@@ -162,6 +162,88 @@ public sealed class Simulator
         return line;
     }
 
+    /// <summary>
+    /// Zalozi linky a tabule stanice: chybajuce linky prida (samoucenie zapnute), existujucim zmeni triedu a port
+    /// (nazov, rezim a zrkadlo ostanu), chybajuce tabule prida s profilom podla vyrobcu, ktory sa zvacsi podla obsahu;
+    /// tabule, ktore uz su, necha tak, ako ich obsluha nastavila.
+    /// </summary>
+    public StationImportResult ImportStation(StationImport import)
+    {
+        ArgumentNullException.ThrowIfNull(import);
+        int linesAdded = 0, linesUpdated = 0, boardsAdded = 0, boardsKept = 0;
+        var unsupported = new List<int>();
+        var skipped = new List<string>();
+        lock (_lock)
+        {
+            foreach (var station in import.Lines)
+            {
+                var manufacturers = ManufacturersFor(station.TableClass);
+                if (manufacturers.Count == 0 || station.Number is < 1 or > 100)
+                {
+                    unsupported.Add(station.Number);
+                    continue;
+                }
+
+                var endpoint = new LineEndpoint(LineTransport.Tcp, "0.0.0.0", station.Port);
+                // vyrobca samoucenia podla prvej tabule linky, ktoru simulator zobrazi
+                var manufacturer = import.Boards.Where(b => b.Line == station.Number).Select(b => b.Manufacturer)
+                    .FirstOrDefault(m => manufacturers.Contains(m, StringComparer.OrdinalIgnoreCase)) ?? manufacturers[0];
+                if (_lines.TryGetValue(station.Number, out var old))
+                {
+                    // linka uz pocuva - pri TCP ostane jej adresa, zmeni sa len port
+                    if (old.Endpoint.Transport == LineTransport.Tcp)
+                        endpoint = old.Endpoint with { Port = station.Port };
+                    if (old.TableClass == station.TableClass && old.Endpoint == endpoint)
+                        continue;
+                    AddLineCore(new LineConfig(old.Number, station.TableClass, endpoint.ToString())
+                    {
+                        Name = old.Name.Length > 0 ? old.Name : station.Name,
+                        Mode = old.Mode,
+                        AutoLearn = old.AutoLearn,
+                        Manufacturer = manufacturers.Contains(old.Manufacturer, StringComparer.OrdinalIgnoreCase) ? old.Manufacturer : manufacturer,
+                        Mirror = old.Mirror?.ToString()
+                    });
+                    linesUpdated++;
+                }
+                else
+                {
+                    AddLineCore(new LineConfig(station.Number, station.TableClass, endpoint.ToString())
+                    {
+                        Name = station.Name, AutoLearn = true, Manufacturer = manufacturer
+                    });
+                    linesAdded++;
+                }
+            }
+
+            foreach (var board in import.Boards)
+            {
+                if (unsupported.Contains(board.Line) || !_lines.TryGetValue(board.Line, out var line))
+                    continue;
+                var key = ManufacturersFor(line.TableClass).FirstOrDefault(m => string.Equals(m, board.Manufacturer, StringComparison.OrdinalIgnoreCase));
+                if (key is null)
+                {
+                    skipped.Add(SimBoard.MakeId(board.Line, board.Address));
+                    continue;
+                }
+
+                if (_boards.ContainsKey(SimBoard.MakeId(board.Line, board.Address)))
+                {
+                    boardsKept++;
+                    continue;
+                }
+
+                AddBoardCore(new BoardConfig(board.Line, board.Address, key)
+                {
+                    Name = board.Name, Profile = BoardProfile.DefaultFor(key) with { AutoSize = true }
+                });
+                boardsAdded++;
+            }
+        }
+
+        Raise([new StructureChanged()]);
+        return new StationImportResult(linesAdded, linesUpdated, boardsAdded, boardsKept, unsupported, skipped);
+    }
+
     /// <summary>Odstrani linku aj s jej tabulami.</summary>
     public bool RemoveLine(int number)
     {
@@ -405,6 +487,22 @@ public sealed class Simulator
         }
 
         _lines[config.Number] = line;
+
+        // ina rodina protokolu (napr. ELEN → LCD1) - tabule linky dostanu obsah novej rodiny
+        var family = protocol.CreateDisplay().GetType();
+        foreach (var board in _boards.Values.Where(b => b.Line == line.Number && b.Display.GetType() != family).ToList())
+        {
+            _boards[board.Id] = new SimBoard(board.Line, board.Address, board.Name, board.ManufacturerKey, board.Profile, protocol.CreateDisplay())
+            {
+                SecondAddress = board.SecondAddress,
+                Design = board.Design,
+                Fault = board.Fault,
+                AutoCreated = board.AutoCreated,
+                Stats = board.Stats,
+                Version = board.Version + 1
+            };
+        }
+
         return line;
     }
 

@@ -43,6 +43,13 @@ TablePort=1=TCP://127.0.0.1:47001
 Hodnotu `TablePort` ukazuje stránka **Linky**. INISS musí mať `Environment\OutToTableDriver=1`. Číslo pred `=` je
 číslo linky, podľa ktorého INISS priraďuje tabule z `TPhysic.txt` (`COMUNICATION_PORT`).
 
+Najjednoduchšie je presmerovať INISS z **GVDEditora**: okno Nastavenia INISSu → Nástroje → *Presmerovať tabule na
+simulátor*. Zapíše vybrané linky do `.INI` vedľa programu (celé sekcie `Driver*` s `TablePort=N=TCP://adresa:47000+N`
+a `OutToTableDriver=1`, pôvodný stav v komentároch, zrušenie ho vráti) a cez `POST /api/station` založí v simulátore
+linky s rovnakým číslom a triedou a tabule z `TPhysic`/`TKatalog` (adresa, výrobca, názov; profil podľa výrobcu so
+samoučením rozmeru). Tabule, ktoré v simulátore už sú, ostanú nezmenené; linke, ktorá už existuje, sa zmení len trieda
+a port. Zmena triedy linky prevedie obsah jej tabúľ na novú rodinu (ELEN ↔ znakové).
+
 Linka môže ísť aj cez **sériový port** (`COM13:9600,n,8,1`) – napríklad druhý koniec virtuálneho páru COM
 portov, ktorého prvý koniec má INISS v `TablePort=COM3`.
 

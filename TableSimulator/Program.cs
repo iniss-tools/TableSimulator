@@ -39,7 +39,7 @@ await using var recordings = new RecordingService(simulator, transport, hub);
 
 simulator.Changed += e =>
 {
-    if (e is StructureChanged or BoardChanged { })
+    if (e is StructureChanged or BoardChanged)
         store.ScheduleSave();
 };
 
@@ -118,9 +118,9 @@ api.MapDelete("/log", () =>
     return Results.NoContent();
 });
 
-api.MapGet("/recordings", () => recordings.List());
+api.MapGet("/recordings", recordings.List);
 api.MapPost("/recordings/start", (StartRecordingRequest request) => recordings.StartAsync(request.Note));
-api.MapPost("/recordings/stop", () => recordings.StopAsync());
+api.MapPost("/recordings/stop", recordings.StopAsync);
 api.MapDelete("/recordings/{name}", (string name) => recordings.Delete(name) ? Results.NoContent() : Results.NotFound());
 api.MapGet("/recordings/{name}/file", (string name) =>
     RecordingService.PathFor(name) is { } path && File.Exists(path)
@@ -141,6 +141,14 @@ api.MapGet("/monitor", () =>
     var monitor = Monitor();
     return new MonitorDto(monitor.Exists, monitor.Root, monitor.Exists ? monitor.Panels().ToArray() : [], monitor.Projects().ToArray(), monitor.Look());
 });
+// linky a tabule stanice INISSu (GVDEditor pri presmerovani liniek na simulator)
+api.MapPost("/station", async (StationImport import) =>
+{
+    var result = simulator.ImportStation(import);
+    await transport.SyncAsync();
+    return Results.Ok(result);
+});
+
 api.MapPost("/monitor/import", (MonitorImportRequest request) =>
 {
     var monitor = Monitor();
@@ -168,9 +176,9 @@ api.MapPost("/monitor/import", (MonitorImportRequest request) =>
     return Results.Ok(new { count });
 });
 
-api.MapGet("/fonts", () => fonts.List());
+api.MapGet("/fonts", fonts.List);
 api.MapGet("/fonts/{file}", (string file) => fonts.Get(file) is { } f ? Results.Ok(f) : Results.NotFound());
-api.MapGet("/designs", () => designs.List());
+api.MapGet("/designs", designs.List);
 
 api.MapGet("/settings", Settings);
 api.MapPut("/settings", (SettingsDto dto) =>
