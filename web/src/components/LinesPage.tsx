@@ -70,7 +70,7 @@ function LineDialog({ initial, isNew, onClose }: { initial: LineConfig; isNew: b
         <Field label={t("field.name")} wide>
           <input value={config.name} onChange={(e) => setConfig({ ...config, name: e.target.value })} />
         </Field>
-        <Field label={t("field.endpoint")} wide>
+        <Field label={t("field.endpoint")} hint={t("field.endpoint.hint")} wide>
           <input value={config.endpoint} onChange={(e) => setConfig({ ...config, endpoint: e.target.value })} />
         </Field>
         <Field label={t("field.mode")} hint={t("line.mode.hint")} wide>

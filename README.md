@@ -36,17 +36,34 @@ TablePort=1=TCP://127.0.0.1:47001
 Hodnotu `TablePort` ukazuje stránka **Linky**. INISS musí mať `Environment\OutToTableDriver=1`. Číslo pred `=` je
 číslo linky, podľa ktorého INISS priraďuje tabule z `TPhysic.txt` (`COMUNICATION_PORT`).
 
+Linka môže ísť aj cez **pomenovanú rúru**. Tam sú roly opačné: rúru vytvára INISS (`TablePort=3=\\.\PIPE\Tabule`)
+a simulátor sa k nej pripája – v nastavení linky `\\.\PIPE\Tabule`, prípadne `\\počítač\PIPE\Tabule`, ak INISS
+beží na inom počítači. Kým INISS nebeží, simulátor to skúša každú sekundu znova.
+
 Tabule netreba zakladať ručne: linka so **samoučením** vytvorí tabuľu pri prvej správe na novú adresu a jej
 rozmer zväčšuje podľa toho, čo INISS posiela. Režim linky **len počúvať** neodpovedá – hodí sa na sledovanie
 linky, na ktorej odpovedajú skutočné tabule.
+
+## Záznamy komunikácie
+
+Stránka **Záznamy** nahrá všetko, čo INISS pošle na linky (aj odpovede tabúľ), do súboru `.tsrec` v
+`%AppData%\TableSimulator\recordings`. Záznam sa dá prehrať v pôvodnom čase, zrýchlene alebo bez čakania, aj
+dokola – správy idú do liniek simulátora, akoby ich posielal INISS, a odpovede tabúľ sa zahodia. Hodí sa na skúšky
+bez INISSu, na ukážky a na prenos situácie z inej stanice (súbor sa dá stiahnuť a na inom počítači nahrať); linky
+a tabule zo záznamu, ktoré v simulátore chýbajú, sa pri prehratí doplnia.
+
+Formát je JSON Lines v UTF-8: prvý riadok je hlavička s linkami a tabuľami v čase začiatku, potom jeden riadok na
+kus prevádzky – `{"t":1.234,"line":1,"rx":"0185…"}` od INISSu alebo `{"t":…,"line":1,"tx":"06"}` odpoveď tabule
+(`t` sú sekundy od začiatku, bajty v hex). Ukladajú sa bajty tak, ako prišli, nie celé správy, aby prehratie prešlo
+rovnakým skladaním správ.
 
 ## Architektúra
 
 | Projekt                  | Obsah                                                                                    |
 |--------------------------|------------------------------------------------------------------------------------------|
-| `TableSimulator.Core`    | `net10.0` bez UI a bez Windows: linky (`Transport/`), protokoly (`Protocols/`), stav tabúľ (`Boards/`), `Simulation/Simulator` |
+| `TableSimulator.Core`    | `net10.0` bez UI a bez Windows: linky (`Transport/`), protokoly (`Protocols/`), stav tabúľ (`Boards/`), záznam a prehratie (`Recording/`), `Simulation/Simulator` |
 | `TableSimulator`         | server ASP.NET Core: API, WebSocket `/ws`, statické súbory webu, nastavenia               |
-| `TableSimulator.Tests`   | MSTest – rámce a súčty podľa príkladov z docs, rozklad riadku, simulátor, TCP linka      |
+| `TableSimulator.Tests`   | MSTest – rámce a súčty podľa príkladov z docs, rozklad riadku, simulátor, linka TCP aj rúra, záznam a prehratie |
 | `web/`                   | React + TypeScript (bun, Vite): ovládanie a renderer tabúľ; testy `bun test`              |
 
 Jadro rozhoduje, **čo** tabuľa ukazuje (rozklad správ, riadky číslované odspodu, striedanie, pohyblivý text, jas,

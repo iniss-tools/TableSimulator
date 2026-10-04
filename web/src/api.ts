@@ -128,6 +128,40 @@ export interface State {
   settings: Settings;
 }
 
+export interface RecordingInfo {
+  name: string;
+  size: number;
+  created: string;
+  duration: number;
+  lines: number[];
+  frames: number;
+  note: string | null;
+}
+
+export interface RecorderStatus {
+  recording: boolean;
+  name: string | null;
+  started: string | null;
+  entries: number;
+  bytes: number;
+}
+
+export interface ReplayStatus {
+  name: string;
+  state: "running" | "finished" | "stopped";
+  position: number;
+  duration: number;
+  speed: number;
+  loop: boolean;
+  pass: number;
+}
+
+export interface Recordings {
+  items: RecordingInfo[];
+  recorder: RecorderStatus;
+  replay: ReplayStatus | null;
+}
+
 export interface DesignInfo {
   id: string;
   name: string;
@@ -191,6 +225,18 @@ export const api = {
   fonts: () => call<string[]>("GET", "/api/fonts"),
   designs: () => call<DesignInfo[]>("GET", "/api/designs"),
   putSettings: (settings: Settings) => call<{ restart: boolean }>("PUT", "/api/settings", settings),
+  recordings: () => call<Recordings>("GET", "/api/recordings"),
+  startRecording: (note: string) => call<RecorderStatus>("POST", "/api/recordings/start", { note }),
+  stopRecording: () => call<RecorderStatus>("POST", "/api/recordings/stop"),
+  deleteRecording: (name: string) => call<void>("DELETE", `/api/recordings/${encodeURIComponent(name)}`),
+  recordingUrl: (name: string) => `/api/recordings/${encodeURIComponent(name)}/file`,
+  uploadRecording: async (file: File) => {
+    const response = await fetch(`/api/recordings/upload?name=${encodeURIComponent(file.name)}`, { method: "POST", body: file });
+    if (!response.ok) throw new ApiError(String(response.status));
+    return (await response.json()) as RecordingInfo;
+  },
+  play: (name: string, speed: number, loop: boolean) => call<ReplayStatus>("POST", "/api/replay", { name, speed, loop }),
+  stopReplay: () => call<void>("POST", "/api/replay/stop"),
 };
 
 /** Nastavenie tabule z jej aktualneho stavu (na upravu). */

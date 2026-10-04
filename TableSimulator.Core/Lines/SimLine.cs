@@ -5,21 +5,29 @@ using TableSimulator.Core.Protocols;
 namespace TableSimulator.Core.Lines;
 
 /// <summary>
-/// Sietovy prenos linky.
+/// Prenos linky.
 /// </summary>
 public enum LineTransport
 {
+    /// <summary>TCP server - INISS sa pripaja ako klient.</summary>
     [JsonStringEnumMemberName("tcp")] Tcp,
-    [JsonStringEnumMemberName("udp")] Udp
+
+    /// <summary>UDP - INISS posiela datagramy.</summary>
+    [JsonStringEnumMemberName("udp")] Udp,
+
+    /// <summary>Pomenovana rura - server je INISS, simulator sa k nej pripaja ako klient.</summary>
+    [JsonStringEnumMemberName("pipe")] Pipe
 }
 
 /// <summary>
-/// Kde linka simulatora pocuva: <c>TCP://host:port</c> alebo <c>UDP://host:port</c> (rovnaky tvar ako <c>TablePort</c> v INISSe).
+/// Koncovy bod linky v tvare hodnoty <c>TablePort</c> v INISSe: <c>TCP://host:port</c> a <c>UDP://host:port</c> - simulator
+/// pocuva; <c>\\server\PIPE\meno</c> - rura, ktoru vytvori INISS a simulator sa k nej pripoji.
 /// </summary>
-/// <param name="Transport">TCP alebo UDP</param>
-/// <param name="Host">adresa rozhrania; <c>0.0.0.0</c> = vsetky</param>
-/// <param name="Port">cislo portu</param>
-public sealed record LineEndpoint(LineTransport Transport, string Host, int Port)
+/// <param name="Transport">TCP, UDP alebo rura</param>
+/// <param name="Host">TCP a UDP: adresa rozhrania (<c>0.0.0.0</c> = vsetky); rura: pocitac s INISSom (<c>.</c> = tento)</param>
+/// <param name="Port">cislo portu; pri rure 0</param>
+/// <param name="Pipe">meno rury (bez <c>\\.\PIPE\</c>); inak prazdne</param>
+public sealed record LineEndpoint(LineTransport Transport, string Host, int Port, string Pipe = "")
 {
     /// <summary>Prvy port pri automatickom pridelovani: linka N pocuva na porte <c>BasePort + N</c>.</summary>
     public const int BasePort = 47000;
@@ -27,13 +35,22 @@ public sealed record LineEndpoint(LineTransport Transport, string Host, int Port
     /// <summary>Predvoleny koncovy bod linky <paramref name="line" /> (TCP na vsetkych rozhraniach).</summary>
     public static LineEndpoint DefaultFor(int line) => new(LineTransport.Tcp, "0.0.0.0", BasePort + line);
 
-    /// <summary>Rozlozi text <c>TCP://host:port</c>; null pri zlom tvare.</summary>
+    /// <summary>Rozlozi <c>TCP://host:port</c>, <c>UDP://host:port</c> alebo <c>\\server\PIPE\meno</c>; null pri zlom tvare.</summary>
     public static LineEndpoint? TryParse(string? text)
     {
         if (string.IsNullOrWhiteSpace(text))
             return null;
 
         var s = text.Trim();
+        if (s.StartsWith(@"\\", StringComparison.Ordinal))
+        {
+            // \\server\PIPE\meno - INISS rovnako hlada "\PIPE\" bez ohladu na velkost pismen
+            var parts = s[2..].Split('\\', 3);
+            if (parts.Length != 3 || parts[0].Length == 0 || !parts[1].Equals("PIPE", StringComparison.OrdinalIgnoreCase) || parts[2].Length == 0)
+                return null;
+            return new LineEndpoint(LineTransport.Pipe, parts[0], 0, parts[2]);
+        }
+
         LineTransport transport;
         if (s.StartsWith("TCP://", StringComparison.OrdinalIgnoreCase))
             transport = LineTransport.Tcp;
@@ -51,12 +68,16 @@ public sealed record LineEndpoint(LineTransport Transport, string Host, int Port
     }
 
     /// <summary>
-    /// Hodnota <c>TablePort</c>, ktorou sa INISS na tuto linku pripoji: <c>N=TCP://host:port</c>.
+    /// Hodnota <c>TablePort</c> pre INISS: <c>N=TCP://host:port</c>, pri rure <c>N=\\.\PIPE\meno</c> (ruru vytvara INISS
+    /// na svojom pocitaci).
     /// </summary>
     /// <param name="line">cislo linky v INISSe</param>
     /// <param name="connectHost">adresa tohto pocitaca z pohladu INISSu; null = adresa rozhrania, pri 0.0.0.0 127.0.0.1</param>
     public string ToInissTablePort(int line, string? connectHost = null)
     {
+        if (Transport == LineTransport.Pipe)
+            return string.Create(CultureInfo.InvariantCulture, $@"{line}=\\.\PIPE\{Pipe}");
+
         var host = connectHost ?? (Host is "0.0.0.0" or "::" or "*" ? "127.0.0.1" : Host);
         return string.Create(CultureInfo.InvariantCulture, $"{line}={Scheme}://{host}:{Port}");
     }
@@ -64,7 +85,9 @@ public sealed record LineEndpoint(LineTransport Transport, string Host, int Port
     private string Scheme => Transport == LineTransport.Tcp ? "TCP" : "UDP";
 
     /// <inheritdoc />
-    public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"{Scheme}://{Host}:{Port}");
+    public override string ToString() => Transport == LineTransport.Pipe
+        ? $@"\\{Host}\PIPE\{Pipe}"
+        : string.Create(CultureInfo.InvariantCulture, $"{Scheme}://{Host}:{Port}");
 }
 
 /// <summary>

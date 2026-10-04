@@ -33,6 +33,7 @@ using var hub = new LiveHub(simulator, () => settings.ConnectHost);
 var fonts = new FontCatalog(() => settings.FontsFolder);
 var designs = new DesignCatalog(Path.Combine(webRoot, "designs"), () => settings.EffectiveDesignsFolder);
 using var designWatcher = WatchDesigns(settings.EffectiveDesignsFolder, hub);
+await using var recordings = new RecordingService(simulator, transport, hub);
 
 simulator.Changed += e =>
 {
@@ -115,6 +116,24 @@ api.MapDelete("/log", () =>
     return Results.NoContent();
 });
 
+api.MapGet("/recordings", () => recordings.List());
+api.MapPost("/recordings/start", (StartRecordingRequest request) => recordings.StartAsync(request.Note));
+api.MapPost("/recordings/stop", () => recordings.StopAsync());
+api.MapDelete("/recordings/{name}", (string name) => recordings.Delete(name) ? Results.NoContent() : Results.NotFound());
+api.MapGet("/recordings/{name}/file", (string name) =>
+    RecordingService.PathFor(name) is { } path && File.Exists(path)
+        ? Results.File(path, "application/x-ndjson", name + TableSimulator.Core.Recording.RecordingFile.Extension)
+        : Results.NotFound());
+api.MapPost("/recordings/upload", async (HttpRequest request, string? name) =>
+    await recordings.UploadAsync(name ?? "zaznam", request.Body) is { } info ? Results.Ok(info) : Results.BadRequest(new { error = "format" }));
+api.MapPost("/replay", async (PlayRequest request) =>
+    await recordings.PlayAsync(request.Name, request.Speed, request.Loop) is { } status ? Results.Ok(status) : Results.NotFound());
+api.MapPost("/replay/stop", async () =>
+{
+    await recordings.StopReplayAsync();
+    return Results.NoContent();
+});
+
 api.MapGet("/fonts", () => fonts.List());
 api.MapGet("/fonts/{file}", (string file) => fonts.Get(file) is { } f ? Results.Ok(f) : Results.NotFound());
 api.MapGet("/designs", () => designs.List());
@@ -169,3 +188,9 @@ static FileSystemWatcher? WatchDesigns(string folder, LiveHub hub)
     watcher.Deleted += changed;
     return watcher;
 }
+
+/// <summary>Zaciatok zaznamu.</summary>
+internal sealed record StartRecordingRequest(string? Note);
+
+/// <summary>Prehratie zaznamu.</summary>
+internal sealed record PlayRequest(string Name, double Speed, bool Loop);

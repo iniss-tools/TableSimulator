@@ -339,3 +339,4 @@ node_modules/
 web/dist/
 # vystup buildu webu - generuje sa pri dotnet build
 TableSimulator/wwwroot/
+*.tsbuildinfo

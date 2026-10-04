@@ -472,6 +472,65 @@ code.hex {
   margin-top: 12px;
 }
 
+.recorder {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.recorder.recording {
+  border-color: var(--bad);
+}
+
+.recorder .grow {
+  flex: 1;
+  min-width: 160px;
+}
+
+.rec-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--bad);
+  vertical-align: -1px;
+}
+
+.recording .rec-dot {
+  animation: rec-blink 1s steps(2, start) infinite;
+}
+
+@keyframes rec-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.replay {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.replay .toolbar {
+  margin-bottom: 8px;
+}
+
+.progress {
+  height: 6px;
+  background: var(--panel-2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress > div {
+  height: 100%;
+  background: var(--accent);
+}
+
 .kiosk {
   min-height: 100vh;
   background: #000;

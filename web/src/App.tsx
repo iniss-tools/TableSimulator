@@ -6,6 +6,7 @@ import { BoardsPage } from "./components/BoardsPage";
 import { BoardView } from "./components/BoardView";
 import { LinesPage } from "./components/LinesPage";
 import { LogPage } from "./components/LogPage";
+import { RecordingsPage } from "./components/RecordingsPage";
 import { SettingsPage } from "./components/SettingsPage";
 
 function useHash(): string {
@@ -78,6 +79,7 @@ export function App() {
     ["boards", t("nav.boards")],
     ["lines", t("nav.lines")],
     ["log", t("nav.log")],
+    ["recordings", t("nav.recordings")],
     ["settings", t("nav.settings")],
   ];
 
@@ -106,7 +108,17 @@ export function App() {
       </header>
       {!live.connected && live.loaded && <div className="banner">{t("server.offline")}</div>}
       <main>
-        {page === "lines" ? <LinesPage /> : page === "log" ? <LogPage /> : page === "settings" ? <SettingsPage /> : <BoardsPage />}
+        {page === "lines" ? (
+          <LinesPage />
+        ) : page === "log" ? (
+          <LogPage />
+        ) : page === "recordings" ? (
+          <RecordingsPage />
+        ) : page === "settings" ? (
+          <SettingsPage />
+        ) : (
+          <BoardsPage />
+        )}
       </main>
     </div>
   );

@@ -1,3 +1,4 @@
+using System.IO.Pipes;
 using System.Net;
 using System.Net.Sockets;
 using TableSimulator.Core.Lines;
@@ -6,8 +7,10 @@ using TableSimulator.Core.Simulation;
 namespace TableSimulator.Core.Transport;
 
 /// <summary>
-/// Sietovy server jednej linky: INISS sa pripaja ako klient (<c>TablePort=N=TCP://…</c>), prijate bajty idu do
-/// simulatora a jeho odpovede spat. Pri TCP plati vzdy posledne spojenie - nove spojenie stare zatvori.
+/// Spojenie jednej linky s INISSom. Pri TCP a UDP je simulator server a INISS sa pripaja (<c>TablePort=N=TCP://…</c>);
+/// pri rure (<c>TablePort=N=\\.\PIPE\meno</c>) ruru vytvori INISS a simulator sa k nej pripaja ako klient, kym INISS
+/// nebezi, skusa to znova. Prijate bajty idu do simulatora a jeho odpovede spat. Pri TCP plati vzdy posledne spojenie -
+/// nove spojenie stare zatvori.
 /// </summary>
 public sealed class LineHost : IAsyncDisposable
 {
@@ -29,9 +32,19 @@ public sealed class LineHost : IAsyncDisposable
     /// <summary>Kde server pocuva.</summary>
     public LineEndpoint Endpoint { get; }
 
+    /// <summary>Ako dlho sa caka na ruru INISSu, kym sa pokus zopakuje.</summary>
+    private static readonly TimeSpan PipeRetry = TimeSpan.FromSeconds(1);
+
     /// <summary>Spusti server; chybu (obsadeny port) zapise do stavu linky.</summary>
     public void Start()
     {
+        if (Endpoint.Transport == LineTransport.Pipe)
+        {
+            _loop = PipeLoopAsync(_cts.Token);
+            _simulator.SetLineStatus(Line, LineStatus.Listening, null);
+            return;
+        }
+
         try
         {
             var address = ParseAddress(Endpoint.Host);
@@ -131,6 +144,54 @@ public sealed class LineHost : IAsyncDisposable
         {
             client.Dispose();
             if (Interlocked.CompareExchange(ref _client, null, client) == client && !token.IsCancellationRequested)
+                _simulator.SetLineStatus(Line, LineStatus.Listening, null);
+        }
+    }
+
+    private async Task PipeLoopAsync(CancellationToken token)
+    {
+        var buffer = new byte[4096];
+        while (!token.IsCancellationRequested)
+        {
+            using var pipe = new NamedPipeClientStream(Endpoint.Host, Endpoint.Pipe, PipeDirection.InOut, PipeOptions.Asynchronous);
+            try
+            {
+                await pipe.ConnectAsync(PipeRetry, token).ConfigureAwait(false);
+            }
+            catch (Exception e) when (e is TimeoutException or IOException or UnauthorizedAccessException)
+            {
+                // INISS este rura nevytvoril alebo su vsetky jej instancie obsadene
+                await Task.Delay(PipeRetry, token).ConfigureAwait(false);
+                continue;
+            }
+
+            // INISS ruru vytvara v rezime sprav - kazda odpoved ide ako samostatna sprava
+            if (OperatingSystem.IsWindows())
+                pipe.ReadMode = PipeTransmissionMode.Message;
+
+            _simulator.SetLineStatus(Line, LineStatus.Connected, Endpoint.ToString());
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    var read = await pipe.ReadAsync(buffer, token).ConfigureAwait(false);
+                    if (read == 0)
+                        break;
+
+                    foreach (var reply in _simulator.Receive(Line, buffer.AsSpan(0, read)))
+                    {
+                        if (reply.Delay > TimeSpan.Zero)
+                            await Task.Delay(reply.Delay, token).ConfigureAwait(false);
+                        await pipe.WriteAsync(reply.Bytes, token).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (IOException)
+            {
+                // INISS ruru zavrel
+            }
+
+            if (!token.IsCancellationRequested)
                 _simulator.SetLineStatus(Line, LineStatus.Listening, null);
         }
     }

@@ -3,6 +3,7 @@ using TableSimulator.Core.Boards;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Protocols;
 using TableSimulator.Core.Protocols.Elen;
+using TableSimulator.Core.Recording;
 
 namespace TableSimulator.Core.Simulation;
 
@@ -24,6 +25,18 @@ public sealed record StructureChanged : SimulatorEvent;
 public sealed record FrameLogged(FrameRecord Record) : SimulatorEvent;
 
 /// <summary>
+/// Odkial prisli bajty linky.
+/// </summary>
+public enum TrafficSource
+{
+    /// <summary>Od INISSu po linke.</summary>
+    Line,
+
+    /// <summary>Z prehravaneho zaznamu - nezapisuje sa do prebiehajuceho zaznamu.</summary>
+    Replay
+}
+
+/// <summary>
 /// Odpoved INISSu - posle sa po <see cref="Delay" />.
 /// </summary>
 public sealed record LineReply(byte[] Bytes, TimeSpan Delay);
@@ -43,6 +56,7 @@ public sealed class Simulator
     private readonly Dictionary<string, SimBoard> _boards = [];
     private readonly LinkedList<FrameRecord> _log = [];
     private readonly TimeProvider _time;
+    private SessionRecorder? _recorder;
     private long _seq;
 
     public Simulator(TimeProvider? time = null)
@@ -233,7 +247,10 @@ public sealed class Simulator
     /// <summary>
     /// Spracuje bajty prijate na linke a vrati odpovede, ktore treba INISSu poslat.
     /// </summary>
-    public IReadOnlyList<LineReply> Receive(int lineNumber, ReadOnlySpan<byte> data)
+    /// <param name="lineNumber">cislo linky</param>
+    /// <param name="data">prijate bajty</param>
+    /// <param name="source">od INISSu alebo zo zaznamu</param>
+    public IReadOnlyList<LineReply> Receive(int lineNumber, ReadOnlySpan<byte> data, TrafficSource source = TrafficSource.Line)
     {
         Context context;
         lock (_lock)
@@ -247,11 +264,84 @@ public sealed class Simulator
             foreach (var reply in context.Replies)
                 line.Stats.BytesOut += reply.Bytes.Length;
             line.Version++;
+
+            if (source == TrafficSource.Line && _recorder is { } recorder)
+            {
+                var now = Now;
+                recorder.Add(lineNumber, FrameDirection.Received, data, now);
+                foreach (var reply in context.Replies)
+                    recorder.Add(lineNumber, FrameDirection.Sent, reply.Bytes, now);
+            }
         }
 
         context.Events.Add(new LineChanged(lineNumber));
         Raise(context.Events);
         return context.Replies;
+    }
+
+    /// <summary>Zacne zapisovat prevadzku liniek do zaznamu; predchadzajuci zaznam vrati (treba ho ukoncit).</summary>
+    public SessionRecorder? StartRecording(SessionRecorder recorder)
+    {
+        lock (_lock)
+        {
+            var previous = _recorder;
+            _recorder = recorder;
+            return previous;
+        }
+    }
+
+    /// <summary>Prestane zapisovat do zaznamu a vrati ho (treba ho ukoncit); null = zaznam nebezal.</summary>
+    public SessionRecorder? StopRecording()
+    {
+        lock (_lock)
+        {
+            var recorder = _recorder;
+            _recorder = null;
+            return recorder;
+        }
+    }
+
+    /// <summary>Zahodi rozpracovanu spravu linky (zaciatok prehravania, nove spojenie).</summary>
+    public void ResetLine(int number)
+    {
+        lock (_lock)
+            _lines.GetValueOrDefault(number)?.Protocol.Reset();
+    }
+
+    /// <summary>
+    /// Doplni linky a tabule, ktore v simulatore chybaju (napr. zo zaznamu z ineho pocitaca); existujuce nemeni.
+    /// </summary>
+    /// <returns>pribudla aspon jedna linka (treba spustit jej server)</returns>
+    public bool AddMissing(SimulatorConfig config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        var linesAdded = false;
+        var changed = false;
+        lock (_lock)
+        {
+            foreach (var line in config.Lines.Where(l => !_lines.ContainsKey(l.Number)))
+            {
+                try
+                {
+                    AddLineCore(line);
+                    linesAdded = changed = true;
+                }
+                catch (ArgumentException)
+                {
+                    // trieda alebo koncovy bod, ktore tento simulator nepozna
+                }
+            }
+
+            foreach (var board in config.Boards.Where(b => _lines.ContainsKey(b.Line) && !_boards.ContainsKey(SimBoard.MakeId(b.Line, b.Address))))
+            {
+                AddBoardCore(board);
+                changed = true;
+            }
+        }
+
+        if (changed)
+            Raise([new StructureChanged()]);
+        return linesAdded;
     }
 
     private SimLine AddLineCore(LineConfig config)
