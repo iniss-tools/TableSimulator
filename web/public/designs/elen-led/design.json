@@ -1,0 +1,14 @@
+{
+  "name": "LED – okrúhle body",
+  "renderer": "led-matrix",
+  "pitch": 5,
+  "dot": 0.78,
+  "shape": "circle",
+  "off": "#2b1a14",
+  "colors": { "0": "#ffb000", "1": "#ff3b22", "2": "#3dff4a", "3": "#ffc21a" },
+  "glow": 0.6,
+  "background": "#0c0c0c",
+  "rowGap": 1,
+  "padding": 3,
+  "frame": { "width": 10, "color": "#24272b", "radius": 8 }
+}

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<!-- Jadro simulatora bez UI a bez Windows: linky, protokoly tabul, stav tabul, zaznam komunikacie. -->
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<OutputType>Library</OutputType>
+		<RootNamespace>TableSimulator.Core</RootNamespace>
+		<AssemblyName>TableSimulator.Core</AssemblyName>
+		<LangVersion>default</LangVersion>
+	</PropertyGroup>
+	<ItemGroup>
+		<InternalsVisibleTo Include="TableSimulator.Tests" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\ToolsCore\ToolsCore.Iniss\ToolsCore.Iniss.csproj" />
+	</ItemGroup>
+</Project>

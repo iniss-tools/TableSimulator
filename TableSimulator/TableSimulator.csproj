@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<!-- Server simulatora: linky pre INISS, API a WebSocket pre webove rozhranie, ktore je vo wwwroot. -->
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<OutputType>Exe</OutputType>
+		<RootNamespace>TableSimulator</RootNamespace>
+		<AssemblyName>TableSimulator</AssemblyName>
+		<LangVersion>default</LangVersion>
+		<WebDir>$(MSBuildProjectDirectory)\..\web</WebDir>
+	</PropertyGroup>
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+	<ItemGroup>
+		<!-- ako implicitne usingy Microsoft.NET.Sdk.Web (Web SDK sa nepouziva kvoli wwwroot vo vystupe) -->
+		<Using Include="Microsoft.AspNetCore.Builder" />
+		<Using Include="Microsoft.AspNetCore.Hosting" />
+		<Using Include="Microsoft.AspNetCore.Http" />
+		<Using Include="Microsoft.Extensions.DependencyInjection" />
+		<Using Include="Microsoft.Extensions.Hosting" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\TableSimulator.Core\TableSimulator.Core.csproj" />
+	</ItemGroup>
+
+	<!-- Webove rozhranie (bun + vite) sa zostavi do wwwroot pred buildom; -p:SkipWebBuild=true ho vynecha. -->
+	<ItemGroup>
+		<WebSource Include="$(WebDir)\src\**\*;$(WebDir)\public\**\*;$(WebDir)\index.html;$(WebDir)\package.json;$(WebDir)\vite.config.ts;$(WebDir)\tsconfig.json" />
+	</ItemGroup>
+	<Target Name="BuildWeb" BeforeTargets="BeforeBuild" Inputs="@(WebSource)" Outputs="$(MSBuildProjectDirectory)\wwwroot\index.html"
+			Condition="'$(SkipWebBuild)' != 'true'">
+		<Exec Command="bun install" WorkingDirectory="$(WebDir)" Condition="!Exists('$(WebDir)\node_modules')" />
+		<Exec Command="bun run build" WorkingDirectory="$(WebDir)" />
+	</Target>
+	<Target Name="IncludeWeb" DependsOnTargets="BuildWeb" BeforeTargets="AssignTargetPaths">
+		<ItemGroup>
+			<Content Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
+		</ItemGroup>
+	</Target>
+</Project>

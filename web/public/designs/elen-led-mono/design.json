@@ -1,0 +1,14 @@
+{
+  "name": "LED – jantárová (jednofarebná)",
+  "renderer": "led-matrix",
+  "pitch": 5,
+  "dot": 0.8,
+  "shape": "circle",
+  "off": "#2a1c08",
+  "colors": { "0": "#ffa31a", "1": "#ffa31a", "2": "#ffa31a", "3": "#ffa31a" },
+  "glow": 0.7,
+  "background": "#0a0806",
+  "rowGap": 1,
+  "padding": 3,
+  "frame": { "width": 10, "color": "#1e1a14", "radius": 8 }
+}

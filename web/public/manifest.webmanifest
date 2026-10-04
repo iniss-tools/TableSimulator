@@ -1,0 +1,9 @@
+{
+  "name": "Simulátor tabúľ",
+  "short_name": "Tabule",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111418",
+  "theme_color": "#111418",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "LED – hranaté body",
+  "renderer": "led-matrix",
+  "pitch": 4,
+  "dot": 0.9,
+  "shape": "square",
+  "off": "#1d1d1d",
+  "colors": { "0": "#ffb000", "1": "#ff2a1a", "2": "#2cff3a", "3": "#ffd000" },
+  "glow": 0,
+  "background": "#050505",
+  "rowGap": 0,
+  "padding": 2,
+  "frame": { "width": 6, "color": "#3a3d42", "radius": 2 }
+}
