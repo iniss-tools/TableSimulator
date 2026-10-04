@@ -5,14 +5,27 @@ namespace TableSimulator.Core.Protocols.Elen;
 
 /// <summary>
 /// Protokol ELEN (TableClass 4) z pohladu tabule: potvrdzuje spravy jednym bajtom a pamata si obsah riadkov.
+/// Spravanie na strane panelu (dvojita adresa, prikazy 2, 5-9, dva jasy) podla programu ELEN Monitor.
 /// </summary>
 internal sealed class ElenProtocol : ILineProtocol
 {
     private const int CmdTime = 0;
     private const int CmdRow = 1;
+    private const int CmdReadRow = 2;
     private const int CmdMoving = 3;
     private const int CmdLight = 4;
     private const int CmdStatus = 5;
+    private const int CmdReset = 7;
+    private const int CmdTimeout = 8;
+    private const int CmdFlash = 9;
+
+    /// <summary>Prikazy, ktore panel len potvrdi.</summary>
+    private static readonly HashSet<int> AckOnly = [6, 0x0B, 0x0D];
+
+    /// <summary>Odpoved panelu na prikaz 7.</summary>
+    private const byte ResetReply = 0x7F;
+
+    private const byte CarriageReturn = 0x0D;
 
     private readonly ElenFramer _framer = new();
 
@@ -49,7 +62,7 @@ internal sealed class ElenProtocol : ILineProtocol
                 {
                     if (board.Display is not ElenDisplay)
                         continue;
-                    info = Apply(board, frame, context);
+                    info = Apply(board, frame, false, context, out _);
                     context.Changed(board);
                 }
             }
@@ -75,20 +88,34 @@ internal sealed class ElenProtocol : ILineProtocol
             return;
         }
 
-        var applied = Apply(target, frame, context);
+        var secondAddress = target.SecondAddress == frame.Address && target.Address != frame.Address;
+        var applied = Apply(target, frame, secondAddress, context, out var reply);
         context.Changed(target);
         context.LogReceived(frame.Raw, frame.Address, FrameStatus.Ok, applied);
-        context.Reply(target, [ElenFrame.Ack], new FrameInfo("ack"));
+        if (reply != null)
+            context.Reply(target, reply, new FrameInfo("data"));
+        else if (frame.Command == CmdReset)
+            context.Reply(target, [ResetReply], new FrameInfo("reset"));
+        else
+            context.Reply(target, [ElenFrame.Ack], new FrameInfo("ack"));
     }
 
     /// <summary>
     /// Vykona prikaz na tabuli a vrati jeho rozlozeny vyznam.
     /// </summary>
-    private static FrameInfo Apply(SimBoard board, ElenFrame frame, ILineContext context)
+    /// <param name="board">tabula</param>
+    /// <param name="frame">sprava</param>
+    /// <param name="secondAddress">sprava prisla na druhu adresu panelu - riadky su v hornej polovici</param>
+    /// <param name="context">kontext linky</param>
+    /// <param name="reply">odpoved s datami (prikazy 2 a 5); null = jednoduche potvrdenie</param>
+    private static FrameInfo Apply(SimBoard board, ElenFrame frame, bool secondAddress, ILineContext context, out byte[]? reply)
     {
+        reply = null;
         var display = (ElenDisplay)board.Display;
         var variant = ElenVariant.Find(board.ManufacturerKey) ?? ElenVariant.Elen;
         var p = frame.Parameters;
+        // druha adresa panelu ovlada hornu polovicu riadkov
+        var rowOffset = secondAddress ? board.Profile.Rows / 2 : 0;
 
         switch (frame.Command)
         {
@@ -101,10 +128,28 @@ internal sealed class ElenProtocol : ILineProtocol
                     break;
                 }
 
-                var content = ElenRowParser.Parse(p.AsSpan(1), variant);
-                display.SetRow(row, content);
-                if (board.Profile.AutoSize)
-                    Grow(board, row, content);
+                // CR v obsahu pokracuje na nizsom riadku
+                var content = p.AsSpan(1);
+                for (var r = row + rowOffset; r > 0; r--)
+                {
+                    var end = content.IndexOf(CarriageReturn);
+                    var part = ElenRowParser.Parse(end < 0 ? content : content[..end], variant);
+                    display.SetRow(r, part);
+                    if (board.Profile.AutoSize)
+                        Grow(board, r, part);
+                    if (end < 0)
+                        break;
+                    content = content[(end + 1)..];
+                }
+
+                break;
+            }
+
+            case CmdReadRow when p.Length >= 1:
+            {
+                var row = (p[0] & 0x7F) + rowOffset;
+                var raw = display.Rows.TryGetValue(row, out var content) ? content.Raw : [];
+                reply = DataReply(frame, [(byte)(0x80 | row), .. raw]);
                 break;
             }
 
@@ -134,9 +179,14 @@ internal sealed class ElenProtocol : ILineProtocol
             }
 
             case CmdLight when p.Length >= 2:
-                display.MovingRow = p[0] & 0x7F;
-                display.Brightness = Brightness(p);
+            {
+                var row = p[0] & 0x7F;
+                display.MovingRow = row == 0 ? 0 : row + rowOffset;
+                // jas cervenej a zelenej; jeden bajt = obom rovnaky (INISS 3.39)
+                display.Brightness = p[1] & 0x7F;
+                display.BrightnessGreen = p.Length >= 3 ? p[2] & 0x7F : display.Brightness;
                 break;
+            }
 
             case CmdTime when p.Length >= 12:
                 if (ParseClock(p) is { } clock)
@@ -146,9 +196,37 @@ internal sealed class ElenProtocol : ILineProtocol
                 }
 
                 break;
+
+            case CmdStatus:
+                reply = DataReply(frame, [0x80, 0x80]);
+                break;
+
+            case CmdTimeout when p.Length >= 1:
+                display.Timeout = p[0] & 0x7F;
+                break;
+
+            case CmdFlash when p.Length >= 2:
+                display.FlashOn = p[0] & 0x7F;
+                display.FlashOff = p[1] & 0x7F;
+                break;
         }
 
         return Describe(frame, board.ManufacturerKey);
+    }
+
+    /// <summary>
+    /// Odpoved s datami: <c>02 adresa|80 prikaz|80 data… 04 sucetH|80 sucetL|80</c>, sucet ako pri sprave od INISSu.
+    /// </summary>
+    private static byte[] DataReply(ElenFrame frame, ReadOnlySpan<byte> data)
+    {
+        var reply = new byte[data.Length + 6];
+        reply[0] = 0x02;
+        reply[1] = frame.Raw[1];
+        reply[2] = frame.Raw[2];
+        data.CopyTo(reply.AsSpan(3));
+        reply[^3] = ElenFrame.Eot;
+        (reply[^2], reply[^1]) = ElenChecksum.Encode(ElenChecksum.Compute(reply.AsSpan(0, reply.Length - 2)));
+        return reply;
     }
 
     /// <summary>
@@ -163,17 +241,19 @@ internal sealed class ElenProtocol : ILineProtocol
             CmdRow when p.Length >= 1 && (p[0] & 0x7F) == 0 => new FrameInfo("elen.clear"),
             CmdRow when p.Length >= 1 => new FrameInfo("elen.row",
                 Args(("row", Num(p[0] & 0x7F)), ("text", ElenRowParser.Parse(p.AsSpan(1), variant).PlainText))),
+            CmdReadRow when p.Length >= 1 => new FrameInfo("elen.readRow", Args(("row", Num(p[0] & 0x7F)))),
             CmdMoving when p.Length >= 1 => new FrameInfo("elen.moving", Args(("part", Num(p[0] & 0x3F)), ("last", "0"), ("text", ""))),
-            CmdLight when p.Length >= 2 => new FrameInfo("elen.light", Args(("row", Num(p[0] & 0x7F)), ("brightness", Num(Brightness(p))))),
+            CmdLight when p.Length >= 2 => new FrameInfo("elen.light", Args(("row", Num(p[0] & 0x7F)), ("brightness", Num(p[1] & 0x7F)))),
             CmdTime when p.Length >= 12 => new FrameInfo("elen.time",
                 Args(("time", ParseClock(p)?.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) ?? ""))),
             CmdStatus => new FrameInfo("elen.status"),
+            CmdTimeout when p.Length >= 1 => new FrameInfo("elen.timeout", Args(("seconds", Num(p[0] & 0x7F)))),
+            CmdFlash when p.Length >= 2 => new FrameInfo("elen.flash", Args(("on", Num((p[0] & 0x7F) * 100)), ("off", Num((p[1] & 0x7F) * 100)))),
+            CmdReset => new FrameInfo("elen.reset"),
+            _ when AckOnly.Contains(frame.Command) => new FrameInfo("elen.cmd", Args(("cmd", Num(frame.Command)))),
             _ => new FrameInfo("elen.unknown", Args(("cmd", Num(frame.Command))))
         };
     }
-
-    /// <summary>Jas z prikazu 4; INISS2 posiela pri ELEN10/16 jas v dvoch bajtoch (horny a dolny).</summary>
-    private static int Brightness(byte[] p) => p.Length >= 3 ? ((p[1] & 0x7F) << 7) | (p[2] & 0x7F) : p[1] & 0x7F;
 
     private static FrameInfo Broadcast(FrameInfo info)
     {

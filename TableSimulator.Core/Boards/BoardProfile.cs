@@ -26,17 +26,26 @@ public sealed record BoardProfile
     /// </summary>
     public IReadOnlyDictionary<string, int>? FontMap { get; init; }
 
-    /// <summary>Ako dlho sa zobrazuje jedna cast striedania [ms].</summary>
-    public int AlternationMs { get; init; } = 3000;
+    /// <summary>Ako dlho sa zobrazuje jedna cast striedania [ms] - ELEN Monitor prepina kazde 2 s.</summary>
+    public int AlternationMs { get; init; } = 2000;
 
-    /// <summary>Ako dlho blikajuci text svieti [ms].</summary>
-    public int BlinkOnMs { get; init; } = 500;
+    /// <summary>Ako dlho blikajuci text svieti [ms] - FlashON konfiguracie panelu (predvolene 10 × 0,1 s).</summary>
+    public int BlinkOnMs { get; init; } = 1000;
 
-    /// <summary>Ako dlho blikajuci text nesvieti [ms].</summary>
+    /// <summary>Ako dlho blikajuci text nesvieti [ms] - FlashOFF konfiguracie panelu (predvolene 5 × 0,1 s).</summary>
     public int BlinkOffMs { get; init; } = 500;
 
-    /// <summary>Rychlost pohybliveho textu [body/s].</summary>
-    public int ScrollSpeed { get; init; } = 40;
+    /// <summary>Rychlost pohybliveho textu [body/s] - ELEN Monitor posuva o bod kazdy tik (asi 16 ms).</summary>
+    public int ScrollSpeed { get; init; } = 60;
+
+    /// <summary>Jednofarebny panel: kazdy rozsvieteny bod ma farbu <c>mono</c> zo vzhladu (napr. zlte panely YC).</summary>
+    public bool Monochrome { get; init; }
+
+    /// <summary>Panel ma zamenenu cervenu a zelenu (konfiguracia panelu s farebnostou 2).</summary>
+    public bool SwapRedGreen { get; init; }
+
+    /// <summary>Hlavicka tabule - stitok nad maticou s textami a hodinami; null = bez hlavicky.</summary>
+    public BoardHeader? Header { get; init; }
 
     /// <summary>Pismo pohybliveho textu.</summary>
     public int MovingFont { get; init; } = 0x52;
@@ -52,6 +61,39 @@ public sealed record BoardProfile
         _ => new BoardProfile()
     };
 }
+
+/// <summary>
+/// Hlavicka tabule: pevny stitok nad maticou (napr. "ODCHODY / DEPARTURES" a popisy stlpcov) a hodiny panelu.
+/// INISS ju neposiela - patri k hardveru tabule. Polohy a vysky su v bodoch matice.
+/// </summary>
+public sealed record BoardHeader
+{
+    /// <summary>Vyska hlavicky v bodoch.</summary>
+    public int Height { get; init; }
+
+    /// <summary>Texty hlavicky.</summary>
+    public IReadOnlyList<HeaderText> Texts { get; init; } = [];
+
+    /// <summary>Hodiny panelu; null = panel hodiny nema.</summary>
+    public HeaderClock? Clock { get; init; }
+}
+
+/// <summary>
+/// Text hlavicky.
+/// </summary>
+/// <param name="X">lavy okraj v bodoch</param>
+/// <param name="Y">horny okraj v bodoch od vrchu hlavicky</param>
+/// <param name="Height">vyska pisma v bodoch</param>
+/// <param name="Text">text</param>
+public sealed record HeaderText(int X, int Y, int Height, string Text);
+
+/// <summary>
+/// Hodiny v hlavicke - ukazuju cas hodin panelu, ktory nastavuje INISS (kym ho nenastavi, cas pocitaca).
+/// </summary>
+/// <param name="X">lavy okraj v bodoch</param>
+/// <param name="Y">horny okraj v bodoch od vrchu hlavicky</param>
+/// <param name="Height">vyska cislic v bodoch</param>
+public sealed record HeaderClock(int X, int Y, int Height);
 
 /// <summary>
 /// Porucha tabule, ktoru simulator predstiera - na skusku reakcie INISSu.

@@ -49,6 +49,10 @@ export function SettingsPage() {
         </Field>
         <p className="muted small">{fonts.length ? t("settings.fontsFound", { list: fonts.join(", ") }) : t("settings.noFonts")}</p>
 
+        <Field label={t("settings.monitorFolder")} hint={t("settings.monitorFolder.hint")} wide>
+          <input value={form.monitorFolder} onChange={(e) => setForm({ ...form, monitorFolder: e.target.value })} />
+        </Field>
+
         <Field
           label={t("settings.designsFolder")}
           hint={t("settings.designsFolder.hint", { folder: "%AppData%\\TableSimulator\\designs" })}

@@ -13,29 +13,26 @@ public sealed record FontFileDto(string File, string Name, FontDto[] Fonts);
 /// <summary>
 /// Subory pisiem ELEN z priecinka pisiem - prehliadac podla nich kresli presne body tabule.
 /// </summary>
-public sealed class FontCatalog(Func<string> folder)
+public sealed class FontCatalog(Func<IReadOnlyList<string>> folders)
 {
     private readonly ConcurrentDictionary<string, (DateTime Stamp, FontFileDto Font)> _cache = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Mena suborov .bin v priecinku pisiem, ktore sa daju nacitat ako pisma.</summary>
-    public string[] List()
-    {
-        var dir = folder();
-        if (string.IsNullOrWhiteSpace(dir) || !Directory.Exists(dir))
-            return [];
-        return Directory.EnumerateFiles(dir, "*.bin").Select(Path.GetFileName).OfType<string>()
-            .Where(f => Get(f) != null).Order(StringComparer.OrdinalIgnoreCase).ToArray();
-    }
+    public string[] List() =>
+        Folders().SelectMany(dir => Directory.EnumerateFiles(dir, "*.bin")).Select(Path.GetFileName).OfType<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase).Where(f => Get(f) != null).Order(StringComparer.OrdinalIgnoreCase).ToArray();
+
+    /// <summary>Priecinky pisiem, ktore existuju, v poradi priority.</summary>
+    private IEnumerable<string> Folders() => folders().Where(d => !string.IsNullOrWhiteSpace(d) && Directory.Exists(d));
 
     /// <summary>Subor pisiem podla mena; null = neexistuje alebo nie je pismo.</summary>
     public FontFileDto? Get(string file)
     {
-        var dir = folder();
-        if (string.IsNullOrWhiteSpace(dir) || file.IndexOfAny(['/', '\\', ':']) >= 0 || !file.EndsWith(".bin", StringComparison.OrdinalIgnoreCase))
+        if (file.IndexOfAny(['/', '\\', ':']) >= 0 || !file.EndsWith(".bin", StringComparison.OrdinalIgnoreCase))
             return null;
 
-        var path = Path.Combine(dir, file);
-        if (!File.Exists(path))
+        var path = Folders().Select(dir => Path.Combine(dir, file)).FirstOrDefault(File.Exists);
+        if (path == null)
             return null;
 
         var stamp = File.GetLastWriteTimeUtc(path);

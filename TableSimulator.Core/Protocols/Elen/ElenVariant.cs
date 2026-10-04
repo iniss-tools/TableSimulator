@@ -12,14 +12,15 @@ namespace TableSimulator.Core.Protocols.Elen;
 /// <param name="MaxMovingParts">najviac casti pohybliveho textu</param>
 /// <param name="DefaultFont">zakladne pismo, ked INISS ziadne nenastavi</param>
 /// <param name="CursorCodes">variant pozna kody polohy kurzora (ELENOLD nie)</param>
-public sealed record ElenVariant(string Key, Encoding Encoding, bool ExtendedFont, int MaxMovingParts, int DefaultFont, bool CursorCodes)
+/// <param name="WideCursor">kod <c>14</c> je poloha kurzora 512-639 (ELEKON); panely ELEN ho beru ako atribut pisma</param>
+public sealed record ElenVariant(string Key, Encoding Encoding, bool ExtendedFont, int MaxMovingParts, int DefaultFont, bool CursorCodes, bool WideCursor = false)
 {
     public static readonly ElenVariant Elen = new("ELEN", Encodings.Kamenicky, false, 24, 0x42, true);
     public static readonly ElenVariant ElenOld = new("ELENOLD", Encodings.Kamenicky, false, 24, 0x42, false);
     public static readonly ElenVariant Elen10 = new("ELEN10", Encodings.Win1250, true, 64, 0x42, true);
     public static readonly ElenVariant Elen16 = new("ELEN16", Encodings.Win1250, true, 64, 0x42, true);
     public static readonly ElenVariant Elen16Kam = new("ELEN16Kam", Encodings.Kamenicky, true, 64, 0x42, true);
-    public static readonly ElenVariant Elekon = new("ELEKON", Encodings.Win1250, false, 24, 0x40, true);
+    public static readonly ElenVariant Elekon = new("ELEKON", Encodings.Win1250, false, 24, 0x40, true, true);
 
     /// <summary>Vsetky varianty v poradi dokumentacie.</summary>
     public static IReadOnlyList<ElenVariant> All { get; } = [Elen, ElenOld, Elen10, Elen16, Elen16Kam, Elekon];

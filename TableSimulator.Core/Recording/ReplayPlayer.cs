@@ -129,7 +129,8 @@ public sealed class ReplayPlayer : IAsyncDisposable
                 _position = _recording.Duration;
             } while (Loop && !token.IsCancellationRequested);
 
-            _state = ReplayState.Finished;
+            // zastavenie medzi dvoma prechodmi opakovania nie je skoncenie
+            _state = token.IsCancellationRequested ? ReplayState.Stopped : ReplayState.Finished;
         }
         catch (OperationCanceledException)
         {

@@ -26,6 +26,9 @@ public sealed record AppSettings
     /// <summary>Adresa tohto pocitaca z pohladu INISSu (pre <c>TablePort</c>); prazdna = 127.0.0.1.</summary>
     public string ConnectHost { get; init; } = "";
 
+    /// <summary>Priecinok programu ELEN Monitor - predlohy tabul, pisma a projekty; prazdny = bez Monitora.</summary>
+    public string MonitorFolder { get; init; } = "";
+
     /// <summary>Priecinok nastaveni - predvolene v profile pouzivatela, parametrom <c>--data</c> inde (prenosna instalacia, testy).</summary>
     [JsonIgnore]
     public static string DataFolder { get; private set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TableSimulator");

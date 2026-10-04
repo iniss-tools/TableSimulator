@@ -26,6 +26,28 @@ export interface Line {
   inissTablePort: string;
   stats: LineStats;
   version: number;
+  mirror: string | null;
+  mirrorError: string | null;
+}
+
+export interface HeaderText {
+  x: number;
+  y: number;
+  height: number;
+  text: string;
+}
+
+export interface HeaderClock {
+  x: number;
+  y: number;
+  height: number;
+}
+
+/** Hlavicka tabule - polohy a vysky v bodoch matice. */
+export interface BoardHeader {
+  height: number;
+  texts: HeaderText[];
+  clock: HeaderClock | null;
 }
 
 export interface Profile {
@@ -40,6 +62,9 @@ export interface Profile {
   scrollSpeed: number;
   movingFont: number;
   autoSize: boolean;
+  monochrome: boolean;
+  swapRedGreen: boolean;
+  header: BoardHeader | null;
 }
 
 export interface Run {
@@ -69,6 +94,9 @@ export interface Display {
   movingRow: number;
   movingCodes: number[] | null;
   movingText: string | null;
+  brightnessGreen: number;
+  flashOnMs: number | null;
+  flashOffMs: number | null;
 }
 
 export interface Fault {
@@ -97,6 +125,7 @@ export interface Board {
   stats: BoardStats;
   display: Display;
   version: number;
+  secondAddress: number | null;
 }
 
 export interface Frame {
@@ -118,6 +147,7 @@ export interface Settings {
   designsFolder: string;
   connectHost: string;
   configPath: string;
+  monitorFolder: string;
 }
 
 export interface State {
@@ -177,6 +207,7 @@ export interface LineConfig {
   mode: LineMode;
   autoLearn: boolean;
   manufacturer: string;
+  mirror: string | null;
 }
 
 export interface BoardConfig {
@@ -187,6 +218,21 @@ export interface BoardConfig {
   profile: Profile;
   design: string | null;
   fault: Fault;
+  secondAddress: number | null;
+}
+
+/** Predloha tabule z programu ELEN Monitor. */
+export interface BoardTemplate {
+  file: string;
+  name: string;
+  profile: Profile;
+}
+
+export interface MonitorInfo {
+  available: boolean;
+  folder: string;
+  panels: BoardTemplate[];
+  projects: string[];
 }
 
 /** Chyba volania API s textom zo servera. */
@@ -236,6 +282,8 @@ export const api = {
     return (await response.json()) as RecordingInfo;
   },
   play: (name: string, speed: number, loop: boolean) => call<ReplayStatus>("POST", "/api/replay", { name, speed, loop }),
+  monitor: () => call<MonitorInfo>("GET", "/api/monitor"),
+  importMonitor: (project: string, line: number) => call<{ count: number }>("POST", "/api/monitor/import", { project, line }),
   stopReplay: () => call<void>("POST", "/api/replay/stop"),
 };
 
@@ -249,6 +297,7 @@ export function boardConfig(board: Board): BoardConfig {
     profile: { ...board.profile },
     design: board.design,
     fault: board.fault,
+    secondAddress: board.secondAddress,
   };
 }
 
@@ -262,5 +311,6 @@ export function lineConfig(line: Line): LineConfig {
     mode: line.mode,
     autoLearn: line.autoLearn,
     manufacturer: line.manufacturer,
+    mirror: line.mirror,
   };
 }

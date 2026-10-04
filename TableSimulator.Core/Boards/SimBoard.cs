@@ -40,6 +40,18 @@ public sealed class ElenDisplay : BoardDisplay
     /// <summary>Rozpracovane nahravanie pohybliveho textu.</summary>
     internal List<byte> MovingUpload { get; } = [];
 
+    /// <summary>Jas zelenej 0-100 (prikaz 4 s dvoma bajtmi); <see cref="BoardDisplay.Brightness" /> je jas cervenej.</summary>
+    public int BrightnessGreen { get; set; } = 100;
+
+    /// <summary>Ako dlho blikajuci text svieti [× 0,1 s], ak ho INISS nastavil prikazom 9; null = podla profilu.</summary>
+    public int? FlashOn { get; set; }
+
+    /// <summary>Ako dlho blikajuci text nesvieti [× 0,1 s], ak ho INISS nastavil prikazom 9; null = podla profilu.</summary>
+    public int? FlashOff { get; set; }
+
+    /// <summary>Timeout panelu [s] z prikazu 8; null = nenastaveny.</summary>
+    public int? Timeout { get; set; }
+
     /// <summary>Nastavi obsah riadku; prazdny obsah riadok zmaze.</summary>
     public void SetRow(int row, RowContent content)
     {
@@ -94,6 +106,9 @@ public sealed class SimBoard
 
     /// <summary>Adresa tabule na linke.</summary>
     public int Address { get; }
+
+    /// <summary>Druha adresa panelu (dvojita adresa) - ovlada hornu polovicu riadkov; null = len jedna adresa.</summary>
+    public int? SecondAddress { get; set; }
 
     /// <summary>Nazov pre obsluhu.</summary>
     public string Name { get; set; }

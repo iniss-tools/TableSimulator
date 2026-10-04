@@ -36,6 +36,9 @@ TablePort=1=TCP://127.0.0.1:47001
 Hodnotu `TablePort` ukazuje stránka **Linky**. INISS musí mať `Environment\OutToTableDriver=1`. Číslo pred `=` je
 číslo linky, podľa ktorého INISS priraďuje tabule z `TPhysic.txt` (`COMUNICATION_PORT`).
 
+Linka môže ísť aj cez **sériový port** (`COM13:9600,n,8,1`) – napríklad druhý koniec virtuálneho páru COM
+portov, ktorého prvý koniec má INISS v `TablePort=COM3`.
+
 Linka môže ísť aj cez **pomenovanú rúru**. Tam sú roly opačné: rúru vytvára INISS (`TablePort=3=\\.\PIPE\Tabule`)
 a simulátor sa k nej pripája – v nastavení linky `\\.\PIPE\Tabule`, prípadne `\\počítač\PIPE\Tabule`, ak INISS
 beží na inom počítači. Kým INISS nebeží, simulátor to skúša každú sekundu znova.
@@ -43,6 +46,31 @@ beží na inom počítači. Kým INISS nebeží, simulátor to skúša každú s
 Tabule netreba zakladať ručne: linka so **samoučením** vytvorí tabuľu pri prvej správe na novú adresu a jej
 rozmer zväčšuje podľa toho, čo INISS posiela. Režim linky **len počúvať** neodpovedá – hodí sa na sledovanie
 linky, na ktorej odpovedajú skutočné tabule.
+
+## ELEN Monitor
+
+V **Nastaveniach** sa dá zadať priečinok programu ELEN Monitor (napr. `D:\INISSroot\Tools\Monitor`). Simulátor
+z neho potom berie:
+
+- **predlohy tabúľ** – každý typ panelu (`Sim\*.cfg` a jeho konfigurácia `Sim\CONFIG\rwp_*.bin`) dá rozmer, písmo,
+  farebnosť, časy blikania, hlavičku a hodiny; v dialógu tabule „Predloha z ELEN Monitora“,
+- **písma** zo `Sim\FONT` (popri vlastnom priečinku písiem),
+- **projekty** (`Projects\*.prj`) – tlačidlo „Import z ELEN Monitora“ na stránke Tabule vytvorí z každého simulátora
+  projektu tabuľu na zvolenej linke, vrátane dvojitých adries.
+
+Vstavaný vzhľad **ELEN Monitor** kreslí tabule ako Monitor (hranaté body, tmavomodrá hlavička, sivé medzery medzi
+riadkami).
+
+Na porovnanie s Monitorom vedľa seba má linka voľbu **zrkadliť na sériový port**: všetko, čo pošle INISS (aj
+prehrávaný záznam), sa skopíruje na zvolený COM port, kde cez virtuálny pár portov (napr. com0com) počúva Monitor
+v režime „Monitor“. Simulátor odpovedá INISSu sám, Monitor len zobrazuje.
+
+## Hlavičky tabúľ
+
+Hlavička je štítok nad maticou – texty (napr. „ODCHODY / DEPARTURES“ a popisy stĺpcov) a hodiny panelu. INISS ju
+neposiela, patrí k profilu tabule; polohy a výšky sú v bodoch matice. Hodiny ukazujú čas, ktorý panelu nastavil
+INISS hromadnou správou; kým ho nenastaví, čas počítača. Farby a písmo hlavičky určuje vzhľad (`header` v
+`design.json`).
 
 ## Záznamy komunikácie
 
@@ -61,7 +89,7 @@ rovnakým skladaním správ.
 
 | Projekt                  | Obsah                                                                                    |
 |--------------------------|------------------------------------------------------------------------------------------|
-| `TableSimulator.Core`    | `net10.0` bez UI a bez Windows: linky (`Transport/`), protokoly (`Protocols/`), stav tabúľ (`Boards/`), záznam a prehratie (`Recording/`), `Simulation/Simulator` |
+| `TableSimulator.Core`    | `net10.0` bez UI a bez Windows: linky (`Transport/`), protokoly (`Protocols/`), stav tabúľ (`Boards/`), záznam a prehratie (`Recording/`), súbory ELEN Monitora (`Monitor/`), `Simulation/Simulator` |
 | `TableSimulator`         | server ASP.NET Core: API, WebSocket `/ws`, statické súbory webu, nastavenia               |
 | `TableSimulator.Tests`   | MSTest – rámce a súčty podľa príkladov z docs, rozklad riadku, simulátor, linka TCP aj rúra, záznam a prehratie |
 | `web/`                   | React + TypeScript (bun, Vite): ovládanie a renderer tabúľ; testy `bun test`              |
@@ -69,8 +97,9 @@ rovnakým skladaním správ.
 Jadro rozhoduje, **čo** tabuľa ukazuje (rozklad správ, riadky číslované odspodu, striedanie, pohyblivý text, jas,
 hodiny). Prehliadač rozhoduje, **ako** to vyzerá. Medzi nimi sú tri vrstvy dát mimo kódu:
 
-1. **Profil tabule** – hardvér: šírka v bodoch, počet a výška riadkov, súbor písiem ELEN (`.bin`), časovanie
-   striedania, blikania a pohyblivého textu. Upravuje sa v dialógu tabule.
+1. **Profil tabule** – hardvér: šírka v bodoch, počet a výška riadkov, súbor písiem ELEN (`.bin`), farebnosť,
+   hlavička, časovanie striedania (predvolene 2 s), blikania (1,0 s svieti / 0,5 s nesvieti) a pohyblivého textu
+   (60 bodov/s) – predvolené hodnoty podľa ELEN Monitora a konfigurácie panelov. Upravuje sa v dialógu tabule.
 2. **Vzhľad** – priečinok s `design.json` (vstavané vo `web/public/designs/`, vlastné v
    `%AppData%\TableSimulator\designs`; rovnaký názov vstavaný prekryje). Zmena súboru sa na tabuliach prejaví hneď.
 3. **Písma ELEN** – súbory `.bin` z priečinka písiem (napr. `Sim\FONT` programu ELEN Monitor). Bez písma sa text
@@ -101,18 +130,20 @@ hodiny). Prehliadač rozhoduje, **ako** to vyzerá. Medzi nimi sú tri vrstvy d�
 | `dot`        | priemer bodu ako podiel `pitch`                                                  |
 | `shape`      | `circle`, `square` alebo `rounded`                                               |
 | `off`        | farba zhasnutej LED; `null` = nekresliť                                          |
-| `colors`     | farba podľa farby písma ELEN: `0` bez farby, `1` červená, `2` zelená, `3` žltá   |
+| `colors`     | farba podľa farby písma ELEN: `0` bez farby, `1` červená, `2` zelená, `3` žltá, `mono` jednofarebný panel |
 | `glow`       | žiara okolo rozsvietenej LED, `0`–`1`                                            |
 | `rowGap`     | medzera medzi riadkami tabule v bodoch                                           |
 | `padding`    | okraj medzi rámom a bodmi v bodoch                                               |
 | `frame`      | rám tabule: šírka a polomer v CSS px, farba                                      |
+| `gapColor`   | výplň medzi riadkami; `null` = pozadie                                          |
+| `header`     | hlavička: `background`, `color`, `font`, `bold`, `clockColor`, `clockBackground`, `clockFont` |
 
 Chýbajúce kľúče doplní predvolený vzhľad.
 
 ### Písma ELEN
 
-Číslo písma vyberie z `.bin` písmo takto: rozšírené písmo `n` (bit `0x8000`, bity 8–11) → písmo `n`, inak rez
-(bity 4–5) → písmo s číslom rezu. Inak sa dá zvoliť v profile (`fontMap`: `face0`…`face3`, `ext1`…). Pri písme
+Číslo písma vyberie z `.bin` písmo takto (overené v ELEN Monitore): rozšírené písmo `n` (bit `0x8000`, bity 8–11)
+→ písmo `n`, inak rez (bity 4–5) → písmo s číslom rezu. Inak sa dá zvoliť v profile (`fontMap`: `face0`…`face3`, `ext1`…). Pri písme
 s vysokými číslicami (bit `0x08`) sa medzera, číslice a dvojbodka berú zo znakov `0x14`–`0x1F`.
 
 ## Zobrazenie na inom zariadení

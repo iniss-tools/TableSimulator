@@ -40,8 +40,25 @@ function board(rows: Board["display"]["rows"], extra: Partial<Board["display"]> 
       scrollSpeed: 10,
       movingFont: 0x52,
       autoSize: false,
+      monochrome: false,
+      swapRedGreen: false,
+      header: null,
     },
-    display: { family: "elen", brightness: 99, clock: null, clockSetAt: null, rows, movingRow: 0, movingCodes: null, movingText: null, ...extra },
+    secondAddress: null,
+    display: {
+      family: "elen",
+      brightness: 99,
+      brightnessGreen: 99,
+      flashOnMs: null,
+      flashOffMs: null,
+      clock: null,
+      clockSetAt: null,
+      rows,
+      movingRow: 0,
+      movingCodes: null,
+      movingText: null,
+      ...extra,
+    },
   };
 }
 
@@ -103,9 +120,14 @@ describe("rasterize", () => {
     expect(at(frame, 0, 1)).toBe(2);
   });
 
-  test("faza blikania", () => {
-    const p = board([]).profile;
-    expect(blinkPhase(p, 100)).toBe(true);
-    expect(blinkPhase(p, 600)).toBe(false);
+  test("faza blikania podla profilu a prikazu 9", () => {
+    const b = board([]);
+    expect(blinkPhase(b.profile, 100)).toBe(true);
+    expect(blinkPhase(b.profile, 600)).toBe(false);
+    // prikaz 9: svieti 1,0 s, nesvieti 0,5 s
+    const d = { flashOnMs: 1000, flashOffMs: 500 };
+    expect(blinkPhase(b.profile, 900, d)).toBe(true);
+    expect(blinkPhase(b.profile, 1200, d)).toBe(false);
+    expect(blinkPhase(b.profile, 1600, d)).toBe(true);
   });
 });

@@ -90,6 +90,9 @@ function LineDialog({ initial, isNew, onClose }: { initial: LineConfig; isNew: b
             ))}
           </select>
         </Field>
+        <Field label={t("field.mirror")} hint={t("field.mirror.hint")} wide>
+          <input value={config.mirror ?? ""} placeholder="COM10:9600,n,8,1" onChange={(e) => setConfig({ ...config, mirror: e.target.value.trim() || null })} />
+        </Field>
       </div>
     </Dialog>
   );
@@ -105,7 +108,7 @@ export function LinesPage() {
     while (used.has(number)) number++;
     setEditing({
       isNew: true,
-      config: { number, tableClass: 4, endpoint: `TCP://0.0.0.0:${47000 + number}`, name: "", mode: "display", autoLearn: true, manufacturer: "ELEN" },
+      config: { number, tableClass: 4, endpoint: `TCP://0.0.0.0:${47000 + number}`, name: "", mode: "display", autoLearn: true, manufacturer: "ELEN", mirror: null },
     });
   };
 
@@ -140,6 +143,12 @@ export function LinesPage() {
                 <td>{t(`line.class.${l.tableClass}` as TextKey)}</td>
                 <td>
                   <code>{l.endpoint}</code>
+                  {l.mirror && (
+                    <div className="muted small">
+                      {t("lines.mirror", { port: l.mirror })}
+                      {l.mirrorError && <span className="tag">{l.mirrorError}</span>}
+                    </div>
+                  )}
                 </td>
                 <td>{t(`line.mode.${l.mode}`)}</td>
                 <td>
@@ -147,7 +156,13 @@ export function LinesPage() {
                   {l.statusDetail && <div className="muted small">{l.statusDetail}</div>}
                 </td>
                 <td className="nowrap">
-                  <code>{l.inissTablePort}</code> <CopyButton text={l.inissTablePort} />
+                  {l.inissTablePort ? (
+                    <>
+                      <code>{l.inissTablePort}</code> <CopyButton text={l.inissTablePort} />
+                    </>
+                  ) : (
+                    <span className="muted small">{t("lines.serialTablePort")}</span>
+                  )}
                 </td>
                 <td className="muted small">{t("lines.traffic", { frames: l.stats.frames, bad: l.stats.badFrames, connections: l.stats.connections })}</td>
                 <td className="nowrap">

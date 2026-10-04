@@ -24,6 +24,9 @@ public sealed record LineConfig(int Number, int TableClass, string Endpoint)
     public LineMode Mode { get; init; }
     public bool AutoLearn { get; init; } = true;
     public string Manufacturer { get; init; } = "ELEN";
+
+    /// <summary>Seriovy port, kam sa kopiruju spravy od INISSu (<c>COM10:9600,n,8,1</c>); null = nikam.</summary>
+    public string? Mirror { get; init; }
 }
 
 /// <summary>
@@ -38,4 +41,7 @@ public sealed record BoardConfig(int Line, int Address, string Manufacturer)
     public BoardProfile Profile { get; init; } = new();
     public string? Design { get; init; }
     public BoardFault Fault { get; init; } = BoardFault.None;
+
+    /// <summary>Druha adresa panelu (dvojita adresa) - ovlada hornu polovicu riadkov; null = len jedna adresa.</summary>
+    public int? SecondAddress { get; init; }
 }

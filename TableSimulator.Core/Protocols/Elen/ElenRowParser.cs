@@ -3,15 +3,17 @@ using TableSimulator.Core.Boards;
 namespace TableSimulator.Core.Protocols.Elen;
 
 /// <summary>
-/// Rozklad obsahu riadku ELEN na useky a striedania: kody polohy kurzora <c>10</c>–<c>14</c>, pismo <c>ESC n</c>,
-/// rozsirene pismo <c>19 h</c>, striedanie <c>ESC { *</c> … <c>|</c> … <c>}</c> a text.
+/// Rozklad obsahu riadku ELEN na useky a striedania: kody polohy kurzora <c>10</c>–<c>13</c> (ELEKON aj <c>14</c>),
+/// pismo <c>ESC n</c>, rozsirene pismo <c>19 h</c>, striedanie <c>ESC { *</c> … <c>|</c> … <c>}</c> a text.
+/// Panel ELEN pouziva bajt za <c>{</c> ako pocitadlo striedania - moze byt lubovolny, INISS posiela <c>*</c>.
 /// </summary>
 public static class ElenRowParser
 {
     private const byte Esc = 0x1B;
     private const byte ExtendedFont = 0x19;
     private const byte CursorFirst = 0x10;
-    private const byte CursorLast = 0x14;
+    private const byte CursorLast = 0x13;
+    private const byte WideCursorOrAttribute = 0x14;
 
     /// <summary>
     /// Rozlozi obsah riadku.
@@ -26,15 +28,25 @@ public static class ElenRowParser
         for (var i = 0; i < content.Length; i++)
         {
             var b = content[i];
-            if (variant.CursorCodes && b is >= CursorFirst and <= CursorLast && i + 1 < content.Length)
+            if (variant.CursorCodes && (b is >= CursorFirst and <= CursorLast || (b == WideCursorOrAttribute && variant.WideCursor))
+                                     && i + 1 < content.Length)
             {
                 state.Flush();
                 state.X = (b - CursorFirst) * 128 + (content[++i] & 0x7F);
             }
+            else if (b == WideCursorOrAttribute && variant.CursorCodes && i + 1 < content.Length)
+            {
+                // panel ELEN: 14 n meni farbu (bity 0-1) a pri bite 3 aj rez (bity 4-5)
+                state.Flush();
+                var n = content[++i];
+                state.Font = (state.Font & ~0x03) | (n & 0x03);
+                if ((n & 0x08) != 0)
+                    state.Font = (state.Font & ~0x30) | (n & 0x30);
+            }
             else if (b == Esc && i + 1 < content.Length)
             {
                 var n = content[++i];
-                if (n == (byte)'{' && i + 1 < content.Length && content[i + 1] == (byte)'*')
+                if (n == (byte)'{' && i + 1 < content.Length)
                 {
                     i++;
                     state.BeginAlternation();

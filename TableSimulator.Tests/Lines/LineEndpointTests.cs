@@ -23,11 +23,35 @@ public class LineEndpointTests
     }
 
     [TestMethod]
-    [DataRow("COM3")]
+    [DataRow("LPT1")]
+    [DataRow("COM3:abc")]
     [DataRow("TCP://host")]
     [DataRow("TCP://host:0")]
     [DataRow("")]
     public void Rozklad_ZlyTvar(string text) => Assert.IsNull(LineEndpoint.TryParse(text));
+
+    [TestMethod]
+    [DataRow("COM13", "COM13:9600,n,8,1")]
+    [DataRow("com5:19200", "COM5:19200,n,8,1")]
+    [DataRow("COM7:2400,E,7,2", "COM7:2400,e,7,2")]
+    public void Rozklad_SeriovyPort(string text, string expected)
+    {
+        var endpoint = LineEndpoint.TryParse(text);
+
+        Assert.AreEqual(LineTransport.Serial, endpoint!.Transport);
+        Assert.AreEqual(expected, endpoint.ToString());
+        Assert.AreEqual("", endpoint.ToInissTablePort(3));
+    }
+
+    [TestMethod]
+    public void Zrkadlo_LenSeriovyPort()
+    {
+        var sim = new Simulator();
+
+        Assert.ThrowsExactly<ArgumentException>(() => sim.SetLine(new LineConfig(1, 4, "TCP://0.0.0.0:47001") { Mirror = "TCP://x:1" }));
+        sim.SetLine(new LineConfig(1, 4, "TCP://0.0.0.0:47001") { Mirror = "COM10" });
+        Assert.AreEqual("COM10:9600,n,8,1", sim.ToConfig().Lines[0].Mirror);
+    }
 
     [TestMethod]
     public void TablePortPreIniss()

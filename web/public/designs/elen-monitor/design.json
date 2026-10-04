@@ -1,0 +1,24 @@
+{
+  "name": "ELEN Monitor",
+  "renderer": "led-matrix",
+  "pitch": 4,
+  "dot": 1,
+  "shape": "square",
+  "off": "#000000",
+  "colors": { "0": "#ffff00", "1": "#ff0000", "2": "#00ff00", "3": "#ffff00", "mono": "#ffff00" },
+  "glow": 0,
+  "background": "#000000",
+  "rowGap": 8,
+  "gapColor": "#414141",
+  "padding": 0,
+  "frame": { "width": 0, "color": "#000000", "radius": 0 },
+  "header": {
+    "background": "#000080",
+    "color": "#ffffff",
+    "font": "Arial, Helvetica, sans-serif",
+    "bold": true,
+    "clockColor": "#ffff00",
+    "clockBackground": "#000000",
+    "clockFont": "Tahoma, Verdana, sans-serif"
+  }
+}

@@ -67,6 +67,9 @@ public sealed class Simulator
     /// <summary>Udalosti pre rozhranie; vyvolavaju sa mimo zamku.</summary>
     public event Action<SimulatorEvent>? Changed;
 
+    /// <summary>Prijate bajty linky (od INISSu aj zo zaznamu) - pre zrkadlo; vyvolava sa mimo zamku v poradi prijatia.</summary>
+    public event Action<int, byte[]>? Traffic;
+
     /// <summary>Triedy liniek (TableClass), ktore simulator pozna.</summary>
     public static IReadOnlyList<int> SupportedClasses => [.. Protocols.Keys];
 
@@ -133,11 +136,11 @@ public sealed class Simulator
             {
                 Lines = _lines.Values.Select(l => new LineConfig(l.Number, l.TableClass, l.Endpoint.ToString())
                 {
-                    Name = l.Name, Mode = l.Mode, AutoLearn = l.AutoLearn, Manufacturer = l.Manufacturer
+                    Name = l.Name, Mode = l.Mode, AutoLearn = l.AutoLearn, Manufacturer = l.Manufacturer, Mirror = l.Mirror?.ToString()
                 }).ToList(),
                 Boards = Boards.Select(b => new BoardConfig(b.Line, b.Address, b.ManufacturerKey)
                 {
-                    Name = b.Name, Profile = b.Profile, Design = b.Design, Fault = b.Fault
+                    Name = b.Name, Profile = b.Profile, Design = b.Design, Fault = b.Fault, SecondAddress = b.SecondAddress
                 }).ToList()
             };
         }
@@ -276,7 +279,22 @@ public sealed class Simulator
 
         context.Events.Add(new LineChanged(lineNumber));
         Raise(context.Events);
+        Traffic?.Invoke(lineNumber, data.ToArray());
         return context.Replies;
+    }
+
+    /// <summary>Zapise chybu zrkadla linky (null = v poriadku).</summary>
+    public void SetMirrorError(int number, string? error)
+    {
+        lock (_lock)
+        {
+            if (!_lines.TryGetValue(number, out var line) || line.MirrorError == error)
+                return;
+            line.MirrorError = error;
+            line.Version++;
+        }
+
+        Raise([new LineChanged(number)]);
     }
 
     /// <summary>Zacne zapisovat prevadzku liniek do zaznamu; predchadzajuci zaznam vrati (treba ho ukoncit).</summary>
@@ -353,6 +371,13 @@ public sealed class Simulator
                        ?? throw new ArgumentException(string.Create(CultureInfo.InvariantCulture, $"Unsupported TableClass {config.TableClass}."), nameof(config));
         var endpoint = LineEndpoint.TryParse(config.Endpoint)
                        ?? throw new ArgumentException($"Invalid endpoint '{config.Endpoint}'.", nameof(config));
+        LineEndpoint? mirror = null;
+        if (!string.IsNullOrWhiteSpace(config.Mirror))
+        {
+            mirror = LineEndpoint.TryParse(config.Mirror);
+            if (mirror is not { Transport: LineTransport.Serial })
+                throw new ArgumentException($"Invalid mirror '{config.Mirror}' - expected COMn.", nameof(config));
+        }
 
         var old = _lines.GetValueOrDefault(config.Number);
         var line = new SimLine(config.Number, config.TableClass, protocol)
@@ -362,7 +387,8 @@ public sealed class Simulator
             Endpoint = endpoint,
             Mode = config.Mode,
             AutoLearn = config.AutoLearn,
-            Manufacturer = config.Manufacturer
+            Manufacturer = config.Manufacturer,
+            Mirror = mirror
         };
 
         if (old != null)
@@ -384,6 +410,7 @@ public sealed class Simulator
         var display = _boards.TryGetValue(id, out var old) ? old.Display : line.Protocol.CreateDisplay();
         var board = new SimBoard(config.Line, config.Address, config.Name, config.Manufacturer, config.Profile, display)
         {
+            SecondAddress = config.SecondAddress is > 0 and < 128 && config.SecondAddress != config.Address ? config.SecondAddress : null,
             Design = config.Design,
             Fault = config.Fault,
             AutoCreated = old?.AutoCreated ?? false,
@@ -440,6 +467,8 @@ public sealed class Simulator
             var id = SimBoard.MakeId(line.Number, address);
             if (sim._boards.TryGetValue(id, out var board))
                 return board;
+            if (sim._boards.Values.FirstOrDefault(b => b.Line == line.Number && b.SecondAddress == address) is { } second)
+                return second;
             if (!line.AutoLearn)
                 return null;
 

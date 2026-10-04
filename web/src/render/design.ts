@@ -20,6 +20,20 @@ export interface LedDesign {
   /** Okraj medzi ramom a bodmi v bodoch. */
   padding: number;
   frame: { width: number; color: string; radius: number };
+  /** Vypln medzi riadkami; null = pozadie. */
+  gapColor: string | null;
+  /** Hlavicka tabule (stitok s textami a hodiny). */
+  header: HeaderStyle;
+}
+
+export interface HeaderStyle {
+  background: string;
+  color: string;
+  font: string;
+  bold: boolean;
+  clockColor: string;
+  clockBackground: string;
+  clockFont: string;
 }
 
 export const DEFAULT_DESIGN_ID = "elen-led";
@@ -31,12 +45,22 @@ export const DEFAULT_DESIGN: LedDesign = {
   dot: 0.78,
   shape: "circle",
   off: "#2b1a14",
-  colors: { "0": "#ffb000", "1": "#ff3b22", "2": "#3dff4a", "3": "#ffc21a" },
+  colors: { "0": "#ffb000", "1": "#ff3b22", "2": "#3dff4a", "3": "#ffc21a", mono: "#ffb000" },
   glow: 0.6,
   background: "#0c0c0c",
   rowGap: 1,
   padding: 3,
   frame: { width: 10, color: "#24272b", radius: 8 },
+  gapColor: null,
+  header: {
+    background: "#0b1f4b",
+    color: "#ffffff",
+    font: "Arial, Helvetica, sans-serif",
+    bold: true,
+    clockColor: "#ffd000",
+    clockBackground: "#000000",
+    clockFont: "Tahoma, Verdana, sans-serif",
+  },
 };
 
 const cache = new Map<string, Promise<LedDesign>>();
@@ -53,6 +77,7 @@ export function loadDesign(id: string, version: number): Promise<LedDesign> {
         ...data,
         colors: { ...DEFAULT_DESIGN.colors, ...(data.colors ?? {}) },
         frame: { ...DEFAULT_DESIGN.frame, ...(data.frame ?? {}) },
+        header: { ...DEFAULT_DESIGN.header, ...(data.header ?? {}) },
       }))
       .catch(() => DEFAULT_DESIGN);
     cache.set(key, promise);

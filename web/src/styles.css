@@ -472,6 +472,33 @@ code.hex {
   margin-top: 12px;
 }
 
+.header-editor {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+table.compact th,
+table.compact td {
+  padding: 3px 4px;
+  border-bottom: none;
+  background: transparent;
+  position: static;
+}
+
+table.compact td.grow,
+table.compact td.grow input {
+  width: 100%;
+}
+
+.inline-inputs {
+  display: flex;
+  gap: 6px;
+}
+
 .recorder {
   background: var(--panel);
   border: 1px solid var(--border);

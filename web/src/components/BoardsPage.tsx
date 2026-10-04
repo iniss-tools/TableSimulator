@@ -1,10 +1,11 @@
 // Prehlad tabul: zive zobrazenie, stav komunikacie, poruchy.
-import { useState } from "react";
-import { api, boardConfig, type Board, type BoardConfig, type FaultKind } from "../api";
+import { useEffect, useState } from "react";
+import { api, ApiError, boardConfig, type Board, type BoardConfig, type FaultKind, type MonitorInfo } from "../api";
 import { locale, t } from "../i18n";
 import { useLive } from "../store";
 import { BoardDialog } from "./BoardDialog";
 import { BoardView } from "./BoardView";
+import { Dialog, Field } from "./Dialog";
 
 const FAULTS: FaultKind[] = ["none", "noReply", "nak", "delay", "garbage"];
 
@@ -16,18 +17,22 @@ function newBoard(line: number, manufacturer: string): BoardConfig {
     name: "",
     design: null,
     fault: { kind: "none", delayMs: 0 },
+    secondAddress: null,
     profile: {
       width: 192,
       rows: 2,
       rowHeight: 10,
       fontFile: null,
       fontMap: null,
-      alternationMs: 3000,
-      blinkOnMs: 500,
+      alternationMs: 2000,
+      blinkOnMs: 1000,
       blinkOffMs: 500,
-      scrollSpeed: 40,
+      scrollSpeed: 60,
       movingFont: 0x52,
       autoSize: false,
+      monochrome: false,
+      swapRedGreen: false,
+      header: null,
     },
   };
 }
@@ -50,7 +55,10 @@ function BoardCard({ board, onEdit }: { board: Board; onEdit: () => void }) {
         <div>
           <h3>{name}</h3>
           <div className="muted">
-            {t("board.lineAddress", { line: board.line, address: board.address })} · {board.manufacturer}
+            {board.secondAddress
+              ? t("board.lineAddress2", { line: board.line, address: board.address, second: board.secondAddress })
+              : t("board.lineAddress", { line: board.line, address: board.address })}{" "}
+            · {board.manufacturer}
             {board.autoCreated && <> · {t("board.auto")}</>}
           </div>
         </div>
@@ -104,10 +112,61 @@ function BoardCard({ board, onEdit }: { board: Board; onEdit: () => void }) {
   );
 }
 
+/** Import projektu ELEN Monitora: simulatory projektu sa stanu tabulami na zvolenej linke. */
+function MonitorImportDialog({ monitor, onClose }: { monitor: MonitorInfo; onClose: () => void }) {
+  const live = useLive();
+  const [project, setProject] = useState(monitor.projects[0] ?? "");
+  const [line, setLine] = useState(live.lines[0]?.number ?? 1);
+  const [error, setError] = useState<string | null>(null);
+
+  const save = async () => {
+    try {
+      await api.importMonitor(project, line);
+      onClose();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+    }
+  };
+
+  return (
+    <Dialog title={t("monitor.import.title")} onClose={onClose} onSubmit={save} error={error}>
+      <p className="hint">{t("monitor.import.hint")}</p>
+      <div className="form-grid">
+        <Field label={t("monitor.import.project")} wide>
+          <select value={project} onChange={(e) => setProject(e.target.value)}>
+            {monitor.projects.map((p) => (
+              <option key={p}>{p}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label={t("field.line")}>
+          <select value={line} onChange={(e) => setLine(Number(e.target.value))}>
+            {live.lines.map((l) => (
+              <option key={l.number} value={l.number}>
+                {l.number}
+                {l.name ? ` – ${l.name}` : ""}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+    </Dialog>
+  );
+}
+
 export function BoardsPage() {
   const live = useLive();
   const [filter, setFilter] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ config: BoardConfig; isNew: boolean } | null>(null);
+  const [monitor, setMonitor] = useState<MonitorInfo | null>(null);
+  const [importing, setImporting] = useState(false);
+
+  useEffect(() => {
+    api
+      .monitor()
+      .then(setMonitor)
+      .catch(() => setMonitor(null));
+  }, [live.settings]);
 
   const boards = live.boards.filter((b) => filter === null || b.line === filter);
   const firstLine = live.lines[0];
@@ -128,6 +187,11 @@ export function BoardsPage() {
         <a className="button secondary" href="#/wall">
           {t("nav.wall")}
         </a>
+        {monitor?.available && monitor.projects.length > 0 && (
+          <button className="secondary" disabled={live.lines.length === 0} onClick={() => setImporting(true)}>
+            {t("monitor.import")}
+          </button>
+        )}
         <button disabled={!firstLine} onClick={() => firstLine && setEditing({ config: newBoard(firstLine.number, firstLine.manufacturer), isNew: true })}>
           {t("boards.add")}
         </button>
@@ -154,6 +218,7 @@ export function BoardsPage() {
       )}
 
       {editing && <BoardDialog initial={editing.config} isNew={editing.isNew} onClose={() => setEditing(null)} />}
+      {importing && monitor && <MonitorImportDialog monitor={monitor} onClose={() => setImporting(false)} />}
     </section>
   );
 }

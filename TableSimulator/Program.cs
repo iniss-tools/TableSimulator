@@ -3,6 +3,7 @@ using System.Globalization;
 using Microsoft.Extensions.FileProviders;
 using TableSimulator;
 using TableSimulator.Api;
+using TableSimulator.Core.Monitor;
 using TableSimulator.Core.Simulation;
 using TableSimulator.Core.Transport;
 
@@ -30,7 +31,8 @@ store.Load();
 await using var transport = new TransportManager(simulator);
 await transport.SyncAsync();
 using var hub = new LiveHub(simulator, () => settings.ConnectHost);
-var fonts = new FontCatalog(() => settings.FontsFolder);
+// pisma: vlastny priecinok, potom pisma programu ELEN Monitor
+var fonts = new FontCatalog(() => [settings.FontsFolder, Monitor().FontFolder, Monitor().SimFolder]);
 var designs = new DesignCatalog(Path.Combine(webRoot, "designs"), () => settings.EffectiveDesignsFolder);
 using var designWatcher = WatchDesigns(settings.EffectiveDesignsFolder, hub);
 await using var recordings = new RecordingService(simulator, transport, hub);
@@ -134,6 +136,38 @@ api.MapPost("/replay/stop", async () =>
     return Results.NoContent();
 });
 
+api.MapGet("/monitor", () =>
+{
+    var monitor = Monitor();
+    return new MonitorDto(monitor.Exists, monitor.Root, monitor.Exists ? monitor.Panels().ToArray() : [], monitor.Projects().ToArray(), monitor.Look());
+});
+api.MapPost("/monitor/import", (MonitorImportRequest request) =>
+{
+    var monitor = Monitor();
+    var entries = monitor.Project(request.Project);
+    if (entries.Count == 0)
+        return Results.NotFound();
+    var manufacturer = simulator.Read(s => s.FindLine(request.Line)?.Manufacturer);
+    if (manufacturer == null)
+        return Results.BadRequest(new { error = "line" });
+
+    var count = 0;
+    foreach (var entry in entries)
+    {
+        if (monitor.Panel(entry.ConfigFile) is not { } template)
+            continue;
+        simulator.SetBoard(new BoardConfig(request.Line, entry.Addresses[0], manufacturer)
+        {
+            Name = string.IsNullOrWhiteSpace(entry.Location) ? template.Name : entry.Location,
+            Profile = template.Profile,
+            SecondAddress = entry.Addresses.Count > 1 ? entry.Addresses[1] : null
+        });
+        count++;
+    }
+
+    return Results.Ok(new { count });
+});
+
 api.MapGet("/fonts", () => fonts.List());
 api.MapGet("/fonts/{file}", (string file) => fonts.Get(file) is { } f ? Results.Ok(f) : Results.NotFound());
 api.MapGet("/designs", () => designs.List());
@@ -145,7 +179,8 @@ api.MapPut("/settings", (SettingsDto dto) =>
     settings = settings with
     {
         HttpPort = dto.HttpPort, AllowNetwork = dto.AllowNetwork, FontsFolder = dto.FontsFolder.Trim(), DesignsFolder = dto.DesignsFolder.Trim(),
-        ConnectHost = dto.ConnectHost.Trim()
+        ConnectHost = dto.ConnectHost.Trim(),
+        MonitorFolder = dto.MonitorFolder.Trim()
     };
     settings.Save();
     hub.Broadcast(new { type = "structure" });
@@ -164,7 +199,12 @@ await app.RunAsync();
 store.Save();
 return;
 
-SettingsDto Settings() => new(settings.HttpPort, settings.AllowNetwork, settings.FontsFolder, settings.DesignsFolder, settings.ConnectHost, configPath);
+SettingsDto Settings() => new(settings.HttpPort, settings.AllowNetwork, settings.FontsFolder, settings.DesignsFolder, settings.ConnectHost, configPath)
+{
+    MonitorFolder = settings.MonitorFolder
+};
+
+MonitorFolder Monitor() => new(settings.MonitorFolder);
 
 string? Arg(string name)
 {
@@ -194,3 +234,9 @@ internal sealed record StartRecordingRequest(string? Note);
 
 /// <summary>Prehratie zaznamu.</summary>
 internal sealed record PlayRequest(string Name, double Speed, bool Loop);
+
+/// <summary>Import projektu ELEN Monitora na linku.</summary>
+internal sealed record MonitorImportRequest(string Project, int Line);
+
+/// <summary>Instalacia ELEN Monitora pre webove rozhranie.</summary>
+internal sealed record MonitorDto(bool Available, string Folder, BoardTemplate[] Panels, string[] Projects, MonitorLook Look);

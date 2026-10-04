@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using TableSimulator.Core.Protocols;
 
 namespace TableSimulator.Core.Lines;
@@ -16,18 +17,22 @@ public enum LineTransport
     [JsonStringEnumMemberName("udp")] Udp,
 
     /// <summary>Pomenovana rura - server je INISS, simulator sa k nej pripaja ako klient.</summary>
-    [JsonStringEnumMemberName("pipe")] Pipe
+    [JsonStringEnumMemberName("pipe")] Pipe,
+
+    /// <summary>Seriovy port - napr. druhy koniec virtualneho paru COM portov, ktoreho prvy koniec ma INISS.</summary>
+    [JsonStringEnumMemberName("serial")] Serial
 }
 
 /// <summary>
 /// Koncovy bod linky v tvare hodnoty <c>TablePort</c> v INISSe: <c>TCP://host:port</c> a <c>UDP://host:port</c> - simulator
 /// pocuva; <c>\\server\PIPE\meno</c> - rura, ktoru vytvori INISS a simulator sa k nej pripoji.
 /// </summary>
-/// <param name="Transport">TCP, UDP alebo rura</param>
-/// <param name="Host">TCP a UDP: adresa rozhrania (<c>0.0.0.0</c> = vsetky); rura: pocitac s INISSom (<c>.</c> = tento)</param>
-/// <param name="Port">cislo portu; pri rure 0</param>
-/// <param name="Pipe">meno rury (bez <c>\\.\PIPE\</c>); inak prazdne</param>
-public sealed record LineEndpoint(LineTransport Transport, string Host, int Port, string Pipe = "")
+/// <param name="Transport">TCP, UDP, rura alebo seriovy port</param>
+/// <param name="Host">TCP a UDP: adresa rozhrania (<c>0.0.0.0</c> = vsetky); rura: pocitac s INISSom (<c>.</c> = tento);
+/// seriovy port: meno portu (<c>COM13</c>)</param>
+/// <param name="Port">cislo portu; pri seriovom porte rychlost; pri rure 0</param>
+/// <param name="Pipe">meno rury (bez <c>\\.\PIPE\</c>); pri seriovom porte parita, data a stop bity (<c>n,8,1</c>); inak prazdne</param>
+public sealed partial record LineEndpoint(LineTransport Transport, string Host, int Port, string Pipe = "")
 {
     /// <summary>Prvy port pri automatickom pridelovani: linka N pocuva na porte <c>BasePort + N</c>.</summary>
     public const int BasePort = 47000;
@@ -42,6 +47,15 @@ public sealed record LineEndpoint(LineTransport Transport, string Host, int Port
             return null;
 
         var s = text.Trim();
+        if (SerialPattern().Match(s) is { Success: true } serial)
+        {
+            var baud = serial.Groups[2].Success ? int.Parse(serial.Groups[2].Value, CultureInfo.InvariantCulture) : 9600;
+            var framing = serial.Groups[3].Success
+                ? string.Create(CultureInfo.InvariantCulture, $"{serial.Groups[3].Value.ToLowerInvariant()},{serial.Groups[4].Value},{serial.Groups[5].Value}")
+                : "n,8,1";
+            return baud is > 0 and <= 921600 ? new LineEndpoint(LineTransport.Serial, serial.Groups[1].Value.ToUpperInvariant(), baud, framing) : null;
+        }
+
         if (s.StartsWith(@"\\", StringComparison.Ordinal))
         {
             // \\server\PIPE\meno - INISS rovnako hlada "\PIPE\" bez ohladu na velkost pismen
@@ -75,6 +89,9 @@ public sealed record LineEndpoint(LineTransport Transport, string Host, int Port
     /// <param name="connectHost">adresa tohto pocitaca z pohladu INISSu; null = adresa rozhrania, pri 0.0.0.0 127.0.0.1</param>
     public string ToInissTablePort(int line, string? connectHost = null)
     {
+        // pri seriovom porte ma INISS druhy koniec paru - jeho meno simulator nepozna
+        if (Transport == LineTransport.Serial)
+            return "";
         if (Transport == LineTransport.Pipe)
             return string.Create(CultureInfo.InvariantCulture, $@"{line}=\\.\PIPE\{Pipe}");
 
@@ -85,9 +102,16 @@ public sealed record LineEndpoint(LineTransport Transport, string Host, int Port
     private string Scheme => Transport == LineTransport.Tcp ? "TCP" : "UDP";
 
     /// <inheritdoc />
-    public override string ToString() => Transport == LineTransport.Pipe
-        ? $@"\\{Host}\PIPE\{Pipe}"
-        : string.Create(CultureInfo.InvariantCulture, $"{Scheme}://{Host}:{Port}");
+    public override string ToString() => Transport switch
+    {
+        LineTransport.Pipe => $@"\\{Host}\PIPE\{Pipe}",
+        LineTransport.Serial => string.Create(CultureInfo.InvariantCulture, $"{Host}:{Port},{Pipe}"),
+        _ => string.Create(CultureInfo.InvariantCulture, $"{Scheme}://{Host}:{Port}")
+    };
+
+    /// <summary><c>COMn</c>, volitelne <c>:rychlost</c> a <c>,parita,data,stop</c> (ako <c>TablePortParam</c> INISSu).</summary>
+    [GeneratedRegex(@"^(COM\d{1,3})(?::(\d{1,6})(?:,([NOEMS]),([5-8]),(1|1\.5|2))?)?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex SerialPattern();
 }
 
 /// <summary>
@@ -158,6 +182,12 @@ public sealed class SimLine
 
     /// <summary>Vyrobca tabul vytvorenych samoucenim.</summary>
     public string Manufacturer { get; set; } = "ELEN";
+
+    /// <summary>Kam sa kopiruju spravy od INISSu (seriovy port, napr. pre ELEN Monitor); null = nikam.</summary>
+    public LineEndpoint? Mirror { get; set; }
+
+    /// <summary>Chyba zrkadla (port neexistuje, je obsadeny…); null = v poriadku.</summary>
+    public string? MirrorError { get; internal set; }
 
     /// <summary>Stav spojenia.</summary>
     public LineStatus Status { get; internal set; }

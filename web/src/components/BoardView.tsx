@@ -4,7 +4,7 @@ import type { Board } from "../api";
 import { useLive } from "../store";
 import { DEFAULT_DESIGN, DEFAULT_DESIGN_ID, loadDesign, type LedDesign } from "../render/design";
 import { CanvasGlyphSource, ElenGlyphSource, loadFontSet, type ElenFontSet, type GlyphSource } from "../render/fonts";
-import { blinkPhase, isAnimated, rasterize } from "../render/rasterize";
+import { blinkPhase, boardClock, hasClock, isAnimated, rasterize } from "../render/rasterize";
 import { LedRenderer, ledSize } from "../render/led";
 
 interface Props {
@@ -53,7 +53,7 @@ export function BoardView({ board, fit = "width" }: Props) {
   const renderer = useRef<LedRenderer | null>(null);
 
   const rowHeight = board.profile.rowHeight;
-  const natural = ledSize({ width: board.profile.width, height: board.profile.rows * rowHeight }, design, rowHeight);
+  const natural = ledSize({ width: board.profile.width, height: board.profile.rows * rowHeight }, design, rowHeight, board.profile.header);
   const cssScale = space.width > 0 ? (fit === "contain" && space.height > 0 ? Math.min(space.width / natural.width, space.height / natural.height) : space.width / natural.width) : 0;
 
   const source = fontSet ? new ElenGlyphSource(fontSet, board.profile.fontMap) : null;
@@ -79,14 +79,32 @@ export function BoardView({ board, fit = "width" }: Props) {
       }
       const t = Date.now();
       const frame = rasterize(b, glyphs, t);
-      renderer.current!.render(frame, d, b.profile.rowHeight, b.display.brightness, blinkPhase(b.profile, t), scale);
+      const clock = boardClock(b, t);
+      renderer.current!.render(
+        frame,
+        d,
+        {
+          rowHeight: b.profile.rowHeight,
+          brightness: b.display.brightness,
+          brightnessGreen: b.display.brightnessGreen ?? b.display.brightness,
+          blinkOn: blinkPhase(b.profile, t, b.display),
+          monochrome: b.profile.monochrome,
+          swapRedGreen: b.profile.swapRedGreen,
+          header: b.profile.header,
+          clock: `${String(clock.getHours()).padStart(2, "0")}:${String(clock.getMinutes()).padStart(2, "0")}`,
+        },
+        scale,
+      );
       last = now;
     };
 
     draw(performance.now());
-    if (isAnimated(board)) {
+    // animacia: striedanie, blikanie a posun ~30× za sekundu; samotne hodiny staci raz za sekundu
+    const animated = isAnimated(board);
+    if (animated || hasClock(board)) {
+      const interval = animated ? 33 : 1000;
       const tick = (now: number) => {
-        if (now - last >= 33) draw(now);
+        if (now - last >= interval) draw(now);
         raf = requestAnimationFrame(tick);
       };
       raf = requestAnimationFrame(tick);

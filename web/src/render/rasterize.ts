@@ -24,10 +24,24 @@ export function isAnimated(board: Board): boolean {
   );
 }
 
-/** Faza blikania v case timeMs: true = blikajuci text svieti. */
-export function blinkPhase(profile: Profile, timeMs: number): boolean {
-  const period = Math.max(1, profile.blinkOnMs + profile.blinkOffMs);
-  return timeMs % period < profile.blinkOnMs;
+/** Faza blikania v case timeMs: true = blikajuci text svieti. Casy z prikazu 9 maju prednost pred profilom. */
+export function blinkPhase(profile: Profile, timeMs: number, display?: { flashOnMs: number | null; flashOffMs: number | null }): boolean {
+  const on = display?.flashOnMs ?? profile.blinkOnMs;
+  const off = display?.flashOffMs ?? profile.blinkOffMs;
+  const period = Math.max(1, on + off);
+  return timeMs % period < on;
+}
+
+/** Ci tabula ma hodiny v hlavicke - treba prekreslovat aspon raz za sekundu. */
+export function hasClock(board: Board): boolean {
+  return !!board.profile.header?.clock;
+}
+
+/** Cas hodin panelu: od nastavenia INISSom bezi dalej; kym ho INISS nenastavi, cas pocitaca. */
+export function boardClock(board: Board, nowMs: number): Date {
+  const d = board.display;
+  if (d.clock && d.clockSetAt) return new Date(Date.parse(d.clock) + (nowMs - Date.parse(d.clockSetAt)));
+  return new Date(nowMs);
 }
 
 function drawRun(frame: DotFrame, run: Run, x: number, y0: number, rowHeight: number, source: GlyphSource): number {
