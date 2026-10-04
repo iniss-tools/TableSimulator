@@ -1,0 +1,15 @@
+{
+  "name": "LCD – tmavé znaky na zelenožltom",
+  "renderer": "led-matrix",
+  "pitch": 4,
+  "dot": 0.9,
+  "shape": "square",
+  "off": "#a3b653",
+  "colors": { "0": "#1f2a12", "1": "#1f2a12", "2": "#1f2a12", "3": "#1f2a12", "mono": "#1f2a12" },
+  "glow": 0,
+  "background": "#9eb24d",
+  "rowGap": 2,
+  "padding": 3,
+  "frame": { "width": 10, "color": "#3b4034", "radius": 6 },
+  "gapColor": null
+}

@@ -2,6 +2,7 @@ using System.Globalization;
 using TableSimulator.Core.Boards;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Protocols;
+using TableSimulator.Core.Protocols.Elektrocas;
 using TableSimulator.Core.Protocols.Elen;
 using TableSimulator.Core.Recording;
 
@@ -71,7 +72,11 @@ public sealed class Simulator
     public event Action<int, byte[]>? Traffic;
 
     /// <summary>Triedy liniek (TableClass), ktore simulator pozna.</summary>
-    public static IReadOnlyList<int> SupportedClasses => [.. Protocols.Keys];
+    public static IReadOnlyList<int> SupportedClasses => [.. Protocols.Keys.Order()];
+
+    /// <summary>Vyrobcovia tabul (<c>MANUFACTURER_KEY</c>), ktore simulator na linke danej triedy zobrazi; prvy je predvoleny.</summary>
+    public static IReadOnlyList<string> ManufacturersFor(int tableClass) =>
+        Protocols.TryGetValue(tableClass, out var p) ? p.Manufacturers : [];
 
     /// <summary>Aktualny cas simulatora.</summary>
     public DateTimeOffset Now => _time.GetUtcNow();
@@ -387,7 +392,9 @@ public sealed class Simulator
             Endpoint = endpoint,
             Mode = config.Mode,
             AutoLearn = config.AutoLearn,
-            Manufacturer = config.Manufacturer,
+            // vyrobca samoucenia musi patrit k triede linky
+            Manufacturer = ManufacturersFor(config.TableClass).FirstOrDefault(m => string.Equals(m, config.Manufacturer, StringComparison.OrdinalIgnoreCase))
+                           ?? ManufacturersFor(config.TableClass)[0],
             Mirror = mirror
         };
 
@@ -421,13 +428,16 @@ public sealed class Simulator
         return board;
     }
 
-    // protokoly podla triedy linky (TableClass)
-    private static readonly Dictionary<int, Func<ILineProtocol>> Protocols = new()
+    // protokoly podla triedy linky (TableClass) a vyrobcovia tabul, ktori na takej linke byvaju
+    private static readonly Dictionary<int, (Func<ILineProtocol> Create, string[] Manufacturers)> Protocols = new()
     {
-        [4] = () => new ElenProtocol()
+        [1] = (() => new ElektrocasProtocol(), ["LCD"]),
+        [4] = (() => new ElenProtocol(), ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16Kam", "ELEKON"]),
+        [5] = (() => new ElektrocasProtocol(), ["LCD1", "ERP"]),
+        [130] = (() => new ItpProtocol(), ["LCD1", "ERP", "LCD"])
     };
 
-    private static ILineProtocol? CreateProtocol(int tableClass) => Protocols.GetValueOrDefault(tableClass)?.Invoke();
+    private static ILineProtocol? CreateProtocol(int tableClass) => Protocols.TryGetValue(tableClass, out var p) ? p.Create() : null;
 
     private void Raise(IEnumerable<SimulatorEvent> events)
     {
@@ -491,42 +501,25 @@ public sealed class Simulator
         public void LogReceived(byte[] bytes, int? address, FrameStatus status, FrameInfo info) =>
             Events.Add(new FrameLogged(sim.AddLog(line.Number, FrameDirection.Received, address, bytes, status, info)));
 
-        public void Reply(SimBoard board, byte[] bytes, FrameInfo info)
+        public void Reply(SimBoard board, byte[] bytes, FrameInfo info, bool positive = true)
         {
             if (line.Mode == LineMode.Monitor)
                 return;
 
-            var status = FrameStatus.Ok;
-            var delay = TimeSpan.Zero;
-            switch (board.Fault.Kind)
-            {
-                case FaultKind.NoReply:
-                    board.Stats.Unanswered++;
-                    Events.Add(new FrameLogged(sim.AddLog(line.Number, FrameDirection.Sent, board.Address, [], FrameStatus.Fault, new FrameInfo("fault.noReply"))));
-                    return;
-                case FaultKind.Nak:
-                    bytes = [ElenFrame.Nak];
-                    info = new FrameInfo("nak");
-                    status = FrameStatus.Fault;
-                    break;
-                case FaultKind.Garbage:
-                    bytes = [0x00];
-                    info = new FrameInfo("garbage");
-                    status = FrameStatus.Fault;
-                    break;
-                case FaultKind.Delay:
-                    delay = TimeSpan.FromMilliseconds(Math.Max(0, board.Fault.DelayMs));
-                    status = FrameStatus.Fault;
-                    break;
-            }
+            var reply = BoardFaults.Apply(board, line.Protocol, bytes, info, positive);
+            if (reply.Bytes == null)
+                Events.Add(new FrameLogged(sim.AddLog(line.Number, FrameDirection.Sent, board.Address, [], reply.Status, reply.Info)));
+            else
+                ReplyRaw(board.Address, reply.Bytes, reply.Delay, reply.Status, reply.Info);
+        }
 
-            if (bytes is [ElenFrame.Ack])
-                board.Stats.Acks++;
-            else if (bytes is [ElenFrame.Nak])
-                board.Stats.Naks++;
+        public void ReplyRaw(int? address, byte[] bytes, TimeSpan delay, FrameStatus status, FrameInfo info)
+        {
+            if (line.Mode == LineMode.Monitor)
+                return;
 
             Replies.Add(new LineReply(bytes, delay));
-            Events.Add(new FrameLogged(sim.AddLog(line.Number, FrameDirection.Sent, board.Address, bytes, status, info)));
+            Events.Add(new FrameLogged(sim.AddLog(line.Number, FrameDirection.Sent, address, bytes, status, info)));
         }
     }
 }

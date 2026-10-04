@@ -2,22 +2,15 @@
 // blikanie). Ako body vyzeraju, rozhoduje az LED renderer podla vzhladu.
 import type { Board, Profile, Run } from "../api";
 import type { GlyphSource } from "./fonts";
+import { isCharsAnimated, rasterizeChars } from "./chars";
+import { COLOR_NONE, type DotFrame } from "./frame";
 
-/** Farba bodu: 0 nesvieti, 1 cervena, 2 zelena, 3 zlta, 4 pismo bez farby. */
-export const COLOR_NONE = 4;
-
-export interface DotFrame {
-  width: number;
-  height: number;
-  /** Farba kazdeho bodu po riadkoch. */
-  color: Uint8Array;
-  /** 1 = bod blika. */
-  blink: Uint8Array;
-}
+export { COLOR_NONE, type DotFrame } from "./frame";
 
 /** Ci sa obsah tabule meni v case (striedanie, blikanie, pohyblivy text) - potom treba prekreslovat. */
 export function isAnimated(board: Board): boolean {
   const d = board.display;
+  if (d.family === "chars") return isCharsAnimated(board);
   if (d.movingRow > 0 && d.movingCodes && d.movingCodes.length > 0) return true;
   return d.rows.some((r) =>
     r.elements.some((e) => e.type === "alt" || (e.run !== null && (e.run.font & 0x04) !== 0) || (e.parts ?? []).some((p) => p.some((run) => (run.font & 0x04) !== 0))),
@@ -77,6 +70,7 @@ function textWidth(run: Run, source: GlyphSource): number {
  * Body tabule v case timeMs.
  */
 export function rasterize(board: Board, source: GlyphSource, timeMs: number): DotFrame {
+  if (board.display.family === "chars") return rasterizeChars(board, source, timeMs);
   const p = board.profile;
   const width = Math.max(1, p.width);
   const height = Math.max(1, p.rows * p.rowHeight);

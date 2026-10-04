@@ -58,6 +58,8 @@ public sealed record BoardProfile
     {
         "ELEN16" or "ELEN16KAM" => new BoardProfile { Width = 384, Rows = 4, RowHeight = 16 },
         "ELEKON" => new BoardProfile { Width = 384, Rows = 4, RowHeight = 16 },
+        // znakove tabule Elektrocas: 8 bodov na znak, 40 znakov
+        "LCD1" or "ERP" or "LCD" => new BoardProfile { Width = 320, Rows = 4, RowHeight = 16 },
         _ => new BoardProfile()
     };
 }
@@ -113,7 +115,10 @@ public enum FaultKind
     [JsonStringEnumMemberName("delay")] Delay,
 
     /// <summary>Tabula odpovie nezmyslom.</summary>
-    [JsonStringEnumMemberName("garbage")] Garbage
+    [JsonStringEnumMemberName("garbage")] Garbage,
+
+    /// <summary>Tabula hlasi stav s poruchou (tabule so stavovou odpovedou, napr. LCD1).</summary>
+    [JsonStringEnumMemberName("status")] Status
 }
 
 /// <summary>
@@ -121,7 +126,8 @@ public enum FaultKind
 /// </summary>
 /// <param name="Kind">druh</param>
 /// <param name="DelayMs">oneskorenie odpovede pri <see cref="FaultKind.Delay" /></param>
-public sealed record BoardFault(FaultKind Kind, int DelayMs = 0)
+/// <param name="Status">stavove bity pri <see cref="FaultKind.Status" /> (napr. 0x08 porucha izolacie, 0x40 napajanie)</param>
+public sealed record BoardFault(FaultKind Kind, int DelayMs = 0, int Status = 0)
 {
     /// <summary>Bez poruchy.</summary>
     public static BoardFault None { get; } = new(FaultKind.None);

@@ -8,7 +8,8 @@ export interface LiveState {
   lines: Line[];
   boards: Board[];
   supportedClasses: number[];
-  manufacturers: string[];
+  /** Vyrobcovia tabul podla triedy linky. */
+  manufacturers: Record<string, string[]>;
   settings: State["settings"] | null;
   /** Zvysi sa pri zmene vzhladu v priecinku vzhladov - renderer si ho nacita znova. */
   designVersion: number;
@@ -26,7 +27,7 @@ let state: LiveState = {
   lines: [],
   boards: [],
   supportedClasses: [],
-  manufacturers: [],
+  manufacturers: {},
   settings: null,
   designVersion: 0,
   recorder: null,
@@ -142,4 +143,9 @@ export function useLive(): LiveState {
 export function onDesignChanged(listener: (id: string) => void): () => void {
   designListeners.add(listener);
   return () => designListeners.delete(listener);
+}
+
+/** Vyrobcovia tabul na linke danej triedy. */
+export function manufacturersFor(live: LiveState, tableClass: number | undefined): string[] {
+  return (tableClass !== undefined && live.manufacturers[String(tableClass)]) || [];
 }

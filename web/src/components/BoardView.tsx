@@ -2,8 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { Board } from "../api";
 import { useLive } from "../store";
-import { DEFAULT_DESIGN, DEFAULT_DESIGN_ID, loadDesign, type LedDesign } from "../render/design";
-import { CanvasGlyphSource, ElenGlyphSource, loadFontSet, type ElenFontSet, type GlyphSource } from "../render/fonts";
+import { DEFAULT_DESIGN, defaultDesignId, loadDesign, type LedDesign } from "../render/design";
+import { CanvasGlyphSource, CellGlyphSource, ElenGlyphSource, loadFontSet, type ElenFontSet, type GlyphSource } from "../render/fonts";
+import { CHAR_WIDTH } from "../render/chars";
 import { blinkPhase, boardClock, hasClock, isAnimated, rasterize } from "../render/rasterize";
 import { LedRenderer, ledSize } from "../render/led";
 
@@ -21,7 +22,7 @@ export function BoardView({ board, fit = "width" }: Props) {
   const [fontSet, setFontSet] = useState<ElenFontSet | null>(null);
   const [space, setSpace] = useState({ width: 0, height: 0 });
 
-  const designId = board.design || DEFAULT_DESIGN_ID;
+  const designId = board.design || defaultDesignId(board.display.family);
   useEffect(() => {
     let live = true;
     loadDesign(designId, designVersion).then((d) => live && setDesign(d));
@@ -62,8 +63,8 @@ export function BoardView({ board, fit = "width" }: Props) {
   useEffect(() => {
     if (!canvas.current || cssScale <= 0) return;
     renderer.current ??= new LedRenderer(canvas.current);
-    let fallback: CanvasGlyphSource | null = null;
-    let fallbackHeight = 0;
+    let fallback: GlyphSource | null = null;
+    let fallbackKey = "";
     let raf = 0;
     let last = 0;
 
@@ -71,9 +72,11 @@ export function BoardView({ board, fit = "width" }: Props) {
       const { board: b, design: d, source: s, scale } = inputs.current;
       let glyphs = s;
       if (!glyphs) {
-        if (!fallback || fallbackHeight !== b.profile.rowHeight) {
-          fallback = new CanvasGlyphSource(b.profile.rowHeight);
-          fallbackHeight = b.profile.rowHeight;
+        // znakova tabula ma pevnu bunku na znak, ELEN pismo s vlastnymi sirkami znakov
+        const key = `${b.display.family}|${b.profile.rowHeight}`;
+        if (!fallback || fallbackKey !== key) {
+          fallback = b.display.family === "chars" ? new CellGlyphSource(CHAR_WIDTH, b.profile.rowHeight) : new CanvasGlyphSource(b.profile.rowHeight);
+          fallbackKey = key;
         }
         glyphs = fallback;
       }

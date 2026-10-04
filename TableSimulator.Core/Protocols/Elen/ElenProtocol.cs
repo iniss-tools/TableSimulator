@@ -33,6 +33,11 @@ internal sealed class ElenProtocol : ILineProtocol
 
     public BoardDisplay CreateDisplay() => new ElenDisplay();
 
+    /// <summary>Panel ELEN pri poruche odmietne (NAK) alebo odpovie nezmyslom; stav nehlasi - odmietne.</summary>
+    public (byte[] Bytes, FrameInfo Info) FaultReply(BoardFault fault, byte[] normal) => fault.Kind == FaultKind.Garbage
+        ? ([0x00], new FrameInfo("garbage"))
+        : ([ElenFrame.Nak], new FrameInfo("nak"));
+
     public void Receive(ReadOnlySpan<byte> data, ILineContext context)
     {
         var discarded = _framer.DiscardedBytes;
@@ -84,7 +89,7 @@ internal sealed class ElenProtocol : ILineProtocol
         if (!frame.ChecksumOk)
         {
             context.LogReceived(frame.Raw, frame.Address, FrameStatus.BadChecksum, Describe(frame, target.ManufacturerKey));
-            context.Reply(target, [ElenFrame.Nak], new FrameInfo("nak"));
+            context.Reply(target, [ElenFrame.Nak], new FrameInfo("nak"), false);
             return;
         }
 

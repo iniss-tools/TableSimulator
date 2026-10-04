@@ -38,6 +38,11 @@ export interface HeaderStyle {
 
 export const DEFAULT_DESIGN_ID = "elen-led";
 
+/** Predvoleny vzhlad podla rodiny tabule (znakove tabule Elektrocas vyzeraju ako LCD). */
+export function defaultDesignId(family: string): string {
+  return family === "chars" ? "lcd-dark" : DEFAULT_DESIGN_ID;
+}
+
 export const DEFAULT_DESIGN: LedDesign = {
   name: "LED",
   renderer: "led-matrix",

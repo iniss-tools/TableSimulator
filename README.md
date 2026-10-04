@@ -4,9 +4,16 @@ Simulátor informačných tabúľ pre INISS 3.39. INISS posiela obsah tabúľ po
 a simulátor sa tvári ako tabule na druhom konci linky – odpovedá bajtovým protokolom výrobcu a obsah tabúľ
 zobrazuje vo webovom prehliadači: na tomto počítači, na inom počítači v sieti, na tablete alebo televízore.
 
-Protokoly sú popísané v `iniss-tools-docs/docs/iniss/protokoly/`. Zatiaľ je hotová rodina **ELEN**
-(`TableClass=4`: ELEN, ELENOLD, ELEN10, ELEN16, ELEN16Kam, ELEKON). Adon/BUSE sa simulovať nedá – INISS ich
-ovláda cez knižnicu `infotabd.dll`, ktorej bajty na linke nepoznáme.
+Protokoly sú popísané v `iniss-tools-docs/docs/iniss/protokoly/`. Hotové sú:
+
+| `TableClass` | Tabule                                                        |
+|--------------|---------------------------------------------------------------|
+| `4`          | ELEN, ELENOLD, ELEN10, ELEN16, ELEN16Kam, ELEKON              |
+| `5`          | Elektročas LCD1 a slepecké hlásiče ERP                        |
+| `1`          | Elektročas LCD (staršie)                                      |
+| `130`        | LCD1, ERP a LCD za sieťovým prevodníkom KTP (pakety ITP)      |
+
+Adon/BUSE sa simulovať nedá – INISS ich ovláda cez knižnicu `infotabd.dll`, ktorej bajty na linke nepoznáme.
 
 ## Spustenie
 
@@ -65,6 +72,21 @@ Na porovnanie s Monitorom vedľa seba má linka voľbu **zrkadliť na sériový 
 prehrávaný záznam), sa skopíruje na zvolený COM port, kde cez virtuálny pár portov (napr. com0com) počúva Monitor
 v režime „Monitor“. Simulátor odpovedá INISSu sám, Monitor len zobrazuje.
 
+## Tabule Elektročas
+
+Tabule `LCD1`, `ERP` a `LCD` sú znakové: INISS posiela riadky zhora od 0 a stĺpce v znakoch, každý znak s vlastným
+číslom písma. Simulátor kreslí znak do bunky 8 bodov × výška riadku (predvolene 40 znakov × 4 riadky × 16 bodov),
+písmo `0x40` inverzne a `0x80` blikajúce. Striedanie `#` prichádza vo vrstvách – v časti `k` tabuľa ukazuje
+vrstvu `k` tam, kde má znaky, inde vrstvu 0. Každú správu tabuľa potvrdí stavom `70`, na dotaz `08` odpovie typom
+`9` (smie zápis `15`), na dotaz `A1` časom a hromadný čas `A8` nastaví hodiny všetkých tabúľ na linke.
+
+Porucha **hlási poruchu v stave** pošle v odpovedi zvolené stavové bity (`01` chybná správa, `08` izolácia 110 V –
+INISS ju len zafarbí, `10` súradnice, `40` napájanie, `80` hardvér).
+
+Na linke `130` simulátor hrá aj prevodník KTP: paket ITP rozbalí, odpoveď tabule zabalí s tým istým číslom a
+hlavičkou s kódom chyby `0`. INISS tu čaká na odpoveď pri každom pakete, aj pri hromadnom – keď tabuľa neodpovie
+(hromadná správa, porucha *neodpovedá*, adresa bez tabule), prevodník hlási chybu `1` *zariadenie neodpovedalo*.
+
 ## Hlavičky tabúľ
 
 Hlavička je štítok nad maticou – texty (napr. „ODCHODY / DEPARTURES“ a popisy stĺpcov) a hodiny panelu. INISS ju
@@ -91,19 +113,22 @@ rovnakým skladaním správ.
 |--------------------------|------------------------------------------------------------------------------------------|
 | `TableSimulator.Core`    | `net10.0` bez UI a bez Windows: linky (`Transport/`), protokoly (`Protocols/`), stav tabúľ (`Boards/`), záznam a prehratie (`Recording/`), súbory ELEN Monitora (`Monitor/`), `Simulation/Simulator` |
 | `TableSimulator`         | server ASP.NET Core: API, WebSocket `/ws`, statické súbory webu, nastavenia               |
-| `TableSimulator.Tests`   | MSTest – rámce a súčty podľa príkladov z docs, rozklad riadku, simulátor, linka TCP aj rúra, záznam a prehratie |
+| `TableSimulator.Tests`   | MSTest – rámce a súčty podľa príkladov z docs (ELEN, LCD1, ITP), rozklad riadku, simulátor, linka TCP aj rúra, záznam a prehratie |
 | `web/`                   | React + TypeScript (bun, Vite): ovládanie a renderer tabúľ; testy `bun test`              |
 
-Jadro rozhoduje, **čo** tabuľa ukazuje (rozklad správ, riadky číslované odspodu, striedanie, pohyblivý text, jas,
-hodiny). Prehliadač rozhoduje, **ako** to vyzerá. Medzi nimi sú tri vrstvy dát mimo kódu:
+Jadro rozhoduje, **čo** tabuľa ukazuje (rozklad správ, riadky ELEN odspodu a Elektročas zhora, striedanie,
+pohyblivý text, jas, hodiny). Prehliadač rozhoduje, **ako** to vyzerá. Medzi nimi sú tri vrstvy dát mimo kódu:
 
 1. **Profil tabule** – hardvér: šírka v bodoch, počet a výška riadkov, súbor písiem ELEN (`.bin`), farebnosť,
    hlavička, časovanie striedania (predvolene 2 s), blikania (1,0 s svieti / 0,5 s nesvieti) a pohyblivého textu
    (60 bodov/s) – predvolené hodnoty podľa ELEN Monitora a konfigurácie panelov. Upravuje sa v dialógu tabule.
 2. **Vzhľad** – priečinok s `design.json` (vstavané vo `web/public/designs/`, vlastné v
    `%AppData%\TableSimulator\designs`; rovnaký názov vstavaný prekryje). Zmena súboru sa na tabuliach prejaví hneď.
+   Predvolený je `elen-led` pre tabule ELEN a `lcd-dark` pre znakové tabule Elektročas (ďalej `lcd-green`,
+   `lcd-blue`); oba druhy tabúľ kreslí ten istý renderer bodov, takže sa dá použiť ktorýkoľvek vzhľad.
 3. **Písma ELEN** – súbory `.bin` z priečinka písiem (napr. `Sim\FONT` programu ELEN Monitor). Bez písma sa text
-   kreslí približným písmom prehliadača; polohy textu sedia, tvary znakov nie.
+   kreslí približným písmom prehliadača; polohy textu sedia, tvary znakov nie. Znakové tabule Elektročas kreslia
+   písmo prehliadača s pevnou šírkou do bunky znaku.
 
 ### `design.json`
 
@@ -130,7 +155,7 @@ hodiny). Prehliadač rozhoduje, **ako** to vyzerá. Medzi nimi sú tri vrstvy d�
 | `dot`        | priemer bodu ako podiel `pitch`                                                  |
 | `shape`      | `circle`, `square` alebo `rounded`                                               |
 | `off`        | farba zhasnutej LED; `null` = nekresliť                                          |
-| `colors`     | farba podľa farby písma ELEN: `0` bez farby, `1` červená, `2` zelená, `3` žltá, `mono` jednofarebný panel |
+| `colors`     | farba podľa farby písma ELEN: `0` bez farby (aj všetky znaky tabúľ Elektročas), `1` červená, `2` zelená, `3` žltá, `mono` jednofarebný panel |
 | `glow`       | žiara okolo rozsvietenej LED, `0`–`1`                                            |
 | `rowGap`     | medzera medzi riadkami tabule v bodoch                                           |
 | `padding`    | okraj medzi rámom a bodmi v bodoch                                               |

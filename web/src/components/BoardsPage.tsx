@@ -1,13 +1,16 @@
 // Prehlad tabul: zive zobrazenie, stav komunikacie, poruchy.
 import { useEffect, useState } from "react";
-import { api, ApiError, boardConfig, type Board, type BoardConfig, type FaultKind, type MonitorInfo } from "../api";
+import { api, ApiError, boardConfig, defaultProfile, type Board, type BoardConfig, type FaultKind, type MonitorInfo } from "../api";
 import { locale, t } from "../i18n";
 import { useLive } from "../store";
 import { BoardDialog } from "./BoardDialog";
 import { BoardView } from "./BoardView";
 import { Dialog, Field } from "./Dialog";
 
-const FAULTS: FaultKind[] = ["none", "noReply", "nak", "delay", "garbage"];
+const FAULTS: FaultKind[] = ["none", "noReply", "nak", "delay", "garbage", "status"];
+
+/** Poruchy, ktore tabula danej rodiny vie predstierat - stav hlasia len tabule so stavovou odpovedou. */
+const faultsFor = (board: Board) => FAULTS.filter((f) => f !== "status" || board.display.family === "chars");
 
 function newBoard(line: number, manufacturer: string): BoardConfig {
   return {
@@ -16,24 +19,9 @@ function newBoard(line: number, manufacturer: string): BoardConfig {
     manufacturer,
     name: "",
     design: null,
-    fault: { kind: "none", delayMs: 0 },
+    fault: { kind: "none", delayMs: 0, status: 0 },
     secondAddress: null,
-    profile: {
-      width: 192,
-      rows: 2,
-      rowHeight: 10,
-      fontFile: null,
-      fontMap: null,
-      alternationMs: 2000,
-      blinkOnMs: 1000,
-      blinkOffMs: 500,
-      scrollSpeed: 60,
-      movingFont: 0x52,
-      autoSize: false,
-      monochrome: false,
-      swapRedGreen: false,
-      header: null,
-    },
+    profile: defaultProfile(manufacturer),
   };
 }
 
@@ -44,7 +32,13 @@ function BoardCard({ board, onEdit }: { board: Board; onEdit: () => void }) {
   // hodiny tabule idu od nastavenia dalej
   const clock = d.clock && d.clockSetAt ? new Date(Date.parse(d.clock) + (Date.now() - Date.parse(d.clockSetAt))).toLocaleString(locale()) : null;
 
-  const setFault = (kind: FaultKind) => api.setFault(board.id, { kind, delayMs: kind === "delay" ? Math.max(board.fault.delayMs, 500) : 0 });
+  const setFault = (kind: FaultKind) =>
+    api.setFault(board.id, {
+      kind,
+      delayMs: kind === "delay" ? Math.max(board.fault.delayMs, 500) : 0,
+      // predvolene "chybna sprava"
+      status: kind === "status" ? board.fault.status || 0x01 : 0,
+    });
   const remove = () => {
     if (confirm(t("board.delete.confirm", { name }))) api.deleteBoard(board.id);
   };
@@ -88,7 +82,7 @@ function BoardCard({ board, onEdit }: { board: Board; onEdit: () => void }) {
         <label className="fault">
           {t("fault.label")}{" "}
           <select value={board.fault.kind} onChange={(e) => setFault(e.target.value as FaultKind)}>
-            {FAULTS.map((f) => (
+            {faultsFor(board).map((f) => (
               <option key={f} value={f}>
                 {t(`fault.${f}`)}
               </option>
@@ -102,7 +96,18 @@ function BoardCard({ board, onEdit }: { board: Board; onEdit: () => void }) {
               step={100}
               value={board.fault.delayMs}
               title={t("fault.delayMs")}
-              onChange={(e) => api.setFault(board.id, { kind: "delay", delayMs: Number.parseInt(e.target.value, 10) || 0 })}
+              onChange={(e) => api.setFault(board.id, { kind: "delay", delayMs: Number.parseInt(e.target.value, 10) || 0, status: 0 })}
+            />
+          )}
+          {board.fault.kind === "status" && (
+            <input
+              className="narrow"
+              defaultValue={board.fault.status.toString(16).toUpperCase().padStart(2, "0")}
+              title={t("fault.statusBits")}
+              onBlur={(e) => {
+                const status = Number.parseInt(e.target.value, 16);
+                if (!Number.isNaN(status)) api.setFault(board.id, { kind: "status", delayMs: 0, status: status & 0xff });
+              }}
             />
           )}
         </label>

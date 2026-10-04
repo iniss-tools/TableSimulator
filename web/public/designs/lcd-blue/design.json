@@ -1,0 +1,15 @@
+{
+  "name": "LCD – biele znaky na modrom",
+  "renderer": "led-matrix",
+  "pitch": 4,
+  "dot": 0.9,
+  "shape": "square",
+  "off": "#1b45c8",
+  "colors": { "0": "#eef3ff", "1": "#eef3ff", "2": "#eef3ff", "3": "#eef3ff", "mono": "#eef3ff" },
+  "glow": 0.1,
+  "background": "#163cb8",
+  "rowGap": 2,
+  "padding": 3,
+  "frame": { "width": 10, "color": "#23272e", "radius": 6 },
+  "gapColor": null
+}

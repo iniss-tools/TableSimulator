@@ -168,3 +168,63 @@ export class CanvasGlyphSource implements GlyphSource {
     return glyph;
   }
 }
+
+/**
+ * Znaky znakovej tabule (LCD) z pisma prehliadaca: kazdy znak presne do bunky sirka × vyska bodov s bodom medzery
+ * vpravo. Kresli sa vo stvornasobnom rozliseni a bod svieti, ked ho znak pokryva aspon zo 45 % - uzke znaky ako "m"
+ * sa tak nezlievaju.
+ */
+export class CellGlyphSource implements GlyphSource {
+  private static readonly SUPERSAMPLE = 4;
+  private readonly cache = new Map<string, Glyph>();
+  private readonly ctx: CanvasRenderingContext2D | null;
+
+  constructor(
+    private readonly width: number,
+    private readonly height: number,
+  ) {
+    const canvas = document.createElement("canvas");
+    canvas.width = width * CellGlyphSource.SUPERSAMPLE;
+    canvas.height = height * CellGlyphSource.SUPERSAMPLE;
+    this.ctx = canvas.getContext("2d", { willReadFrequently: true });
+  }
+
+  glyph(_code: number, ch: string): Glyph | null {
+    const cached = this.cache.get(ch);
+    if (cached) return cached;
+    const ctx = this.ctx;
+    if (!ctx) return null;
+
+    const ss = CellGlyphSource.SUPERSAMPLE;
+    const { width, height } = this;
+    const w = width * ss;
+    const h = height * ss;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.font = `${Math.round(h * 0.85)}px Consolas, "DejaVu Sans Mono", "Courier New", monospace`;
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#fff";
+    // sirka znaku na bunku bez posledneho stlpca (medzera medzi znakmi)
+    const advance = Math.max(1, ctx.measureText("M").width);
+    ctx.setTransform((Math.max(1, width - 1) * ss) / advance, 0, 0, 1, 0, 0);
+    ctx.fillText(ch, 0, Math.round(h * 0.78));
+    const pixels = ctx.getImageData(0, 0, w, h).data;
+
+    const bits = new Uint8Array(width * height);
+    const threshold = 0.45 * ss * ss * 255;
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        let sum = 0;
+        for (let sy = 0; sy < ss; sy++) {
+          const row = ((y * ss + sy) * w + x * ss) * 4 + 3;
+          for (let sx = 0; sx < ss; sx++) sum += pixels[row + sx * 4];
+        }
+        bits[y * width + x] = sum >= threshold ? 1 : 0;
+      }
+    }
+
+    const glyph: Glyph = { width, height, isSet: (x, y) => x >= 0 && y >= 0 && x < width && y < height && bits[y * width + x] === 1 };
+    this.cache.set(ch, glyph);
+    return glyph;
+  }
+}

@@ -2,7 +2,7 @@
 
 export type LineMode = "display" | "monitor";
 export type LineStatus = "stopped" | "listening" | "connected" | "error";
-export type FaultKind = "none" | "noReply" | "nak" | "delay" | "garbage";
+export type FaultKind = "none" | "noReply" | "nak" | "delay" | "garbage" | "status";
 
 export interface LineStats {
   bytesIn: number;
@@ -85,8 +85,23 @@ export interface Row {
   elements: RowElement[];
 }
 
+/** Vrstva riadku znakovej tabule; kod -1 = znak vo vrstve nie je (plati vrstva 0). */
+export interface CharLayer {
+  layer: number;
+  codes: number[];
+  fonts: number[];
+  text: string;
+}
+
+/** Riadok znakovej tabule (Elektrocas) zhora od 0. */
+export interface CharRow {
+  row: number;
+  layers: CharLayer[];
+}
+
 export interface Display {
-  family: string;
+  /** elen = maticova tabula ELEN (rows), chars = znakova tabula Elektrocas (charRows). */
+  family: "elen" | "chars" | "unknown";
   brightness: number;
   clock: string | null;
   clockSetAt: string | null;
@@ -97,11 +112,14 @@ export interface Display {
   brightnessGreen: number;
   flashOnMs: number | null;
   flashOffMs: number | null;
+  charRows: CharRow[] | null;
 }
 
 export interface Fault {
   kind: FaultKind;
   delayMs: number;
+  /** Stavove bity, ktore tabula hlasi pri poruche "status". */
+  status: number;
 }
 
 export interface BoardStats {
@@ -154,7 +172,8 @@ export interface State {
   lines: Line[];
   boards: Board[];
   supportedClasses: number[];
-  manufacturers: string[];
+  /** Vyrobcovia tabul podla triedy linky (kluc = TableClass); prvy je predvoleny. */
+  manufacturers: Record<string, string[]>;
   settings: Settings;
 }
 
@@ -298,6 +317,34 @@ export function boardConfig(board: Board): BoardConfig {
     design: board.design,
     fault: board.fault,
     secondAddress: board.secondAddress,
+  };
+}
+
+/** Vyrobcovia znakovych tabul Elektrocas (rodina chars). */
+export const CHAR_MANUFACTURERS = ["LCD", "LCD1", "ERP"];
+
+/** Profil novej tabule podla vyrobcu (zodpoveda BoardProfile.DefaultFor). */
+export function defaultProfile(manufacturer: string): Profile {
+  const upper = manufacturer.toUpperCase();
+  const size =
+    upper === "ELEN16" || upper === "ELEN16KAM" || upper === "ELEKON"
+      ? { width: 384, rows: 4, rowHeight: 16 }
+      : CHAR_MANUFACTURERS.includes(upper)
+        ? { width: 320, rows: 4, rowHeight: 16 }
+        : { width: 192, rows: 2, rowHeight: 10 };
+  return {
+    ...size,
+    fontFile: null,
+    fontMap: null,
+    alternationMs: 2000,
+    blinkOnMs: 1000,
+    blinkOffMs: 500,
+    scrollSpeed: 60,
+    movingFont: 0x52,
+    autoSize: false,
+    monochrome: false,
+    swapRedGreen: false,
+    header: null,
   };
 }
 

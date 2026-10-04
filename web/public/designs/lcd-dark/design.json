@@ -1,0 +1,15 @@
+{
+  "name": "LCD – svetlé znaky na tmavom",
+  "renderer": "led-matrix",
+  "pitch": 4,
+  "dot": 0.92,
+  "shape": "square",
+  "off": "#15181d",
+  "colors": { "0": "#f3ecd2", "1": "#f3ecd2", "2": "#f3ecd2", "3": "#f3ecd2", "mono": "#f3ecd2" },
+  "glow": 0.15,
+  "background": "#0b0d10",
+  "rowGap": 2,
+  "padding": 3,
+  "frame": { "width": 10, "color": "#2a2d31", "radius": 6 },
+  "gapColor": "#07080a"
+}

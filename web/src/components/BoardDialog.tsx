@@ -1,8 +1,8 @@
 // Uprava tabule: identita, profil (hardver vratane hlavicky) a vzhlad.
 import { useEffect, useState } from "react";
-import { api, ApiError, type BoardConfig, type BoardHeader, type BoardTemplate, type DesignInfo, type HeaderText, type Profile } from "../api";
+import { api, ApiError, defaultProfile, type BoardConfig, type BoardHeader, type BoardTemplate, type DesignInfo, type HeaderText, type Profile } from "../api";
 import { t } from "../i18n";
-import { useLive } from "../store";
+import { manufacturersFor, useLive } from "../store";
 import { Dialog, Field } from "./Dialog";
 
 interface Props {
@@ -121,6 +121,9 @@ export function BoardDialog({ initial, isNew, onClose }: Props) {
   }, []);
 
   const profile = (patch: Partial<Profile>) => setConfig({ ...config, profile: { ...config.profile, ...patch } });
+  const lineManufacturers = (line: number) => manufacturersFor(live, live.lines.find((l) => l.number === line)?.tableClass);
+  const manufacturers = lineManufacturers(config.line);
+  const shownManufacturers = config.manufacturer && !manufacturers.includes(config.manufacturer) ? [config.manufacturer, ...manufacturers] : manufacturers;
 
   const applyTemplate = (file: string) => {
     const template = templates.find((x) => x.file === file);
@@ -145,7 +148,16 @@ export function BoardDialog({ initial, isNew, onClose }: Props) {
     <Dialog title={title} onClose={onClose} onSubmit={save} error={error} busy={busy}>
       <div className="form-grid">
         <Field label={t("field.line")}>
-          <select value={config.line} disabled={!isNew} onChange={(e) => setConfig({ ...config, line: num(e.target.value) })}>
+          <select
+            value={config.line}
+            disabled={!isNew}
+            onChange={(e) => {
+              const line = num(e.target.value);
+              const available = lineManufacturers(line);
+              const manufacturer = available.includes(config.manufacturer) ? config.manufacturer : (available[0] ?? config.manufacturer);
+              setConfig({ ...config, line, manufacturer, profile: manufacturer === config.manufacturer ? config.profile : defaultProfile(manufacturer) });
+            }}
+          >
             {live.lines.map((l) => (
               <option key={l.number} value={l.number}>
                 {l.number}
@@ -171,7 +183,7 @@ export function BoardDialog({ initial, isNew, onClose }: Props) {
         </Field>
         <Field label={t("field.manufacturer")}>
           <select value={config.manufacturer} onChange={(e) => setConfig({ ...config, manufacturer: e.target.value })}>
-            {live.manufacturers.map((m) => (
+            {shownManufacturers.map((m) => (
               <option key={m}>{m}</option>
             ))}
           </select>

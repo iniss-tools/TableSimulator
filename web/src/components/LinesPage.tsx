@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { api, ApiError, lineConfig, type LineConfig, type LineMode } from "../api";
 import { t, type TextKey } from "../i18n";
-import { useLive } from "../store";
+import { manufacturersFor, useLive } from "../store";
 import { Dialog, Field } from "./Dialog";
 
 function CopyButton({ text }: { text: string }) {
@@ -59,7 +59,14 @@ function LineDialog({ initial, isNew, onClose }: { initial: LineConfig; isNew: b
           />
         </Field>
         <Field label={t("field.tableClass")}>
-          <select value={config.tableClass} onChange={(e) => setConfig({ ...config, tableClass: Number(e.target.value) })}>
+          <select
+            value={config.tableClass}
+            onChange={(e) => {
+              const tableClass = Number(e.target.value);
+              const manufacturers = manufacturersFor(live, tableClass);
+              setConfig({ ...config, tableClass, manufacturer: manufacturers.includes(config.manufacturer) ? config.manufacturer : (manufacturers[0] ?? "") });
+            }}
+          >
             {live.supportedClasses.map((c) => (
               <option key={c} value={c}>
                 {t(`line.class.${c}` as TextKey)}
@@ -85,7 +92,7 @@ function LineDialog({ initial, isNew, onClose }: { initial: LineConfig; isNew: b
         </label>
         <Field label={t("field.lineManufacturer")}>
           <select value={config.manufacturer} onChange={(e) => setConfig({ ...config, manufacturer: e.target.value })}>
-            {live.manufacturers.map((m) => (
+            {manufacturersFor(live, config.tableClass).map((m) => (
               <option key={m}>{m}</option>
             ))}
           </select>

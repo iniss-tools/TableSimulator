@@ -14,6 +14,8 @@ function meaning(frame: Frame): string {
   if (frame.kind === "elen.row" && !args.text) key = "kind.elen.rowEmpty";
   let text = hasText(key) ? t(key, args) : frame.kind;
   if (args.broadcast === "1") text += ` (${t("log.broadcast")})`;
+  // sprava tabule zabalena v pakete ITP
+  if (args.seq && !frame.kind.startsWith("itp.")) text += ` · ${t("log.itpSeq", { seq: args.seq })}`;
   return text;
 }
 
