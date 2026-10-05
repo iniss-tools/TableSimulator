@@ -244,6 +244,11 @@ export const sk = {
   "kind.itp.empty": "Paket ITP č. {seq} bez celej správy tabule",
   "kind.itp.noAnswer": "Prevodník: zariadenie neodpovedalo (paket {seq})",
   "log.itpSeq": "paket {seq}",
+  "mismatch.title": "INISS posiela tabuli správy pre iného výrobcu, obsah sa môže zobrazovať zle.",
+  "mismatch.elen.extendedFont": "Prichádza rozšírené písmo, ktoré INISS posiela len tabuliam {suggested}.",
+  "mismatch.lcd.lcd1Commands": "Prichádza zápis s písmom každého znaku, ktorý INISS posiela len tabuliam {suggested}.",
+  "mismatch.lcd.lcdCommands": "Prichádza zápis riadku bez písma, ktorý INISS posiela len tabuliam {suggested}.",
+  "mismatch.switch": "Prepnúť na {manufacturer}",
 } as const;
 
 export type TextKey = keyof typeof sk;

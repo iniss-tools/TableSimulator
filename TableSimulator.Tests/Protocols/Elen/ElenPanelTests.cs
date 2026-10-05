@@ -119,4 +119,32 @@ public class ElenPanelTests
 
         Assert.AreEqual("{A|B}", row.PlainText);
     }
+
+    [TestMethod]
+    public void RozsirenePismoPreElen_NesuladVyrobcu()
+    {
+        var sim = new Simulator();
+        sim.SetLine(new LineConfig(1, 4, "TCP://127.0.0.1:47001") { AutoLearn = false, Manufacturer = "ELEN" });
+        sim.SetBoard(new BoardConfig(1, 5, "ELEN") { Profile = new BoardProfile { Rows = 4 } });
+
+        // 1B 42 19 86 - pismo 0x42 s rozsirenym pismom 6 (len ELEN16)
+        Replies(sim, ElenFrame.Build(5, 1, Hex("81 1B 42 19 86 41")));
+
+        var mismatch = sim.Read(s => s.FindBoard("1-5"))!.Mismatch;
+        Assert.AreEqual(new ManufacturerMismatch("elen.extendedFont", ["ELEN16", "ELEN16Kam"]), mismatch);
+
+        sim.SetBoard(new BoardConfig(1, 5, "ELEN16") { Profile = new BoardProfile { Rows = 4 } });
+        Replies(sim, ElenFrame.Build(5, 1, Hex("81 1B 42 19 86 41")));
+        Assert.IsNull(sim.Read(s => s.FindBoard("1-5"))!.Mismatch, "po zmene vyrobcu zistenie zmizne");
+    }
+
+    [TestMethod]
+    public void BeznyObsahElen_BezNesuladu()
+    {
+        var sim = Create();
+
+        Replies(sim, ElenFrame.Build(5, 1, Hex("81 10 80 1B 42 41")));
+
+        Assert.IsNull(sim.Read(s => s.FindBoard("1-5"))!.Mismatch);
+    }
 }

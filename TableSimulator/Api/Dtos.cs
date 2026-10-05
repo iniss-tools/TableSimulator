@@ -85,6 +85,9 @@ public sealed record BoardDto(
 {
     /// <summary>Druha adresa panelu; null = len jedna.</summary>
     public int? SecondAddress { get; init; }
+
+    /// <summary>Spravy od INISSu patria inemu vyrobcovi; null = v poriadku.</summary>
+    public ManufacturerMismatch? Mismatch { get; init; }
 }
 
 /// <summary>Zaznam komunikacie - bajty ako hex.</summary>
@@ -136,7 +139,8 @@ public static class Dto
         b.Id, b.Line, b.Address, b.Name, b.ManufacturerKey, b.Profile, b.Design, b.Fault, b.AutoCreated, b.Stats, From(b.Display, b.ManufacturerKey),
         b.Version)
     {
-        SecondAddress = b.SecondAddress
+        SecondAddress = b.SecondAddress,
+        Mismatch = b.Mismatch
     };
 
     public static FrameDto From(FrameRecord r) => new(

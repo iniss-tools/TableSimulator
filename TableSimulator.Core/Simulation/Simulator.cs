@@ -520,6 +520,8 @@ public sealed class Simulator
             Fault = config.Fault,
             AutoCreated = old?.AutoCreated ?? false,
             Stats = old?.Stats ?? new BoardStats(),
+            // pri inom vyrobcovi zistenie neplati - overi sa na dalsich spravach
+            Mismatch = string.Equals(old?.ManufacturerKey, config.Manufacturer, StringComparison.OrdinalIgnoreCase) ? old?.Mismatch : null,
             Version = (old?.Version ?? 0) + 1
         };
         _boards[id] = board;

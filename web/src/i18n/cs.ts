@@ -246,4 +246,9 @@ export const cs: Record<TextKey, string> = {
   "kind.itp.empty": "Paket ITP č. {seq} bez celé zprávy tabule",
   "kind.itp.noAnswer": "Převodník: zařízení neodpovědělo (paket {seq})",
   "log.itpSeq": "paket {seq}",
+  "mismatch.title": "INISS posílá tabuli zprávy pro jiného výrobce, obsah se může zobrazovat špatně.",
+  "mismatch.elen.extendedFont": "Přichází rozšířené písmo, které INISS posílá jen tabulím {suggested}.",
+  "mismatch.lcd.lcd1Commands": "Přichází zápis s písmem každého znaku, který INISS posílá jen tabulím {suggested}.",
+  "mismatch.lcd.lcdCommands": "Přichází zápis řádku bez písma, který INISS posílá jen tabulím {suggested}.",
+  "mismatch.switch": "Přepnout na {manufacturer}",
 };

@@ -147,6 +147,8 @@ internal sealed class ElektrocasProtocol : ILineProtocol
             return;
         }
 
+        if (Mismatch(target.ManufacturerKey, frame.Command) is { } mismatch)
+            target.Mismatch = mismatch;
         var status = Apply(target, frame, out var data);
         context.Changed(target);
         context.LogReceived(frame.Raw, frame.Address, FrameStatus.Ok, Describe(frame, target.ManufacturerKey));
@@ -245,6 +247,21 @@ internal sealed class ElektrocasProtocol : ILineProtocol
             default:
                 return 0;
         }
+    }
+
+    /// <summary>
+    /// Sprava, ktoru INISS posiela len inemu vyrobcovi: zapis bez pisma <c>10</c> len tabuliam LCD, zapis s pismom
+    /// <c>15</c>/<c>16</c> a dotaz na typ <c>08</c> len LCD1 a ERP.
+    /// </summary>
+    private static ManufacturerMismatch? Mismatch(string manufacturer, int command)
+    {
+        var lcd = string.Equals(manufacturer, "LCD", StringComparison.OrdinalIgnoreCase);
+        return command switch
+        {
+            CmdRowSegments or CmdRowFonts or CmdType when lcd => new ManufacturerMismatch("lcd.lcd1Commands", ["LCD1", "ERP"]),
+            CmdRowText when !lcd => new ManufacturerMismatch("lcd.lcdCommands", ["LCD"]),
+            _ => null
+        };
     }
 
     /// <summary>Zapise znaky; riadok mimo tabule je chybna suradnica (pri samouceni sa tabula zvacsi).</summary>

@@ -135,6 +135,8 @@ internal sealed class ElenProtocol : ILineProtocol
 
                 // CR v obsahu pokracuje na nizsom riadku
                 var content = p.AsSpan(1);
+                if (!variant.ExtendedFont && ExtendedFontNumber(content) is { } ext)
+                    board.Mismatch = new ManufacturerMismatch("elen.extendedFont", ext > 4 ? ["ELEN16", "ELEN16Kam"] : ["ELEN10", "ELEN16", "ELEN16Kam"]);
                 for (var r = row + rowOffset; r > 0; r--)
                 {
                     var end = content.IndexOf(CarriageReturn);
@@ -298,6 +300,18 @@ internal sealed class ElenProtocol : ILineProtocol
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Cislo rozsireneho pisma (<c>19 h</c>, h s bitom 0x80), ak ho obsah riadku nesie; inak null. INISS ho posiela len
+    /// tabuliam ELEN10, ELEN16 a ELEN16Kam (ELEN10 pozna pisma 1-4) a ako text nikdy neposiela kod pod 0x20.
+    /// </summary>
+    private static int? ExtendedFontNumber(ReadOnlySpan<byte> content)
+    {
+        for (var i = 0; i + 1 < content.Length; i++)
+            if (content[i] == 0x19 && (content[i + 1] & 0x80) != 0)
+                return content[i + 1] & 0x0F;
+        return null;
     }
 
     /// <summary>Tabula zo samoucenia sa zvacsi, aby sa obsah zmestil.</summary>

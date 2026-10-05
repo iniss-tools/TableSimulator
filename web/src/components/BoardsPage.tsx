@@ -1,7 +1,7 @@
 // Prehlad tabul: zive zobrazenie, stav komunikacie, poruchy.
 import { useEffect, useState } from "react";
 import { api, ApiError, boardConfig, defaultProfile, type Board, type BoardConfig, type FaultKind, type MonitorInfo } from "../api";
-import { locale, t } from "../i18n";
+import { hasText, locale, t } from "../i18n";
 import { useLive } from "../store";
 import { BoardDialog } from "./BoardDialog";
 import { BoardView } from "./BoardView";
@@ -23,6 +23,27 @@ function newBoard(line: number, manufacturer: string): BoardConfig {
     secondAddress: null,
     profile: defaultProfile(manufacturer),
   };
+}
+
+/** INISS posiela tabuli spravy pre ineho vyrobcu - dovod a prepnutie na spravneho. */
+function MismatchWarning({ board }: { board: Board }) {
+  const mismatch = board.mismatch!;
+  const key = `mismatch.${mismatch.evidence}`;
+  const suggested = mismatch.suggested.join(", ");
+  return (
+    <div className="mismatch" role="alert">
+      <div>
+        <strong>{t("mismatch.title")}</strong> {hasText(key) ? t(key, { suggested }) : ""}
+      </div>
+      <div className="mismatch-actions">
+        {mismatch.suggested.map((m) => (
+          <button key={m} className="secondary" onClick={() => api.putBoard({ ...boardConfig(board), manufacturer: m })}>
+            {t("mismatch.switch", { manufacturer: m })}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function BoardCard({ board, onEdit }: { board: Board; onEdit: () => void }) {
@@ -71,6 +92,7 @@ function BoardCard({ board, onEdit }: { board: Board; onEdit: () => void }) {
           </button>
         </div>
       </header>
+      {board.mismatch && <MismatchWarning board={board} />}
       <BoardView board={board} />
       <footer className="card-foot">
         <span className="muted">

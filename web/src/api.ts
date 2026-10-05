@@ -130,6 +130,13 @@ export interface BoardStats {
   lastFrameAt: string | null;
 }
 
+/** Spravy od INISSu patria inemu vyrobcovi, nez ma tabula nastaveneho. */
+export interface ManufacturerMismatch {
+  /** Co na to ukazuje: elen.extendedFont, lcd.lcd1Commands, lcd.lcdCommands. */
+  evidence: string;
+  suggested: string[];
+}
+
 export interface Board {
   id: string;
   line: number;
@@ -144,6 +151,7 @@ export interface Board {
   display: Display;
   version: number;
   secondAddress: number | null;
+  mismatch: ManufacturerMismatch | null;
 }
 
 export interface Frame {

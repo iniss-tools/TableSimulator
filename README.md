@@ -58,7 +58,9 @@ a simulátor sa k nej pripája – v nastavení linky `\\.\PIPE\Tabule`, prípad
 beží na inom počítači. Kým INISS nebeží, simulátor to skúša každú sekundu znova.
 
 Tabule netreba zakladať ručne: linka so **samoučením** vytvorí tabuľu pri prvej správe na novú adresu a jej
-rozmer zväčšuje podľa toho, čo INISS posiela. Režim linky **len počúvať** neodpovedá – hodí sa na sledovanie
+rozmer zväčšuje podľa toho, čo INISS posiela. Výrobcu (`MANUFACTURER_KEY`) jej dá podľa nastavenia linky – ak INISS
+posiela správy, ktoré patria inému výrobcovi (rozšírené písmo `19 h` tabuli `ELEN`, zápis `15`/`16` tabuli `LCD`,
+zápis `10` tabuli `LCD1`/`ERP`), karta tabule na to upozorní a ponúkne prepnutie na správneho výrobcu. Režim linky **len počúvať** neodpovedá – hodí sa na sledovanie
 linky, na ktorej odpovedajú skutočné tabule.
 
 ## ELEN Monitor

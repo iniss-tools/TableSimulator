@@ -260,6 +260,27 @@ public class ElektrocasProtocolTests
         Assert.AreNotEqual("«A»", ElektrocasCharset.Decode(Hex("84 41 85"), "LCD"));
     }
 
+    [TestMethod]
+    public void ZapisLcd1PreTabuluLcd_NesuladVyrobcu()
+    {
+        var sim = Create(1, "LCD");
+
+        Replies(sim, Frame(12, 0x16, [0, 0, 1, 0, .. "A"u8, 0x10]));
+
+        Assert.AreEqual(new ManufacturerMismatch("lcd.lcd1Commands", ["LCD1", "ERP"]), sim.Read(s => s.FindBoard("1-12"))!.Mismatch);
+        Assert.IsNull(sim.Read(s => s.FindBoard("1-13"))!.Mismatch);
+    }
+
+    [TestMethod]
+    public void ZapisLcdPreTabuluLcd1_NesuladVyrobcu()
+    {
+        var sim = Create();
+
+        Replies(sim, Frame(12, 0x10, [0, 0, .. "A"u8]));
+
+        Assert.AreEqual("LCD", sim.Read(s => s.FindBoard("1-12"))!.Mismatch!.Suggested.Single());
+    }
+
     private static byte[] Frame(int address, int command, byte[] parameters) => ElektrocasFrame.Build(address, 0, command, parameters);
 
     private static byte[] Status(int address, int status) => ElektrocasFrame.Build(0, address, 0x70, [(byte)status]);
