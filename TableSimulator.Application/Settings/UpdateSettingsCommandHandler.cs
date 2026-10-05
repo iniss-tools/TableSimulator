@@ -19,12 +19,19 @@ public sealed class UpdateSettingsCommandHandler(ISettingsStore settings, ILiveN
             FontsFolder = (request.FontsFolder ?? "").Trim(),
             DesignsFolder = (request.DesignsFolder ?? "").Trim(),
             ConnectHost = (request.ConnectHost ?? "").Trim(),
-            MonitorFolder = (request.MonitorFolder ?? "").Trim()
+            MonitorFolder = (request.MonitorFolder ?? "").Trim(),
+            RequireLogin = request.RequireLogin,
+            VirtualFolders = VirtualFolders(request.VirtualFolders)
         };
-        // port, pristup zo siete a priecinok vzhladov server pouzije az po restarte
-        var restart = updated.HttpPort != current.HttpPort || updated.AllowNetwork != current.AllowNetwork || updated.DesignsFolder != current.DesignsFolder;
+        // port, pristup zo siete, prihlasovanie a priecinok vzhladov server pouzije az po restarte
+        var restart = updated.HttpPort != current.HttpPort || updated.LoginRequired != current.LoginRequired
+                      || updated.AllowNetwork != current.AllowNetwork || updated.DesignsFolder != current.DesignsFolder;
         settings.Save(updated);
         live.Publish(new StructureMessage());
         return Task.FromResult(Result.Success(new SettingsUpdatedDto(restart)));
     }
+
+    // prazdne riadky a opakovania sa vynechaju
+    private static string[] VirtualFolders(IReadOnlyList<string>? folders) =>
+        (folders ?? []).Select(f => f.Trim()).Where(f => f.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 }

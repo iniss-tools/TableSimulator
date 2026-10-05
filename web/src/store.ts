@@ -1,8 +1,10 @@
 // Zivy stav simulatora: prve nacitanie cez /api/state, potom zmeny cez WebSocket /ws.
 import { useSyncExternalStore } from "react";
-import { api, type Board, type Frame, type Line, type RecorderStatus, type ReplayStatus, type State } from "./api";
+import { api, onUnauthorized, type Board, type Frame, type Line, type Me, type RecorderStatus, type ReplayStatus, type State } from "./api";
 
 export interface LiveState {
+  /** Prihlaseny pouzivatel; null = este sa nezistilo. */
+  me: Me | null;
   loaded: boolean;
   connected: boolean;
   lines: Line[];
@@ -22,6 +24,7 @@ export interface LiveState {
 }
 
 let state: LiveState = {
+  me: null,
   loaded: false,
   connected: false,
   lines: [],
@@ -37,6 +40,7 @@ let state: LiveState = {
 
 const listeners = new Set<() => void>();
 const designListeners = new Set<(id: string) => void>();
+const virtualListeners = new Set<(sources: string[], definitions: boolean) => void>();
 
 function set(patch: Partial<LiveState>) {
   state = { ...state, ...patch };
@@ -79,6 +83,8 @@ export function openSocket(onFrames?: (frames: Frame[]) => void, withLog = false
       if (!withLog) {
         set({ connected: true });
         reload().catch(() => undefined);
+        // po vypadku spojenia si virtualne tabule nacitaju obsah znova
+        virtualListeners.forEach((l) => l([], true));
       }
     };
     socket.onclose = () => {
@@ -118,6 +124,9 @@ export function openSocket(onFrames?: (frames: Frame[]) => void, withLog = false
         case "recordings":
           if (!withLog) set({ recordingsVersion: state.recordingsVersion + 1 });
           break;
+        case "virtual":
+          if (!withLog) virtualListeners.forEach((l) => l(msg.sources as string[], msg.definitions as boolean));
+          break;
       }
     };
   };
@@ -145,7 +154,37 @@ export function onDesignChanged(listener: (id: string) => void): () => void {
   return () => designListeners.delete(listener);
 }
 
+/** Zmena XML tabul (mena suborov) alebo definicii virtualnych tabul. */
+export function onVirtualChanged(listener: (sources: string[], definitions: boolean) => void): () => void {
+  virtualListeners.add(listener);
+  return () => virtualListeners.delete(listener);
+}
+
 /** Vyrobcovia tabul na linke danej triedy. */
 export function manufacturersFor(live: LiveState, tableClass: number | undefined): string[] {
   return (tableClass !== undefined && live.manufacturers[String(tableClass)]) || [];
+}
+
+/** Zisti prihlaseneho pouzivatela (pri starte, po prihlaseni a po odpovedi 401). */
+export async function loadMe() {
+  try {
+    set({ me: await api.me() });
+  } catch {
+    // server nebezi - skusi sa znova pri dalsom nacitani
+  }
+}
+
+onUnauthorized(() => {
+  loadMe().catch(() => undefined);
+});
+
+/** Ci prihlaseny pouzivatel ma opravnenie. */
+export function can(me: Me | null, permission: string): boolean {
+  return me?.permissions.includes(permission) ?? false;
+}
+
+/** Opravnenia prihlaseneho pouzivatela pre komponenty. */
+export function useCan(): (permission: string) => boolean {
+  const { me } = useLive();
+  return (permission) => can(me, permission);
 }

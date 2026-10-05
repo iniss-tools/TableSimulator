@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Lines;
 using TableSimulator.Contracts.Lines;
 
@@ -11,5 +12,6 @@ public sealed class SetLine : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapPut("lines/{number:int}", async (int number, SetLineRequest request, ICommandHandler<SetLineCommand> handler,
             CancellationToken cancellationToken) =>
-            (await handler.Handle(new SetLineCommand(number, request), cancellationToken)).Match(Results.NoContent, CustomResults.Problem));
+            (await handler.Handle(new SetLineCommand(number, request), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
+            .RequireAuthorization(Permissions.SimulatorEdit);
 }

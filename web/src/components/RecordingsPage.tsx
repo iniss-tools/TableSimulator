@@ -1,8 +1,8 @@
 // Zaznamy komunikacie: nahravanie prevadzky liniek a jej prehratie do simulatora.
 import { useEffect, useRef, useState } from "react";
-import { api, type RecordingInfo } from "../api";
+import { api, PERMISSIONS, type RecordingInfo } from "../api";
 import { locale, t } from "../i18n";
-import { useLive } from "../store";
+import { useCan, useLive } from "../store";
 
 const SPEEDS = [1, 2, 5, 10, 0];
 
@@ -22,6 +22,7 @@ function size(bytes: number): string {
 
 function Recorder() {
   const { recorder } = useLive();
+  const can = useCan();
   const [note, setNote] = useState("");
   const [, tick] = useState(0);
 
@@ -39,10 +40,12 @@ function Recorder() {
         <span className="rec-dot" />
         <span>{t("rec.running", { name: recorder.name ?? "", duration: duration(elapsed), entries: recorder.entries, size: size(recorder.bytes) })}</span>
         <span className="spacer" />
-        <button onClick={() => api.stopRecording()}>{t("rec.stop")}</button>
+        {can(PERMISSIONS.recordings) && <button onClick={() => api.stopRecording()}>{t("rec.stop")}</button>}
       </div>
     );
   }
+
+  if (!can(PERMISSIONS.recordings)) return null;
 
   return (
     <form
@@ -62,6 +65,7 @@ function Recorder() {
 
 function Replay() {
   const { replay } = useLive();
+  const can = useCan();
   if (!replay) return null;
   const percent = replay.duration > 0 ? Math.min(100, (replay.position / replay.duration) * 100) : 100;
   const running = replay.state === "running";
@@ -75,7 +79,7 @@ function Replay() {
         </span>
         <span className="spacer" />
         {running && (
-          <button className="secondary" onClick={() => api.stopReplay()}>
+          <button className="secondary" hidden={!can(PERMISSIONS.recordings)} onClick={() => api.stopReplay()}>
             {t("replay.stop")}
           </button>
         )}
@@ -89,6 +93,7 @@ function Replay() {
 
 export function RecordingsPage() {
   const live = useLive();
+  const can = useCan();
   const [items, setItems] = useState<RecordingInfo[]>([]);
   const [speed, setSpeed] = useState(1);
   const [loop, setLoop] = useState(false);
@@ -137,7 +142,7 @@ export function RecordingsPage() {
         </label>
         <span className="spacer" />
         <input ref={upload} type="file" accept=".tsrec" multiple hidden onChange={(e) => onUpload(e.target.files)} />
-        <button className="secondary" onClick={() => upload.current?.click()}>
+        <button className="secondary" hidden={!can(PERMISSIONS.recordings)} onClick={() => upload.current?.click()}>
           {t("rec.upload")}
         </button>
       </div>
@@ -171,7 +176,7 @@ export function RecordingsPage() {
                   <td className="nowrap">{size(r.size)}</td>
                   <td>{r.note}</td>
                   <td className="nowrap">
-                    <button onClick={() => api.play(r.name, speed, loop)} disabled={live.recorder?.name === r.name}>
+                    <button hidden={!can(PERMISSIONS.recordings)} onClick={() => api.play(r.name, speed, loop)} disabled={live.recorder?.name === r.name}>
                       {t("rec.play")}
                     </button>{" "}
                     <a className="icon-button" href={api.recordingUrl(r.name)} download title={t("rec.download")}>
@@ -180,6 +185,7 @@ export function RecordingsPage() {
                     <button
                       className="icon-button"
                       title={t("common.delete")}
+                      hidden={!can(PERMISSIONS.recordings)}
                       disabled={live.recorder?.name === r.name}
                       onClick={() => confirm(t("rec.delete.confirm", { name: r.name })) && api.deleteRecording(r.name).then(() => setItems(items.filter((i) => i.name !== r.name)))}
                     >

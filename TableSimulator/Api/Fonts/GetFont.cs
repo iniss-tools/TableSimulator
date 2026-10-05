@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Fonts;
 using TableSimulator.Contracts.Fonts;
 
@@ -10,5 +11,6 @@ public sealed class GetFont : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapGet("fonts/{file}", async (string file, IQueryHandler<GetFontQuery, FontFileDto> handler, CancellationToken cancellationToken) =>
-            (await handler.Handle(new GetFontQuery(file), cancellationToken)).Match(Results.Ok, CustomResults.Problem));
+            (await handler.Handle(new GetFontQuery(file), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .RequireAuthorization(Permissions.SimulatorView);
 }

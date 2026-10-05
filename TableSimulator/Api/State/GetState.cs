@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.State;
 using TableSimulator.Contracts.State;
 
@@ -10,5 +11,6 @@ public sealed class GetState : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapGet("state", async (IQueryHandler<GetStateQuery, StateDto> handler, CancellationToken cancellationToken) =>
-            (await handler.Handle(new GetStateQuery(), cancellationToken)).Match(Results.Ok, CustomResults.Problem));
+            (await handler.Handle(new GetStateQuery(), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .RequireAuthorization(Permissions.SimulatorView);
 }

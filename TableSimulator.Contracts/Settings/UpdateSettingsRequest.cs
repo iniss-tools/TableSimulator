@@ -9,4 +9,6 @@ public sealed record UpdateSettingsRequest
     public string DesignsFolder { get; init; } = "";
     public string ConnectHost { get; init; } = "";
     public string MonitorFolder { get; init; } = "";
+    public bool RequireLogin { get; init; }
+    public IReadOnlyList<string>? VirtualFolders { get; init; }
 }

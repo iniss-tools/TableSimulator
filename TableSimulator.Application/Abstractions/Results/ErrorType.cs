@@ -16,5 +16,11 @@ public enum ErrorType
     NotFound,
 
     /// <summary>Koliduje so stavom (409).</summary>
-    Conflict
+    Conflict,
+
+    /// <summary>Neprihlaseny alebo zle prihlasovacie udaje (401).</summary>
+    Unauthorized,
+
+    /// <summary>Prihlaseny, ale na toto nema pravo (403).</summary>
+    Forbidden
 }

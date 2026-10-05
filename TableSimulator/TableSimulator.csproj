@@ -23,6 +23,7 @@
 		<ProjectReference Include="..\TableSimulator.Application\TableSimulator.Application.csproj" />
 		<ProjectReference Include="..\TableSimulator.Contracts\TableSimulator.Contracts.csproj" />
 		<ProjectReference Include="..\TableSimulator.Core\TableSimulator.Core.csproj" />
+		<ProjectReference Include="..\TableSimulator.Persistence\TableSimulator.Persistence.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="JetBrains.Annotations" Version="2026.2.0" />

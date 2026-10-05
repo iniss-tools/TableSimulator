@@ -19,6 +19,12 @@ public sealed record AppPaths(string DataFolder, string ConfigPath, string WebRo
     /// <summary>Zaznamy komunikacie.</summary>
     public string RecordingsFolder => Path.Combine(DataFolder, "recordings");
 
+    /// <summary>Databaza pouzivatelov (SQLite).</summary>
+    public string DatabaseFile => Path.Combine(DataFolder, "tablesimulator.db");
+
+    /// <summary>Kluce ochrany dat (podpis prihlasovacich cookie) - s priecinkom nastaveni sa prenasaju.</summary>
+    public string KeysFolder => Path.Combine(DataFolder, "keys");
+
     /// <summary>Logy servera.</summary>
     public string LogsFolder => Path.Combine(DataFolder, "logs");
 

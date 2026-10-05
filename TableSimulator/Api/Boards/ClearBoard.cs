@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Boards;
 
 namespace TableSimulator.Api.Boards;
@@ -9,5 +10,6 @@ public sealed class ClearBoard : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapPost("boards/{id}/clear", async (string id, ICommandHandler<ClearBoardCommand> handler, CancellationToken cancellationToken) =>
-            (await handler.Handle(new ClearBoardCommand(id), cancellationToken)).Match(Results.NoContent, CustomResults.Problem));
+            (await handler.Handle(new ClearBoardCommand(id), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
+            .RequireAuthorization(Permissions.SimulatorEdit);
 }

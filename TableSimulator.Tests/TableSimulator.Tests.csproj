@@ -12,10 +12,14 @@
 		<PackageReference Include="MSTest.TestFramework" Version="4.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.12" />
+		<!-- testy servera (prihlasenie, opravnenia) cez TestServer -->
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\TableSimulator.Core\TableSimulator.Core.csproj" />
 		<ProjectReference Include="..\TableSimulator.Contracts\TableSimulator.Contracts.csproj" />
 		<ProjectReference Include="..\TableSimulator.Application\TableSimulator.Application.csproj" />
+		<ProjectReference Include="..\TableSimulator.Persistence\TableSimulator.Persistence.csproj" />
+		<ProjectReference Include="..\TableSimulator\TableSimulator.csproj" />
 	</ItemGroup>
 </Project>

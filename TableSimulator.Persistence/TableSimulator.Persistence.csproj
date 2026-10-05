@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<!-- Databaza simulatora (EF Core): pouzivatelia a roly ASP.NET Core Identity. Zatial SQLite; model je nezavisly od
+	     poskytovatela, kazdy poskytovatel ma vlastnu odvodenu triedu kontextu a vlastne migracie (Migrations/<poskytovatel>). -->
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<OutputType>Library</OutputType>
+		<RootNamespace>TableSimulator.Persistence</RootNamespace>
+		<AssemblyName>TableSimulator.Persistence</AssemblyName>
+		<LangVersion>default</LangVersion>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\TableSimulator.Application\TableSimulator.Application.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.12" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+</Project>

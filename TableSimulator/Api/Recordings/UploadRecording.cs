@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Recordings;
 using TableSimulator.Contracts.Recordings;
 
@@ -16,5 +17,6 @@ public sealed class UploadRecording : IEndpoint
             await request.Body.CopyToAsync(buffer, cancellationToken);
             var result = await handler.Handle(new UploadRecordingCommand(name ?? "zaznam", buffer.ToArray()), cancellationToken);
             return result.Match(Results.Ok, CustomResults.Problem);
-        });
+        })
+            .RequireAuthorization(Permissions.RecordingsManage);
 }

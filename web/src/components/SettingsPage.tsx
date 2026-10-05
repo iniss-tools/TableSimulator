@@ -12,9 +12,14 @@ export function SettingsPage() {
   const [fonts, setFonts] = useState<string[]>([]);
   const [designs, setDesigns] = useState<DesignInfo[]>([]);
   const [message, setMessage] = useState<string | null>(null);
+  // text pola s priecinkami (riadok = priecinok) - prazdne riadky vynecha az server
+  const [folders, setFolders] = useState((live.settings?.virtualFolders ?? []).join("\n"));
 
   useEffect(() => {
-    if (!form && live.settings) setForm(live.settings);
+    if (!form && live.settings) {
+      setForm(live.settings);
+      setFolders(live.settings.virtualFolders.join("\n"));
+    }
   }, [live.settings, form]);
 
   useEffect(() => {
@@ -62,6 +67,18 @@ export function SettingsPage() {
         </Field>
         <p className="muted small">{t("settings.designsFound", { list: designs.map((d) => `${d.name} (${d.id})`).join(", ") })}</p>
 
+        <Field label={t("settings.virtualFolders")} hint={t("settings.virtualFolders.hint")} wide>
+          <textarea
+            rows={3}
+            value={folders}
+            placeholder={"C:\\INISS\\Logy"}
+            onChange={(e) => {
+              setFolders(e.target.value);
+              setForm({ ...form, virtualFolders: e.target.value.split(/\r?\n/) });
+            }}
+          />
+        </Field>
+
         <Field label={t("settings.connectHost")} hint={t("settings.connectHost.hint")} wide>
           <input value={form.connectHost} onChange={(e) => setForm({ ...form, connectHost: e.target.value })} />
         </Field>
@@ -72,6 +89,16 @@ export function SettingsPage() {
           <input type="checkbox" checked={form.allowNetwork} onChange={(e) => setForm({ ...form, allowNetwork: e.target.checked })} />
           {t("settings.allowNetwork")}
         </label>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={form.requireLogin || form.allowNetwork}
+            disabled={form.allowNetwork}
+            onChange={(e) => setForm({ ...form, requireLogin: e.target.checked })}
+          />
+          {t("settings.requireLogin")}
+        </label>
+        <p className="muted small">{t("settings.requireLogin.hint")}</p>
         <p className="muted small">{t("settings.configPath", { path: form.configPath })}</p>
         <div className="dialog-buttons">
           {message && <span className="muted">{message}</span>}

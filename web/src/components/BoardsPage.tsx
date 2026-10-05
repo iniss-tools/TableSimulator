@@ -1,8 +1,8 @@
 // Prehlad tabul: zive zobrazenie, stav komunikacie, poruchy.
 import { useEffect, useState } from "react";
-import { api, ApiError, boardConfig, defaultProfile, type Board, type BoardConfig, type FaultKind, type MonitorInfo } from "../api";
+import { api, ApiError, boardConfig, defaultProfile, PERMISSIONS, type Board, type BoardConfig, type FaultKind, type MonitorInfo } from "../api";
 import { hasText, locale, t } from "../i18n";
-import { useLive } from "../store";
+import { useCan, useLive } from "../store";
 import { BoardDialog } from "./BoardDialog";
 import { BoardView } from "./BoardView";
 import { Dialog, Field } from "./Dialog";
@@ -26,7 +26,7 @@ function newBoard(line: number, manufacturer: string): BoardConfig {
 }
 
 /** INISS posiela tabuli spravy pre ineho vyrobcu - dovod a prepnutie na spravneho. */
-function MismatchWarning({ board }: { board: Board }) {
+function MismatchWarning({ board, edit }: { board: Board; edit: boolean }) {
   const mismatch = board.mismatch!;
   const key = `mismatch.${mismatch.evidence}`;
   const suggested = mismatch.suggested.join(", ");
@@ -36,7 +36,7 @@ function MismatchWarning({ board }: { board: Board }) {
         <strong>{t("mismatch.title")}</strong> {hasText(key) ? t(key, { suggested }) : ""}
       </div>
       <div className="mismatch-actions">
-        {mismatch.suggested.map((m) => (
+        {edit && mismatch.suggested.map((m) => (
           <button key={m} className="secondary" onClick={() => api.putBoard({ ...boardConfig(board), manufacturer: m })}>
             {t("mismatch.switch", { manufacturer: m })}
           </button>
@@ -46,7 +46,7 @@ function MismatchWarning({ board }: { board: Board }) {
   );
 }
 
-function BoardCard({ board, onEdit }: { board: Board; onEdit: () => void }) {
+function BoardCard({ board, onEdit, edit }: { board: Board; onEdit: () => void; edit: boolean }) {
   const name = board.name || t("board.unnamed", { address: board.address });
   const last = board.stats.lastFrameAt ? new Date(board.stats.lastFrameAt).toLocaleTimeString(locale()) : null;
   const d = board.display;
@@ -81,6 +81,8 @@ function BoardCard({ board, onEdit }: { board: Board; onEdit: () => void }) {
           <a className="icon-button" href={`#/view/${board.id}`} title={t("board.fullscreen")}>
             ⛶
           </a>
+          {edit && (
+            <>
           <button className="icon-button" onClick={onEdit} title={t("common.edit")}>
             ✎
           </button>
@@ -90,9 +92,11 @@ function BoardCard({ board, onEdit }: { board: Board; onEdit: () => void }) {
           <button className="icon-button" onClick={remove} title={t("common.delete")}>
             ✕
           </button>
+            </>
+          )}
         </div>
       </header>
-      {board.mismatch && <MismatchWarning board={board} />}
+      {board.mismatch && <MismatchWarning board={board} edit={edit} />}
       <BoardView board={board} />
       <footer className="card-foot">
         <span className="muted">
@@ -103,7 +107,7 @@ function BoardCard({ board, onEdit }: { board: Board; onEdit: () => void }) {
         </span>
         <label className="fault">
           {t("fault.label")}{" "}
-          <select value={board.fault.kind} onChange={(e) => setFault(e.target.value as FaultKind)}>
+          <select value={board.fault.kind} disabled={!edit} onChange={(e) => setFault(e.target.value as FaultKind)}>
             {faultsFor(board).map((f) => (
               <option key={f} value={f}>
                 {t(`fault.${f}`)}
@@ -183,6 +187,7 @@ function MonitorImportDialog({ monitor, onClose }: { monitor: MonitorInfo; onClo
 
 export function BoardsPage() {
   const live = useLive();
+  const edit = useCan()(PERMISSIONS.edit);
   const [filter, setFilter] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ config: BoardConfig; isNew: boolean } | null>(null);
   const [monitor, setMonitor] = useState<MonitorInfo | null>(null);
@@ -214,14 +219,16 @@ export function BoardsPage() {
         <a className="button secondary" href="#/wall">
           {t("nav.wall")}
         </a>
-        {monitor?.available && monitor.projects.length > 0 && (
+        {edit && monitor?.available && monitor.projects.length > 0 && (
           <button className="secondary" disabled={live.lines.length === 0} onClick={() => setImporting(true)}>
             {t("monitor.import")}
           </button>
         )}
-        <button disabled={!firstLine} onClick={() => firstLine && setEditing({ config: newBoard(firstLine.number, firstLine.manufacturer), isNew: true })}>
-          {t("boards.add")}
-        </button>
+        {edit && (
+          <button disabled={!firstLine} onClick={() => firstLine && setEditing({ config: newBoard(firstLine.number, firstLine.manufacturer), isNew: true })}>
+            {t("boards.add")}
+          </button>
+        )}
       </div>
 
       {boards.length === 0 ? (
@@ -239,7 +246,7 @@ export function BoardsPage() {
       ) : (
         <div className="cards">
           {boards.map((b) => (
-            <BoardCard key={b.id} board={b} onEdit={() => setEditing({ config: boardConfig(b), isNew: false })} />
+            <BoardCard key={b.id} board={b} edit={edit} onEdit={() => setEditing({ config: boardConfig(b), isNew: false })} />
           ))}
         </div>
       )}

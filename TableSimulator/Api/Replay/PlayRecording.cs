@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Replay;
 using TableSimulator.Contracts.Recordings;
 
@@ -11,5 +12,6 @@ public sealed class PlayRecording : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapPost("replay", async (PlayRequest request, ICommandHandler<PlayRecordingCommand, ReplayStatusDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new PlayRecordingCommand(request.Name, request.Speed, request.Loop), cancellationToken))
-            .Match(Results.Ok, CustomResults.Problem));
+            .Match(Results.Ok, CustomResults.Problem))
+            .RequireAuthorization(Permissions.RecordingsManage);
 }

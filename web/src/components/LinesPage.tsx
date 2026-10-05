@@ -1,8 +1,8 @@
 // Komunikacne linky - zodpovedaju sekciam Driver v INISSe.
 import { useState } from "react";
-import { api, ApiError, lineConfig, type LineConfig, type LineMode } from "../api";
+import { api, ApiError, lineConfig, PERMISSIONS, type LineConfig, type LineMode } from "../api";
 import { t, type TextKey } from "../i18n";
-import { manufacturersFor, useLive } from "../store";
+import { manufacturersFor, useCan, useLive } from "../store";
 import { Dialog, Field } from "./Dialog";
 
 function CopyButton({ text }: { text: string }) {
@@ -107,6 +107,7 @@ function LineDialog({ initial, isNew, onClose }: { initial: LineConfig; isNew: b
 
 export function LinesPage() {
   const live = useLive();
+  const edit = useCan()(PERMISSIONS.edit);
   const [editing, setEditing] = useState<{ config: LineConfig; isNew: boolean } | null>(null);
 
   const add = () => {
@@ -124,7 +125,7 @@ export function LinesPage() {
       <div className="toolbar">
         <h2>{t("lines.title")}</h2>
         <span className="spacer" />
-        <button onClick={add}>{t("lines.add")}</button>
+        {edit && <button onClick={add}>{t("lines.add")}</button>}
       </div>
       <p className="hint">{t("lines.hint")}</p>
       <div className="table-wrap">
@@ -173,16 +174,20 @@ export function LinesPage() {
                 </td>
                 <td className="muted small">{t("lines.traffic", { frames: l.stats.frames, bad: l.stats.badFrames, connections: l.stats.connections })}</td>
                 <td className="nowrap">
-                  <button className="icon-button" title={t("common.edit")} onClick={() => setEditing({ config: lineConfig(l), isNew: false })}>
-                    ✎
-                  </button>
-                  <button
-                    className="icon-button"
-                    title={t("common.delete")}
-                    onClick={() => confirm(t("line.delete.confirm", { number: l.number })) && api.deleteLine(l.number)}
-                  >
-                    ✕
-                  </button>
+                  {edit && (
+                    <>
+                      <button className="icon-button" title={t("common.edit")} onClick={() => setEditing({ config: lineConfig(l), isNew: false })}>
+                        ✎
+                      </button>
+                      <button
+                        className="icon-button"
+                        title={t("common.delete")}
+                        onClick={() => confirm(t("line.delete.confirm", { number: l.number })) && api.deleteLine(l.number)}
+                      >
+                        ✕
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

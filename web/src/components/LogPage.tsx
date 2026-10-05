@@ -1,8 +1,8 @@
 // Ziva komunikacia na linkach - spravy INISSu a odpovede tabul, rozlozene aj v hex.
 import { useEffect, useRef, useState } from "react";
-import { api, type Frame } from "../api";
+import { api, PERMISSIONS, type Frame } from "../api";
 import { hasText, locale, t, useLanguage } from "../i18n";
-import { openSocket } from "../store";
+import { openSocket, useCan } from "../store";
 
 const MAX = 3000;
 const TIME: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3, hour12: false };
@@ -25,6 +25,7 @@ function hex(h: string): string {
 
 export function LogPage() {
   useLanguage();
+  const can = useCan();
   const [frames, setFrames] = useState<Frame[]>([]);
   const [paused, setPaused] = useState(false);
   const [hideReplies, setHideReplies] = useState(true);
@@ -70,15 +71,17 @@ export function LogPage() {
         <button className="secondary" onClick={() => setPaused(!paused)}>
           {paused ? t("log.resume") : t("log.pause")}
         </button>
-        <button
-          className="secondary"
-          onClick={() => {
-            api.clearLog();
-            setFrames([]);
-          }}
-        >
-          {t("log.clear")}
-        </button>
+        {can(PERMISSIONS.edit) && (
+          <button
+            className="secondary"
+            onClick={() => {
+              api.clearLog();
+              setFrames([]);
+            }}
+          >
+            {t("log.clear")}
+          </button>
+        )}
       </div>
       {shown.length === 0 ? (
         <p className="empty">{t("log.empty")}</p>

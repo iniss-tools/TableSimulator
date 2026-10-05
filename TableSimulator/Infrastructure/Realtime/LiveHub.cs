@@ -27,6 +27,8 @@ public sealed class LiveHub : ILiveNotifier, IDisposable
     private readonly Channel<SimulatorEvent> _events = Channel.CreateUnbounded<SimulatorEvent>(new UnboundedChannelOptions { SingleReader = true });
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _pump;
+    // DI ho likviduje aj ako ILiveNotifier - druhe volanie nic nerobi
+    private int _disposed;
 
     public LiveHub(Simulator simulator, ISettingsStore settings)
     {
@@ -136,6 +138,8 @@ public sealed class LiveHub : ILiveNotifier, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        if (Interlocked.Exchange(ref _disposed, 1) == 1)
+            return;
         _simulator.Changed -= OnChanged;
         _cts.Cancel();
         _events.Writer.TryComplete();

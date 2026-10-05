@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Recordings;
 using TableSimulator.Contracts.Recordings;
 
@@ -10,5 +11,6 @@ public sealed class StopRecording : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapPost("recordings/stop", async (ICommandHandler<StopRecordingCommand, RecorderStatusDto> handler, CancellationToken cancellationToken) =>
-            (await handler.Handle(new StopRecordingCommand(), cancellationToken)).Match(Results.Ok, CustomResults.Problem));
+            (await handler.Handle(new StopRecordingCommand(), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .RequireAuthorization(Permissions.RecordingsManage);
 }

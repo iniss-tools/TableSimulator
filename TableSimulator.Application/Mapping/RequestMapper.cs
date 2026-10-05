@@ -7,7 +7,7 @@ using TableSimulator.Core.Simulation;
 namespace TableSimulator.Application.Mapping;
 
 /// <summary>Prevod poziadaviek API na nastavenie simulatora.</summary>
-public static class RequestMapper
+public static partial class RequestMapper
 {
     /// <summary>Nastavenie linky s cislom z adresy poziadavky.</summary>
     public static LineConfig ToConfig(SetLineRequest request, int number)

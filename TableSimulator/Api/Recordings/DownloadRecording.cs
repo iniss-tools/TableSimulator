@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Recordings;
 
 namespace TableSimulator.Api.Recordings;
@@ -11,5 +12,6 @@ public sealed class DownloadRecording : IEndpoint
         app.MapGet("recordings/{name}/file", async (string name, IQueryHandler<GetRecordingFileQuery, RecordingFile> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new GetRecordingFileQuery(name), cancellationToken))
-            .Match(file => Results.File(file.Path, "application/x-ndjson", file.DownloadName), CustomResults.Problem));
+            .Match(file => Results.File(file.Path, "application/x-ndjson", file.DownloadName), CustomResults.Problem))
+            .RequireAuthorization(Permissions.SimulatorView);
 }

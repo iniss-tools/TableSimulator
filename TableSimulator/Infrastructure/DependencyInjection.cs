@@ -2,6 +2,7 @@ using TableSimulator.Application.Live;
 using TableSimulator.Application.Settings;
 using TableSimulator.Core.Simulation;
 using TableSimulator.Core.Transport;
+using TableSimulator.Core.Virtual;
 using TableSimulator.Infrastructure.Hosting;
 using TableSimulator.Infrastructure.Persistence;
 using TableSimulator.Infrastructure.Realtime;
@@ -18,10 +19,13 @@ public static class DependencyInjection
         services.AddSingleton(_ => new Simulator());
         services.AddSingleton<TransportManager>();
         services.AddSingleton<ConfigStore>();
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<XmlTableFolders>();
         services.AddSingleton<LiveHub>();
         services.AddSingleton<ILiveNotifier>(sp => sp.GetRequiredService<LiveHub>());
         services.AddHostedService<SimulatorHostedService>();
         services.AddHostedService<DesignWatcherService>();
+        services.AddHostedService<XmlTableWatcherService>();
         return services;
     }
 }

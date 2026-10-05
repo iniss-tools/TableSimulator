@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Boards;
 
 namespace TableSimulator.Api.Boards;
@@ -9,5 +10,6 @@ public sealed class DeleteBoard : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapDelete("boards/{id}", async (string id, ICommandHandler<DeleteBoardCommand> handler, CancellationToken cancellationToken) =>
-            (await handler.Handle(new DeleteBoardCommand(id), cancellationToken)).Match(Results.NoContent, CustomResults.Problem));
+            (await handler.Handle(new DeleteBoardCommand(id), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
+            .RequireAuthorization(Permissions.SimulatorEdit);
 }

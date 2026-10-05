@@ -175,7 +175,102 @@ export interface Settings {
   connectHost: string;
   configPath: string;
   monitorFolder: string;
+  /** Vyzadovat prihlasenie aj z tohto pocitaca (zo siete sa vyzaduje vzdy). */
+  requireLogin: boolean;
+  /** Priecinky logov INISSu s XML tabul pre virtualne tabule. */
+  virtualFolders: string[];
 }
+
+/** Virtualna tabula - co z XML tabule INISSu ukazat na jednej obrazovke (ako definicia v INISSView). */
+export interface VirtualBoard {
+  id: number;
+  name: string;
+  description: string;
+  /** Subor XML bez pripony (SAVE_XML). */
+  source: string;
+  /** Pocet zaznamov; null = vsetky. */
+  rowCount: number | null;
+  /** Poradie prveho zaznamu (od 1). */
+  rowStart: number;
+  /** Text namiesto # v stanici a smere; prazdny = casti sa striedaju. */
+  separator: string;
+  /** Sablona XSL z INISSView (zatial sa nepouziva). */
+  template: string;
+  /** Atribut x pre sablonu (zatial sa nepouziva). */
+  parameter: string;
+}
+
+/** Subor XML tabule v priecinkoch logov INISSu; casy su miestne casy pocitaca s INISSom. */
+export interface VirtualSource {
+  name: string;
+  path: string;
+  modified: string;
+  station: string | null;
+  key: string | null;
+  written: string | null;
+  validTo: string | null;
+  rows: number;
+  /** Platnost uplynula - INISS subor neobnovuje. */
+  stale: boolean;
+  error: string | null;
+}
+
+export interface VirtualFolder {
+  path: string;
+  exists: boolean;
+}
+
+export interface VirtualOverview {
+  boards: VirtualBoard[];
+  sources: VirtualSource[];
+  folders: VirtualFolder[];
+}
+
+/** Polozka zaznamu: meno prvku z XML (time, type, number, destination…) a text s castami oddelenymi #. */
+export interface VirtualCell {
+  name: string;
+  text: string;
+}
+
+export interface VirtualRow {
+  cells: VirtualCell[];
+}
+
+/** Co ukazuje virtualna tabula. */
+export interface VirtualView {
+  board: VirtualBoard;
+  source: VirtualSource | null;
+  rows: VirtualRow[];
+}
+
+export interface InissViewImported {
+  added: number;
+  replaced: number;
+  skipped: number;
+  duplicates: number[];
+  folders: string[];
+}
+
+/** Prihlaseny pouzivatel a rezim prihlasenia. */
+export interface Me {
+  loginRequired: boolean;
+  setupRequired: boolean;
+  authenticated: boolean;
+  userName: string | null;
+  displayName: string | null;
+  role: "admin" | "operator" | "viewer" | null;
+  permissions: string[];
+}
+
+/** Opravnenia (rovnake nazvy ako politiky servera). */
+export const PERMISSIONS = {
+  view: "simulator.view",
+  log: "log.view",
+  edit: "simulator.edit",
+  recordings: "recordings.manage",
+  settings: "settings.manage",
+  users: "users.manage",
+} as const;
 
 export interface State {
   lines: Line[];
@@ -278,6 +373,16 @@ interface Problem {
   errors?: ProblemError[];
 }
 
+/** Hlavicka proti CSRF - server bez nej odmietne kazdu zmenu. */
+const CSRF_HEADER = { "X-Requested-With": "TableSimulator" };
+
+let unauthorized: (() => void) | null = null;
+
+/** Co urobit, ked server odpovie 401 (prihlasenie vyprsalo alebo pouzivatela vypli). */
+export function onUnauthorized(handler: () => void) {
+  unauthorized = handler;
+}
+
 /** Text chyby v jazyku obsluhy podla kodu; neznamy kod = popis zo servera. */
 function describe(code: string | undefined, description: string | undefined, fallback: string): string {
   const key = `error.${code}`;
@@ -286,7 +391,8 @@ function describe(code: string | undefined, description: string | undefined, fal
 
 /** Chyba z odpovede servera - pri neplatnych vstupoch vsetky chyby pod sebou. */
 async function apiError(response: Response): Promise<ApiError> {
-  const fallback = `${response.status} ${response.statusText}`;
+  const fallback =
+    response.status === 401 ? t("error.auth.required") : response.status === 403 ? t("error.auth.forbidden") : `${response.status} ${response.statusText}`;
   try {
     const data = (await response.json()) as Problem;
     if (data.errors?.length) return new ApiError(data.errors.map((e) => describe(e.code, e.description, fallback)).join("\n"));
@@ -300,15 +406,20 @@ async function apiError(response: Response): Promise<ApiError> {
 async function call<T>(method: string, url: string, body?: unknown): Promise<T> {
   const response = await fetch(url, {
     method,
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    headers: body === undefined ? CSRF_HEADER : { ...CSRF_HEADER, "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
+  if (response.status === 401 && !url.startsWith("/api/auth/")) unauthorized?.();
   if (!response.ok) throw await apiError(response);
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }
 
 export const api = {
+  me: () => call<Me>("GET", "/api/auth/me"),
+  login: (userName: string, password: string, remember: boolean) => call<Me>("POST", "/api/auth/login", { userName, password, remember }),
+  logout: () => call<void>("POST", "/api/auth/logout"),
+  setup: (userName: string, displayName: string, password: string) => call<Me>("POST", "/api/auth/setup", { userName, displayName, password }),
   state: () => call<State>("GET", "/api/state"),
   putLine: (config: LineConfig) => call<void>("PUT", `/api/lines/${config.number}`, config),
   deleteLine: (number: number) => call<void>("DELETE", `/api/lines/${number}`),
@@ -327,7 +438,7 @@ export const api = {
   deleteRecording: (name: string) => call<void>("DELETE", `/api/recordings/${encodeURIComponent(name)}`),
   recordingUrl: (name: string) => `/api/recordings/${encodeURIComponent(name)}/file`,
   uploadRecording: async (file: File) => {
-    const response = await fetch(`/api/recordings/upload?name=${encodeURIComponent(file.name)}`, { method: "POST", body: file });
+    const response = await fetch(`/api/recordings/upload?name=${encodeURIComponent(file.name)}`, { method: "POST", body: file, headers: CSRF_HEADER });
     if (!response.ok) throw await apiError(response);
     return (await response.json()) as RecordingInfo;
   },
@@ -335,6 +446,11 @@ export const api = {
   monitor: () => call<MonitorInfo>("GET", "/api/monitor"),
   importMonitor: (project: string, line: number) => call<{ count: number }>("POST", "/api/monitor/import", { project, line }),
   stopReplay: () => call<void>("POST", "/api/replay/stop"),
+  virtual: () => call<VirtualOverview>("GET", "/api/virtual"),
+  virtualView: (id: number) => call<VirtualView>("GET", `/api/virtual/${id}`),
+  putVirtual: (board: VirtualBoard) => call<void>("PUT", `/api/virtual/${board.id}`, board),
+  deleteVirtual: (id: number) => call<void>("DELETE", `/api/virtual/${id}`),
+  importInissView: (content: string, replace: boolean) => call<InissViewImported>("POST", "/api/virtual/import", { content, replace }),
 };
 
 /** Nastavenie tabule z jej aktualneho stavu (na upravu). */

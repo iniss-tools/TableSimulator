@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Settings;
 using TableSimulator.Contracts.Settings;
 
@@ -11,5 +12,6 @@ public sealed class UpdateSettings : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapPut("settings", async (UpdateSettingsRequest request, ICommandHandler<UpdateSettingsCommand, SettingsUpdatedDto> handler,
             CancellationToken cancellationToken) =>
-            (await handler.Handle(new UpdateSettingsCommand(request), cancellationToken)).Match(Results.Ok, CustomResults.Problem));
+            (await handler.Handle(new UpdateSettingsCommand(request), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .RequireAuthorization(Permissions.SettingsManage);
 }

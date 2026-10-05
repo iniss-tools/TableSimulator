@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Boards;
 using TableSimulator.Contracts.Boards;
 
@@ -10,5 +11,6 @@ public sealed class GetBoard : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapGet("boards/{id}", async (string id, IQueryHandler<GetBoardQuery, BoardDto> handler, CancellationToken cancellationToken) =>
-            (await handler.Handle(new GetBoardQuery(id), cancellationToken)).Match(Results.Ok, CustomResults.Problem));
+            (await handler.Handle(new GetBoardQuery(id), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .RequireAuthorization(Permissions.SimulatorView);
 }

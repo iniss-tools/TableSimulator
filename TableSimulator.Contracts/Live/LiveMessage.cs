@@ -14,4 +14,5 @@ namespace TableSimulator.Contracts.Live;
 [JsonDerivedType(typeof(RecordingsMessage), "recordings")]
 [JsonDerivedType(typeof(RecorderMessage), "recorder")]
 [JsonDerivedType(typeof(ReplayMessage), "replay")]
+[JsonDerivedType(typeof(VirtualMessage), "virtual")]
 public abstract record LiveMessage;

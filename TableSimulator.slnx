@@ -2,6 +2,7 @@
   <Project Path="TableSimulator.Core/TableSimulator.Core.csproj" />
   <Project Path="TableSimulator.Contracts/TableSimulator.Contracts.csproj" />
   <Project Path="TableSimulator.Application/TableSimulator.Application.csproj" />
+  <Project Path="TableSimulator.Persistence/TableSimulator.Persistence.csproj" />
   <Project Path="TableSimulator/TableSimulator.csproj" />
   <Project Path="TableSimulator.Tests/TableSimulator.Tests.csproj" />
 </Solution>

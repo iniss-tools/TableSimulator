@@ -4,10 +4,12 @@ using Serilog;
 using TableSimulator.Api;
 using TableSimulator.Application;
 using TableSimulator.Infrastructure;
+using TableSimulator.Infrastructure.Auth;
 using TableSimulator.Infrastructure.Hosting;
 using TableSimulator.Infrastructure.Logging;
 using TableSimulator.Infrastructure.Realtime;
 using TableSimulator.Infrastructure.Settings;
+using TableSimulator.Persistence;
 
 // parametre: --data <priecinok> (nastavenia), --config <subor> (linky a tabule), --port <cislo>, --no-browser
 Log.Logger = SerilogSetup.CreateBootstrapLogger();
@@ -23,23 +25,31 @@ try
     builder.Services.AddSerilog((_, logger) => SerilogSetup.Configure(logger, paths));
     builder.Services.AddProblemDetails();
     builder.Services.AddInfrastructure(paths, settings);
+    builder.Services.AddPersistence(paths.DatabaseFile);
+    builder.Services.AddAuth(paths, new AuthMode(settings.Current.LoginRequired));
     builder.Services.AddApplication();
     builder.Services.AddEndpoints(typeof(Program).Assembly);
 
     var app = builder.Build();
+    await DatabaseInitializer.InitializeAsync(app.Services);
     app.UseExceptionHandler();
     app.UseWebSockets();
     app.UseDefaultFiles();
     app.UseDesignFiles();
     app.UseStaticFiles();
     app.UseSerilogRequestLogging(SerilogSetup.ConfigureRequestLogging);
+    app.UseAuthentication();
+    app.UseAuthorization();
+    app.UseCsrfHeader();
+    app.UseUserLogContext();
     app.MapLiveSocket("/ws");
     app.MapEndpoints(app.MapGroup("/api"));
 
     var url = string.Create(CultureInfo.InvariantCulture, $"http://localhost:{settings.Current.HttpPort}/");
     app.Lifetime.ApplicationStarted.Register(() =>
     {
-        Log.Information("TableSimulator: {Url} (nastavenia: {DataFolder})", url, paths.DataFolder);
+        Log.Information("TableSimulator: {Url} (nastavenia: {DataFolder}, prihlasovanie: {Login})", url, paths.DataFolder,
+            settings.Current.LoginRequired ? "zapnute" : "vypnute - len tento pocitac");
         if (!commandLine.NoBrowser)
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true })?.Dispose();
     });
@@ -56,3 +66,6 @@ finally
 {
     await Log.CloseAndFlushAsync();
 }
+
+/// <summary>Vstupny bod servera (aj pre testy cez WebApplicationFactory).</summary>
+public partial class Program;

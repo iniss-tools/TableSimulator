@@ -12,6 +12,10 @@ public sealed class UpdateSettingsCommandValidator : AbstractValidator<UpdateSet
             RuleFor(c => c.Request.HttpPort).InclusiveBetween(1, 65535).WithErrorCode(SettingsErrors.Port);
             RuleFor(c => c.Request.ConnectHost).Must(h => h is null || !h.Trim().Any(char.IsWhiteSpace)).WithErrorCode(SettingsErrors.ConnectHost)
                 .WithMessage("The address must not contain spaces.");
+            RuleFor(c => c.Request.VirtualFolders)
+                .Must(f => f is null || f.Count(p => !string.IsNullOrWhiteSpace(p)) <= SettingsErrors.MaxVirtualFolders)
+                .WithErrorCode(SettingsErrors.VirtualFolders)
+                .WithMessage($"At most {SettingsErrors.MaxVirtualFolders} folders with table XML files.");
         });
     }
 }

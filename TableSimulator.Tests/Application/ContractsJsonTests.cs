@@ -70,6 +70,8 @@ public class ContractsJsonTests
 
         Assert.AreEqual("""{"type":"design","id":"lcd-dark"}""", json);
         Assert.AreEqual("""{"type":"structure"}""", JsonSerializer.Serialize<LiveMessage>(new StructureMessage(), Web));
+        Assert.AreEqual("""{"type":"virtual","sources":["KosiceO"],"definitions":false}""",
+            JsonSerializer.Serialize<LiveMessage>(new VirtualMessage(["KosiceO"], false), Web));
     }
 
     [TestMethod]

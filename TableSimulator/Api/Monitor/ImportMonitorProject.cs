@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Monitor;
 using TableSimulator.Contracts.Monitor;
 
@@ -12,5 +13,6 @@ public sealed class ImportMonitorProject : IEndpoint
         app.MapPost("monitor/import", async (MonitorImportRequest request, ICommandHandler<ImportMonitorProjectCommand, MonitorImportedDto> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new ImportMonitorProjectCommand(request.Project, request.Line), cancellationToken))
-            .Match(Results.Ok, CustomResults.Problem));
+            .Match(Results.Ok, CustomResults.Problem))
+            .RequireAuthorization(Permissions.SimulatorEdit);
 }

@@ -21,7 +21,7 @@ namespace TableSimulator.Application.Mapping;
 /// <summary>
 /// Prevod stavu simulatora na kontrakty API - stav tabul a liniek sa cita pod zamkom simulatora.
 /// </summary>
-public static class DtoMapper
+public static partial class DtoMapper
 {
     /// <summary>Vyrobcovia, ktorych tabule simulator zobrazi, podla triedy linky.</summary>
     public static IReadOnlyDictionary<string, string[]> Manufacturers { get; } = Simulator.SupportedClasses.ToDictionary(
@@ -157,7 +157,9 @@ public static class DtoMapper
         ArgumentNullException.ThrowIfNull(paths);
         return new SettingsDto(settings.HttpPort, settings.AllowNetwork, settings.FontsFolder, settings.DesignsFolder, settings.ConnectHost, paths.ConfigPath)
         {
-            MonitorFolder = settings.MonitorFolder
+            MonitorFolder = settings.MonitorFolder,
+            RequireLogin = settings.RequireLogin,
+            VirtualFolders = settings.VirtualFolders
         };
     }
 

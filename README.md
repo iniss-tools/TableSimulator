@@ -23,10 +23,12 @@ dotnet run --project TableSimulator/TableSimulator.csproj
 
 Server otvorí prehliadač na `http://localhost:5470/`. Parametre: `--port <číslo>`, `--no-browser`,
 `--data <priečinok>` (nastavenia inde než v `%AppData%\TableSimulator`, napr. prenosná inštalácia),
-`--config <súbor>` (linky a tabule).
+`--config <súbor>` (linky a tabule). Chýbajúci parameter nahradí premenná prostredia `TABLESIMULATOR_DATA`,
+`TABLESIMULATOR_CONFIG` alebo `TABLESIMULATOR_NO_BROWSER=1` (využívajú ju testy servera).
 
 Server zapisuje záznam (Serilog) do konzoly a do denných súborov `logs\tablesimulator-RRRRMMDD.log` v priečinku
-nastavení (14 dní): spojenia liniek s INISSom, vybavené príkazy, odmietnuté vstupy a chyby.
+nastavení (14 dní): spojenia liniek s INISSom, vybavené príkazy, prihlásenia, odmietnuté požiadavky a chyby.
+Riadok súboru nesie meno prihláseného používateľa (`-` bez prihlásenia a mimo požiadaviek).
 
 Build zostaví aj webové rozhranie (`bun install` a `bun run build` v `web/`, výstup do `TableSimulator/wwwroot`);
 `-p:SkipWebBuild=true` ho vynechá. Pri vývoji webu: spustený server a v `web/` `bun run dev` (Vite posiela `/api`
@@ -51,7 +53,8 @@ simulátor*. Zapíše vybrané linky do `.INI` vedľa programu (celé sekcie `Dr
 a `OutToTableDriver=1`, pôvodný stav v komentároch, zrušenie ho vráti) a cez `POST /api/station` založí v simulátore
 linky s rovnakým číslom a triedou a tabule z `TPhysic`/`TKatalog` (adresa, výrobca, názov; profil podľa výrobcu so
 samoučením rozmeru). Tabule, ktoré v simulátore už sú, ostanú nezmenené; linke, ktorá už existuje, sa zmení len trieda
-a port. Zmena triedy linky prevedie obsah jej tabúľ na novú rodinu (ELEN ↔ znakové).
+a port. Zmena triedy linky prevedie obsah jej tabúľ na novú rodinu (ELEN ↔ znakové). Ak simulátor vyžaduje
+prihlásenie, GVDEditor zapíše `.INI`, ale linky a tabule v simulátore nezaloží (server odpovie `401`).
 
 Linka môže ísť aj cez **sériový port** (`COM13:9600,n,8,1`) – napríklad druhý koniec virtuálneho páru COM
 portov, ktorého prvý koniec má INISS v `TablePort=COM3`.
@@ -119,15 +122,49 @@ kus prevádzky – `{"t":1.234,"line":1,"rx":"0185…"}` od INISSu alebo `{"t":�
 (`t` sú sekundy od začiatku, bajty v hex). Ukladajú sa bajty tak, ako prišli, nie celé správy, aby prehratie prešlo
 rovnakým skladaním správ.
 
+## Virtuálne tabule
+
+Tabuľa, ktorá má v INISSe vyplnený export do XML (`SAVE_XML` v `TPhysic.TXT`, spravidla s adresou `-1`), zapisuje
+svoj obsah do súboru `<SAVE_XML>.xml` v priečinku logov INISSu (`PathNames\LogPath`). Simulátor tieto súbory číta
+a ukazuje na celej obrazovke ako INISSView – bez IIS a šablón XSL. Nastavenie INISSu popisuje návod *Virtuálne
+tabule cez INISSView* v dokumentácii INISSTools.
+
+1. V **Nastaveniach** zadajte priečinok logov INISSu (najviac 4, jeden na riadok; aj sieťový). Simulátor ho
+   prechádza každé 2 s. Rovnomenný súbor vo viacerých priečinkoch sa berie novší, pri rovnakom čase z prvého
+   priečinka – ako INISSView pri dvoch priečinkoch. Denné archívy `TAB*.XML`/`REP*.XML` a iné XML vynechá.
+2. Na stránke **Virtuálne** pridajte tabuľu: číslo (adresa zobrazenia `#/virtual/<číslo>`, ako `t=` v INISSView),
+   súbor XML (`SAVE_XML` bez prípony), počet záznamov a poradie prvého (jedna tabuľa INISSu na dvoch obrazovkách:
+   6 od 1. a 6 od 7.) a oddeľovač. Tabuľa sa dá založiť aj priamo zo zoznamu nájdených súborov.
+3. Odkaz **Zobraziť** dajte prehliadaču na monitore (dvojklik = celá obrazovka).
+
+**Načítať z INISSView** prevezme definície tabúľ zo súboru `Web.config` (čísla, názvy, popisy, súbory, riadky,
+oddeľovač; parametre oddeľuje `TabInfoSeparator`, apostrofy sa vynechajú). Tabuľu s číslom, ktoré už je, prepíše
+len so zaškrtnutým *prepísať*. Priečinky z `TabXmlDir` ponúkne na sledovanie. Šablóna XSL a parameter `x` sa
+uložia pre budúcu podporu šablón, zatiaľ sa nepoužívajú.
+
+Zobrazenie:
+- Stĺpce idú v poradí stĺpcov katalógovej tabule (prvky `row` v XML). Druh a číslo vlaku sú jeden stĺpec,
+  `typehex` a stĺpce prázdne vo všetkých záznamoch sa vynechajú.
+- Časti textu oddelené `#` sa striedajú po 1,5 s. Oddeľovač ich ukáže naraz, ale len v cieľovej stanici a smere,
+  ako v INISSView.
+- Text s jedinou časťou a znakom `#` (napr. `3#`) bliká.
+- Keď uplynie platnosť obsahu (`validto`), tabuľa ukáže, že údaje nie sú aktuálne (INISS asi nebeží). Neúplný
+  súbor, ktorý INISS práve zapisuje, sa skúsi znova; chyba sa ohlási až po troch neúspešných pokusoch.
+
+Definície sú v databáze servera (`tablesimulator.db`). API: `GET /api/virtual` (definície, súbory, priečinky),
+`GET /api/virtual/{číslo}` (vybrané záznamy), `PUT`/`DELETE /api/virtual/{číslo}`, `POST /api/virtual/import`;
+zmenu súboru alebo definícií ohlási WebSocket správou `virtual`.
+
 ## Architektúra
 
 | Projekt                       | Obsah                                                                                    |
 |-------------------------------|------------------------------------------------------------------------------------------|
-| `TableSimulator.Core`         | `net10.0` bez UI a bez Windows: linky (`Transport/`), protokoly (`Protocols/`), stav tabúľ (`Boards/`), záznam a prehratie (`Recording/`), súbory ELEN Monitora (`Monitor/`), `Simulation/Simulator` |
+| `TableSimulator.Core`         | `net10.0` bez UI a bez Windows: linky (`Transport/`), protokoly (`Protocols/`), stav tabúľ (`Boards/`), záznam a prehratie (`Recording/`), súbory ELEN Monitora (`Monitor/`), XML tabúľ INISSu a definície INISSView (`Virtual/`), `Simulation/Simulator` |
 | `TableSimulator.Contracts`    | kontrakty API a WebSocketu – DTO bez logiky a bez závislostí, každé v samostatnom súbore po oblastiach (`Lines/`, `Boards/`, `Display/`, `Frames/`, `Recordings/`, `Live/`…); používa ich aj GVDEditor |
-| `TableSimulator.Application`  | príkazy a dotazy (CQRS bez mediátora) s handlermi a validátormi FluentValidation po oblastiach, dekorátory (overenie, záznam), `Result`/`Error`, mapovanie jadro ↔ kontrakty, služby (záznamy, písma, vzhľady) |
-| `TableSimulator`              | server ASP.NET Core: endpointy v `Api/` (každý v samostatnom súbore), WebSocket `/ws`, Serilog, súbory nastavení a konfigurácie v `Infrastructure/` |
-| `TableSimulator.Tests`        | MSTest – rámce a súčty podľa príkladov z docs (ELEN, LCD1, ITP), rozklad riadku, simulátor, linka TCP aj rúra, záznam a prehratie, aplikačná vrstva a tvar JSON kontraktov |
+| `TableSimulator.Application`  | príkazy a dotazy (CQRS bez mediátora) s handlermi a validátormi FluentValidation po oblastiach, dekorátory (overenie, záznam), `Result`/`Error`, mapovanie jadro ↔ kontrakty, služby (záznamy, písma, vzhľady), roly a oprávnenia (`Auth/`) |
+| `TableSimulator.Persistence`  | databáza servera (EF Core + ASP.NET Core Identity): používatelia a roly, definície virtuálnych tabúľ; `AppDbContext` je spoločný, poskytovateľ má vlastnú podtriedu a migrácie (`Sqlite/`, `Migrations/Sqlite/`) |
+| `TableSimulator`              | server ASP.NET Core: endpointy v `Api/` (každý v samostatnom súbore), WebSocket `/ws`, Serilog, prihlasovanie (`Infrastructure/Auth/`), súbory nastavení a konfigurácie v `Infrastructure/` |
+| `TableSimulator.Tests`        | MSTest – rámce a súčty podľa príkladov z docs (ELEN, LCD1, ITP), rozklad riadku, simulátor, linka TCP aj rúra, záznam a prehratie, aplikačná vrstva, tvar JSON kontraktov, XML tabúľ a `Web.config` INISSView, server cez `WebApplicationFactory` (prihlasovanie, oprávnenia, virtuálne tabule) |
 | `web/`                        | React + TypeScript (bun, Vite): ovládanie a renderer tabúľ; testy `bun test`              |
 
 ### API
@@ -137,14 +174,24 @@ Endpoint je tenký: z požiadavky zostaví príkaz (`ICommand`) alebo dotaz (`IQ
 odpoveď. Handlery a validátory sa registrujú skenovaním zostavenia (Scrutor) a každý handler obalia dekorátory:
 **overenie** (validátory FluentValidation – pri chybe sa handler nespustí) a navonok **záznam** (čas, chyba).
 
-Chyba je odpoveď ProblemDetails so stavom podľa druhu (`400` neplatné vstupy a nevykonateľná požiadavka, `404`,
-`409`, `500`), kódom chyby vo vlastnosti `code` a pri neplatných vstupoch zoznamom `errors: [{code, description}]`.
+Chyba je odpoveď ProblemDetails so stavom podľa druhu (`400` neplatné vstupy a nevykonateľná požiadavka, `401`
+neprihlásený, `403` bez oprávnenia, `404`, `409`, `500`), kódom chyby vo vlastnosti `code` a pri neplatných vstupoch zoznamom `errors: [{code, description}]`.
 Kód je stabilný kľúč (`line.endpoint`, `board.notFound`…) – webové rozhranie podľa neho zobrazí text v jazyku obsluhy
 (`error.<kód>` v `web/src/i18n`), `description` je anglický popis pre záznam a klientov bez prekladu.
 
 Novú požiadavku pridáte takto: DTO do `TableSimulator.Contracts`, príkaz alebo dotaz s handlerom (a validátorom) do
-oblasti v `TableSimulator.Application`, trieda `IEndpoint` do `TableSimulator/Api/<oblasť>/`, typy do
-`web/src/api.ts` a texty nových kódov chýb do `web/src/i18n`.
+oblasti v `TableSimulator.Application`, trieda `IEndpoint` do `TableSimulator/Api/<oblasť>/` s politikou
+`.RequireAuthorization(Permissions.X)` (verejný endpoint výslovne `.AllowAnonymous()` – test
+`KazdyEndpoint_MaPolitikuAleboJeVerejny` endpoint bez jedného z nich odmietne), typy do `web/src/api.ts` a texty
+nových kódov chýb do `web/src/i18n`.
+
+Zmena databázy = nová migrácia pre každého poskytovateľa:
+
+```bash
+dotnet ef migrations add <Nazov> --project TableSimulator.Persistence --startup-project TableSimulator.Persistence --context SqliteAppDbContext --output-dir Migrations/Sqlite
+```
+
+Server databázu pri štarte vytvorí alebo zmigruje a doplní roly.
 
 ### Jadro, profil a vzhľad
 
@@ -207,4 +254,33 @@ s vysokými číslicami (bit `0x08`) sa medzera, číslice a dvojbodka berú zo 
 
 `#/view/<linka>-<adresa>` ukáže jednu tabuľu bez ovládania (dvojklik = celá obrazovka), `#/wall` všetky tabule
 pod sebou. Aby boli dostupné z iných zariadení, zapnite v **Nastaveniach** prístup zo siete (po reštarte server
-počúva na všetkých rozhraniach; Windows sa môže spýtať na bránu firewall).
+počúva na všetkých rozhraniach; Windows sa môže spýtať na bránu firewall). Prístup zo siete vždy vyžaduje
+prihlásenie – zariadenie s tabuľou sa prihlási ako používateľ s rolou *pozorovateľ*.
+
+## Prihlasovanie a oprávnenia
+
+Kým je server dostupný len z tohto počítača a v **Nastaveniach** nie je zapnuté *Vyžadovať prihlásenie aj na tomto
+počítači*, prihlásenie sa nepýta a každý je správca (`local`). Prihlásenie platí, ak je zapnutá aspoň jedna z volieb
+*prístup zo siete* a *vyžadovať prihlásenie*; obe sa prejavia po reštarte servera.
+
+Prvé otvorenie bez používateľov ponúkne založenie **prvého správcu** – len na počítači so simulátorom (požiadavka
+zo siete sa odmietne). Heslo má aspoň 8 znakov, po 5 neúspešných pokusoch sa účet na 5 minút zablokuje.
+*Zostať prihlásený* drží prihlásenie 14 dní od posledného použitia (aj po reštarte servera), inak do zatvorenia
+prehliadača.
+
+| Rola          | Môže                                                                         |
+|---------------|------------------------------------------------------------------------------|
+| `admin`       | všetko vrátane nastavení servera a používateľov                               |
+| `operator`    | tabule a linky meniť, záznamy nahrávať, prehrávať a mazať, komunikácia        |
+| `viewer`      | tabule, linky, záznamy a komunikáciu len pozerať                              |
+
+Oprávnenia (`simulator.view`, `simulator.edit`, `recordings.manage`, `log.view`, `settings.manage`, `users.manage`)
+kontroluje server na každom endpointe aj na WebSockete; webové rozhranie podľa `/api/auth/me` len skryje, čo
+používateľ nesmie.
+
+Databáza používateľov je `tablesimulator.db` (SQLite) v priečinku nastavení, kľúče na podpis prihlásenia
+v `keys\` (vo Windows šifrované DPAPI) – ich zmazanie odhlási všetkých.
+
+Klient API mimo prehliadača: zmena (`POST`, `PUT`, `DELETE`) musí niesť hlavičku `X-Requested-With` s ľubovoľnou
+hodnotou (ochrana proti CSRF, inak `403 auth.csrf`); GVDEditor ju posiela. WebSocket `/ws` odmietne spojenie
+zo stránky iného servera (hlavička `Origin`).

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Station;
 using TableSimulator.Contracts.Station;
 
@@ -11,5 +12,6 @@ public sealed class ImportStation : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapPost("station", async (StationImportRequest request, ICommandHandler<ImportStationCommand, StationImportedDto> handler,
             CancellationToken cancellationToken) =>
-            (await handler.Handle(new ImportStationCommand(request), cancellationToken)).Match(Results.Ok, CustomResults.Problem));
+            (await handler.Handle(new ImportStationCommand(request), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .RequireAuthorization(Permissions.SimulatorEdit);
 }

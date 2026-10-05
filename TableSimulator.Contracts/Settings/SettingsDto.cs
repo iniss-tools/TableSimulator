@@ -6,4 +6,10 @@ public sealed record SettingsDto(int HttpPort, bool AllowNetwork, string FontsFo
 {
     /// <summary>Priecinok programu ELEN Monitor.</summary>
     public string MonitorFolder { get; init; } = "";
+
+    /// <summary>Vyzadovat prihlasenie aj z tohto pocitaca (pri pristupe zo siete sa vyzaduje vzdy).</summary>
+    public bool RequireLogin { get; init; }
+
+    /// <summary>Priecinky logov INISSu s XML tabul pre virtualne tabule (prvy ma prednost pri rovnakom case).</summary>
+    public IReadOnlyList<string> VirtualFolders { get; init; } = [];
 }
