@@ -1,4 +1,5 @@
-// Typy a volania API servera simulatora (zrkadli TableSimulator/Api/Dtos.cs).
+// Typy a volania API servera simulatora (zrkadli projekt TableSimulator.Contracts).
+import { hasText, t } from "./i18n";
 
 export type LineMode = "display" | "monitor";
 export type LineStatus = "stopped" | "listening" | "connected" | "error";
@@ -262,8 +263,39 @@ export interface MonitorInfo {
   projects: string[];
 }
 
-/** Chyba volania API s textom zo servera. */
+/** Chyba volania API s textom pre obsluhu. */
 export class ApiError extends Error {}
+
+/** Chyba v odpovedi servera (ProblemDetails): kod je kluc textu, popis je anglicky. */
+interface ProblemError {
+  code: string;
+  description: string;
+}
+
+interface Problem {
+  code?: string;
+  detail?: string;
+  errors?: ProblemError[];
+}
+
+/** Text chyby v jazyku obsluhy podla kodu; neznamy kod = popis zo servera. */
+function describe(code: string | undefined, description: string | undefined, fallback: string): string {
+  const key = `error.${code}`;
+  return code && hasText(key) ? t(key) : description || fallback;
+}
+
+/** Chyba z odpovede servera - pri neplatnych vstupoch vsetky chyby pod sebou. */
+async function apiError(response: Response): Promise<ApiError> {
+  const fallback = `${response.status} ${response.statusText}`;
+  try {
+    const data = (await response.json()) as Problem;
+    if (data.errors?.length) return new ApiError(data.errors.map((e) => describe(e.code, e.description, fallback)).join("\n"));
+    return new ApiError(describe(data.code, data.detail, fallback));
+  } catch {
+    // bez tela
+    return new ApiError(fallback);
+  }
+}
 
 async function call<T>(method: string, url: string, body?: unknown): Promise<T> {
   const response = await fetch(url, {
@@ -271,16 +303,7 @@ async function call<T>(method: string, url: string, body?: unknown): Promise<T> 
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  if (!response.ok) {
-    let message = `${response.status} ${response.statusText}`;
-    try {
-      const data = await response.json();
-      if (data?.error) message = data.error;
-    } catch {
-      // bez tela
-    }
-    throw new ApiError(message);
-  }
+  if (!response.ok) throw await apiError(response);
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }
@@ -305,7 +328,7 @@ export const api = {
   recordingUrl: (name: string) => `/api/recordings/${encodeURIComponent(name)}/file`,
   uploadRecording: async (file: File) => {
     const response = await fetch(`/api/recordings/upload?name=${encodeURIComponent(file.name)}`, { method: "POST", body: file });
-    if (!response.ok) throw new ApiError(String(response.status));
+    if (!response.ok) throw await apiError(response);
     return (await response.json()) as RecordingInfo;
   },
   play: (name: string, speed: number, loop: boolean) => call<ReplayStatus>("POST", "/api/replay", { name, speed, loop }),

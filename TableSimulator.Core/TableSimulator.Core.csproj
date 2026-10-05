@@ -16,5 +16,7 @@
 	<ItemGroup>
 		<!-- seriova linka a zrkadlenie linky na COM port (virtualny par COM portov, ELEN Monitor) -->
 		<PackageReference Include="System.IO.Ports" Version="10.0.12" />
+		<!-- zaznamy spojeni liniek; zapisuje ich server (Serilog) -->
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
 	</ItemGroup>
 </Project>

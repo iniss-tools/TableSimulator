@@ -238,6 +238,8 @@ main {
 
 .error {
   color: var(--bad);
+  /* viac chyb z overenia pod sebou */
+  white-space: pre-line;
 }
 
 .empty {
