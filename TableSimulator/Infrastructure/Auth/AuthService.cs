@@ -14,6 +14,7 @@ public sealed class AuthService(
     UserManager<AppUser> users,
     SignInManager<AppUser> signIn,
     IHttpContextAccessor accessor,
+    TimeProvider time,
     ILogger<AuthService> logger) : IAuthService
 {
     public bool LoginRequired => mode.LoginRequired;
@@ -21,7 +22,8 @@ public sealed class AuthService(
     /// <summary>Spojenie z tohto pocitaca (TestServer adresu nema - tiez lokalne).</summary>
     public bool IsLocalRequest => accessor.HttpContext?.Connection.RemoteIpAddress is not { } remote || IPAddress.IsLoopback(remote);
 
-    public Task<bool> HasUsersAsync(CancellationToken cancellationToken) => users.Users.AnyAsync(cancellationToken);
+    public async Task<bool> HasAdminAsync(CancellationToken cancellationToken) =>
+        (await users.GetUsersInRoleAsync(Roles.Admin).ConfigureAwait(false)).Any(u => !u.IsDisabled);
 
     public async Task<(SignInOutcome Outcome, SignedInUser? User)> SignInAsync(string userName, string password, bool remember, CancellationToken cancellationToken)
     {
@@ -43,6 +45,8 @@ public sealed class AuthService(
             return (outcome, null);
         }
 
+        user.LastLoginAt = time.GetUtcNow();
+        await users.UpdateAsync(user).ConfigureAwait(false);
         await signIn.SignInAsync(user, isPersistent: remember).ConfigureAwait(false);
         var signedIn = new SignedInUser(user.UserName!, user.DisplayName, await RoleOfAsync(user).ConfigureAwait(false));
         AuthLog.SignedIn(logger, signedIn.UserName, signedIn.Role);

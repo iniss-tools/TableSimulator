@@ -11,8 +11,11 @@ public interface IAuthService
     /// <summary>Poziadavka prisla z tohto pocitaca.</summary>
     bool IsLocalRequest { get; }
 
-    /// <summary>Existuje aspon jeden pouzivatel.</summary>
-    Task<bool> HasUsersAsync(CancellationToken cancellationToken);
+    /// <summary>
+    /// Existuje aspon jeden spravca, ktory sa moze prihlasit - inak sa na tomto pocitaci ponukne zalozenie spravcu
+    /// (aj ked ini pouzivatelia su).
+    /// </summary>
+    Task<bool> HasAdminAsync(CancellationToken cancellationToken);
 
     /// <summary>Overi meno a heslo a prihlasi (cookie).</summary>
     Task<(SignInOutcome Outcome, SignedInUser? User)> SignInAsync(string userName, string password, bool remember, CancellationToken cancellationToken);

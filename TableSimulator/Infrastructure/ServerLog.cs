@@ -35,6 +35,12 @@ internal static partial class ServerLog
     [LoggerMessage(Level = LogLevel.Information, Message = "XML tabule {Name} uz v priecinkoch nie je")]
     public static partial void XmlTableRemoved(ILogger logger, string name);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Audit: odstranenych {Count} zaznamov starsich nez {Days} dni")]
+    public static partial void AuditCleaned(ILogger logger, int count, int days);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Cistenie auditu zlyhalo")]
+    public static partial void AuditCleanupFailed(ILogger logger, Exception exception);
+
     [LoggerMessage(Level = LogLevel.Error, Message = "Prechod priecinkov s XML tabul zlyhal")]
     public static partial void XmlTablesFailed(ILogger logger, Exception exception);
 }

@@ -18,6 +18,9 @@ internal static partial class AuthLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Odhlaseny {UserName}")]
     public static partial void SignedOut(ILogger logger, string? userName);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Neplatny pristupovy kluc {Prefix}…")]
+    public static partial void KeyRejected(ILogger logger, string prefix);
+
     [LoggerMessage(Level = LogLevel.Warning, Message = "Zalozeny prvy spravca {UserName}")]
     public static partial void AdminCreated(ILogger logger, string userName);
 }

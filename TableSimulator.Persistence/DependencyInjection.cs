@@ -1,7 +1,11 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using TableSimulator.Application.Audit;
+using TableSimulator.Application.Keys;
 using TableSimulator.Application.Virtual;
+using TableSimulator.Persistence.Audit;
+using TableSimulator.Persistence.Keys;
 using TableSimulator.Persistence.Sqlite;
 using TableSimulator.Persistence.Virtual;
 
@@ -17,6 +21,8 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext, SqliteAppDbContext>(options => options.UseSqlite(connection));
         services.AddScoped<IVirtualBoardRepository, VirtualBoardRepository>();
         services.AddScoped<IVirtualLayoutRepository, VirtualLayoutRepository>();
+        services.AddScoped<IAuditLog, AuditLog>();
+        services.AddScoped<IAccessKeyRepository, AccessKeyRepository>();
         return services;
     }
 }

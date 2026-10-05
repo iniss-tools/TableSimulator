@@ -1,6 +1,6 @@
 // Prihlasenie a zalozenie prveho spravcu (kym na serveri nie je ziaden pouzivatel).
 import { useState } from "react";
-import { api, ApiError } from "../api";
+import { accessKey, api, ApiError, forgetAccessKey } from "../api";
 import { t } from "../i18n";
 import { loadMe } from "../store";
 import { Field } from "./Dialog";
@@ -13,6 +13,8 @@ export function AuthPage({ setup }: { setup: boolean }) {
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // karta ma kluc zariadenia, ktory server neprijal (odstraneny alebo zle skopirovany)
+  const [keyInvalid, setKeyInvalid] = useState(accessKey() !== null);
 
   const submit = async () => {
     if (setup && password !== again) {
@@ -21,6 +23,9 @@ export function AuthPage({ setup }: { setup: boolean }) {
     }
     setBusy(true);
     setError(null);
+    // prihlasenie heslom - neplatny kluc by ho prebil
+    forgetAccessKey();
+    setKeyInvalid(false);
     try {
       if (setup) await api.setup(userName.trim(), displayName.trim(), password);
       else await api.login(userName.trim(), password, remember);
@@ -45,6 +50,7 @@ export function AuthPage({ setup }: { setup: boolean }) {
           <img src="/favicon.svg" alt="" width={26} height={26} /> {t("app.title")}
         </h1>
         <h2>{setup ? t("auth.title.setup") : t("auth.title.login")}</h2>
+        {keyInvalid && <p className="error">{t("auth.keyInvalid")}</p>}
         {setup && <p className="hint">{t("auth.setup.text")}</p>}
         <Field label={t("auth.userName")} wide>
           <input autoFocus autoComplete="username" value={userName} onChange={(e) => setUserName(e.target.value)} />

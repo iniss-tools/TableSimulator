@@ -2,6 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 using TableSimulator.Application;
 using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Abstractions.Results;
+using TableSimulator.Application.Audit;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Boards;
 using TableSimulator.Application.Decorators;
 using TableSimulator.Application.Lines;
@@ -36,7 +38,35 @@ public class ApplicationPipelineTests
         public void Publish(LiveMessage message) => Messages.Add(message);
     }
 
-    private static ServiceProvider Create(out Simulator simulator, out TestLive live)
+    private sealed class TestAudit : IAuditLog
+    {
+        public List<AuditEntry> Entries { get; } = [];
+
+        public Task WriteAsync(AuditEntry entry, CancellationToken cancellationToken)
+        {
+            Entries.Add(entry);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<AuditEntry>> ListAsync(long? before, string? user, string? action, int limit, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<AuditEntry>>(Entries);
+
+        public Task<int> DeleteOlderThanAsync(DateTime time, CancellationToken cancellationToken) => Task.FromResult(0);
+    }
+
+    private sealed class TestUser : ICurrentUser
+    {
+        public bool IsAuthenticated => true;
+        public string? UserName => "operator1";
+        public string? DisplayName => "Operátor";
+        public string? Role => Roles.Operator;
+        public string? Address => "192.168.1.20";
+        public bool IsAccessKey => false;
+    }
+
+    private static ServiceProvider Create(out Simulator simulator, out TestLive live) => Create(out simulator, out live, new TestAudit());
+
+    private static ServiceProvider Create(out Simulator simulator, out TestLive live, TestAudit audit)
     {
         simulator = new Simulator();
         live = new TestLive();
@@ -48,6 +78,9 @@ public class ApplicationPipelineTests
         services.AddSingleton(new AppPaths(folder, Path.Combine(folder, "config.json"), Path.Combine(folder, "wwwroot")));
         services.AddSingleton<ISettingsStore>(new TestSettings());
         services.AddSingleton<ILiveNotifier>(live);
+        services.AddSingleton<IAuditLog>(audit);
+        services.AddSingleton<ICurrentUser>(new TestUser());
+        services.AddSingleton(TimeProvider.System);
         services.AddApplication();
         return services.BuildServiceProvider();
     }
@@ -68,6 +101,36 @@ public class ApplicationPipelineTests
         var handler = scope.ServiceProvider.GetRequiredService<ICommandHandler<SetLineCommand>>();
 
         Assert.IsInstanceOfType<LoggingCommandHandler<SetLineCommand>>(handler);
+    }
+
+    [TestMethod]
+    public async Task Prikaz_ZapisanyDoAuditu()
+    {
+        var audit = new TestAudit();
+        await using var provider = Create(out _, out _, audit);
+        using var scope = provider.CreateScope();
+        var handler = scope.ServiceProvider.GetRequiredService<ICommandHandler<SetLineCommand>>();
+
+        await handler.Handle(new SetLineCommand(500, Pipe()), CancellationToken.None);
+
+        var entry = audit.Entries.Single();
+        Assert.AreEqual(("operator1", "SetLine", "500", false, "validation", "192.168.1.20"),
+            (entry.User, entry.Action, entry.Target, entry.Success, entry.Error, entry.Address));
+        StringAssert.Contains(entry.Details, "\"tableClass\":4");
+    }
+
+    [TestMethod]
+    public void AuditDetails_BezHesielAVelkychObsahov()
+    {
+        var login = AuditDetails.Of(new TableSimulator.Application.Auth.LoginCommand("novak", "tajne-heslo", true));
+        var upload = AuditDetails.Of(new TableSimulator.Application.Recordings.UploadRecordingCommand("a.tsrec", new byte[1000]));
+        var long_ = AuditDetails.Of(new TableSimulator.Application.Recordings.DeleteRecordingCommand(new string('x', 500)));
+
+        Assert.AreEqual("""{"userName":"novak","password":"***","remember":true}""", login);
+        Assert.AreEqual("""{"fileName":"a.tsrec"}""", upload);
+        Assert.AreEqual("{\"name\":\"" + new string('x', AuditDetails.MaxText) + "…\"}", long_);
+        StringAssert.Contains(AuditDetails.Of(new TableSimulator.Application.Virtual.DeleteVirtualLayoutCommand("príchody")), "príchody");
+        Assert.AreEqual("", AuditDetails.Of(new TableSimulator.Application.Auth.LogoutCommand()));
     }
 
     [TestMethod]

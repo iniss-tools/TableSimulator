@@ -15,4 +15,8 @@ public sealed record MeDto(
     string? UserName,
     string? DisplayName,
     string? Role,
-    IReadOnlyList<string> Permissions);
+    IReadOnlyList<string> Permissions)
+{
+    /// <summary>Poziadavka prisla s pristupovym klucom (zariadenie, program) - nema heslo ani odhlasenie.</summary>
+    public bool AccessKey { get; init; }
+}

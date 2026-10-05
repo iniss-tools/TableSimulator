@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddHostedService<SimulatorHostedService>();
         services.AddHostedService<DesignWatcherService>();
         services.AddHostedService<XmlTableWatcherService>();
+        services.AddHostedService<AuditRetentionService>();
         return services;
     }
 }

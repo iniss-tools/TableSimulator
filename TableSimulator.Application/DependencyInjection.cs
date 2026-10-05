@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Audit;
 using TableSimulator.Application.Decorators;
 using TableSimulator.Application.Designs;
 using TableSimulator.Application.Fonts;
@@ -13,7 +14,7 @@ public static class DependencyInjection
 {
     /// <summary>
     /// Handlery najde v tomto zostaveni (Scrutor). Dekoratory obalia kazdy handler - posledny pridany je vonkajsi:
-    /// zaznam (cas, chyba) obsahuje aj overenie vstupov.
+    /// zaznam (cas, chyba) obsahuje audit a ten overenie vstupov - do auditu ide aj prikaz s neplatnymi vstupmi.
     /// </summary>
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
@@ -32,6 +33,9 @@ public static class DependencyInjection
         services.Decorate(typeof(ICommandHandler<,>), typeof(ValidationCommandHandler<,>));
         services.Decorate(typeof(ICommandHandler<>), typeof(ValidationCommandHandler<>));
 
+        services.Decorate(typeof(ICommandHandler<,>), typeof(AuditCommandHandler<,>));
+        services.Decorate(typeof(ICommandHandler<>), typeof(AuditCommandHandler<>));
+
         services.Decorate(typeof(IQueryHandler<,>), typeof(LoggingQueryHandler<,>));
         services.Decorate(typeof(ICommandHandler<,>), typeof(LoggingCommandHandler<,>));
         services.Decorate(typeof(ICommandHandler<>), typeof(LoggingCommandHandler<>));
@@ -43,6 +47,7 @@ public static class DependencyInjection
         services.AddSingleton<RecordingService>();
         services.AddSingleton<FontCatalog>();
         services.AddSingleton<DesignCatalog>();
+        services.AddScoped<AuditWriter>();
         return services;
     }
 }

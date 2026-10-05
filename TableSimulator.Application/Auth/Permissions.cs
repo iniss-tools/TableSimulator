@@ -21,6 +21,9 @@ public static class Permissions
     /// <summary>Spravovat pouzivatelov.</summary>
     public const string UsersManage = "users.manage";
 
+    /// <summary>Prezerat audit - kto co urobil.</summary>
+    public const string AuditView = "audit.view";
+
     /// <summary>Vsetky opravnenia.</summary>
-    public static IReadOnlyList<string> All { get; } = [SimulatorView, LogView, SimulatorEdit, RecordingsManage, SettingsManage, UsersManage];
+    public static IReadOnlyList<string> All { get; } = [SimulatorView, LogView, SimulatorEdit, RecordingsManage, SettingsManage, UsersManage, AuditView];
 }

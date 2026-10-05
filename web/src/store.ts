@@ -1,6 +1,6 @@
 // Zivy stav simulatora: prve nacitanie cez /api/state, potom zmeny cez WebSocket /ws.
 import { useSyncExternalStore } from "react";
-import { api, onUnauthorized, type Board, type Frame, type Line, type Me, type RecorderStatus, type ReplayStatus, type State } from "./api";
+import { api, onUnauthorized, socketUrl, type Board, type Frame, type Line, type Me, type RecorderStatus, type ReplayStatus, type State } from "./api";
 
 export interface LiveState {
   /** Prihlaseny pouzivatel; null = este sa nezistilo. */
@@ -77,8 +77,7 @@ export function openSocket(onFrames?: (frames: Frame[]) => void, withLog = false
   let retry: ReturnType<typeof setTimeout> | undefined;
 
   const connect = () => {
-    const proto = location.protocol === "https:" ? "wss" : "ws";
-    socket = new WebSocket(`${proto}://${location.host}/ws${withLog ? "?log=1" : ""}`);
+    socket = new WebSocket(socketUrl(withLog));
     socket.onopen = () => {
       if (!withLog) {
         set({ connected: true });

@@ -10,7 +10,7 @@ public sealed class SetupCommandHandler(IAuthService auth) : ICommandHandler<Set
     {
         if (!auth.LoginRequired)
             return Result.Failure<MeDto>(AuthErrors.NotRequired());
-        if (await auth.HasUsersAsync(cancellationToken).ConfigureAwait(false))
+        if (await auth.HasAdminAsync(cancellationToken).ConfigureAwait(false))
             return Result.Failure<MeDto>(AuthErrors.SetupDone());
         // na servere dostupnom zo siete by si spravcu mohol zalozit hocikto, kto pride prvy
         if (!auth.IsLocalRequest)

@@ -8,9 +8,7 @@ public sealed class GetMeQueryHandler(IAuthService auth, ICurrentUser user) : IQ
 {
     public async Task<Result<MeDto>> Handle(GetMeQuery query, CancellationToken cancellationToken)
     {
-        var setup = auth.LoginRequired && !await auth.HasUsersAsync(cancellationToken).ConfigureAwait(false);
-        return Result.Success(user.IsAuthenticated
-            ? MeFactory.Create(auth.LoginRequired, setup, user.UserName, user.DisplayName, user.Role)
-            : MeFactory.Create(auth.LoginRequired, setup, null, null, null));
+        var setup = auth.LoginRequired && !await auth.HasAdminAsync(cancellationToken).ConfigureAwait(false);
+        return Result.Success(MeFactory.Create(auth.LoginRequired, setup, user));
     }
 }

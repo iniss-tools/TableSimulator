@@ -638,11 +638,38 @@ table.compact td.grow input {
   font-size: 1rem;
 }
 
-.user {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.user-menu {
+  position: relative;
   color: var(--muted);
+}
+
+.user-menu summary {
+  cursor: pointer;
+  white-space: nowrap;
+  list-style: none;
+}
+
+.user-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.user-menu summary::after {
+  content: " ▾";
+}
+
+.user-menu-items {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 10em;
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 /* hlasenia na stranke (vysledok importu, chybajuce nastavenie) */
@@ -823,4 +850,55 @@ table.compact td.grow input {
   .layout-preview {
     position: static;
   }
+}
+
+/* zalozky stranky (pouzivatelia a audit) */
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tabs a {
+  padding: 4px 12px;
+  border-radius: 6px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.tabs a.active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.audit-filter {
+  width: 14em;
+}
+
+table.audit td {
+  font-size: 13px;
+  vertical-align: top;
+}
+
+table.audit tr.audit-failed td {
+  background: color-mix(in srgb, var(--bad) 8%, transparent);
+}
+
+.audit-details {
+  display: block;
+  max-width: 40em;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: 12px;
+}
+
+/* tajna hodnota alebo odkaz na skopirovanie */
+.copy-field {
+  display: flex;
+  gap: 6px;
+}
+
+.copy-field input {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, Consolas, monospace;
 }

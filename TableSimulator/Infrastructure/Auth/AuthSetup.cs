@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using TableSimulator.Application.Auth;
 using TableSimulator.Application.Settings;
+using TableSimulator.Application.Users;
 using TableSimulator.Persistence;
 using TableSimulator.Persistence.Identity;
 
@@ -18,6 +19,9 @@ public static class AuthSetup
     /// <summary>Nazov prihlasovacej cookie.</summary>
     public const string CookieName = "TableSimulator.Auth";
 
+    /// <summary>Schema, ktora podla poziadavky vyberie kluc, cookie alebo rezim bez prihlasenia.</summary>
+    public const string AutoScheme = "Auto";
+
     public static IServiceCollection AddAuth(this IServiceCollection services, AppPaths paths, AuthMode mode)
     {
         ArgumentNullException.ThrowIfNull(paths);
@@ -26,6 +30,7 @@ public static class AuthSetup
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserService, UserService>();
 
         // kluce podpisu cookie pri nastaveniach - po restarte (aj prenesenej instalacii) prihlasenie plati
         var protection = services.AddDataProtection().SetApplicationName("TableSimulator").PersistKeysToFileSystem(new DirectoryInfo(paths.KeysFolder));
@@ -51,8 +56,14 @@ public static class AuthSetup
         // zmena hesla alebo vypnutie uctu zrusi prihlasenia najneskor do minuty
         services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.FromMinutes(1));
 
-        services.AddAuthentication(mode.LoginRequired ? IdentityConstants.ApplicationScheme : LocalAuthenticationHandler.SchemeName)
+        // poziadavka s pristupovym klucom ide cez kluc (aj ked prehliadac posiela cookie), inak cookie alebo rezim bez prihlasenia
+        services.AddAuthentication(AutoScheme)
+            .AddPolicyScheme(AutoScheme, null, options => options.ForwardDefaultSelector = context =>
+                AccessKeyAuthenticationHandler.KeyOf(context.Request) is not null ? AccessKeyAuthenticationHandler.SchemeName
+                : mode.LoginRequired ? IdentityConstants.ApplicationScheme
+                : LocalAuthenticationHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, LocalAuthenticationHandler>(LocalAuthenticationHandler.SchemeName, null)
+            .AddScheme<AuthenticationSchemeOptions, AccessKeyAuthenticationHandler>(AccessKeyAuthenticationHandler.SchemeName, null)
             .AddIdentityCookies();
         services.ConfigureApplicationCookie(options =>
         {

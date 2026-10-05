@@ -1,5 +1,8 @@
 // Typy a volania API servera simulatora (zrkadli projekt TableSimulator.Contracts).
 import { hasText, t } from "./i18n";
+import { authHeaders } from "./auth";
+
+export { accessKey, authHeaders, deviceLink, forgetAccessKey, socketUrl } from "./auth";
 
 export type LineMode = "display" | "monitor";
 export type LineStatus = "stopped" | "listening" | "connected" | "error";
@@ -318,6 +321,8 @@ export interface Me {
   displayName: string | null;
   role: "admin" | "operator" | "viewer" | null;
   permissions: string[];
+  /** Poziadavka prisla s pristupovym klucom (zariadenie, program) - bez hesla a odhlasenia. */
+  accessKey?: boolean;
 }
 
 /** Opravnenia (rovnake nazvy ako politiky servera). */
@@ -328,7 +333,71 @@ export const PERMISSIONS = {
   recordings: "recordings.manage",
   settings: "settings.manage",
   users: "users.manage",
+  audit: "audit.view",
 } as const;
+
+export type Role = "admin" | "operator" | "viewer";
+
+export type AccessKeyKind = "device" | "api";
+
+/** Pristupovy kluc bez tajnej hodnoty. */
+export interface AccessKeyInfo {
+  id: string;
+  name: string;
+  kind: AccessKeyKind;
+  role: Role;
+  /** Zaciatok kluca na rozlisenie. */
+  prefix: string;
+  createdAt: string;
+  createdBy: string;
+  lastUsedAt: string | null;
+}
+
+/** Novy kluc - tajna hodnota sa ukaze len raz. */
+export interface AccessKeyCreated {
+  key: AccessKeyInfo;
+  secret: string;
+}
+
+/** Roly od najvyssej. */
+export const ROLES: Role[] = ["admin", "operator", "viewer"];
+
+/** Pouzivatel pre spravu pouzivatelov (casy UTC ako ISO text). */
+export interface UserInfo {
+  userName: string;
+  displayName: string;
+  role: Role;
+  disabled: boolean;
+  /** Zablokovany po neuspesnych pokusoch do; null = nie. */
+  lockedUntil: string | null;
+  createdAt: string;
+  lastLoginAt: string | null;
+}
+
+/** Zaznam auditu - kto co urobil; user "-" = neprihlaseny. */
+export interface AuditEntry {
+  id: number;
+  time: string;
+  user: string;
+  action: string;
+  target: string;
+  success: boolean;
+  error: string | null;
+  details: string;
+  address: string | null;
+}
+
+export interface AuditPage {
+  entries: AuditEntry[];
+  hasMore: boolean;
+}
+
+export interface AuditFilter {
+  before?: number;
+  user?: string;
+  action?: string;
+  limit?: number;
+}
 
 export interface State {
   lines: Line[];
@@ -431,9 +500,6 @@ interface Problem {
   errors?: ProblemError[];
 }
 
-/** Hlavicka proti CSRF - server bez nej odmietne kazdu zmenu. */
-const CSRF_HEADER = { "X-Requested-With": "TableSimulator" };
-
 let unauthorized: (() => void) | null = null;
 
 /** Co urobit, ked server odpovie 401 (prihlasenie vyprsalo alebo pouzivatela vypli). */
@@ -464,7 +530,7 @@ async function apiError(response: Response): Promise<ApiError> {
 async function call<T>(method: string, url: string, body?: unknown): Promise<T> {
   const response = await fetch(url, {
     method,
-    headers: body === undefined ? CSRF_HEADER : { ...CSRF_HEADER, "Content-Type": "application/json" },
+    headers: body === undefined ? authHeaders() : { ...authHeaders(), "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (response.status === 401 && !url.startsWith("/api/auth/")) unauthorized?.();
@@ -496,7 +562,7 @@ export const api = {
   deleteRecording: (name: string) => call<void>("DELETE", `/api/recordings/${encodeURIComponent(name)}`),
   recordingUrl: (name: string) => `/api/recordings/${encodeURIComponent(name)}/file`,
   uploadRecording: async (file: File) => {
-    const response = await fetch(`/api/recordings/upload?name=${encodeURIComponent(file.name)}`, { method: "POST", body: file, headers: CSRF_HEADER });
+    const response = await fetch(`/api/recordings/upload?name=${encodeURIComponent(file.name)}`, { method: "POST", body: file, headers: authHeaders() });
     if (!response.ok) throw await apiError(response);
     return (await response.json()) as RecordingInfo;
   },
@@ -511,6 +577,22 @@ export const api = {
   importInissView: (content: string, replace: boolean) => call<InissViewImported>("POST", "/api/virtual/import", { content, replace }),
   putLayout: (layout: VirtualLayout) => call<void>("PUT", `/api/virtual/layouts/${encodeURIComponent(layout.id)}`, layout),
   deleteLayout: (id: string) => call<void>("DELETE", `/api/virtual/layouts/${encodeURIComponent(id)}`),
+  users: () => call<UserInfo[]>("GET", "/api/users"),
+  createUser: (user: { userName: string; displayName: string; role: Role; password: string }) => call<void>("POST", "/api/users", user),
+  updateUser: (userName: string, user: { displayName: string; role: Role; disabled: boolean }) =>
+    call<void>("PUT", `/api/users/${encodeURIComponent(userName)}`, user),
+  setUserPassword: (userName: string, password: string) => call<void>("POST", `/api/users/${encodeURIComponent(userName)}/password`, { password }),
+  unlockUser: (userName: string) => call<void>("POST", `/api/users/${encodeURIComponent(userName)}/unlock`),
+  deleteUser: (userName: string) => call<void>("DELETE", `/api/users/${encodeURIComponent(userName)}`),
+  changePassword: (currentPassword: string, newPassword: string) => call<void>("POST", "/api/auth/password", { currentPassword, newPassword }),
+  keys: () => call<AccessKeyInfo[]>("GET", "/api/keys"),
+  createKey: (name: string, kind: AccessKeyKind, role: Role) => call<AccessKeyCreated>("POST", "/api/keys", { name, kind, role }),
+  deleteKey: (id: string) => call<void>("DELETE", `/api/keys/${encodeURIComponent(id)}`),
+  audit: (filter: AuditFilter) => {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(filter)) if (value !== undefined) query.set(key, String(value));
+    return call<AuditPage>("GET", `/api/audit?${query}`);
+  },
 };
 
 /** Nastavenie tabule z jej aktualneho stavu (na upravu). */

@@ -54,7 +54,8 @@ a `OutToTableDriver=1`, pôvodný stav v komentároch, zrušenie ho vráti) a ce
 linky s rovnakým číslom a triedou a tabule z `TPhysic`/`TKatalog` (adresa, výrobca, názov; profil podľa výrobcu so
 samoučením rozmeru). Tabule, ktoré v simulátore už sú, ostanú nezmenené; linke, ktorá už existuje, sa zmení len trieda
 a port. Zmena triedy linky prevedie obsah jej tabúľ na novú rodinu (ELEN ↔ znakové). Ak simulátor vyžaduje
-prihlásenie, GVDEditor zapíše `.INI`, ale linky a tabule v simulátore nezaloží (server odpovie `401`).
+prihlásenie, GVDEditor sa ohlási API kľúčom (pole *API kľúč simulátora*, kľúč druhu program s rolou operátor –
+pozri [Prístupové kľúče](#prístupové-kľúče)).
 
 Linka môže ísť aj cez **sériový port** (`COM13:9600,n,8,1`) – napríklad druhý koniec virtuálneho páru COM
 portov, ktorého prvý koniec má INISS v `TablePort=COM3`.
@@ -276,7 +277,8 @@ s vysokými číslicami (bit `0x08`) sa medzera, číslice a dvojbodka berú zo 
 `#/view/<linka>-<adresa>` ukáže jednu tabuľu bez ovládania (dvojklik = celá obrazovka), `#/wall` všetky tabule
 pod sebou. Aby boli dostupné z iných zariadení, zapnite v **Nastaveniach** prístup zo siete (po reštarte server
 počúva na všetkých rozhraniach; Windows sa môže spýtať na bránu firewall). Prístup zo siete vždy vyžaduje
-prihlásenie – zariadenie s tabuľou sa prihlási ako používateľ s rolou *pozorovateľ*.
+prihlásenie – zariadenie s tabuľou sa nemusí prihlasovať, stačí mu odkaz s kľúčom zariadenia (pozri
+[Prístupové kľúče](#prístupové-kľúče)).
 
 ## Prihlasovanie a oprávnenia
 
@@ -284,24 +286,53 @@ Kým je server dostupný len z tohto počítača a v **Nastaveniach** nie je zap
 počítači*, prihlásenie sa nepýta a každý je správca (`local`). Prihlásenie platí, ak je zapnutá aspoň jedna z volieb
 *prístup zo siete* a *vyžadovať prihlásenie*; obe sa prejavia po reštarte servera.
 
-Prvé otvorenie bez používateľov ponúkne založenie **prvého správcu** – len na počítači so simulátorom (požiadavka
-zo siete sa odmietne). Heslo má aspoň 8 znakov, po 5 neúspešných pokusoch sa účet na 5 minút zablokuje.
+Kým neexistuje žiadny aktívny správca, prihlasovacia stránka ponúkne založenie **prvého správcu** – len na počítači
+so simulátorom (požiadavka zo siete sa odmietne). Heslo má aspoň 8 znakov, po 5 neúspešných pokusoch sa účet na
+5 minút zablokuje.
 *Zostať prihlásený* drží prihlásenie 14 dní od posledného použitia (aj po reštarte servera), inak do zatvorenia
 prehliadača.
 
 | Rola          | Môže                                                                         |
 |---------------|------------------------------------------------------------------------------|
-| `admin`       | všetko vrátane nastavení servera a používateľov                               |
+| `admin`       | všetko vrátane nastavení servera, používateľov a auditu                       |
 | `operator`    | tabule a linky meniť, záznamy nahrávať, prehrávať a mazať, komunikácia        |
 | `viewer`      | tabule, linky, záznamy a komunikáciu len pozerať                              |
 
-Oprávnenia (`simulator.view`, `simulator.edit`, `recordings.manage`, `log.view`, `settings.manage`, `users.manage`)
-kontroluje server na každom endpointe aj na WebSockete; webové rozhranie podľa `/api/auth/me` len skryje, čo
+Oprávnenia (`simulator.view`, `simulator.edit`, `recordings.manage`, `log.view`, `settings.manage`, `users.manage`,
+`audit.view`) kontroluje server na každom endpointe aj na WebSockete; webové rozhranie podľa `/api/auth/me` len skryje, čo
 používateľ nesmie.
 
-Databáza používateľov je `tablesimulator.db` (SQLite) v priečinku nastavení, kľúče na podpis prihlásenia
+Stránka **Používatelia** (správca) zakladá používateľov, mení im zobrazované meno, rolu a vypnutie, nastavuje nové
+heslo (zruší aj zablokovanie), odomkne zablokovaný účet a odstráni ho. Svoju rolu nikto nezmení a seba nevypne ani
+neodstráni; aktívny správca musí ostať aspoň jeden. Zmena roly sa prihlásenému prejaví do minúty bez odhlásenia,
+vypnutie, nové heslo a odstránenie ho do minúty odhlásia. Vlastné heslo si každý zmení v ponuke pod svojím menom.
+Používateľov sa dá pripraviť aj bez zapnutého prihlasovania.
+
+**Audit** (záložka stránky Používatelia, oprávnenie `audit.view`) zaznamená každý príkaz – kto (`-` = neprihlásený),
+kedy, z akej adresy, akcia (meno príkazu: `SetLine`, `Login`…), čoho sa týka (linka, tabuľa, používateľ…), či sa
+podaril (inak kód chyby) a podrobnosti ako JSON; heslá sú nahradené `***`, obsahy súborov vynechané. Zapisuje ho
+dekorátor príkazov, takže nový príkaz sa zaznamená sám – cieľ doplní explicitná implementácia `IAuditable`.
+Zaznamenané sú aj neúspešné prihlásenia; požiadavky odmietnuté pre chýbajúce oprávnenie zachytí záznam servera.
+Záznamy sa držia 365 dní. API: `GET /api/audit?before=&user=&action=&limit=` (od najnovších).
+
+Databáza používateľov a auditu je `tablesimulator.db` (SQLite) v priečinku nastavení, kľúče na podpis prihlásenia
 v `keys\` (vo Windows šifrované DPAPI) – ich zmazanie odhlási všetkých.
 
-Klient API mimo prehliadača: zmena (`POST`, `PUT`, `DELETE`) musí niesť hlavičku `X-Requested-With` s ľubovoľnou
-hodnotou (ochrana proti CSRF, inak `403 auth.csrf`); GVDEditor ju posiela. WebSocket `/ws` odmietne spojenie
+### Prístupové kľúče
+
+Kľúč nahrádza prihlásenie zariadeniam a programom; vytvára ho správca na stránke Používatelia → **Kľúče**
+(`POST /api/keys`). Kľúč (`ts_` + 43 znakov) sa ukáže len raz – server si pamätá iba jeho hash SHA-256, začiatok na
+rozlíšenie a čas posledného použitia. Odstránený kľúč prestane platiť hneď (overuje sa pri každej požiadavke).
+
+- **Zariadenie** (monitor, kiosk) má vždy rolu pozorovateľ. Dialóg po vytvorení zloží odkaz na zvolenú stránku
+  (virtuálna tabuľa, tabuľa, všetky tabule): `http://server:5470/?key=…#/virtual/3`. Webové rozhranie si kľúč z adresy
+  uloží do relácie karty, z adresy ho odstráni a posiela ho v hlavičke; WebSocket ho dostane v parametri
+  `access_token`. Karta s kľúčom pristupuje ako zariadenie aj vtedy, keď je v prehliadači prihlásený používateľ.
+- **Program** (GVDEditor, skript) posiela `Authorization: Bearer <kľúč>` s rolou podľa výberu (GVDEditor potrebuje
+  operátora). Takú požiadavku nemôže podvrhnúť cudzia stránka, preto nepotrebuje hlavičku `X-Requested-With`.
+
+V audite je požiadavka s kľúčom pod menom `key:názov`.
+
+Klient API s prihlásením cez cookie: zmena (`POST`, `PUT`, `DELETE`) musí niesť hlavičku `X-Requested-With`
+s ľubovoľnou hodnotou (ochrana proti CSRF, inak `403 auth.csrf`). WebSocket `/ws` odmietne spojenie
 zo stránky iného servera (hlavička `Origin`).

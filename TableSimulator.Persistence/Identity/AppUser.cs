@@ -13,4 +13,7 @@ public sealed class AppUser : IdentityUser<Guid>
 
     /// <summary>Ucet je vypnuty - prihlasit sa neda, existujuce prihlasenie sa zrusi.</summary>
     public bool IsDisabled { get; set; }
+
+    /// <summary>Posledne uspesne prihlasenie; null = este nikdy.</summary>
+    public DateTimeOffset? LastLoginAt { get; set; }
 }

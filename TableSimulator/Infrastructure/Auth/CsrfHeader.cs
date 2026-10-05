@@ -3,6 +3,7 @@ namespace TableSimulator.Infrastructure.Auth;
 /// <summary>
 /// Ochrana proti CSRF: poziadavky, ktore menia stav (<c>/api</c> mimo GET), musia niest hlavicku
 /// <see cref="HeaderName" />. Cudzia stranka ju bez povolenia CORS poslat nevie - prehliadac by sa najprv pytal servera.
+/// Poziadavka s pristupovym klucom v hlavicke <c>Authorization</c> ju nepotrebuje - tu prehliadac sam neprida.
 /// </summary>
 public static class CsrfHeader
 {
@@ -16,7 +17,8 @@ public static class CsrfHeader
         {
             var request = context.Request;
             if (request.Path.StartsWithSegments("/api") && !HttpMethods.IsGet(request.Method) && !HttpMethods.IsHead(request.Method)
-                && !HttpMethods.IsOptions(request.Method) && !request.Headers.ContainsKey(HeaderName))
+                && !HttpMethods.IsOptions(request.Method) && !request.Headers.ContainsKey(HeaderName)
+                && !request.Headers.Authorization.ToString().StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             {
                 await Results.Problem(
                     title: "Forbidden",

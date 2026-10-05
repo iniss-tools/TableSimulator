@@ -14,4 +14,10 @@ public interface ICurrentUser
 
     /// <summary>Rola; null = neprihlaseny.</summary>
     string? Role { get; }
+
+    /// <summary>IP adresa, z ktorej poziadavka prisla; null = nezname.</summary>
+    string? Address { get; }
+
+    /// <summary>Poziadavka prisla s pristupovym klucom, nie s prihlasenim pouzivatela.</summary>
+    bool IsAccessKey { get; }
 }

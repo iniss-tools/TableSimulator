@@ -1,4 +1,5 @@
 // Pisma ELEN zo servera (/api/fonts/<subor>) a zdroje znakov pre rasterizaciu.
+import { authHeaders } from "../auth";
 
 export interface ElenFontData {
   name: string;
@@ -63,7 +64,7 @@ const cache = new Map<string, Promise<ElenFontSet | null>>();
 export function loadFontSet(file: string): Promise<ElenFontSet | null> {
   let promise = cache.get(file);
   if (!promise) {
-    promise = fetch(`/api/fonts/${encodeURIComponent(file)}`)
+    promise = fetch(`/api/fonts/${encodeURIComponent(file)}`, { headers: authHeaders() })
       .then((r) => (r.ok ? r.json() : null))
       .then((dto: FontFileDto | null) => (dto ? decodeFontSet(dto) : null))
       .catch(() => null);

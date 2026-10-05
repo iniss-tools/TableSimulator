@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Contracts.Virtual;
 
@@ -9,4 +10,4 @@ namespace TableSimulator.Application.Virtual;
 /// </summary>
 /// <param name="Content">obsah suboru</param>
 /// <param name="Replace">tabulu s rovnakym cislom prepisat; inak ostane</param>
-public sealed record ImportInissViewCommand(string Content, bool Replace) : ICommand<InissViewImportedDto>;
+public sealed record ImportInissViewCommand([property: JsonIgnore] string Content, bool Replace) : ICommand<InissViewImportedDto>;

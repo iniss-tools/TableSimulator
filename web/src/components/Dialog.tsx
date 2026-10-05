@@ -11,9 +11,13 @@ interface Props {
   busy?: boolean;
   /** Siroke okno (editor s nahladom). */
   wide?: boolean;
+  /** Text potvrdzovacieho tlacidla (predvolene Ulozit). */
+  submitLabel?: string;
+  /** Bez tlacidla Zrusit - len oznamenie. */
+  noCancel?: boolean;
 }
 
-export function Dialog({ title, children, onClose, onSubmit, error, busy, wide }: Props) {
+export function Dialog({ title, children, onClose, onSubmit, error, busy, wide, submitLabel, noCancel }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     ref.current?.showModal();
@@ -32,11 +36,13 @@ export function Dialog({ title, children, onClose, onSubmit, error, busy, wide }
         <div className="dialog-body">{children}</div>
         {error && <p className="error">{error}</p>}
         <div className="dialog-buttons">
-          <button type="button" className="secondary" onClick={onClose}>
-            {t("common.cancel")}
-          </button>
+          {!noCancel && (
+            <button type="button" className="secondary" onClick={onClose}>
+              {t("common.cancel")}
+            </button>
+          )}
           <button type="submit" disabled={busy}>
-            {t("common.save")}
+            {submitLabel ?? t("common.save")}
           </button>
         </div>
       </form>
