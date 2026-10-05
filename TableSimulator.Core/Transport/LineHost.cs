@@ -3,6 +3,8 @@ using System.IO.Pipes;
 using System.IO.Ports;
 using System.Net;
 using System.Net.Sockets;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Simulation;
 
@@ -17,13 +19,18 @@ namespace TableSimulator.Core.Transport;
 public sealed class LineHost : IAsyncDisposable
 {
     private readonly Simulator _simulator;
+    private readonly ILogger _logger;
     private readonly CancellationTokenSource _cts = new();
+    private readonly Lock _statusLock = new();
     private Task? _loop;
     private TcpClient? _client;
+    private LineStatus? _status;
+    private string? _detail;
 
-    public LineHost(Simulator simulator, int line, LineEndpoint endpoint)
+    public LineHost(Simulator simulator, int line, LineEndpoint endpoint, ILogger? logger = null)
     {
         _simulator = simulator;
+        _logger = logger ?? NullLogger.Instance;
         Line = line;
         Endpoint = endpoint;
     }
@@ -46,7 +53,7 @@ public sealed class LineHost : IAsyncDisposable
         // stav pred spustenim slucky - rychle spojenie ho inak prepise
         if (Endpoint.Transport == LineTransport.Pipe)
         {
-            _simulator.SetLineStatus(Line, LineStatus.Listening, null);
+            SetStatus(LineStatus.Listening, null);
             _loop = PipeLoopAsync(_cts.Token);
             return;
         }
@@ -64,19 +71,19 @@ public sealed class LineHost : IAsyncDisposable
             {
                 var listener = new TcpListener(address, Endpoint.Port);
                 listener.Start();
-                _simulator.SetLineStatus(Line, LineStatus.Listening, null);
+                SetStatus(LineStatus.Listening, null);
                 _loop = AcceptLoopAsync(listener, _cts.Token);
             }
             else
             {
                 var udp = new UdpClient(new IPEndPoint(address, Endpoint.Port));
-                _simulator.SetLineStatus(Line, LineStatus.Listening, null);
+                SetStatus(LineStatus.Listening, null);
                 _loop = UdpLoopAsync(udp, _cts.Token);
             }
         }
         catch (SocketException e)
         {
-            _simulator.SetLineStatus(Line, LineStatus.Error, e.Message);
+            SetStatus(LineStatus.Error, e.Message);
         }
     }
 
@@ -98,7 +105,41 @@ public sealed class LineHost : IAsyncDisposable
         }
 
         _cts.Dispose();
-        _simulator.SetLineStatus(Line, LineStatus.Stopped, null);
+        SetStatus(LineStatus.Stopped, null);
+    }
+
+    /// <summary>Stav linky v simulatore; do zaznamu ide len zmena (UDP hlasi spojenie pri kazdom datagrame).</summary>
+    private void SetStatus(LineStatus status, string? detail)
+    {
+        _simulator.SetLineStatus(Line, status, detail);
+        LineStatus? previous;
+        lock (_statusLock)
+        {
+            previous = _status;
+            if (previous == status && _detail == detail)
+                return;
+            _status = status;
+            _detail = detail;
+        }
+
+        switch (status)
+        {
+            case LineStatus.Listening when previous == LineStatus.Connected:
+                TransportLog.Disconnected(_logger, Line);
+                break;
+            case LineStatus.Listening when previous != LineStatus.Listening:
+                TransportLog.Listening(_logger, Line, Endpoint);
+                break;
+            case LineStatus.Connected:
+                TransportLog.Connected(_logger, Line, detail);
+                break;
+            case LineStatus.Error when previous != LineStatus.Error:
+                TransportLog.Failed(_logger, Line, Endpoint, detail);
+                break;
+            case LineStatus.Stopped:
+                TransportLog.Stopped(_logger, Line);
+                break;
+        }
     }
 
     private static IPAddress ParseAddress(string host) =>
@@ -129,7 +170,7 @@ public sealed class LineHost : IAsyncDisposable
     private async Task ServeAsync(TcpClient client, CancellationToken token)
     {
         var remote = client.Client.RemoteEndPoint?.ToString();
-        _simulator.SetLineStatus(Line, LineStatus.Connected, remote);
+        SetStatus(LineStatus.Connected, remote);
         var buffer = new byte[4096];
         try
         {
@@ -156,7 +197,7 @@ public sealed class LineHost : IAsyncDisposable
         {
             client.Dispose();
             if (Interlocked.CompareExchange(ref _client, null, client) == client && !token.IsCancellationRequested)
-                _simulator.SetLineStatus(Line, LineStatus.Listening, null);
+                SetStatus(LineStatus.Listening, null);
         }
     }
 
@@ -181,7 +222,7 @@ public sealed class LineHost : IAsyncDisposable
             if (OperatingSystem.IsWindows())
                 pipe.ReadMode = PipeTransmissionMode.Message;
 
-            _simulator.SetLineStatus(Line, LineStatus.Connected, Endpoint.ToString());
+            SetStatus(LineStatus.Connected, Endpoint.ToString());
             try
             {
                 while (!token.IsCancellationRequested)
@@ -204,7 +245,7 @@ public sealed class LineHost : IAsyncDisposable
             }
 
             if (!token.IsCancellationRequested)
-                _simulator.SetLineStatus(Line, LineStatus.Listening, null);
+                SetStatus(LineStatus.Listening, null);
         }
     }
 
@@ -219,7 +260,7 @@ public sealed class LineHost : IAsyncDisposable
                 port = SerialPorts.Open(Endpoint);
                 // citanie zo serioveho portu nereaguje na zrusenie - zatvorenie portu ho prerusi
                 using var cancel = token.Register(port.Dispose);
-                _simulator.SetLineStatus(Line, LineStatus.Connected, Endpoint.Host);
+                SetStatus(LineStatus.Connected, Endpoint.Host);
                 var stream = port.BaseStream;
                 while (!token.IsCancellationRequested)
                 {
@@ -240,7 +281,7 @@ public sealed class LineHost : IAsyncDisposable
             {
                 if (token.IsCancellationRequested)
                     break;
-                _simulator.SetLineStatus(Line, LineStatus.Error, e.Message);
+                SetStatus(LineStatus.Error, e.Message);
                 await Task.Delay(SerialRetry, token).ConfigureAwait(false);
             }
             finally
@@ -257,7 +298,7 @@ public sealed class LineHost : IAsyncDisposable
             while (!token.IsCancellationRequested)
             {
                 var result = await udp.ReceiveAsync(token).ConfigureAwait(false);
-                _simulator.SetLineStatus(Line, LineStatus.Connected, result.RemoteEndPoint.ToString());
+                SetStatus(LineStatus.Connected, result.RemoteEndPoint.ToString());
                 foreach (var reply in _simulator.Receive(Line, result.Buffer))
                 {
                     if (reply.Delay > TimeSpan.Zero)
@@ -380,14 +421,18 @@ internal sealed class SerialMirror : IDisposable
 public sealed class TransportManager : IAsyncDisposable
 {
     private readonly Simulator _simulator;
+    private readonly ILogger _logger;
     private readonly Dictionary<int, LineHost> _hosts = [];
     private readonly Dictionary<int, SerialMirror> _mirrors = [];
+    // posledny vysledok zapisu zrkadla - do zaznamu ide len zmena
+    private readonly Dictionary<int, string?> _mirrorErrors = [];
     private readonly Lock _mirrorLock = new();
     private readonly SemaphoreSlim _sync = new(1, 1);
 
-    public TransportManager(Simulator simulator)
+    public TransportManager(Simulator simulator, ILogger<TransportManager>? logger = null)
     {
         _simulator = simulator;
+        _logger = logger ?? (ILogger)NullLogger.Instance;
         _simulator.Traffic += OnTraffic;
     }
 
@@ -396,8 +441,24 @@ public sealed class TransportManager : IAsyncDisposable
         SerialMirror? mirror;
         lock (_mirrorLock)
             mirror = _mirrors.GetValueOrDefault(line);
-        if (mirror != null)
-            _simulator.SetMirrorError(line, mirror.Write(data));
+        if (mirror == null)
+            return;
+
+        var error = mirror.Write(data);
+        _simulator.SetMirrorError(line, error);
+        bool changed;
+        lock (_mirrorLock)
+        {
+            changed = !_mirrorErrors.TryGetValue(line, out var last) || last != error;
+            _mirrorErrors[line] = error;
+        }
+
+        if (!changed)
+            return;
+        if (error == null)
+            TransportLog.MirrorWriting(_logger, line, mirror.Endpoint);
+        else
+            TransportLog.MirrorFailed(_logger, line, mirror.Endpoint, error);
     }
 
     /// <summary>
@@ -417,6 +478,7 @@ public sealed class TransportManager : IAsyncDisposable
                     if (mirrors.TryGetValue(number, out var endpoint) && endpoint == mirror.Endpoint)
                         continue;
                     _mirrors.Remove(number);
+                    _mirrorErrors.Remove(number);
                     mirror.Dispose();
                     _simulator.SetMirrorError(number, null);
                 }
@@ -437,7 +499,7 @@ public sealed class TransportManager : IAsyncDisposable
             {
                 if (_hosts.ContainsKey(number))
                     continue;
-                var host = new LineHost(_simulator, number, endpoint);
+                var host = new LineHost(_simulator, number, endpoint, _logger);
                 _hosts[number] = host;
                 host.Start();
             }

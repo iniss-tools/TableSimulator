@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<!-- Kontrakty API a WebSocketu simulatora (DTO bez logiky a bez zavislosti) - server, webove rozhranie a GVDEditor. -->
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<OutputType>Library</OutputType>
+		<RootNamespace>TableSimulator.Contracts</RootNamespace>
+		<AssemblyName>TableSimulator.Contracts</AssemblyName>
+		<LangVersion>default</LangVersion>
+	</PropertyGroup>
+</Project>

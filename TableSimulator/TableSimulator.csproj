@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-	<!-- Server simulatora: linky pre INISS, API a WebSocket pre webove rozhranie, ktore je vo wwwroot. -->
+	<!-- Server simulatora: endpointy API (Api/), WebSocket a infrastruktura (Infrastructure/), webove rozhranie vo wwwroot. -->
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
 		<OutputType>Exe</OutputType>
@@ -20,7 +20,15 @@
 		<Using Include="Microsoft.Extensions.Hosting" />
 	</ItemGroup>
 	<ItemGroup>
+		<ProjectReference Include="..\TableSimulator.Application\TableSimulator.Application.csproj" />
+		<ProjectReference Include="..\TableSimulator.Contracts\TableSimulator.Contracts.csproj" />
 		<ProjectReference Include="..\TableSimulator.Core\TableSimulator.Core.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="JetBrains.Annotations" Version="2026.2.0" />
+		<PackageReference Include="Scrutor" Version="7.0.0" />
+		<PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+		<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
 	</ItemGroup>
 
 	<!-- Webove rozhranie (bun + vite) sa zostavi do wwwroot pred buildom; -p:SkipWebBuild=true ho vynecha. -->
