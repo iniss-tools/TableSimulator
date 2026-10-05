@@ -5,6 +5,7 @@ import { t } from "../i18n";
 import { clearFontCache } from "../render/fonts";
 import { reload, useLive } from "../store";
 import { Field } from "./Dialog";
+import { HttpsSettings } from "./HttpsSettings";
 
 export function SettingsPage() {
   const live = useLive();
@@ -14,6 +15,8 @@ export function SettingsPage() {
   const [message, setMessage] = useState<string | null>(null);
   // text pola s priecinkami (riadok = priecinok) - prazdne riadky vynecha az server
   const [folders, setFolders] = useState((live.settings?.virtualFolders ?? []).join("\n"));
+  // nove heslo certifikatu; null = nechat ulozene
+  const [httpsPassword, setHttpsPassword] = useState<string | null>(null);
 
   useEffect(() => {
     if (!form && live.settings) {
@@ -31,7 +34,9 @@ export function SettingsPage() {
 
   const save = async () => {
     try {
-      const result = await api.putSettings(form);
+      const result = await api.putSettings(form, httpsPassword);
+      setHttpsPassword(null);
+      setForm({ ...form, httpsPasswordSet: httpsPassword === null ? form.httpsPasswordSet : httpsPassword !== "" });
       clearFontCache();
       setMessage(result.restart ? t("settings.restart") : t("settings.saved"));
       await reload();
@@ -99,6 +104,7 @@ export function SettingsPage() {
           {t("settings.requireLogin")}
         </label>
         <p className="muted small">{t("settings.requireLogin.hint")}</p>
+        <HttpsSettings form={form} setForm={setForm} password={httpsPassword} setPassword={setHttpsPassword} />
         <p className="muted small">{t("settings.configPath", { path: form.configPath })}</p>
         <div className="dialog-buttons">
           {message && <span className="muted">{message}</span>}

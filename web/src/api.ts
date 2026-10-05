@@ -182,6 +182,34 @@ export interface Settings {
   requireLogin: boolean;
   /** Priecinky logov INISSu s XML tabul pre virtualne tabule. */
   virtualFolders: string[];
+  /** Port HTTPS; 0 = bez HTTPS. */
+  httpsPort: number;
+  /** Pristup zo siete cez HTTP presmerovat na HTTPS. */
+  httpsRedirect: boolean;
+  /** Vlastny certifikat; prazdny = od certifikacnej autority simulatora. */
+  httpsCertificate: string;
+  /** Subor kluca PEM; prazdny = v subore certifikatu. */
+  httpsKey: string;
+  /** Heslo certifikatu je ulozene (server ho nevracia). */
+  httpsPasswordSet: boolean;
+}
+
+/** Stav HTTPS servera. */
+export interface HttpsStatus {
+  /** HTTPS bezi - port bol nastaveny pri starte servera. */
+  enabled: boolean;
+  port: number;
+  redirect: boolean;
+  source: "generated" | "file";
+  subject: string;
+  issuer: string;
+  /** Odtlacok SHA-256 certifikatu, ktoremu maju zariadenia doverovat. */
+  thumbprint: string;
+  notAfter: string | null;
+  names: string[];
+  /** Kod chyby vlastneho certifikatu (server pouziva certifikat simulatora). */
+  error: string | null;
+  errorDetail: string | null;
 }
 
 /** Virtualna tabula - co z XML tabule INISSu ukazat na jednej obrazovke (ako definicia v INISSView). */
@@ -625,7 +653,10 @@ export const api = {
   clearLog: () => call<void>("DELETE", "/api/log"),
   fonts: () => call<string[]>("GET", "/api/fonts"),
   designs: () => call<DesignInfo[]>("GET", "/api/designs"),
-  putSettings: (settings: Settings) => call<{ restart: boolean }>("PUT", "/api/settings", settings),
+  /** Heslo certifikatu: null = nechat ulozene, prazdne = zmazat. */
+  putSettings: (settings: Settings, httpsPassword: string | null = null) =>
+    call<{ restart: boolean }>("PUT", "/api/settings", { ...settings, httpsPassword }),
+  httpsStatus: () => call<HttpsStatus>("GET", "/api/https"),
   recordings: () => call<Recordings>("GET", "/api/recordings"),
   startRecording: (note: string) => call<RecorderStatus>("POST", "/api/recordings/start", { note }),
   stopRecording: () => call<RecorderStatus>("POST", "/api/recordings/stop"),

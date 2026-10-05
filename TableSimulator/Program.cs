@@ -6,25 +6,27 @@ using TableSimulator.Application;
 using TableSimulator.Infrastructure;
 using TableSimulator.Infrastructure.Auth;
 using TableSimulator.Infrastructure.Hosting;
+using TableSimulator.Infrastructure.Https;
 using TableSimulator.Infrastructure.Logging;
 using TableSimulator.Infrastructure.Realtime;
 using TableSimulator.Infrastructure.Settings;
 using TableSimulator.Persistence;
 
-// parametre: --data <priecinok> (nastavenia), --config <subor> (linky a tabule), --port <cislo>, --no-browser
+// parametre: --data <priecinok> (nastavenia), --config <subor> (linky a tabule), --port <cislo>, --no-browser,
+// --reset-admin [meno] (nove heslo spravcu a koniec)
 Log.Logger = SerilogSetup.CreateBootstrapLogger();
 try
 {
     var commandLine = CommandLine.Parse(args, AppContext.BaseDirectory);
     var paths = commandLine.Paths;
     var settings = new JsonSettingsStore(paths, commandLine.Port);
+    var endpoints = ServerEndpoints.From(settings.Current);
 
     var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args, ContentRootPath = AppContext.BaseDirectory, WebRootPath = paths.WebRoot });
-    builder.WebHost.UseUrls(string.Create(CultureInfo.InvariantCulture,
-        $"http://{(settings.Current.AllowNetwork ? "0.0.0.0" : "localhost")}:{settings.Current.HttpPort}"));
+    builder.WebHost.ConfigureKestrel(endpoints.Configure);
     builder.Services.AddSerilog((_, logger) => SerilogSetup.Configure(logger, paths));
     builder.Services.AddProblemDetails();
-    builder.Services.AddInfrastructure(paths, settings);
+    builder.Services.AddInfrastructure(paths, settings, endpoints);
     builder.Services.AddPersistence(paths.DatabaseFile);
     builder.Services.AddAuth(paths, new AuthMode(settings.Current.LoginRequired));
     builder.Services.AddApplication();
@@ -32,7 +34,13 @@ try
 
     var app = builder.Build();
     await DatabaseInitializer.InitializeAsync(app.Services);
+    if (commandLine.ResetAdmin)
+        return await AdminReset.RunAsync(app.Services, commandLine.ResetAdminName, Console.Out);
+    if (endpoints.HttpsEnabled)
+        app.Services.GetRequiredService<HttpsCertificates>().Initialize();
+
     app.UseExceptionHandler();
+    app.UseHttpsForNetwork();
     app.UseWebSockets();
     app.UseDefaultFiles();
     app.UseDesignFiles();
@@ -45,13 +53,13 @@ try
     app.MapLiveSocket("/ws");
     app.MapEndpoints(app.MapGroup("/api"));
 
-    var url = string.Create(CultureInfo.InvariantCulture, $"http://localhost:{settings.Current.HttpPort}/");
     app.Lifetime.ApplicationStarted.Register(() =>
     {
-        Log.Information("TableSimulator: {Url} (nastavenia: {DataFolder}, prihlasovanie: {Login})", url, paths.DataFolder,
+        Log.Information("TableSimulator: {Url} {HttpsUrl}(nastavenia: {DataFolder}, prihlasovanie: {Login})", endpoints.LocalUrl,
+            endpoints.LocalHttpsUrl is { } https ? https + " " : "", paths.DataFolder,
             settings.Current.LoginRequired ? "zapnute" : "vypnute - len tento pocitac");
         if (!commandLine.NoBrowser)
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true })?.Dispose();
+            Process.Start(new ProcessStartInfo(endpoints.LocalUrl) { UseShellExecute = true })?.Dispose();
     });
 
     await app.RunAsync();

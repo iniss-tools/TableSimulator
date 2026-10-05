@@ -1,12 +1,14 @@
 using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Abstractions.Results;
+using TableSimulator.Application.Https;
 using TableSimulator.Application.Live;
 using TableSimulator.Contracts.Live;
 using TableSimulator.Contracts.Settings;
 
 namespace TableSimulator.Application.Settings;
 
-public sealed class UpdateSettingsCommandHandler(ISettingsStore settings, ILiveNotifier live) : ICommandHandler<UpdateSettingsCommand, SettingsUpdatedDto>
+public sealed class UpdateSettingsCommandHandler(ISettingsStore settings, ILiveNotifier live, IHttpsCertificates certificates, ISecretProtector secrets)
+    : ICommandHandler<UpdateSettingsCommand, SettingsUpdatedDto>
 {
     public Task<Result<SettingsUpdatedDto>> Handle(UpdateSettingsCommand command, CancellationToken cancellationToken)
     {
@@ -21,11 +23,24 @@ public sealed class UpdateSettingsCommandHandler(ISettingsStore settings, ILiveN
             ConnectHost = (request.ConnectHost ?? "").Trim(),
             MonitorFolder = (request.MonitorFolder ?? "").Trim(),
             RequireLogin = request.RequireLogin,
-            VirtualFolders = VirtualFolders(request.VirtualFolders)
+            VirtualFolders = VirtualFolders(request.VirtualFolders),
+            HttpsPort = request.HttpsPort,
+            HttpsRedirect = request.HttpsRedirect,
+            HttpsCertificate = (request.HttpsCertificate ?? "").Trim().Trim('"'),
+            HttpsKey = (request.HttpsKey ?? "").Trim().Trim('"'),
+            // heslo sa vracia len ako priznak - bez noveho ostava ulozene
+            HttpsPassword = request.HttpsPassword is null ? current.HttpsPassword : secrets.Protect(request.HttpsPassword)
         };
-        // port, pristup zo siete, prihlasovanie a priecinok vzhladov server pouzije az po restarte
+        // vlastny certifikat musi byt pouzitelny skor, nez sa ulozi - inak by server po restarte HTTPS nemal
+        if (updated.HttpsPort > 0 && updated.HttpsCertificate.Length > 0
+            && certificates.Check(updated.HttpsCertificate, updated.HttpsKey, secrets.Unprotect(updated.HttpsPassword)) is { IsFailure: true } check)
+            return Task.FromResult(Result.Failure<SettingsUpdatedDto>(check.Error));
+
+        // porty, pristup zo siete, prihlasovanie, presmerovanie na HTTPS a priecinok vzhladov server pouzije az po
+        // restarte; vlastny certifikat nacita sam
         var restart = updated.HttpPort != current.HttpPort || updated.LoginRequired != current.LoginRequired
-                      || updated.AllowNetwork != current.AllowNetwork || updated.DesignsFolder != current.DesignsFolder;
+                      || updated.AllowNetwork != current.AllowNetwork || updated.DesignsFolder != current.DesignsFolder
+                      || updated.HttpsPort != current.HttpsPort || updated.HttpsRedirect != current.HttpsRedirect;
         settings.Save(updated);
         live.Publish(new StructureMessage());
         return Task.FromResult(Result.Success(new SettingsUpdatedDto(restart)));

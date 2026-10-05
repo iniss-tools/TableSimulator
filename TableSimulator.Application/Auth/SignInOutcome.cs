@@ -13,5 +13,8 @@ public enum SignInOutcome
     LockedOut,
 
     /// <summary>Ucet je vypnuty.</summary>
-    Disabled
+    Disabled,
+
+    /// <summary>Z adresy bolo prilis vela neuspesnych pokusov - heslo sa ani neoverovalo.</summary>
+    TooManyAttempts
 }

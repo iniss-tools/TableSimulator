@@ -13,6 +13,9 @@ public static class AuthErrors
 
     public static Error LockedOut() => Error.Unauthorized("auth.lockedOut", "Too many failed attempts - the account is temporarily locked.");
 
+    public static Error TooManyAttempts() =>
+        Error.TooManyRequests("auth.tooManyAttempts", "Too many failed attempts from this address - try again later.");
+
     public static Error Disabled() => Error.Unauthorized("auth.disabled", "The account is disabled.");
 
     public static Error NotRequired() => Error.Problem("auth.notRequired", "Login is not required on this server.");

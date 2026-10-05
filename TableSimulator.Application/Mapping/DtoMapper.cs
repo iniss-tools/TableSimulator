@@ -159,7 +159,12 @@ public static partial class DtoMapper
         {
             MonitorFolder = settings.MonitorFolder,
             RequireLogin = settings.RequireLogin,
-            VirtualFolders = settings.VirtualFolders
+            VirtualFolders = settings.VirtualFolders,
+            HttpsPort = settings.HttpsPort,
+            HttpsRedirect = settings.HttpsRedirect,
+            HttpsCertificate = settings.HttpsCertificate,
+            HttpsKey = settings.HttpsKey,
+            HttpsPasswordSet = settings.HttpsPassword.Length > 0
         };
     }
 

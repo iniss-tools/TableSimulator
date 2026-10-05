@@ -48,6 +48,7 @@ const ACTIONS = [
   "ImportInissView",
   "SetVirtualLayout",
   "DeleteVirtualLayout",
+  "ResetAdmin",
 ];
 
 function actionText(action: string): string {
@@ -356,7 +357,15 @@ function AuditTab() {
                 return (
                   <tr key={e.id} className={e.success ? undefined : "audit-failed"}>
                     <td className="nowrap">{formatDateTime(e.time)}</td>
-                    <td>{e.user === "-" ? <span className="muted">{t("audit.anonymous")}</span> : <code>{e.user}</code>}</td>
+                    <td>
+                      {e.user === "-" ? (
+                        <span className="muted">{t("audit.anonymous")}</span>
+                      ) : e.user === "(console)" ? (
+                        <span className="muted">{t("audit.console")}</span>
+                      ) : (
+                        <code>{e.user}</code>
+                      )}
+                    </td>
                     <td>{actionText(e.action)}</td>
                     <td>{e.target}</td>
                     <td>{e.success ? <span className="status status-connected">{t("audit.ok")}</span> : <span className="status status-error">{hasText(errorKey) ? t(errorKey) : e.error}</span>}</td>

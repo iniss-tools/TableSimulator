@@ -14,9 +14,13 @@ public sealed class AuthService(
     UserManager<AppUser> users,
     SignInManager<AppUser> signIn,
     IHttpContextAccessor accessor,
+    LoginThrottle throttle,
     TimeProvider time,
     ILogger<AuthService> logger) : IAuthService
 {
+    // hash na porovnanie pri neznamom mene - odpoved trva rovnako dlho ako pri existujucom ucte
+    private static string? _dummyHash;
+
     public bool LoginRequired => mode.LoginRequired;
 
     /// <summary>Spojenie z tohto pocitaca (TestServer adresu nema - tiez lokalne).</summary>
@@ -27,9 +31,20 @@ public sealed class AuthService(
 
     public async Task<(SignInOutcome Outcome, SignedInUser? User)> SignInAsync(string userName, string password, bool remember, CancellationToken cancellationToken)
     {
+        if (throttle.Blocked() is not null)
+        {
+            AuthLog.SignInFailed(logger, userName, SignInOutcome.TooManyAttempts);
+            return (SignInOutcome.TooManyAttempts, null);
+        }
+
         var user = await users.FindByNameAsync(userName).ConfigureAwait(false);
         var outcome = SignInOutcome.InvalidCredentials;
-        if (user is not null)
+        if (user is null)
+        {
+            _dummyHash ??= users.PasswordHasher.HashPassword(new AppUser(), Guid.NewGuid().ToString());
+            users.PasswordHasher.VerifyHashedPassword(new AppUser(), _dummyHash, password);
+        }
+        else
         {
             // heslo sa overi skor nez vypnutie uctu - z odpovede sa neda zistit, ktore ucty existuju
             var check = await signIn.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true).ConfigureAwait(false);
@@ -41,6 +56,9 @@ public sealed class AuthService(
 
         if (outcome != SignInOutcome.Success || user is null)
         {
+            // pokus o heslo (aj na zablokovany ucet) - vypnuty ucet so spravnym heslom sa nezarata
+            if (outcome is SignInOutcome.InvalidCredentials or SignInOutcome.LockedOut)
+                throttle.Failed();
             AuthLog.SignInFailed(logger, userName, outcome);
             return (outcome, null);
         }

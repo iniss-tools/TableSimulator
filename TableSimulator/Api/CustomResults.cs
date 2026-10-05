@@ -36,6 +36,7 @@ public static class CustomResults
         ErrorType.Conflict => "Conflict",
         ErrorType.Unauthorized => "Unauthorized",
         ErrorType.Forbidden => "Forbidden",
+        ErrorType.TooManyRequests => "Too many requests",
         _ => "Server error"
     };
 
@@ -46,6 +47,7 @@ public static class CustomResults
         ErrorType.Conflict => "https://tools.ietf.org/html/rfc7231#section-6.5.8",
         ErrorType.Unauthorized => "https://tools.ietf.org/html/rfc7235#section-3.1",
         ErrorType.Forbidden => "https://tools.ietf.org/html/rfc7231#section-6.5.3",
+        ErrorType.TooManyRequests => "https://tools.ietf.org/html/rfc6585#section-4",
         _ => "https://tools.ietf.org/html/rfc7231#section-6.6.1"
     };
 
@@ -56,6 +58,7 @@ public static class CustomResults
         ErrorType.Conflict => StatusCodes.Status409Conflict,
         ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
         ErrorType.Forbidden => StatusCodes.Status403Forbidden,
+        ErrorType.TooManyRequests => StatusCodes.Status429TooManyRequests,
         _ => StatusCodes.Status500InternalServerError
     };
 }

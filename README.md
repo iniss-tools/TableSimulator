@@ -23,7 +23,8 @@ dotnet run --project TableSimulator/TableSimulator.csproj
 
 Server otvorí prehliadač na `http://localhost:5470/`. Parametre: `--port <číslo>`, `--no-browser`,
 `--data <priečinok>` (nastavenia inde než v `%AppData%\TableSimulator`, napr. prenosná inštalácia),
-`--config <súbor>` (linky a tabule). Chýbajúci parameter nahradí premenná prostredia `TABLESIMULATOR_DATA`,
+`--config <súbor>` (linky a tabule), `--reset-admin [meno]` (obnova prístupu správcu, pozri
+[nižšie](#obnova-prístupu-správcu)). Chýbajúci parameter nahradí premenná prostredia `TABLESIMULATOR_DATA`,
 `TABLESIMULATOR_CONFIG` alebo `TABLESIMULATOR_NO_BROWSER=1` (využívajú ju testy servera).
 
 Server zapisuje záznam (Serilog) do konzoly a do denných súborov `logs\tablesimulator-RRRRMMDD.log` v priečinku
@@ -205,7 +206,7 @@ predvolene 200); odpoveď má vybrané záznamy, počet vyhovujúcich (`total`) 
 | `TableSimulator.Contracts`    | kontrakty API a WebSocketu – DTO bez logiky a bez závislostí, každé v samostatnom súbore po oblastiach (`Lines/`, `Boards/`, `Display/`, `Frames/`, `Recordings/`, `Live/`…); používa ich aj GVDEditor |
 | `TableSimulator.Application`  | príkazy a dotazy (CQRS bez mediátora) s handlermi a validátormi FluentValidation po oblastiach, dekorátory (overenie, záznam), `Result`/`Error`, mapovanie jadro ↔ kontrakty, služby (záznamy, písma, vzhľady), roly a oprávnenia (`Auth/`) |
 | `TableSimulator.Persistence`  | databáza servera (EF Core + ASP.NET Core Identity): používatelia a roly, definície virtuálnych tabúľ; `AppDbContext` je spoločný, poskytovateľ má vlastnú podtriedu a migrácie (`Sqlite/`, `Migrations/Sqlite/`) |
-| `TableSimulator`              | server ASP.NET Core: endpointy v `Api/` (každý v samostatnom súbore), WebSocket `/ws`, Serilog, prihlasovanie (`Infrastructure/Auth/`), súbory nastavení a konfigurácie v `Infrastructure/` |
+| `TableSimulator`              | server ASP.NET Core: endpointy v `Api/` (každý v samostatnom súbore), WebSocket `/ws`, Serilog, prihlasovanie a obnova správcu (`Infrastructure/Auth/`), HTTPS a certifikáty (`Infrastructure/Https/`), súbory nastavení a konfigurácie v `Infrastructure/` |
 | `TableSimulator.Tests`        | MSTest – rámce a súčty podľa príkladov z docs (ELEN, LCD1, ITP), rozklad riadku, simulátor, linka TCP aj rúra, záznam a prehratie, aplikačná vrstva, tvar JSON kontraktov, XML tabúľ a `Web.config` INISSView, archívy TAB/REP, server cez `WebApplicationFactory` (prihlasovanie, oprávnenia, virtuálne tabule, archív) |
 | `web/`                        | React + TypeScript (bun, Vite): ovládanie a renderer tabúľ; testy `bun test`              |
 
@@ -298,7 +299,7 @@ s vysokými číslicami (bit `0x08`) sa medzera, číslice a dvojbodka berú zo 
 pod sebou. Aby boli dostupné z iných zariadení, zapnite v **Nastaveniach** prístup zo siete (po reštarte server
 počúva na všetkých rozhraniach; Windows sa môže spýtať na bránu firewall). Prístup zo siete vždy vyžaduje
 prihlásenie – zariadenie s tabuľou sa nemusí prihlasovať, stačí mu odkaz s kľúčom zariadenia (pozri
-[Prístupové kľúče](#prístupové-kľúče)).
+[Prístupové kľúče](#prístupové-kľúče)). Heslá a kľúče idú sieťou čitateľne, kým nie je zapnuté [HTTPS](#https).
 
 ## Prihlasovanie a oprávnenia
 
@@ -308,7 +309,10 @@ počítači*, prihlásenie sa nepýta a každý je správca (`local`). Prihláse
 
 Kým neexistuje žiadny aktívny správca, prihlasovacia stránka ponúkne založenie **prvého správcu** – len na počítači
 so simulátorom (požiadavka zo siete sa odmietne). Heslo má aspoň 8 znakov, po 5 neúspešných pokusoch sa účet na
-5 minút zablokuje.
+5 minút zablokuje. Okrem toho server po 10 neúspešných pokusoch o heslo (prihlásenie aj zmena vlastného hesla)
+z jednej adresy za 15 minút ďalšie pokusy z nej odmieta (`429 auth.tooManyAttempts`) bez overenia hesla, kým
+najstarší neúspech z okna nevypadne – chráni to pred skúšaním mnohých účtov z jedného miesta. IPv6 sa ráta po
+sieťach /64; úspešné prihlásenie počítadlo nenuluje. Počítadlo je v pamäti, reštart ho vynuluje.
 *Zostať prihlásený* drží prihlásenie 14 dní od posledného použitia (aj po reštarte servera), inak do zatvorenia
 prehliadača.
 
@@ -356,3 +360,46 @@ V audite je požiadavka s kľúčom pod menom `key:názov`.
 Klient API s prihlásením cez cookie: zmena (`POST`, `PUT`, `DELETE`) musí niesť hlavičku `X-Requested-With`
 s ľubovoľnou hodnotou (ochrana proti CSRF, inak `403 auth.csrf`). WebSocket `/ws` odmietne spojenie
 zo stránky iného servera (hlavička `Origin`).
+
+### HTTPS
+
+V **Nastaveniach** (skupina HTTPS) sa zadá **port HTTPS** – po reštarte server počúva aj na ňom (na rovnakých
+adresách ako HTTP). HTTP ostáva: z tohto počítača ho používa GVDEditor aj prehliadač otvorený serverom. Prístup
+**zo siete** cez HTTP sa predvolene presmeruje (`308`, aj zmeny – zachová metódu a telo) na rovnakú adresu cez
+HTTPS; voľba *Prístup zo siete cez HTTP presmerovať na HTTPS* to vypne (napr. pre televízor, ktorý certifikát
+simulátora neprijme). Prihlasovacia cookie získaná cez HTTPS má príznak `Secure`.
+
+**Certifikát simulátora** (bez vlastného certifikátu): pri prvom štarte s HTTPS vznikne vlastná certifikačná
+autorita simulátora (RSA 2048, 10 rokov) a ňou podpísaný certifikát servera (najviac 397 dní) pre `localhost`,
+meno počítača (aj s doménou), adresu pre INISS a pri prístupe zo siete adresy IPv4 aktívnych sieťových rozhraní.
+Mesiac pred koncom platnosti alebo keď pribudne adresa, server vydá nový certifikát servera sám – autorita ostáva,
+takže zariadenia ju inštalujú len raz: nastavenia ju ponúknu na stiahnutie (`GET /api/https/certificate`, verejné –
+zariadenie si ju stiahne pred prihlásením) aj s odtlačkom SHA-256 na porovnanie. Inštalácia: Windows – dvojklik
+→ *Nainštalovať certifikát* → *Dôveryhodné koreňové certifikačné autority*; Android – *Nastavenia → Zabezpečenie →
+Šifrovanie a poverenia → Inštalovať certifikát → Certifikát CA*; iOS – profil nainštalovať a v *Všeobecné → Info →
+Nastavenia dôvery certifikátov* zapnúť. Súbory sú v priečinku nastavení v `https\` (`authority.crt` verejný,
+súkromné kľúče `*.key` šifrované ochranou dát servera – na inom počítači alebo pod iným používateľom Windows sa
+nedajú prečítať a vznikne nová autorita).
+
+**Vlastný certifikát** (napr. od firemnej autority alebo win-acme): súbor `.pfx`/`.p12` (s heslom) alebo PEM
+(certifikát a kľúč v jednom súbore, alebo kľúč v *Súbore kľúča PEM*; zašifrovaný kľúč s heslom). Nastavenie
+certifikát pred uložením overí (`settings.httpsCertificateMissing`, `…Invalid`, `…Key`); heslo sa ukladá
+šifrované (ochrana dát servera) a server ho nikdy nevracia – `httpsPasswordSet`, v požiadavke `httpsPassword`
+`null` = ponechať, prázdne = zmazať. Zmenu súboru (obnova certifikátu) server načíta sám do 5 minút, zmenu
+nastavenia hneď – bez reštartu. Ak sa vlastný certifikát načítať nedá, server použije certifikát simulátora
+a chybu ukáže v nastaveniach (`GET /api/https` – stav, mená, platnosť, odtlačok).
+
+GVDEditor na inom počítači zadá adresu `https://server:port`; ak jeho počítač certifikátu nedôveruje, **Zistiť
+stav** to ohlási, a ak zadá `http://` a server presmeruje, ohlási adresu HTTPS.
+
+### Obnova prístupu správcu
+
+```bash
+TableSimulator --reset-admin [meno] [--data <priečinok>]
+```
+
+Pre zabudnuté heslo, zablokovaný alebo vypnutý účet správcu: server sa nespustí, účet dostane nové náhodné heslo
+(16 znakov, vypíše sa len do konzoly, do logu nie), odblokuje sa, zapne, dostane rolu správca a jeho prihlásenia
+na zariadeniach do minúty skončia. Bez mena sa obnoví jediný správca (ak ich je viac, vypíše ich a skončí s kódom
+2); meno, ktoré neexistuje, sa založí ako nový správca. V audite je akcia `ResetAdmin` používateľa `(console)`.
+Môže bežať aj pri spustenom serveri (rovnaký `--data`).

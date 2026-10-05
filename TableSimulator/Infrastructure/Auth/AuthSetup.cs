@@ -31,6 +31,7 @@ public static class AuthSetup
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddSingleton<LoginThrottle>();
 
         // kluce podpisu cookie pri nastaveniach - po restarte (aj prenesenej instalacii) prihlasenie plati
         var protection = services.AddDataProtection().SetApplicationName("TableSimulator").PersistKeysToFileSystem(new DirectoryInfo(paths.KeysFolder));

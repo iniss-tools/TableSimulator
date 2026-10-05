@@ -492,6 +492,46 @@ code.hex {
   margin-top: 12px;
 }
 
+/* skupina nastaveni (HTTPS) */
+.settings-group {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-group legend {
+  padding: 0 6px;
+  font-weight: 600;
+}
+
+.settings-group p {
+  margin: 0;
+}
+
+.https-clear {
+  align-self: flex-start;
+}
+
+.https-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.https-facts dt {
+  color: var(--muted);
+}
+
+.https-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .header-editor {
   border: 1px solid var(--border);
   border-radius: 8px;

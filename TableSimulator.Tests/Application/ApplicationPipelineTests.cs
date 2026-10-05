@@ -6,10 +6,12 @@ using TableSimulator.Application.Audit;
 using TableSimulator.Application.Auth;
 using TableSimulator.Application.Boards;
 using TableSimulator.Application.Decorators;
+using TableSimulator.Application.Https;
 using TableSimulator.Application.Lines;
 using TableSimulator.Application.Live;
 using TableSimulator.Application.Settings;
 using TableSimulator.Contracts.Boards;
+using TableSimulator.Contracts.Https;
 using TableSimulator.Contracts.Lines;
 using TableSimulator.Contracts.Live;
 using TableSimulator.Contracts.Settings;
@@ -64,6 +66,25 @@ public class ApplicationPipelineTests
         public bool IsAccessKey => false;
     }
 
+    /// <summary>Certifikaty: subor "zly.pfx" sa neda pouzit, ostatne ano.</summary>
+    private sealed class TestCertificates : IHttpsCertificates
+    {
+        public HttpsStatusDto Status() => new(false, 0, false, HttpsSource.Generated, "", "", "", null, [], null, null);
+
+        public HttpsCertificateFile? TrustedCertificate() => null;
+
+        public Result Check(string certificate, string key, string password) =>
+            certificate == "zly.pfx" ? Result.Failure(Error.Problem(HttpsErrors.CertificateInvalid, "Bad certificate.")) : Result.Success();
+    }
+
+    /// <summary>Sifrovanie len predponou - test vidi, co sa ulozilo.</summary>
+    private sealed class TestSecrets : ISecretProtector
+    {
+        public string Protect(string value) => value.Length == 0 ? "" : "enc:" + value;
+
+        public string Unprotect(string value) => value.StartsWith("enc:", StringComparison.Ordinal) ? value[4..] : "";
+    }
+
     private static ServiceProvider Create(out Simulator simulator, out TestLive live) => Create(out simulator, out live, new TestAudit());
 
     private static ServiceProvider Create(out Simulator simulator, out TestLive live, TestAudit audit)
@@ -81,6 +102,8 @@ public class ApplicationPipelineTests
         services.AddSingleton<IAuditLog>(audit);
         services.AddSingleton<ICurrentUser>(new TestUser());
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IHttpsCertificates, TestCertificates>();
+        services.AddSingleton<ISecretProtector, TestSecrets>();
         services.AddApplication();
         return services.BuildServiceProvider();
     }
@@ -225,5 +248,34 @@ public class ApplicationPipelineTests
         Assert.AreEqual(5999, settings.HttpPort);
         Assert.AreEqual("C:\\Fonts", settings.FontsFolder);
         Assert.IsInstanceOfType<StructureMessage>(live.Messages.Single());
+    }
+
+    [TestMethod]
+    public async Task ZmenaNastavenia_HttpsHesloSifrovaneANeplatnyCertifikat()
+    {
+        await using var provider = Create(out _, out _);
+        using var scope = provider.CreateScope();
+        var handler = scope.ServiceProvider.GetRequiredService<ICommandHandler<UpdateSettingsCommand, SettingsUpdatedDto>>();
+        var store = provider.GetRequiredService<ISettingsStore>();
+        Task<Result<SettingsUpdatedDto>> Update(string certificate, string? password, int httpsPort = 5471) =>
+            handler.Handle(new UpdateSettingsCommand(new UpdateSettingsRequest
+            {
+                HttpPort = AppSettings.DefaultHttpPort, HttpsPort = httpsPort, HttpsCertificate = certificate, HttpsPassword = password
+            }), CancellationToken.None);
+
+        var set = await Update(" \"C:/certs/server.pfx\" ", "tajne");
+        var kept = await Update("C:/certs/server.pfx", null);
+        Assert.AreEqual("enc:tajne", store.Current.HttpsPassword);
+        var cleared = await Update("C:/certs/server.pfx", "", httpsPort: 5471);
+        var bad = await Update("zly.pfx", null);
+        var samePort = await Update("", null, AppSettings.DefaultHttpPort);
+
+        Assert.IsTrue(set.Value.Restart);
+        Assert.AreEqual("C:/certs/server.pfx", store.Current.HttpsCertificate);
+        Assert.IsFalse(kept.Value.Restart);
+        Assert.IsTrue(cleared.IsSuccess);
+        Assert.AreEqual("", store.Current.HttpsPassword);
+        Assert.AreEqual(HttpsErrors.CertificateInvalid, bad.Error.Code);
+        Assert.AreEqual(SettingsErrors.HttpsPort, ((ValidationError)samePort.Error).Errors[0].Code);
     }
 }

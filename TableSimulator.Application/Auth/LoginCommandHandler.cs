@@ -17,6 +17,7 @@ public sealed class LoginCommandHandler(IAuthService auth) : ICommandHandler<Log
             SignInOutcome.Success when user is not null => Result.Success(MeFactory.Create(auth, user)),
             SignInOutcome.LockedOut => Result.Failure<MeDto>(AuthErrors.LockedOut()),
             SignInOutcome.Disabled => Result.Failure<MeDto>(AuthErrors.Disabled()),
+            SignInOutcome.TooManyAttempts => Result.Failure<MeDto>(AuthErrors.TooManyAttempts()),
             _ => Result.Failure<MeDto>(AuthErrors.InvalidCredentials())
         };
     }

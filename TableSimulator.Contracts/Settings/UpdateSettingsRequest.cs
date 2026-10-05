@@ -11,4 +11,14 @@ public sealed record UpdateSettingsRequest
     public string MonitorFolder { get; init; } = "";
     public bool RequireLogin { get; init; }
     public IReadOnlyList<string>? VirtualFolders { get; init; }
+
+    /// <summary>Port HTTPS; 0 = bez HTTPS.</summary>
+    public int HttpsPort { get; init; }
+
+    public bool HttpsRedirect { get; init; } = true;
+    public string HttpsCertificate { get; init; } = "";
+    public string HttpsKey { get; init; } = "";
+
+    /// <summary>Heslo certifikatu alebo kluca; null = nechat ulozene, prazdne = zmazat.</summary>
+    public string? HttpsPassword { get; init; }
 }

@@ -40,4 +40,19 @@ public sealed record AppSettings
     /// novsi, pri rovnakom case z prveho priecinka.
     /// </summary>
     public IReadOnlyList<string> VirtualFolders { get; init; } = [];
+
+    /// <summary>Port HTTPS; 0 = bez HTTPS. Zmena sa prejavi po restarte.</summary>
+    public int HttpsPort { get; init; }
+
+    /// <summary>Pristup zo siete cez HTTP presmerovat na HTTPS (z tohto pocitaca ostava HTTP).</summary>
+    public bool HttpsRedirect { get; init; } = true;
+
+    /// <summary>Vlastny certifikat (.pfx, .p12 alebo PEM); prazdny = certifikat od certifikacnej autority simulatora.</summary>
+    public string HttpsCertificate { get; init; } = "";
+
+    /// <summary>Subor kluca PEM k vlastnemu certifikatu; prazdny = kluc je v subore certifikatu.</summary>
+    public string HttpsKey { get; init; } = "";
+
+    /// <summary>Heslo vlastneho certifikatu alebo kluca zasifrovane ochranou dat servera (<see cref="ISecretProtector" />).</summary>
+    public string HttpsPassword { get; init; } = "";
 }

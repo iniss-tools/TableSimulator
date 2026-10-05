@@ -17,6 +17,7 @@ public sealed class UserService(
     SignInManager<AppUser> signIn,
     AuthMode mode,
     ICurrentUser current,
+    LoginThrottle throttle,
     TimeProvider time) : IUserService
 {
     public async Task<IReadOnlyList<UserDto>> ListAsync(CancellationToken cancellationToken)
@@ -118,12 +119,16 @@ public sealed class UserService(
         // bez prihlasovania je kazdy spravca "local", ktory heslo nema
         if (!mode.LoginRequired || current.UserName is not { } name || await users.FindByNameAsync(name).ConfigureAwait(false) is not { } user)
             return Result.Failure(AuthErrors.NotRequired());
+        // aj zmena hesla overuje heslo - ukradnute prihlasenie by inak hadalo heslo bez limitu
+        if (throttle.Blocked() is not null)
+            return Result.Failure(AuthErrors.TooManyAttempts());
         var changed = await users.ChangePasswordAsync(user, currentPassword, newPassword).ConfigureAwait(false);
         if (!changed.Succeeded)
         {
-            return changed.Errors.Any(e => e.Code == nameof(IdentityErrorDescriber.PasswordMismatch))
-                ? Result.Failure(UserErrors.CurrentPassword())
-                : Result.Failure(IdentityErrors.ToError(changed.Errors));
+            if (!changed.Errors.Any(e => e.Code == nameof(IdentityErrorDescriber.PasswordMismatch)))
+                return Result.Failure(IdentityErrors.ToError(changed.Errors));
+            throttle.Failed();
+            return Result.Failure(UserErrors.CurrentPassword());
         }
 
         // zmena hesla zmeni razitko - nove cookie, aby toto prihlasenie platilo dalej

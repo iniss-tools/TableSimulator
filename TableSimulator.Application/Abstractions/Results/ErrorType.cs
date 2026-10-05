@@ -22,5 +22,8 @@ public enum ErrorType
     Unauthorized,
 
     /// <summary>Prihlaseny, ale na toto nema pravo (403).</summary>
-    Forbidden
+    Forbidden,
+
+    /// <summary>Prilis vela pokusov - treba pockat (429).</summary>
+    TooManyRequests
 }

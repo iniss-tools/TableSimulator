@@ -79,6 +79,7 @@ function CreatedDialog({ created, onClose }: { created: AccessKeyCreated; onClos
   const live = useLive();
   const [virtual, setVirtual] = useState<VirtualBoard[]>([]);
   const [page, setPage] = useState("#/wall");
+  const [httpsPort, setHttpsPort] = useState<number | null>(null);
   const device = created.key.kind === "device";
 
   useEffect(() => {
@@ -89,6 +90,11 @@ function CreatedDialog({ created, onClose }: { created: AccessKeyCreated; onClos
           setVirtual(v.boards);
           if (v.boards.length > 0) setPage(`#/virtual/${v.boards[0].id}`);
         })
+        .catch(() => undefined);
+    if (device)
+      api
+        .httpsStatus()
+        .then((s) => setHttpsPort(s.enabled ? s.port : null))
         .catch(() => undefined);
   }, [device]);
 
@@ -116,7 +122,7 @@ function CreatedDialog({ created, onClose }: { created: AccessKeyCreated; onClos
             </select>
           </Field>
           <Field label={t("keys.link")} wide>
-            <CopyField value={deviceLink(created.secret, page)} />
+            <CopyField value={deviceLink(created.secret, page, httpsPort)} />
           </Field>
         </>
       ) : (

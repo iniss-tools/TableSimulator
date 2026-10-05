@@ -58,7 +58,11 @@ export function socketUrl(withLog: boolean): string {
   return `${proto}://${location.host}/ws${text ? `?${text}` : ""}`;
 }
 
-/** Odkaz pre zobrazovacie zariadenie s klucom (hash = stranka, napr. #/virtual/3). */
-export function deviceLink(secret: string, hash: string): string {
-  return `${location.origin}/?${KEY_PARAM}=${encodeURIComponent(secret)}${hash}`;
+/**
+ * Odkaz pre zobrazovacie zariadenie s klucom (hash = stranka, napr. #/virtual/3). Pri zapnutom HTTPS
+ * (httpsPort) vzdy cez HTTPS - kluc v adrese by inak isiel sietou citatelne.
+ */
+export function deviceLink(secret: string, hash: string, httpsPort: number | null = null): string {
+  const origin = httpsPort && location.protocol === "http:" ? `https://${location.hostname}:${httpsPort}` : location.origin;
+  return `${origin}/?${KEY_PARAM}=${encodeURIComponent(secret)}${hash}`;
 }
