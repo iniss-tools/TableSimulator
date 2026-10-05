@@ -11,4 +11,14 @@ public sealed record StationImportedDto(
     int BoardsAdded,
     int BoardsKept,
     IReadOnlyList<int> UnsupportedLines,
-    IReadOnlyList<string> SkippedBoards);
+    IReadOnlyList<string> SkippedBoards)
+{
+    /// <summary>Nove virtualne tabule pre tabule s exportom do XML.</summary>
+    public int VirtualBoardsAdded { get; init; }
+
+    /// <summary>Tabule s exportom do XML, pre ktore virtualna tabula uz bola.</summary>
+    public int VirtualBoardsKept { get; init; }
+
+    /// <summary>Co sa stalo s priecinkom logov INISSu.</summary>
+    public StationLogFolder LogFolder { get; init; }
+}

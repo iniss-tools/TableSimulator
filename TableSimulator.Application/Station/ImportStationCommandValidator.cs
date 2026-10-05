@@ -14,6 +14,12 @@ public sealed class ImportStationCommandValidator : AbstractValidator<ImportStat
             RuleFor(c => c.Request.Boards).NotNull().WithErrorCode("station.request");
             RuleForEach(c => c.Request.Lines).ChildRules(line =>
                 line.RuleFor(l => l.Port).InclusiveBetween(1, 65535).WithErrorCode("station.port"));
+            RuleFor(c => c.Request.LogFolder).MaximumLength(260).WithErrorCode("station.logFolder");
+            RuleForEach(c => c.Request.XmlTables).ChildRules(table =>
+                table.RuleFor(t => t.Source).Must(s => !string.IsNullOrWhiteSpace(s) && s.Trim().Length <= 100
+                                                       && s.IndexOfAny(['\\', '/', ':', '*', '?', '"', '<', '>', '|']) < 0)
+                    .WithErrorCode("station.xmlTable"))
+                .When(c => c.Request.XmlTables is not null);
             RuleForEach(c => c.Request.Boards).ChildRules(board =>
             {
                 board.RuleFor(b => b.Address).InclusiveBetween(0, 255).WithErrorCode("station.address");

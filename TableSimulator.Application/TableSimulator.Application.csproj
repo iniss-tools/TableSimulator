@@ -21,4 +21,9 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
 		<PackageReference Include="Scrutor" Version="7.0.0" />
 	</ItemGroup>
+	<ItemGroup>
+		<!-- vstavane rozlozenia virtualnych tabul (data) -->
+		<EmbeddedResource Include="Virtual\Layouts\*.json" />
+	</ItemGroup>
+
 </Project>

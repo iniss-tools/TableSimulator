@@ -12,6 +12,7 @@ namespace TableSimulator.Contracts.Virtual;
 /// <param name="Separator">text namiesto <c>#</c> v stanici a smere; prazdny = casti sa striedaju</param>
 /// <param name="Template">sablona XSL z INISSView (na neskorsiu kompatibilitu, zatial sa nepouziva)</param>
 /// <param name="Parameter">atribut <c>x</c> pre sablonu XSL (zatial sa nepouziva)</param>
+/// <param name="Layout">rozlozenie; prazdne = predvolene</param>
 public sealed record VirtualBoardDto(
     int Id,
     string Name,
@@ -21,4 +22,5 @@ public sealed record VirtualBoardDto(
     int RowStart,
     string Separator,
     string Template,
-    string Parameter);
+    string Parameter,
+    string Layout);

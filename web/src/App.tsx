@@ -18,6 +18,8 @@ function useHash(): string {
   useEffect(() => {
     const onChange = () => setHash(location.hash);
     addEventListener("hashchange", onChange);
+    // adresa sa mohla zmenit skor, nez sa posluchac zaregistroval
+    onChange();
     return () => removeEventListener("hashchange", onChange);
   }, []);
   return hash;

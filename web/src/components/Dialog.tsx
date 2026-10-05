@@ -9,16 +9,18 @@ interface Props {
   onSubmit: () => void;
   error?: string | null;
   busy?: boolean;
+  /** Siroke okno (editor s nahladom). */
+  wide?: boolean;
 }
 
-export function Dialog({ title, children, onClose, onSubmit, error, busy }: Props) {
+export function Dialog({ title, children, onClose, onSubmit, error, busy, wide }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     ref.current?.showModal();
   }, []);
 
   return (
-    <dialog ref={ref} className="dialog" onClose={onClose} onCancel={onClose}>
+    <dialog ref={ref} className={wide ? "dialog dialog-wide" : "dialog"} onClose={onClose} onCancel={onClose}>
       <form
         method="dialog"
         onSubmit={(e) => {

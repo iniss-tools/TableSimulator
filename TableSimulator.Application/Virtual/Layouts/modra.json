@@ -1,0 +1,15 @@
+{
+  "id": "modra",
+  "name": "Modrá – stĺpce podľa XML",
+  "title": "{name}",
+  "showStation": true,
+  "clock": "seconds",
+  "showDate": false,
+  "columnHeaders": true,
+  "rows": 8,
+  "font": "",
+  "alternationMs": 1500,
+  "blinkMs": 600,
+  "blinkPhases": 3,
+  "columns": []
+}

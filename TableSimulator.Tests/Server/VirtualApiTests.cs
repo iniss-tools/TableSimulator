@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using TableSimulator.Contracts.Station;
 using TableSimulator.Contracts.Virtual;
 using static TableSimulator.Tests.Virtual.XmlTableTests;
 
@@ -107,10 +108,69 @@ public sealed class VirtualApiTests
         Assert.AreEqual(1, result.Skipped);
         CollectionAssert.AreEqual(new[] { @"C:\INISS\Logy" }, result.Folders.ToArray());
         var boards = (await client.GetFromJsonAsync<VirtualOverviewDto>("/api/virtual"))!.Boards;
-        Assert.AreEqual(new VirtualBoardDto(1, "Odchody web", "Odchody – hala", "DolneMestoO", 12, 1, "", "Odjezdy", ""), boards[0]);
+        Assert.AreEqual(new VirtualBoardDto(1, "Odchody web", "Odchody – hala", "DolneMestoO", 12, 1, "", "Odjezdy", "", "odchody"), boards[0]);
         Assert.AreEqual("Vlastná", boards[1].Name);
 
         var invalid = await client.PostAsJsonAsync("/api/virtual/import", new InissViewImportRequest("<configuration>", false));
         Assert.AreEqual("virtual.invalidConfig", await CodeOf(invalid));
+    }
+
+    [TestMethod]
+    public async Task Rozlozenie_VstavaneAVlastne()
+    {
+        await using var server = Start(out _);
+        using var client = server.Client();
+        await client.PutAsJsonAsync("/api/virtual/1", new SetVirtualBoardRequest { Name = "Odchody", Source = "DolneMestoO" });
+
+        var overview = (await client.GetFromJsonAsync<VirtualOverviewDto>("/api/virtual"))!;
+        Assert.AreEqual("modra", overview.DefaultLayout);
+        Assert.IsTrue(overview.Layouts.Single(l => l.Id == "pokladne").BuiltIn);
+        Assert.AreEqual("modra", (await client.GetFromJsonAsync<VirtualViewDto>("/api/virtual/1"))!.Layout.Id);
+
+        var mine = overview.Layouts.Single(l => l.Id == "odchody") with { Name = "Moje odchody", Rows = 12 };
+        Assert.AreEqual(HttpStatusCode.NoContent, (await client.PutAsJsonAsync("/api/virtual/layouts/moje", mine)).StatusCode);
+        Assert.AreEqual(HttpStatusCode.NoContent,
+            (await client.PutAsJsonAsync("/api/virtual/1", new SetVirtualBoardRequest { Name = "Odchody", Source = "DolneMestoO", Layout = "moje" })).StatusCode);
+        var layout = (await client.GetFromJsonAsync<VirtualViewDto>("/api/virtual/1"))!.Layout;
+        Assert.AreEqual(("moje", "Moje odchody", 12, false), (layout.Id, layout.Name, layout.Rows, layout.BuiltIn));
+
+        var inUse = await client.DeleteAsync("/api/virtual/layouts/moje");
+        Assert.AreEqual(HttpStatusCode.Conflict, inUse.StatusCode);
+        Assert.AreEqual("virtual.layoutInUse", await CodeOf(inUse));
+        Assert.AreEqual("virtual.layoutBuiltIn", await CodeOf(await client.PutAsJsonAsync("/api/virtual/layouts/modra", mine)));
+        Assert.AreEqual("virtual.layoutNotFound", await CodeOf(await client.PutAsJsonAsync("/api/virtual/1",
+            new SetVirtualBoardRequest { Name = "Odchody", Source = "DolneMestoO", Layout = "neexistuje" })));
+        Assert.AreEqual("virtual.layoutColor", await CodeOf(await client.PutAsJsonAsync("/api/virtual/layouts/zle",
+            mine with { Colors = mine.Colors with { Text = "white" } })));
+
+        await client.PutAsJsonAsync("/api/virtual/1", new SetVirtualBoardRequest { Name = "Odchody", Source = "DolneMestoO" });
+        Assert.AreEqual(HttpStatusCode.NoContent, (await client.DeleteAsync("/api/virtual/layouts/moje")).StatusCode);
+    }
+
+    [TestMethod]
+    public async Task ImportStanice_PriecinokLogovAVirtualneTabule()
+    {
+        await using var server = Start(out var logs);
+        using var client = server.Client();
+        var other = Path.Combine(server.DataFolder, "Logy2");
+        Directory.CreateDirectory(other);
+        StationImportRequest Request(string folder) => new([], [])
+        {
+            LogFolder = folder,
+            XmlTables = [new StationXmlTableDto("Odchody web", "DolneMestoO"), new StationXmlTableDto("Príchody web", "DolneMestoP")]
+        };
+
+        var first = await (await client.PostAsJsonAsync("/api/station", Request(other))).Content.ReadFromJsonAsync<StationImportedDto>();
+        var again = await (await client.PostAsJsonAsync("/api/station", Request(logs + Path.DirectorySeparatorChar))).Content.ReadFromJsonAsync<StationImportedDto>();
+        var missing = await (await client.PostAsJsonAsync("/api/station", Request(Path.Combine(logs, "neexistuje")))).Content
+            .ReadFromJsonAsync<StationImportedDto>();
+
+        Assert.AreEqual((2, 0, StationLogFolder.Added), (first!.VirtualBoardsAdded, first.VirtualBoardsKept, first.LogFolder));
+        Assert.AreEqual((0, 2, StationLogFolder.Watched), (again!.VirtualBoardsAdded, again.VirtualBoardsKept, again.LogFolder));
+        Assert.AreEqual(StationLogFolder.Missing, missing!.LogFolder);
+        var overview = (await client.GetFromJsonAsync<VirtualOverviewDto>("/api/virtual"))!;
+        CollectionAssert.AreEqual(new[] { (1, "DolneMestoO", "odchody"), (2, "DolneMestoP", "prichody") },
+            overview.Boards.Select(b => (b.Id, b.Source, b.Layout)).ToArray());
+        CollectionAssert.AreEqual(new[] { logs, other }, overview.Folders.Select(f => f.Path).ToArray());
     }
 }

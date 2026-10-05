@@ -126,6 +126,13 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Layout")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -160,6 +167,26 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                     b.HasKey("Id");
 
                     b.ToTable("VirtualBoards", (string)null);
+                });
+
+            modelBuilder.Entity("TableSimulator.Application.Virtual.VirtualLayoutRecord", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Definition")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("VirtualLayouts", (string)null);
                 });
 
             modelBuilder.Entity("TableSimulator.Persistence.Identity.AppRole", b =>

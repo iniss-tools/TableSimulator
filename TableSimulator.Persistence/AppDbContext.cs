@@ -14,6 +14,9 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
     /// <summary>Definicie virtualnych tabul.</summary>
     public DbSet<VirtualBoard> VirtualBoards => Set<VirtualBoard>();
 
+    /// <summary>Vlastne rozlozenia virtualnych tabul.</summary>
+    public DbSet<VirtualLayoutRecord> VirtualLayouts => Set<VirtualLayoutRecord>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -30,6 +33,14 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
             board.Property(b => b.Separator).HasMaxLength(20);
             board.Property(b => b.Template).HasMaxLength(100);
             board.Property(b => b.Parameter).HasMaxLength(200);
+            board.Property(b => b.Layout).HasMaxLength(40).HasDefaultValue("");
+        });
+        builder.Entity<VirtualLayoutRecord>(layout =>
+        {
+            layout.ToTable("VirtualLayouts");
+            layout.HasKey(l => l.Id);
+            layout.Property(l => l.Id).HasMaxLength(40);
+            layout.Property(l => l.Name).HasMaxLength(100);
         });
     }
 }

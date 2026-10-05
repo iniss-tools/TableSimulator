@@ -1,0 +1,61 @@
+{
+  "id": "pokladne",
+  "name": "Pokladne – 2 riadky, čierna",
+  "title": "{name}",
+  "showStation": true,
+  "clock": "seconds",
+  "showDate": false,
+  "columnHeaders": true,
+  "rows": 2,
+  "font": "",
+  "alternationMs": 1500,
+  "blinkMs": 600,
+  "blinkPhases": 3,
+  "colors": {
+    "background": "#000000",
+    "text": "#ffffff",
+    "headBackground": "#000000",
+    "headText": "#ffffff",
+    "accent": "#ffd200",
+    "muted": "#a0a0a0",
+    "delay": "#ff5050",
+    "rowLine": "#2a2a2a",
+    "rowAlternate": "#101010"
+  },
+  "columns": [
+    {
+      "cells": [
+        "time"
+      ],
+      "width": "8%",
+      "color": "accent",
+      "bold": true
+    },
+    {
+      "cells": [
+        "type",
+        "number"
+      ],
+      "width": "14%"
+    },
+    {
+      "cells": [
+        "destination"
+      ],
+      "width": "fill",
+      "bold": true
+    },
+    {
+      "cells": [
+        "track"
+      ],
+      "align": "center"
+    },
+    {
+      "cells": [
+        "delay"
+      ],
+      "color": "delay"
+    }
+  ]
+}

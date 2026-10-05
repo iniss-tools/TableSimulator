@@ -11,4 +11,5 @@ public sealed record SetVirtualBoardRequest
     public string Separator { get; init; } = "";
     public string Template { get; init; } = "";
     public string Parameter { get; init; } = "";
+    public string Layout { get; init; } = "";
 }

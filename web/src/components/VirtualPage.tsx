@@ -1,9 +1,10 @@
 // Virtualne tabule: definicie (ako vo Web.config INISSView) a XML tabul najdene v priecinkoch logov INISSu.
 import { useEffect, useRef, useState } from "react";
-import { api, ApiError, PERMISSIONS, type InissViewImported, type VirtualBoard, type VirtualOverview, type VirtualSource } from "../api";
+import { api, ApiError, PERMISSIONS, type InissViewImported, type VirtualBoard, type VirtualLayout, type VirtualOverview, type VirtualSource } from "../api";
 import { t, type TextKey } from "../i18n";
 import { onVirtualChanged, reload, useCan, useLive } from "../store";
 import { Dialog, Field } from "./Dialog";
+import { layoutName, VirtualLayoutDialog } from "./VirtualLayoutDialog";
 
 /** Cas z XML INISSu (miestny, bez pasma) v tvare D. M. HH:MM:SS. */
 function dateTime(value: string | null): string {
@@ -25,7 +26,17 @@ function rowsText(board: VirtualBoard): string {
   return t("virtual.rows.from", { count: board.rowCount, start: board.rowStart });
 }
 
-function VirtualDialog({ initial, isNew, sources, onClose }: { initial: VirtualBoard; isNew: boolean; sources: VirtualSource[]; onClose: () => void }) {
+interface VirtualDialogProps {
+  initial: VirtualBoard;
+  isNew: boolean;
+  sources: VirtualSource[];
+  layouts: VirtualLayout[];
+  defaultLayout: string;
+  onClose: () => void;
+}
+
+function VirtualDialog({ initial, isNew, sources, layouts, defaultLayout, onClose }: VirtualDialogProps) {
+  const fallback = layouts.find((l) => l.id === defaultLayout);
   const [board, setBoard] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -77,6 +88,16 @@ function VirtualDialog({ initial, isNew, sources, onClose }: { initial: VirtualB
         </Field>
         <Field label={t("virtual.field.rowStart")} hint={t("virtual.field.rowStart.hint")}>
           <input type="number" min={1} max={999} value={board.rowStart} onChange={(e) => setBoard({ ...board, rowStart: number(e.target.value) || 1 })} />
+        </Field>
+        <Field label={t("virtual.field.layout")} wide>
+          <select value={board.layout} onChange={(e) => setBoard({ ...board, layout: e.target.value })}>
+            <option value="">{t("virtual.layout.default", { name: fallback ? layoutName(fallback) : defaultLayout })}</option>
+            {layouts.map((l) => (
+              <option key={l.id} value={l.id}>
+                {layoutName(l)}
+              </option>
+            ))}
+          </select>
         </Field>
         <Field label={t("virtual.field.separator")} hint={t("virtual.field.separator.hint")} wide>
           <input value={board.separator} placeholder=", " onChange={(e) => setBoard({ ...board, separator: e.target.value })} />
@@ -130,6 +151,7 @@ export function VirtualPage() {
   const [data, setData] = useState<VirtualOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ board: VirtualBoard; isNew: boolean } | null>(null);
+  const [editingLayout, setEditingLayout] = useState<{ layout: VirtualLayout; isNew: boolean } | null>(null);
   const [replace, setReplace] = useState(false);
   const [imported, setImported] = useState<InissViewImported | null>(null);
   const upload = useRef<HTMLInputElement>(null);
@@ -156,7 +178,18 @@ export function VirtualPage() {
   const add = (source?: VirtualSource) =>
     setEditing({
       isNew: true,
-      board: { id: nextId(), name: source?.key ?? "", description: "", source: source?.name ?? "", rowCount: null, rowStart: 1, separator: "", template: "", parameter: "" },
+      board: {
+        id: nextId(),
+        name: source?.key ?? "",
+        description: "",
+        source: source?.name ?? "",
+        rowCount: null,
+        rowStart: 1,
+        separator: "",
+        template: "",
+        parameter: "",
+        layout: "",
+      },
     });
 
   const onImport = async (files: FileList | null) => {
@@ -172,7 +205,20 @@ export function VirtualPage() {
     }
   };
 
+  // kopia rozlozenia - nazov s priponou, kluc s prvym volnym cislom
+  const copyLayout = (layout: VirtualLayout) => {
+    const used = new Set(data?.layouts.map((l) => l.id));
+    let n = 2;
+    while (used.has(`${layout.id}-${n}`)) n++;
+    setEditingLayout({ isNew: true, layout: { ...layout, id: `${layout.id}-${n}`, name: layoutName(layout) + t("virtual.layout.copySuffix"), builtIn: false } });
+  };
+  const deleteLayout = (layout: VirtualLayout) => {
+    if (confirm(t("virtual.layout.delete.confirm", { name: layoutName(layout) })))
+      api.deleteLayout(layout.id).catch((e) => setError(e instanceof ApiError ? e.message : String(e)));
+  };
+
   if (!data) return error ? <p className="error">{error}</p> : null;
+  const layoutOf = (board: VirtualBoard) => data.layouts.find((l) => l.id === (board.layout || data.defaultLayout));
   const sourceOf = (board: VirtualBoard) => data.sources.find((s) => s.name.toLowerCase() === board.source.toLowerCase());
   const folders = data.folders.map((f) => f.path);
 
@@ -228,6 +274,7 @@ export function VirtualPage() {
                 <th>{t("virtual.col.source")}</th>
                 <th>{t("virtual.col.rows")}</th>
                 <th>{t("virtual.col.separator")}</th>
+                <th>{t("virtual.col.layout")}</th>
                 <th />
               </tr>
             </thead>
@@ -247,6 +294,12 @@ export function VirtualPage() {
                     </td>
                     <td>{rowsText(b)}</td>
                     <td>{b.separator ? <code>{`'${b.separator}'`}</code> : <span className="muted small">{t("virtual.separator.none")}</span>}</td>
+                    <td>
+                      {(() => {
+                        const layout = layoutOf(b);
+                        return layout ? layoutName(layout) : <span className="tag">{b.layout}</span>;
+                      })()}
+                    </td>
                     <td className="nowrap">
                       <a className="button secondary" href={`#/virtual/${b.id}`} target="_blank" rel="noreferrer">
                         {t("virtual.open")}
@@ -324,7 +377,71 @@ export function VirtualPage() {
           </table>
         </div>
       )}
-      {editing && <VirtualDialog initial={editing.board} isNew={editing.isNew} sources={data.sources} onClose={() => setEditing(null)} />}
+      <h3>{t("virtual.layouts.title")}</h3>
+      <p className="hint">{t("virtual.layouts.hint")}</p>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>{t("virtual.layout.col.name")}</th>
+              <th>{t("virtual.layout.col.id")}</th>
+              <th>{t("virtual.layout.col.columns")}</th>
+              <th>{t("virtual.layout.col.used")}</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {data.layouts.map((l) => {
+              const used = data.boards.filter((b) => (b.layout || data.defaultLayout) === l.id).map((b) => b.id);
+              return (
+                <tr key={l.id}>
+                  <td>
+                    {layoutName(l)}
+                    {l.builtIn && <span className="muted small"> · {t("virtual.layout.builtIn")}</span>}
+                  </td>
+                  <td>
+                    <code>{l.id}</code>
+                  </td>
+                  <td>{l.columns.length === 0 ? t("virtual.layout.columnsAuto") : l.columns.length}</td>
+                  <td>{used.join(", ")}</td>
+                  <td className="nowrap">
+                    {edit && (
+                      <>
+                        <button className="secondary" onClick={() => copyLayout(l)}>
+                          {t("virtual.layout.copy")}
+                        </button>
+                        {!l.builtIn && (
+                          <>
+                            <button className="icon-button" title={t("common.edit")} onClick={() => setEditingLayout({ layout: l, isNew: false })}>
+                              ✎
+                            </button>
+                            <button className="icon-button" title={t("common.delete")} onClick={() => deleteLayout(l)}>
+                              ✕
+                            </button>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {editing && (
+        <VirtualDialog
+          initial={editing.board}
+          isNew={editing.isNew}
+          sources={data.sources}
+          layouts={data.layouts}
+          defaultLayout={data.defaultLayout}
+          onClose={() => setEditing(null)}
+        />
+      )}
+      {editingLayout && (
+        <VirtualLayoutDialog initial={editingLayout.layout} isNew={editingLayout.isNew} boards={data.boards} onClose={() => setEditingLayout(null)} />
+      )}
     </section>
   );
 }

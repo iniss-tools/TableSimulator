@@ -666,17 +666,36 @@ table.compact td.grow input {
   background: color-mix(in srgb, var(--warn) 15%, var(--panel));
 }
 
-/* virtualna tabula na celu obrazovku - zatial jedno rozlozenie, vlastne rozlozenia budu data */
+/* virtualna tabula - farby a pismo z rozlozenia (premenne --vb-*), velkost podla kontajnera (kiosk aj nahlad) */
+.vkiosk {
+  height: 100vh;
+  background: #000;
+}
+
+.vscreen {
+  container-type: size;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.vscreen-preview {
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
 .vboard {
   --rows: 8;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: #0b1a3a;
-  color: #fff;
+  background: var(--vb-bg);
+  color: var(--vb-text);
   font-family: "Segoe UI", Arial, sans-serif;
-  font-size: min(calc(84vh / (var(--rows) + 1) * 0.55), 3vw);
+  font-size: min(calc(84cqh / (var(--rows) + 1) * 0.55), 3cqw);
 }
 
 .vboard-head {
@@ -684,22 +703,28 @@ table.compact td.grow input {
   align-items: baseline;
   gap: 1em;
   padding: 0.35em 0.8em;
-  background: #06102a;
-  border-bottom: 0.08em solid #ffcc00;
+  background: var(--vb-head-bg);
+  color: var(--vb-head-text);
+  border-bottom: 0.08em solid var(--vb-accent);
   font-size: 1.15em;
+  white-space: nowrap;
 }
 
 .vboard-title {
   font-weight: 700;
 }
 
-.vboard-station {
+.vboard-station,
+.vboard-date {
+  color: var(--vb-muted);
+}
+
+.vboard-spacer {
   flex: 1;
-  color: #9fb3d9;
 }
 
 .vboard-clock {
-  color: #ffcc00;
+  color: var(--vb-accent);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -711,50 +736,28 @@ table.compact td.grow input {
 
 .vboard-table th {
   background: transparent;
-  color: #9fb3d9;
+  color: var(--vb-muted);
   font-size: 0.55em;
   font-weight: 500;
   text-align: left;
   padding: 0.3em 0.8em;
   border: 0;
-  border-bottom: 1px solid #23396b;
+  border-bottom: 1px solid var(--vb-line);
 }
 
 .vboard-table td {
   padding: 0.2em 0.8em;
   border: 0;
-  border-bottom: 1px solid #1a2d57;
+  border-bottom: 1px solid var(--vb-line);
   white-space: nowrap;
-  max-width: 30vw;
+  max-width: 22cqw;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.vboard-table tr:nth-child(even) td {
-  background: #0e2147;
-}
-
-.vboard-table td.vc-time {
-  color: #ffcc00;
-  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-.vboard-table td.vc-destination {
-  width: 100%;
-  max-width: 45vw;
-  font-weight: 600;
-}
-
-.vboard-table td.vc-delay {
-  color: #ff8080;
-}
-
-.vboard-table td.vc-company,
-.vboard-table td.vc-name {
-  max-width: 16vw;
-  font-size: 0.7em;
-  color: #c9d6ee;
+.vboard-table tr:nth-child(even) td {
+  background: var(--vb-alt);
 }
 
 .vboard-note {
@@ -766,9 +769,58 @@ table.compact td.grow input {
 
 .vboard-empty {
   padding: 1em 0.8em;
-  color: #9fb3d9;
+  color: var(--vb-muted);
 }
 
 .vboard-stale .vboard-table {
   opacity: 0.45;
+}
+
+/* editor rozlozenia virtualnej tabule */
+.dialog-wide {
+  width: min(1280px, calc(100vw - 32px));
+}
+
+.layout-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.layout-editor h3 {
+  margin: 8px 0 0;
+  font-size: 0.95rem;
+}
+
+.layout-preview {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.color-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-field input[type="color"] {
+  width: 36px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: none;
+}
+
+@media (max-width: 900px) {
+  .layout-editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .layout-preview {
+    position: static;
+  }
 }

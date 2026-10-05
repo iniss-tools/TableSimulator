@@ -6,7 +6,7 @@ using TableSimulator.Core.Virtual;
 
 namespace TableSimulator.Application.Virtual;
 
-public sealed class GetVirtualViewQueryHandler(IVirtualBoardRepository boards, XmlTableFolders folders, TimeProvider time)
+public sealed class GetVirtualViewQueryHandler(IVirtualBoardRepository boards, IVirtualLayoutRepository layouts, XmlTableFolders folders, TimeProvider time)
     : IQueryHandler<GetVirtualViewQuery, VirtualViewDto>
 {
     public async Task<Result<VirtualViewDto>> Handle(GetVirtualViewQuery query, CancellationToken cancellationToken)
@@ -18,6 +18,20 @@ public sealed class GetVirtualViewQueryHandler(IVirtualBoardRepository boards, X
         var rows = source?.Table is { } table
             ? XmlTableFilter.Apply(table.Rows, board.RowCount, board.RowStart, board.Separator).Select(DtoMapper.ToDto).ToArray()
             : [];
-        return Result.Success(new VirtualViewDto(DtoMapper.ToDto(board), source is null ? null : DtoMapper.ToDto(source, time.GetLocalNow().DateTime), rows));
+        var layout = await LayoutOf(board, cancellationToken).ConfigureAwait(false);
+        return Result.Success(new VirtualViewDto(DtoMapper.ToDto(board), source is null ? null : DtoMapper.ToDto(source, time.GetLocalNow().DateTime), rows,
+            layout));
+    }
+
+    /// <summary>Rozlozenie tabule; ak neexistuje (alebo ziadne nema), predvolene.</summary>
+    private async Task<VirtualLayoutDto> LayoutOf(VirtualBoard board, CancellationToken cancellationToken)
+    {
+        if (board.Layout.Length == 0)
+            return VirtualLayouts.Default;
+        if (VirtualLayouts.FindBuiltIn(board.Layout) is { } builtIn)
+            return builtIn;
+        return await layouts.FindAsync(board.Layout, cancellationToken).ConfigureAwait(false) is { } record
+            ? VirtualLayouts.Deserialize(record)
+            : VirtualLayouts.Default;
     }
 }

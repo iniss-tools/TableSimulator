@@ -134,26 +134,47 @@ tabule cez INISSView* v dokumentácii INISSTools.
    priečinka – ako INISSView pri dvoch priečinkoch. Denné archívy `TAB*.XML`/`REP*.XML` a iné XML vynechá.
 2. Na stránke **Virtuálne** pridajte tabuľu: číslo (adresa zobrazenia `#/virtual/<číslo>`, ako `t=` v INISSView),
    súbor XML (`SAVE_XML` bez prípony), počet záznamov a poradie prvého (jedna tabuľa INISSu na dvoch obrazovkách:
-   6 od 1. a 6 od 7.) a oddeľovač. Tabuľa sa dá založiť aj priamo zo zoznamu nájdených súborov.
+   6 od 1. a 6 od 7.), oddeľovač a rozloženie. Tabuľa sa dá založiť aj priamo zo zoznamu nájdených súborov.
 3. Odkaz **Zobraziť** dajte prehliadaču na monitore (dvojklik = celá obrazovka).
+
+GVDEditor pri presmerovaní liniek INISSu na simulátor (so založením liniek a tabúľ) pošle aj priečinok logov
+INISSu a tabule s vyplneným `SAVE_XML` zo všetkých grafikonov: simulátor priečinok pridá k sledovaným, ak ho vidí
+(inak to GVDEditor ohlási), a pre XML, ktoré ešte žiadna virtuálna tabuľa neukazuje, založí tabuľu s rozložením
+podľa názvu (odchody, príchody).
 
 **Načítať z INISSView** prevezme definície tabúľ zo súboru `Web.config` (čísla, názvy, popisy, súbory, riadky,
 oddeľovač; parametre oddeľuje `TabInfoSeparator`, apostrofy sa vynechajú). Tabuľu s číslom, ktoré už je, prepíše
-len so zaškrtnutým *prepísať*. Priečinky z `TabXmlDir` ponúkne na sledovanie. Šablóna XSL a parameter `x` sa
-uložia pre budúcu podporu šablón, zatiaľ sa nepoužívajú.
+len so zaškrtnutým *prepísať*. Priečinky z `TabXmlDir` ponúkne na sledovanie. Rozloženie odhadne podľa mena
+šablóny XSL (`Pokladny_*` → pokladne, `*cerna*` → čierna, `Odj*` → odchody, `Prij*`/`Prj*` → príchody). Šablóna XSL
+a parameter `x` sa uložia pre budúcu podporu šablón, zatiaľ sa nepoužívajú.
+
+### Rozloženia
+
+Vzhľad virtuálnej tabule určuje **rozloženie** – dáta, nie kód: nadpis (`{name}` = názov tabule, `{station}` =
+stanica), stanica, dátum a hodiny v hlavičke, popisy stĺpcov, počet riadkov pre veľkosť písma (ak tabuľa nemá
+pevný počet záznamov), písmo, farby, intervaly striedania a blikania a stĺpce. Stĺpec ukazuje jeden alebo viac
+prvkov XML (`type number` = vlak), má popis (prázdny = predvolený v jazyku obsluhy), šírku (prázdna = podľa
+obsahu, `fill` = zvyšok riadku, `12%`, `6em`), zarovnanie, farbu (`accent`, `muted`, `delay` z farieb rozloženia
+alebo `#rrggbb`), tučné písmo, veľkosť v % a oddeľovač prvkov. Bez stĺpcov idú stĺpce podľa XML.
+
+Vstavané rozloženia (`TableSimulator.Application/Virtual/Layouts/*.json`, vložené do zostavy): modrá a čierna so
+stĺpcami podľa XML (modrá je predvolená), odchody, príchody a pokladne (2 riadky). Nedajú sa meniť; **Kopírovať**
+otvorí kópiu v editore s náhľadom na údajoch vybranej tabule. Vlastné rozloženia sú v databáze; rozloženie, ktoré
+tabule používajú, sa nedá odstrániť. Zmena rozloženia sa na otvorených obrazovkách prejaví hneď.
 
 Zobrazenie:
-- Stĺpce idú v poradí stĺpcov katalógovej tabule (prvky `row` v XML). Druh a číslo vlaku sú jeden stĺpec,
+- Stĺpce podľa XML idú v poradí stĺpcov katalógovej tabule (prvky `row`). Druh a číslo vlaku sú jeden stĺpec,
   `typehex` a stĺpce prázdne vo všetkých záznamoch sa vynechajú.
-- Časti textu oddelené `#` sa striedajú po 1,5 s. Oddeľovač ich ukáže naraz, ale len v cieľovej stanici a smere,
+- Časti textu oddelené `#` sa striedajú (predvolene po 1,5 s). Oddeľovač ich ukáže naraz, ale len v cieľovej stanici a smere,
   ako v INISSView.
 - Text s jedinou časťou a znakom `#` (napr. `3#`) bliká.
 - Keď uplynie platnosť obsahu (`validto`), tabuľa ukáže, že údaje nie sú aktuálne (INISS asi nebeží). Neúplný
   súbor, ktorý INISS práve zapisuje, sa skúsi znova; chyba sa ohlási až po troch neúspešných pokusoch.
 
-Definície sú v databáze servera (`tablesimulator.db`). API: `GET /api/virtual` (definície, súbory, priečinky),
-`GET /api/virtual/{číslo}` (vybrané záznamy), `PUT`/`DELETE /api/virtual/{číslo}`, `POST /api/virtual/import`;
-zmenu súboru alebo definícií ohlási WebSocket správou `virtual`.
+Definície a vlastné rozloženia sú v databáze servera (`tablesimulator.db`). API: `GET /api/virtual` (definície,
+súbory, priečinky, rozloženia), `GET /api/virtual/{číslo}` (vybrané záznamy a rozloženie), `PUT`/`DELETE
+/api/virtual/{číslo}`, `PUT`/`DELETE /api/virtual/layouts/{kľúč}`, `POST /api/virtual/import`; zmenu súboru,
+definícií alebo rozložení ohlási WebSocket správou `virtual`.
 
 ## Architektúra
 

@@ -198,6 +198,60 @@ export interface VirtualBoard {
   template: string;
   /** Atribut x pre sablonu (zatial sa nepouziva). */
   parameter: string;
+  /** Rozlozenie; prazdne = predvolene. */
+  layout: string;
+}
+
+export type VirtualClock = "none" | "minutes" | "seconds";
+export type VirtualAlign = "left" | "center" | "right";
+
+/** Farby virtualnej tabule (#rrggbb); rowAlternate prazdne = bez striedania riadkov. */
+export interface VirtualColors {
+  background: string;
+  text: string;
+  headBackground: string;
+  headText: string;
+  accent: string;
+  muted: string;
+  delay: string;
+  rowLine: string;
+  rowAlternate: string;
+}
+
+/** Stlpec rozlozenia: prvky XML, popis (prazdny = predvoleny), sirka ("", "fill", "12%", "6em"), farba ("", accent, muted, delay, #rrggbb). */
+export interface VirtualColumn {
+  cells: string[];
+  label: string;
+  width: string;
+  align: VirtualAlign;
+  color: string;
+  bold: boolean;
+  /** Velkost pisma v percentach riadku. */
+  size: number;
+  /** Text medzi prvkami stlpca. */
+  separator: string;
+}
+
+/** Rozlozenie virtualnej tabule - data (vstavane alebo vlastne v databaze). */
+export interface VirtualLayout {
+  id: string;
+  name: string;
+  builtIn: boolean;
+  /** Nadpis; {name} = nazov tabule, {station} = stanica. */
+  title: string;
+  showStation: boolean;
+  clock: VirtualClock;
+  showDate: boolean;
+  columnHeaders: boolean;
+  /** Pocet riadkov pre velkost pisma, ak tabula nema pevny pocet zaznamov. */
+  rows: number;
+  font: string;
+  colors: VirtualColors;
+  /** Prazdne = stlpce podla XML. */
+  columns: VirtualColumn[];
+  alternationMs: number;
+  blinkMs: number;
+  blinkPhases: number;
 }
 
 /** Subor XML tabule v priecinkoch logov INISSu; casy su miestne casy pocitaca s INISSom. */
@@ -224,6 +278,9 @@ export interface VirtualOverview {
   boards: VirtualBoard[];
   sources: VirtualSource[];
   folders: VirtualFolder[];
+  layouts: VirtualLayout[];
+  /** Rozlozenie tabul bez vlastneho rozlozenia. */
+  defaultLayout: string;
 }
 
 /** Polozka zaznamu: meno prvku z XML (time, type, number, destination…) a text s castami oddelenymi #. */
@@ -241,6 +298,7 @@ export interface VirtualView {
   board: VirtualBoard;
   source: VirtualSource | null;
   rows: VirtualRow[];
+  layout: VirtualLayout;
 }
 
 export interface InissViewImported {
@@ -451,6 +509,8 @@ export const api = {
   putVirtual: (board: VirtualBoard) => call<void>("PUT", `/api/virtual/${board.id}`, board),
   deleteVirtual: (id: number) => call<void>("DELETE", `/api/virtual/${id}`),
   importInissView: (content: string, replace: boolean) => call<InissViewImported>("POST", "/api/virtual/import", { content, replace }),
+  putLayout: (layout: VirtualLayout) => call<void>("PUT", `/api/virtual/layouts/${encodeURIComponent(layout.id)}`, layout),
+  deleteLayout: (id: string) => call<void>("DELETE", `/api/virtual/layouts/${encodeURIComponent(id)}`),
 };
 
 /** Nastavenie tabule z jej aktualneho stavu (na upravu). */

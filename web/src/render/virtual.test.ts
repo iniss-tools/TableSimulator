@@ -1,8 +1,34 @@
 import { describe, expect, test } from "bun:test";
-import type { VirtualRow } from "../api";
-import { ALTERNATION_MS, BLINK_MS, cellText, columnText, virtualColumns } from "./virtual";
+import type { VirtualLayout, VirtualRow } from "../api";
+import { cellText, columnColor, columnText, defaultColumn, DEFAULT_TIMING, labelKey, layoutColumns, layoutTitle, virtualColumns } from "./virtual";
 
 const row = (cells: Record<string, string>): VirtualRow => ({ cells: Object.entries(cells).map(([name, text]) => ({ name, text })) });
+
+const layout = (columns: VirtualLayout["columns"]): VirtualLayout => ({
+  id: "test",
+  name: "Test",
+  builtIn: false,
+  title: "{name}",
+  showStation: true,
+  clock: "seconds",
+  showDate: false,
+  columnHeaders: true,
+  rows: 8,
+  font: "",
+  colors: {
+    background: "#000000",
+    text: "#ffffff",
+    headBackground: "#000000",
+    headText: "#ffffff",
+    accent: "#ffcc00",
+    muted: "#999999",
+    delay: "#ff0000",
+    rowLine: "#222222",
+    rowAlternate: "",
+  },
+  columns,
+  ...DEFAULT_TIMING,
+});
 
 describe("cellText", () => {
   test("text bez # sa nemeni", () => {
@@ -11,15 +37,21 @@ describe("cellText", () => {
 
   test("casti sa striedaju po intervale a prazdne sa vynechaju", () => {
     expect(cellText("Bratislava##Wien", 0)).toBe("Bratislava");
-    expect(cellText("Bratislava##Wien", ALTERNATION_MS)).toBe("Wien");
-    expect(cellText("Bratislava##Wien", 2 * ALTERNATION_MS)).toBe("Bratislava");
+    expect(cellText("Bratislava##Wien", DEFAULT_TIMING.alternationMs)).toBe("Wien");
+    expect(cellText("Bratislava##Wien", 2 * DEFAULT_TIMING.alternationMs)).toBe("Bratislava");
   });
 
   test("jedina cast s # blika - v poslednej faze nesvieti", () => {
     expect(cellText("Kosice#", 0)).toBe("Kosice");
-    expect(cellText("Kosice#", BLINK_MS)).toBe("Kosice");
-    expect(cellText("Kosice#", 2 * BLINK_MS)).toBe("");
-    expect(cellText("Kosice#", 3 * BLINK_MS)).toBe("Kosice");
+    expect(cellText("Kosice#", DEFAULT_TIMING.blinkMs)).toBe("Kosice");
+    expect(cellText("Kosice#", 2 * DEFAULT_TIMING.blinkMs)).toBe("");
+    expect(cellText("Kosice#", 3 * DEFAULT_TIMING.blinkMs)).toBe("Kosice");
+  });
+
+  test("casovanie z rozlozenia", () => {
+    const timing = { alternationMs: 1000, blinkMs: 500, blinkPhases: 2 };
+    expect(cellText("A#B", 1000, timing)).toBe("B");
+    expect(cellText("A#", 500, timing)).toBe("");
   });
 });
 
@@ -33,10 +65,40 @@ describe("virtualColumns", () => {
     const columns = virtualColumns(rows);
 
     expect(columns.map((c) => c.key)).toEqual(["train", "time", "delay", "destination"]);
-    expect(columnText(rows[0], columns[0], 0)).toBe("Os 7813");
+    expect(columnText(rows[0], { cells: columns[0].cells, separator: " " }, 0)).toBe("Os 7813");
   });
 
   test("bez druhu je cislo samostatny stlpec", () => {
     expect(virtualColumns([row({ number: "601", time: "11:52" })]).map((c) => c.key)).toEqual(["number", "time"]);
+  });
+});
+
+describe("layoutColumns", () => {
+  const rows = [row({ time: "11:35", destination: "Horne Mesto" })];
+
+  test("bez stlpcov v rozlozeni podla XML s predvolenym vzhladom", () => {
+    const columns = layoutColumns(layout([]), rows);
+    expect(columns.map((c) => [c.key, c.color, c.width])).toEqual([
+      ["time", "accent", ""],
+      ["destination", "", "fill"],
+    ]);
+  });
+
+  test("stlpce z rozlozenia v jeho poradi", () => {
+    const columns = layoutColumns(layout([{ ...defaultColumn(["destination", "direction"]), separator: " – " }, defaultColumn(["time"])]), rows);
+    expect(columns.map((c) => c.cells.join("+"))).toEqual(["destination+direction", "time"]);
+    expect(columnText(row({ destination: "Kosice", direction: "Presov" }), columns[0], 0)).toBe("Kosice – Presov");
+  });
+});
+
+describe("pomocne", () => {
+  test("popis a farba stlpca, nadpis", () => {
+    expect(labelKey(["type", "number"])).toBe("train");
+    expect(labelKey(["delay"])).toBe("delay");
+    const colors = layout([]).colors;
+    expect(columnColor("accent", colors)).toBe("#ffcc00");
+    expect(columnColor("", colors)).toBeUndefined();
+    expect(columnColor("#123456", colors)).toBe("#123456");
+    expect(layoutTitle("Odchody – {station}", "Odchody web", "Kosice")).toBe("Odchody – Kosice");
   });
 });

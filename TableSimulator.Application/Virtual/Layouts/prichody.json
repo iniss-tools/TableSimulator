@@ -1,0 +1,56 @@
+{
+  "id": "prichody",
+  "name": "Príchody – modrá",
+  "title": "{name}",
+  "showStation": true,
+  "clock": "seconds",
+  "showDate": false,
+  "columnHeaders": true,
+  "rows": 8,
+  "font": "",
+  "alternationMs": 1500,
+  "blinkMs": 600,
+  "blinkPhases": 3,
+  "columns": [
+    {
+      "cells": [
+        "time"
+      ],
+      "width": "8%",
+      "color": "accent",
+      "bold": true
+    },
+    {
+      "cells": [
+        "type",
+        "number"
+      ],
+      "width": "14%"
+    },
+    {
+      "cells": [
+        "destination"
+      ],
+      "width": "fill",
+      "bold": true
+    },
+    {
+      "cells": [
+        "platform"
+      ],
+      "align": "center"
+    },
+    {
+      "cells": [
+        "track"
+      ],
+      "align": "center"
+    },
+    {
+      "cells": [
+        "delay"
+      ],
+      "color": "delay"
+    }
+  ]
+}

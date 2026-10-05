@@ -24,6 +24,7 @@ public sealed class SetVirtualBoardCommandValidator : AbstractValidator<SetVirtu
             RuleFor(c => c.Request.Separator).MaximumLength(20).WithErrorCode(VirtualErrors.Separator);
             RuleFor(c => c.Request.Template).MaximumLength(100).WithErrorCode(VirtualErrors.Template);
             RuleFor(c => c.Request.Parameter).MaximumLength(200).WithErrorCode(VirtualErrors.Parameter);
+            RuleFor(c => c.Request.Layout).MaximumLength(40).WithErrorCode(VirtualErrors.Layout);
         });
     }
 

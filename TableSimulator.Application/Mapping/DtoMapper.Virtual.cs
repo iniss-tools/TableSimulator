@@ -11,7 +11,7 @@ public static partial class DtoMapper
     {
         ArgumentNullException.ThrowIfNull(board);
         return new VirtualBoardDto(board.Id, board.Name, board.Description, board.Source, board.RowCount, board.RowStart, board.Separator,
-            board.Template, board.Parameter);
+            board.Template, board.Parameter, board.Layout);
     }
 
     /// <summary>Subor XML tabule; <paramref name="now" /> urci, ci uz jeho obsah neplati.</summary>

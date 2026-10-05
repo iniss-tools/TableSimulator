@@ -16,6 +16,7 @@ public static class DependencyInjection
         var connection = new SqliteConnectionStringBuilder { DataSource = databaseFile, Pooling = false }.ToString();
         services.AddDbContext<AppDbContext, SqliteAppDbContext>(options => options.UseSqlite(connection));
         services.AddScoped<IVirtualBoardRepository, VirtualBoardRepository>();
+        services.AddScoped<IVirtualLayoutRepository, VirtualLayoutRepository>();
         return services;
     }
 }
