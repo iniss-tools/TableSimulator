@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using TableSimulator.Application.Abstractions.Messaging;
+using TableSimulator.Application.Archive;
 using TableSimulator.Application.Audit;
 using TableSimulator.Application.Decorators;
 using TableSimulator.Application.Designs;
@@ -48,6 +49,7 @@ public static class DependencyInjection
         services.AddSingleton<FontCatalog>();
         services.AddSingleton<DesignCatalog>();
         services.AddScoped<AuditWriter>();
+        services.AddSingleton<ArchiveCatalog>();
         return services;
     }
 }

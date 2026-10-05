@@ -1,8 +1,9 @@
 // Virtualne tabule: definicie (ako vo Web.config INISSView) a XML tabul najdene v priecinkoch logov INISSu.
 import { useEffect, useRef, useState } from "react";
 import { api, ApiError, PERMISSIONS, type InissViewImported, type VirtualBoard, type VirtualLayout, type VirtualOverview, type VirtualSource } from "../api";
-import { t, type TextKey } from "../i18n";
+import { t, useLanguage, type TextKey } from "../i18n";
 import { onVirtualChanged, reload, useCan, useLive } from "../store";
+import { ArchiveTab } from "./ArchiveTab";
 import { Dialog, Field } from "./Dialog";
 import { layoutName, VirtualLayoutDialog } from "./VirtualLayoutDialog";
 
@@ -145,7 +146,31 @@ function ImportResult({ result, folders, onClose }: { result: InissViewImported;
   );
 }
 
-export function VirtualPage() {
+/** Virtualne tabule a archiv INISSu - zalozky jednej stranky. */
+export function VirtualPage({ tab }: { tab: "boards" | "tables" | "reports" }) {
+  useLanguage();
+  return (
+    <section>
+      <div className="toolbar">
+        <h2>{t("virtual.title")}</h2>
+        <nav className="tabs">
+          <a href="#/virtual" className={tab === "boards" ? "active" : ""}>
+            {t("virtual.tab.boards")}
+          </a>
+          <a href="#/archive/tables" className={tab === "tables" ? "active" : ""}>
+            {t("virtual.tab.tables")}
+          </a>
+          <a href="#/archive/reports" className={tab === "reports" ? "active" : ""}>
+            {t("virtual.tab.reports")}
+          </a>
+        </nav>
+      </div>
+      {tab === "boards" ? <VirtualBoardsTab /> : <ArchiveTab key={tab} kind={tab} />}
+    </section>
+  );
+}
+
+function VirtualBoardsTab() {
   const can = useCan();
   const edit = can(PERMISSIONS.edit);
   const [data, setData] = useState<VirtualOverview | null>(null);
@@ -223,9 +248,9 @@ export function VirtualPage() {
   const folders = data.folders.map((f) => f.path);
 
   return (
-    <section>
+    <>
       <div className="toolbar">
-        <h2>{t("virtual.title")}</h2>
+        <p className="hint">{t("virtual.hint")}</p>
         <span className="spacer" />
         {edit && (
           <>
@@ -241,7 +266,6 @@ export function VirtualPage() {
           </>
         )}
       </div>
-      <p className="hint">{t("virtual.hint")}</p>
       {error && <p className="error">{error}</p>}
       {imported && <ImportResult result={imported} folders={folders} onClose={() => setImported(null)} />}
       {data.folders.length === 0 ? (
@@ -442,6 +466,6 @@ export function VirtualPage() {
       {editingLayout && (
         <VirtualLayoutDialog initial={editingLayout.layout} isNew={editingLayout.isNew} boards={data.boards} onClose={() => setEditingLayout(null)} />
       )}
-    </section>
+    </>
   );
 }

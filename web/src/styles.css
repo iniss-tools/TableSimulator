@@ -874,6 +874,42 @@ table.compact td.grow input {
   width: 14em;
 }
 
+/* archiv tabul a hlaseni */
+.archive-train {
+  width: 9em;
+}
+
+.archive-search {
+  width: 16em;
+}
+
+table.archive td {
+  font-size: 13px;
+}
+
+.archive-group + .archive-group {
+  margin-top: 6px;
+}
+
+.archive-names {
+  font-weight: 600;
+}
+
+.archive-columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+}
+
+.archive-text {
+  min-width: 16em;
+  max-width: 40em;
+}
+
+.archive-more {
+  margin-top: 10px;
+}
+
 table.audit td {
   font-size: 13px;
   vertical-align: top;

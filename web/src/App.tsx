@@ -116,7 +116,7 @@ export function App() {
         </span>
         <nav>
           {allowed.map(([id, label]) => (
-            <a key={id} href={`#/${id}`} className={page === id || (id === "users" && (page === "audit" || page === "keys")) ? "active" : ""}>
+            <a key={id} href={`#/${id}`} className={page === id || (id === "users" && (page === "audit" || page === "keys")) || (id === "virtual" && page.startsWith("archive/")) ? "active" : ""}>
               {label}
             </a>
           ))}
@@ -179,8 +179,8 @@ export function App() {
           <RecordingsPage />
         ) : page === "settings" ? (
           <SettingsPage />
-        ) : page === "virtual" ? (
-          <VirtualPage />
+        ) : page === "virtual" || page.startsWith("archive/") ? (
+          <VirtualPage tab={page === "archive/reports" ? "reports" : page === "archive/tables" ? "tables" : "boards"} />
         ) : page === "users" || page === "audit" || page === "keys" ? (
           <UsersPage tab={page} />
         ) : (

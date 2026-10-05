@@ -485,6 +485,76 @@ export interface MonitorInfo {
   projects: string[];
 }
 
+/** Dni dennych archivov INISSu (rrrr-mm-dd) od najnovsieho. */
+export interface ArchiveDays {
+  tables: string[];
+  reports: string[];
+}
+
+export interface ArchiveTrain {
+  type: string;
+  number: string;
+  name: string;
+  /** Datum vlaku, ak sa lisi od dna zaznamu. */
+  date: string | null;
+}
+
+/** Tabule s rovnakym obsahom v zazname archivu tabul. */
+export interface TableArchiveTable {
+  names: string[];
+  columns: { name: string; value: string }[];
+  /** Logicka tabula a riadok pri informacnom texte. */
+  logical: string;
+  row: string;
+}
+
+export interface TableArchiveEntry {
+  time: string;
+  station: string;
+  /** null = informacny text */
+  train: ArchiveTrain | null;
+  text: string;
+  tables: TableArchiveTable[];
+}
+
+export interface ReportArchiveEntry {
+  time: string;
+  kind: string;
+  name: string;
+  auto: boolean;
+  station: string;
+  train: ArchiveTrain | null;
+  arrivalTrack: string;
+  departureTrack: string;
+  arrivalDelay: number | null;
+  departureDelay: number | null;
+  text: string;
+  result: string;
+  details: { key: string; value: string }[];
+}
+
+export interface ArchivePage<T> {
+  date: string;
+  entries: T[];
+  total: number;
+  /** Riadky suboru, ktore sa nedali precitat. */
+  skipped: number;
+}
+
+export interface ArchiveQuery {
+  train?: string;
+  text?: string;
+  newest?: boolean;
+  offset?: number;
+  limit?: number;
+}
+
+function archiveUrl(kind: string, date: string, query: ArchiveQuery): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) if (value !== undefined) params.set(key, String(value));
+  return `/api/archive/${kind}/${date}?${params}`;
+}
+
 /** Chyba volania API s textom pre obsluhu. */
 export class ApiError extends Error {}
 
@@ -593,6 +663,9 @@ export const api = {
     for (const [key, value] of Object.entries(filter)) if (value !== undefined) query.set(key, String(value));
     return call<AuditPage>("GET", `/api/audit?${query}`);
   },
+  archiveDays: () => call<ArchiveDays>("GET", "/api/archive"),
+  tableArchive: (date: string, query: ArchiveQuery) => call<ArchivePage<TableArchiveEntry>>("GET", archiveUrl("tables", date, query)),
+  reportArchive: (date: string, query: ArchiveQuery) => call<ArchivePage<ReportArchiveEntry>>("GET", archiveUrl("reports", date, query)),
 };
 
 /** Nastavenie tabule z jej aktualneho stavu (na upravu). */

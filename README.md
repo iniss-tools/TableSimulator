@@ -177,16 +177,36 @@ súbory, priečinky, rozloženia), `GET /api/virtual/{číslo}` (vybrané zázna
 /api/virtual/{číslo}`, `PUT`/`DELETE /api/virtual/layouts/{kľúč}`, `POST /api/virtual/import`; zmenu súboru,
 definícií alebo rozložení ohlási WebSocket správou `virtual`.
 
+## Archív tabúľ a hlásení
+
+Záložky **Archív tabúľ** a **Archív hlásení** na stránke **Virtuálne** ukazujú denné archívy INISSu
+`TAB<rrrr-mm-dd>.XML` (čo tabule ukazovali o vlakoch a informačné texty) a `REP<rrrr-mm-dd>.XML` (hlásenia, zmeny
+stavu a úpravy vlakov, prihlásenia) zo sledovaných priečinkov logov – ako archív v INISSView. Formát opisuje stránka
+*Archív tabúľ a hlásení* vo formátoch súborov v dokumentácii INISSTools; archív hlásení sa zapisuje len pri
+`ReportLogMode` s príznakom `+2` a `LogReport` = `REP@.XML`.
+
+- Deň sa vyberá zo zoznamu (rovnaký deň vo viacerých priečinkoch = novší súbor), vyhľadáva sa podľa čísla vlaku
+  (časť čísla) a textu v ktoromkoľvek údaji záznamu bez ohľadu na veľkosť písmen a diakritiku.
+- Záznamy idú po stránkach (predvolene od najnovších); **Obnoviť** načíta znova dnešný, ešte zapisovaný súbor.
+- Kódy výluk a odklonov (`vyl`, `vylo`, `od`) dostanú text z legendy, ktorú INISS zapisuje do toho istého súboru.
+- Neúplný posledný riadok, poškodené riadky a riadky v textovom tvare (archív hlásení bez príznaku `+2`) sa
+  preskočia a ich počet sa ukáže pod filtrom.
+- Prečítaný súbor si server drží (posledné štyri), kým sa nezmení – listovanie a filtrovanie ho nečíta znova.
+
+API (oprávnenie na zobrazenie): `GET /api/archive` (dni oboch archívov), `GET /api/archive/tables/{rrrr-mm-dd}`
+a `GET /api/archive/reports/{rrrr-mm-dd}` s parametrami `train`, `text`, `newest`, `offset`, `limit` (1–1000,
+predvolene 200); odpoveď má vybrané záznamy, počet vyhovujúcich (`total`) a preskočených riadkov (`skipped`).
+
 ## Architektúra
 
 | Projekt                       | Obsah                                                                                    |
 |-------------------------------|------------------------------------------------------------------------------------------|
-| `TableSimulator.Core`         | `net10.0` bez UI a bez Windows: linky (`Transport/`), protokoly (`Protocols/`), stav tabúľ (`Boards/`), záznam a prehratie (`Recording/`), súbory ELEN Monitora (`Monitor/`), XML tabúľ INISSu a definície INISSView (`Virtual/`), `Simulation/Simulator` |
+| `TableSimulator.Core`         | `net10.0` bez UI a bez Windows: linky (`Transport/`), protokoly (`Protocols/`), stav tabúľ (`Boards/`), záznam a prehratie (`Recording/`), súbory ELEN Monitora (`Monitor/`), XML tabúľ INISSu a definície INISSView (`Virtual/`), denné archívy TAB/REP (`Archive/`), `Simulation/Simulator` |
 | `TableSimulator.Contracts`    | kontrakty API a WebSocketu – DTO bez logiky a bez závislostí, každé v samostatnom súbore po oblastiach (`Lines/`, `Boards/`, `Display/`, `Frames/`, `Recordings/`, `Live/`…); používa ich aj GVDEditor |
 | `TableSimulator.Application`  | príkazy a dotazy (CQRS bez mediátora) s handlermi a validátormi FluentValidation po oblastiach, dekorátory (overenie, záznam), `Result`/`Error`, mapovanie jadro ↔ kontrakty, služby (záznamy, písma, vzhľady), roly a oprávnenia (`Auth/`) |
 | `TableSimulator.Persistence`  | databáza servera (EF Core + ASP.NET Core Identity): používatelia a roly, definície virtuálnych tabúľ; `AppDbContext` je spoločný, poskytovateľ má vlastnú podtriedu a migrácie (`Sqlite/`, `Migrations/Sqlite/`) |
 | `TableSimulator`              | server ASP.NET Core: endpointy v `Api/` (každý v samostatnom súbore), WebSocket `/ws`, Serilog, prihlasovanie (`Infrastructure/Auth/`), súbory nastavení a konfigurácie v `Infrastructure/` |
-| `TableSimulator.Tests`        | MSTest – rámce a súčty podľa príkladov z docs (ELEN, LCD1, ITP), rozklad riadku, simulátor, linka TCP aj rúra, záznam a prehratie, aplikačná vrstva, tvar JSON kontraktov, XML tabúľ a `Web.config` INISSView, server cez `WebApplicationFactory` (prihlasovanie, oprávnenia, virtuálne tabule) |
+| `TableSimulator.Tests`        | MSTest – rámce a súčty podľa príkladov z docs (ELEN, LCD1, ITP), rozklad riadku, simulátor, linka TCP aj rúra, záznam a prehratie, aplikačná vrstva, tvar JSON kontraktov, XML tabúľ a `Web.config` INISSView, archívy TAB/REP, server cez `WebApplicationFactory` (prihlasovanie, oprávnenia, virtuálne tabule, archív) |
 | `web/`                        | React + TypeScript (bun, Vite): ovládanie a renderer tabúľ; testy `bun test`              |
 
 ### API
