@@ -3,16 +3,31 @@ using Microsoft.EntityFrameworkCore;
 using TableSimulator.Application.Audit;
 using TableSimulator.Application.Keys;
 using TableSimulator.Application.Virtual;
+using TableSimulator.Core.Boards;
+using TableSimulator.Core.Lines;
+using TableSimulator.Core.Simulation;
 using TableSimulator.Persistence.Identity;
+using TableSimulator.Persistence.Settings;
+using TableSimulator.Persistence.Simulation;
 
 namespace TableSimulator.Persistence;
 
 /// <summary>
-/// Databaza simulatora: pouzivatelia a roly (ASP.NET Core Identity), audit a virtualne tabule. Model je nezavisly od poskytovatela - kazdy
+/// Databaza simulatora: nastavenie servera, linky a tabule, pouzivatelia a roly (ASP.NET Core Identity), pristupove
+/// kluce, audit a virtualne tabule. Model je nezavisly od poskytovatela - kazdy
 /// poskytovatel ma vlastnu odvodenu triedu a vlastne migracie (<see cref="Sqlite.SqliteAppDbContext" />).
 /// </summary>
 public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext<AppUser, AppRole, Guid>(options)
 {
+    /// <summary>Nastavenie servera (jeden riadok).</summary>
+    public DbSet<SettingsRecord> ServerSettings => Set<SettingsRecord>();
+
+    /// <summary>Linky simulatora.</summary>
+    public DbSet<LineRecord> Lines => Set<LineRecord>();
+
+    /// <summary>Tabule simulatora.</summary>
+    public DbSet<BoardRecord> Boards => Set<BoardRecord>();
+
     /// <summary>Definicie virtualnych tabul.</summary>
     public DbSet<VirtualBoard> VirtualBoards => Set<VirtualBoard>();
 
@@ -29,6 +44,43 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
     {
         base.OnModelCreating(builder);
         builder.Entity<AppUser>(user => user.Property(u => u.DisplayName).HasMaxLength(100));
+        builder.Entity<SettingsRecord>(settings =>
+        {
+            settings.ToTable("ServerSettings");
+            settings.HasKey(s => s.Id);
+            settings.Property(s => s.Id).ValueGeneratedNever();
+            settings.Property(s => s.FontsFolder).HasMaxLength(500);
+            settings.Property(s => s.DesignsFolder).HasMaxLength(500);
+            settings.Property(s => s.ConnectHost).HasMaxLength(200);
+            settings.Property(s => s.MonitorFolder).HasMaxLength(500);
+            settings.Property(s => s.HttpsCertificate).HasMaxLength(500);
+            settings.Property(s => s.HttpsKey).HasMaxLength(500);
+            settings.Property(s => s.HttpsPassword).HasMaxLength(2000);
+        });
+        // enumy jadra ako kluce z JSON (display, noReply…), nie mena C#
+        builder.Entity<LineRecord>(line =>
+        {
+            line.ToTable("Lines");
+            line.HasKey(l => l.Number);
+            line.Property(l => l.Number).ValueGeneratedNever();
+            line.Property(l => l.Endpoint).HasMaxLength(200);
+            line.Property(l => l.Name).HasMaxLength(100);
+            line.Property(l => l.Mode).HasMaxLength(20).HasConversion(m => SimulatorConfigJson.Key(m), k => SimulatorConfigJson.Parse<LineMode>(k));
+            line.Property(l => l.Manufacturer).HasMaxLength(40);
+            line.Property(l => l.Mirror).HasMaxLength(100);
+            line.HasMany(l => l.Boards).WithOne().HasForeignKey(b => b.Line).OnDelete(DeleteBehavior.Cascade);
+        });
+        builder.Entity<BoardRecord>(board =>
+        {
+            board.ToTable("Boards");
+            board.HasKey(b => new { b.Line, b.Address });
+            board.Property(b => b.Address).ValueGeneratedNever();
+            board.Property(b => b.Manufacturer).HasMaxLength(40);
+            board.Property(b => b.Name).HasMaxLength(100);
+            board.Property(b => b.Profile).HasConversion(p => ProfileJson.Write(p), j => ProfileJson.Read(j));
+            board.Property(b => b.Design).HasMaxLength(100);
+            board.Property(b => b.FaultKind).HasMaxLength(20).HasConversion(f => SimulatorConfigJson.Key(f), k => SimulatorConfigJson.Parse<FaultKind>(k));
+        });
         builder.Entity<VirtualBoard>(board =>
         {
             board.ToTable("VirtualBoards");

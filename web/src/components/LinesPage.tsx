@@ -1,6 +1,6 @@
 // Komunikacne linky - zodpovedaju sekciam Driver v INISSe.
-import { useState } from "react";
-import { api, ApiError, lineConfig, PERMISSIONS, type LineConfig, type LineMode } from "../api";
+import { useRef, useState } from "react";
+import { api, ApiError, lineConfig, PERMISSIONS, type ConfigImported, type LineConfig, type LineMode } from "../api";
 import { t, type TextKey } from "../i18n";
 import { manufacturersFor, useCan, useLive } from "../store";
 import { Dialog, Field } from "./Dialog";
@@ -109,6 +109,24 @@ export function LinesPage() {
   const live = useLive();
   const edit = useCan()(PERMISSIONS.edit);
   const [editing, setEditing] = useState<{ config: LineConfig; isNew: boolean } | null>(null);
+  const [replace, setReplace] = useState(false);
+  const [imported, setImported] = useState<ConfigImported | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const upload = useRef<HTMLInputElement>(null);
+
+  // nahradenie zmaze linky a tabule, ktore v subore nie su - len s potvrdenim
+  const onImport = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (upload.current) upload.current.value = "";
+    if (!file || (replace && !confirm(t("lines.import.replaceConfirm")))) return;
+    try {
+      setImported(await api.importConfig(await file.text(), replace));
+      setImportError(null);
+    } catch (e) {
+      setImported(null);
+      setImportError(e instanceof ApiError ? e.message : String(e));
+    }
+  };
 
   const add = () => {
     const used = new Set(live.lines.map((l) => l.number));
@@ -125,9 +143,33 @@ export function LinesPage() {
       <div className="toolbar">
         <h2>{t("lines.title")}</h2>
         <span className="spacer" />
-        {edit && <button onClick={add}>{t("lines.add")}</button>}
+        <a className="button secondary" href={api.configUrl} download title={t("lines.export.hint")}>
+          {t("lines.export")}
+        </a>
+        {edit && (
+          <>
+            <label className="check">
+              <input type="checkbox" checked={replace} onChange={(e) => setReplace(e.target.checked)} />
+              {t("lines.import.replace")}
+            </label>
+            <input ref={upload} type="file" accept=".json" hidden onChange={(e) => onImport(e.target.files)} />
+            <button className="secondary" title={t("lines.import.hint")} onClick={() => upload.current?.click()}>
+              {t("lines.import")}
+            </button>
+            <button onClick={add}>{t("lines.add")}</button>
+          </>
+        )}
       </div>
       <p className="hint">{t("lines.hint")}</p>
+      {importError && <p className="error">{importError}</p>}
+      {imported && (
+        <p className="banner-info">
+          {t(imported.replaced ? "lines.import.replaced" : "lines.import.added", { lines: imported.lines, boards: imported.boards })}{" "}
+          <button className="secondary" onClick={() => setImported(null)}>
+            {t("common.close")}
+          </button>
+        </p>
+      )}
       <div className="table-wrap">
         <table>
           <thead>

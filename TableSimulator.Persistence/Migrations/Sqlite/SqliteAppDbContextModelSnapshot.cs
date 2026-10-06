@@ -392,6 +392,155 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("TableSimulator.Persistence.Settings.SettingsRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("AllowNetwork")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ConnectHost")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DesignsFolder")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FontsFolder")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("HttpPort")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("HttpsCertificate")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("HttpsKey")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("HttpsPassword")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("HttpsPort")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("HttpsRedirect")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("MonitorFolder")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("RequireLogin")
+                        .HasColumnType("INTEGER");
+
+                    b.PrimitiveCollection<string>("VirtualFolders")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ServerSettings", (string)null);
+                });
+
+            modelBuilder.Entity("TableSimulator.Persistence.Simulation.BoardRecord", b =>
+                {
+                    b.Property<int>("Line")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Address")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Design")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FaultDelayMs")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FaultKind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FaultStatus")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Manufacturer")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Profile")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("SecondAddress")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Line", "Address");
+
+                    b.ToTable("Boards", (string)null);
+                });
+
+            modelBuilder.Entity("TableSimulator.Persistence.Simulation.LineRecord", b =>
+                {
+                    b.Property<int>("Number")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("AutoLearn")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Manufacturer")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Mirror")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TableClass")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Number");
+
+                    b.ToTable("Lines", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("TableSimulator.Persistence.Identity.AppRole", null)
@@ -441,6 +590,20 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("TableSimulator.Persistence.Simulation.BoardRecord", b =>
+                {
+                    b.HasOne("TableSimulator.Persistence.Simulation.LineRecord", null)
+                        .WithMany("Boards")
+                        .HasForeignKey("Line")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TableSimulator.Persistence.Simulation.LineRecord", b =>
+                {
+                    b.Navigation("Boards");
                 });
 #pragma warning restore 612, 618
         }

@@ -96,7 +96,7 @@ public class ApplicationPipelineTests
         services.AddLogging();
         services.AddSingleton(simulator);
         services.AddSingleton<TransportManager>();
-        services.AddSingleton(new AppPaths(folder, Path.Combine(folder, "config.json"), Path.Combine(folder, "wwwroot")));
+        services.AddSingleton(new AppPaths(folder, Path.Combine(folder, "wwwroot")));
         services.AddSingleton<ISettingsStore>(new TestSettings());
         services.AddSingleton<ILiveNotifier>(live);
         services.AddSingleton<IAuditLog>(audit);

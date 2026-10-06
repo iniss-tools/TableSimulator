@@ -8,5 +8,5 @@ public sealed class ImportInissViewCommandValidator : AbstractValidator<ImportIn
     public const int MaxLength = 1_000_000;
 
     public ImportInissViewCommandValidator() =>
-        RuleFor(c => c.Content).NotEmpty().MaximumLength(MaxLength).WithErrorCode(VirtualErrors.Content);
+        RuleFor(c => c.Content).NotEmpty().WithErrorCode(VirtualErrors.Content).MaximumLength(MaxLength).WithErrorCode(VirtualErrors.Content);
 }

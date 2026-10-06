@@ -146,7 +146,10 @@ public sealed class HttpsApiTests
         var saved = await admin.GetStringAsync("/api/settings");
         Assert.Contains("\"httpsPasswordSet\":true", saved);
         Assert.DoesNotContain("tajne-heslo", saved);
-        Assert.DoesNotContain("tajne-heslo", await File.ReadAllTextAsync(Path.Combine(server.DataFolder, "settings.json")));
+        // v databaze len sifrovane
+        await using (var file = new FileStream(Path.Combine(server.DataFolder, "tablesimulator.db"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        using (var reader = new StreamReader(file, System.Text.Encoding.Latin1))
+            Assert.DoesNotContain("tajne-heslo", await reader.ReadToEndAsync());
         var status = await admin.GetFromJsonAsync<HttpsStatusDto>("/api/https");
         Assert.AreEqual(HttpsSource.File, status!.Source);
         Assert.AreEqual("CN=simulator.test, O=INISSTools", status.Subject);

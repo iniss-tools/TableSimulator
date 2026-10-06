@@ -22,10 +22,32 @@ dotnet run --project TableSimulator/TableSimulator.csproj
 ```
 
 Server otvorí prehliadač na `http://localhost:5470/`. Parametre: `--port <číslo>`, `--no-browser`,
-`--data <priečinok>` (nastavenia inde než v `%AppData%\TableSimulator`, napr. prenosná inštalácia),
-`--config <súbor>` (linky a tabule), `--reset-admin [meno]` (obnova prístupu správcu, pozri
-[nižšie](#obnova-prístupu-správcu)). Chýbajúci parameter nahradí premenná prostredia `TABLESIMULATOR_DATA`,
-`TABLESIMULATOR_CONFIG` alebo `TABLESIMULATOR_NO_BROWSER=1` (využívajú ju testy servera).
+`--data <priečinok>` (priečinok nastavení a databázy inde než v `%AppData%\TableSimulator`, napr. prenosná
+inštalácia alebo oddelené prostredie), `--reset-admin [meno]` (obnova prístupu správcu, pozri
+[nižšie](#obnova-prístupu-správcu)). Chýbajúci parameter nahradí premenná prostredia `TABLESIMULATOR_DATA` alebo
+`TABLESIMULATOR_NO_BROWSER=1` (využívajú ju testy servera). Zrušený `--config` server len ohlási – linky a tabule
+sú v databáze a prenášajú sa exportom a importom (pozri [Údaje servera](#údaje-servera)).
+
+## Údaje servera
+
+Všetko, čo server uchováva, je v databáze `tablesimulator.db` (SQLite) v priečinku nastavení: nastavenie servera,
+linky a tabule (profil tabule ako JSON v stĺpci, ostatné údaje v stĺpcoch, enumy kľúčmi z JSON – `display`,
+`noReply`…), používatelia, prístupové kľúče, audit, virtuálne tabule a ich rozloženia. Mimo nej ostávajú súbory,
+ktoré sa upravujú alebo prenášajú ako súbory: záznamy komunikácie (`recordings\*.tsrec`), vlastné vzhľady
+(`designs\<id>\design.json`, menia sa ručne a server ich načíta hneď), certifikáty HTTPS (`https\`), kľúče
+ochrany dát (`keys\`) a logy.
+
+Nastavenie servera sa číta pri štarte ešte pred zostavením servera (porty, prístup zo siete, prihlasovanie);
+linky a tabule sa po každej zmene uložia celé s krátkym odkladom a pri zastavení servera. **Prvý štart**
+s prázdnou databázou prevezme staré súbory `settings.json` a `config.json` z priečinka nastavení a premenuje ich na
+`*.imported` (poškodený súbor sa odloží ako `*.bad` a použijú sa predvolené údaje); bez nich začne predvoleným
+nastavením a jednou linkou ELEN so samoučením. Neskôr podložené staré súbory server ignoruje.
+
+Linky a tabule sa prenášajú na stránke **Linky**: **Exportovať** stiahne súbor JSON (`GET /api/config`, rovnaký tvar
+ako starý `config.json`), **Importovať…** ho nahrá (`POST /api/config/import` `{content, replace}`) – predvolene
+pridá len chýbajúce linky a tabule (ako pri nahratí záznamu), s voľbou *nahradiť všetko* (s potvrdením) nahradí
+všetky; neplatný súbor (`config.invalid`, aj tabuľa bez linky či nepodporovaná trieda) nič nezmení. Import je
+v audite (`ImportConfig`, cieľ `add`/`replace`).
 
 Server zapisuje záznam (Serilog) do konzoly a do denných súborov `logs\tablesimulator-RRRRMMDD.log` v priečinku
 nastavení (14 dní): spojenia liniek s INISSom, vybavené príkazy, prihlásenia, odmietnuté požiadavky a chyby.
@@ -205,7 +227,7 @@ predvolene 200); odpoveď má vybrané záznamy, počet vyhovujúcich (`total`) 
 | `TableSimulator.Core`         | `net10.0` bez UI a bez Windows: linky (`Transport/`), protokoly (`Protocols/`), stav tabúľ (`Boards/`), záznam a prehratie (`Recording/`), súbory ELEN Monitora (`Monitor/`), XML tabúľ INISSu a definície INISSView (`Virtual/`), denné archívy TAB/REP (`Archive/`), `Simulation/Simulator` |
 | `TableSimulator.Contracts`    | kontrakty API a WebSocketu – DTO bez logiky a bez závislostí, každé v samostatnom súbore po oblastiach (`Lines/`, `Boards/`, `Display/`, `Frames/`, `Recordings/`, `Live/`…); používa ich aj GVDEditor |
 | `TableSimulator.Application`  | príkazy a dotazy (CQRS bez mediátora) s handlermi a validátormi FluentValidation po oblastiach, dekorátory (overenie, záznam), `Result`/`Error`, mapovanie jadro ↔ kontrakty, služby (záznamy, písma, vzhľady), roly a oprávnenia (`Auth/`) |
-| `TableSimulator.Persistence`  | databáza servera (EF Core + ASP.NET Core Identity): používatelia a roly, definície virtuálnych tabúľ; `AppDbContext` je spoločný, poskytovateľ má vlastnú podtriedu a migrácie (`Sqlite/`, `Migrations/Sqlite/`) |
+| `TableSimulator.Persistence`  | databáza servera (EF Core + ASP.NET Core Identity): nastavenie servera, linky a tabule, používatelia a roly, kľúče, audit, virtuálne tabule; `AppDbContext` je spoločný, poskytovateľ má vlastnú podtriedu a migrácie (`Sqlite/`, `Migrations/Sqlite/`); `ServerDatabase` otvorí databázu aj mimo DI (štart servera) |
 | `TableSimulator`              | server ASP.NET Core: endpointy v `Api/` (každý v samostatnom súbore), WebSocket `/ws`, Serilog, prihlasovanie a obnova správcu (`Infrastructure/Auth/`), HTTPS a certifikáty (`Infrastructure/Https/`), súbory nastavení a konfigurácie v `Infrastructure/` |
 | `TableSimulator.Tests`        | MSTest – rámce a súčty podľa príkladov z docs (ELEN, LCD1, ITP), rozklad riadku, simulátor, linka TCP aj rúra, záznam a prehratie, aplikačná vrstva, tvar JSON kontraktov, XML tabúľ a `Web.config` INISSView, archívy TAB/REP, server cez `WebApplicationFactory` (prihlasovanie, oprávnenia, virtuálne tabule, archív) |
 | `web/`                        | React + TypeScript (bun, Vite): ovládanie a renderer tabúľ; testy `bun test`              |
@@ -234,7 +256,8 @@ Zmena databázy = nová migrácia pre každého poskytovateľa:
 dotnet ef migrations add <Nazov> --project TableSimulator.Persistence --startup-project TableSimulator.Persistence --context SqliteAppDbContext --output-dir Migrations/Sqlite
 ```
 
-Server databázu pri štarte vytvorí alebo zmigruje a doplní roly.
+Server databázu pri štarte vytvorí alebo zmigruje (ešte pred zostavením servera – `DatabaseBootstrap` – kvôli
+nastaveniu) a doplní roly.
 
 ### Jadro, profil a vzhľad
 
@@ -339,8 +362,8 @@ dekorátor príkazov, takže nový príkaz sa zaznamená sám – cieľ doplní 
 Zaznamenané sú aj neúspešné prihlásenia; požiadavky odmietnuté pre chýbajúce oprávnenie zachytí záznam servera.
 Záznamy sa držia 365 dní. API: `GET /api/audit?before=&user=&action=&limit=` (od najnovších).
 
-Databáza používateľov a auditu je `tablesimulator.db` (SQLite) v priečinku nastavení, kľúče na podpis prihlásenia
-v `keys\` (vo Windows šifrované DPAPI) – ich zmazanie odhlási všetkých.
+Používatelia a audit sú v databáze servera `tablesimulator.db`, kľúče na podpis prihlásenia v `keys\` (vo Windows
+šifrované DPAPI) – ich zmazanie odhlási všetkých.
 
 ### Prístupové kľúče
 

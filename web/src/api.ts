@@ -176,7 +176,8 @@ export interface Settings {
   fontsFolder: string;
   designsFolder: string;
   connectHost: string;
-  configPath: string;
+  /** Databaza servera (nastavenie, linky, tabule, pouzivatelia). */
+  databasePath: string;
   monitorFolder: string;
   /** Vyzadovat prihlasenie aj z tohto pocitaca (zo siete sa vyzaduje vzdy). */
   requireLogin: boolean;
@@ -192,6 +193,14 @@ export interface Settings {
   httpsKey: string;
   /** Heslo certifikatu je ulozene (server ho nevracia). */
   httpsPasswordSet: boolean;
+}
+
+/** Vysledok importu liniek a tabul. */
+export interface ConfigImported {
+  /** Pridane linky (pri nahradeni vsetky). */
+  lines: number;
+  boards: number;
+  replaced: boolean;
 }
 
 /** Stav HTTPS servera. */
@@ -653,6 +662,9 @@ export const api = {
   clearLog: () => call<void>("DELETE", "/api/log"),
   fonts: () => call<string[]>("GET", "/api/fonts"),
   designs: () => call<DesignInfo[]>("GET", "/api/designs"),
+  /** Linky a tabule ako subor JSON (stiahnutie). */
+  configUrl: "/api/config",
+  importConfig: (content: string, replace: boolean) => call<ConfigImported>("POST", "/api/config/import", { content, replace }),
   /** Heslo certifikatu: null = nechat ulozene, prazdne = zmazat. */
   putSettings: (settings: Settings, httpsPassword: string | null = null) =>
     call<{ restart: boolean }>("PUT", "/api/settings", { ...settings, httpsPassword }),

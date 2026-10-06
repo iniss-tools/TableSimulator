@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using System.Globalization;
 using Serilog;
+using Serilog.Extensions.Logging;
 using TableSimulator.Api;
 using TableSimulator.Application;
 using TableSimulator.Infrastructure;
@@ -8,18 +8,24 @@ using TableSimulator.Infrastructure.Auth;
 using TableSimulator.Infrastructure.Hosting;
 using TableSimulator.Infrastructure.Https;
 using TableSimulator.Infrastructure.Logging;
+using TableSimulator.Infrastructure.Persistence;
 using TableSimulator.Infrastructure.Realtime;
 using TableSimulator.Infrastructure.Settings;
 using TableSimulator.Persistence;
 
-// parametre: --data <priecinok> (nastavenia), --config <subor> (linky a tabule), --port <cislo>, --no-browser,
-// --reset-admin [meno] (nove heslo spravcu a koniec)
+// parametre: --data <priecinok> (nastavenia a databaza), --port <cislo>, --no-browser, --reset-admin [meno] (nove heslo
+// spravcu a koniec)
 Log.Logger = SerilogSetup.CreateBootstrapLogger();
 try
 {
     var commandLine = CommandLine.Parse(args, AppContext.BaseDirectory);
     var paths = commandLine.Paths;
-    var settings = new JsonSettingsStore(paths, commandLine.Port);
+    if (commandLine.ObsoleteConfig)
+        Log.Warning("Parameter --config je zruseny - linky a tabule su v databaze; subor nahrajte na stranke Linky (Importovat)");
+    // nastavenie je v databaze - treba ho skor, nez sa server zostavi (porty, pristup zo siete, prihlasovanie)
+    using var bootstrapLog = new SerilogLoggerFactory(Log.Logger);
+    var settings = new DbSettingsStore(paths.DatabaseFile,
+        await DatabaseBootstrap.PrepareAsync(paths, bootstrapLog.CreateLogger(typeof(DatabaseBootstrap).FullName!)), commandLine.Port);
     var endpoints = ServerEndpoints.From(settings.Current);
 
     var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args, ContentRootPath = AppContext.BaseDirectory, WebRootPath = paths.WebRoot });

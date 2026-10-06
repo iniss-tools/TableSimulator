@@ -11,7 +11,7 @@ using TableSimulator.Infrastructure.Realtime;
 
 namespace TableSimulator.Infrastructure;
 
-/// <summary>Registracia infrastruktury servera: simulator, spojenia liniek, ulozenie konfiguracie, WebSocket.</summary>
+/// <summary>Registracia infrastruktury servera: simulator, spojenia liniek, ulozenie liniek a tabul, WebSocket, HTTPS.</summary>
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, AppPaths paths, ISettingsStore settings, ServerEndpoints endpoints)
@@ -24,7 +24,7 @@ public static class DependencyInjection
         services.AddSingleton<IHttpsCertificates>(sp => sp.GetRequiredService<HttpsCertificates>());
         services.AddSingleton(_ => new Simulator());
         services.AddSingleton<TransportManager>();
-        services.AddSingleton<ConfigStore>();
+        services.AddSingleton<SimulatorConfigStore>();
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<XmlTableFolders>();
         services.AddSingleton<LiveHub>();

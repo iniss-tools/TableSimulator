@@ -150,12 +150,12 @@ public static partial class DtoMapper
             result.UnsupportedLines.ToArray(), result.SkippedBoards.ToArray());
     }
 
-    /// <summary>Nastavenie servera; <paramref name="paths" /> doplni subor liniek a tabul.</summary>
+    /// <summary>Nastavenie servera; <paramref name="paths" /> doplni subor databazy.</summary>
     public static SettingsDto ToDto(AppSettings settings, AppPaths paths)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(paths);
-        return new SettingsDto(settings.HttpPort, settings.AllowNetwork, settings.FontsFolder, settings.DesignsFolder, settings.ConnectHost, paths.ConfigPath)
+        return new SettingsDto(settings.HttpPort, settings.AllowNetwork, settings.FontsFolder, settings.DesignsFolder, settings.ConnectHost, paths.DatabaseFile)
         {
             MonitorFolder = settings.MonitorFolder,
             RequireLogin = settings.RequireLogin,

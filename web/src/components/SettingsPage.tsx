@@ -105,7 +105,7 @@ export function SettingsPage() {
         </label>
         <p className="muted small">{t("settings.requireLogin.hint")}</p>
         <HttpsSettings form={form} setForm={setForm} password={httpsPassword} setPassword={setHttpsPassword} />
-        <p className="muted small">{t("settings.configPath", { path: form.configPath })}</p>
+        <p className="muted small">{t("settings.databasePath", { path: form.databasePath })}</p>
         <div className="dialog-buttons">
           {message && <span className="muted">{message}</span>}
           <button type="submit">{t("common.save")}</button>
