@@ -133,6 +133,10 @@ export const cs: Record<TextKey, string> = {
   "log.status.noBoard": "na adrese nikdo není",
   "log.status.fault": "porucha",
   "log.status.noise": "šum",
+  "log.status.eotInData": "04 v datech",
+  "log.status.eotInData.hint": "V obsahu zprávy je bajt 04 – v protokolu ELEN konec zprávy. Bývá to číslo písma bez bitu 0x40 (např. 4 v seznamu písem stanice); tabule ELEN zprávu ukončí už u něj, součet jí nesedí a zprávu odmítne. Číslo písma pro ELEN má bit 0x40, např. 82 tenké zelené, 98 tučné zelené.",
+  "log.shown": "Zobrazeno {shown} z {total} zpráv.",
+  "log.more": "Zobrazit starší",
   "log.broadcast": "hromadně",
 
   "kind.elen.row": "Řádek {row}: „{text}“",

@@ -37,6 +37,20 @@ public class ElenPanelTests
     }
 
     [TestMethod]
+    public void Eot04VObsahu_OdmietnutaAZaznamSoStavom()
+    {
+        var sim = Create();
+
+        var replies = Replies(sim, ElenFrame.Build(5, 1, Hex("81 10 80 1B 04 41")));
+
+        CollectionAssert.AreEqual(new byte[] { 0x15 }, replies);
+        Assert.IsFalse(Display(sim).Rows.TryGetValue(1, out _));
+        var received = sim.LogSince(0).Single(r => r.Direction == Core.Protocols.FrameDirection.Received);
+        Assert.AreEqual(Core.Protocols.FrameStatus.EotInData, received.Status);
+        Assert.AreEqual("elen.row", received.Info.Kind);
+    }
+
+    [TestMethod]
     public void ObsahSCr_PokracujeNizsimRiadkom()
     {
         var sim = Create();

@@ -114,6 +114,7 @@ public static partial class DtoMapper
                 Core.Protocols.FrameStatus.NoBoard => Contracts.Frames.FrameStatus.NoBoard,
                 Core.Protocols.FrameStatus.Fault => Contracts.Frames.FrameStatus.Fault,
                 Core.Protocols.FrameStatus.Noise => Contracts.Frames.FrameStatus.Noise,
+                Core.Protocols.FrameStatus.EotInData => Contracts.Frames.FrameStatus.EotInData,
                 _ => throw new ArgumentOutOfRangeException(nameof(record), record.Status, null)
             },
             record.Info.Kind, record.Info.Args);

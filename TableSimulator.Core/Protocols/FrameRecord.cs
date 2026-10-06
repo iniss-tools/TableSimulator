@@ -29,7 +29,13 @@ public enum FrameStatus
     [JsonStringEnumMemberName("fault")] Fault,
 
     /// <summary>Bajty mimo sprav (sum).</summary>
-    [JsonStringEnumMemberName("noise")] Noise
+    [JsonStringEnumMemberName("noise")] Noise,
+
+    /// <summary>
+    /// V obsahu spravy je bajt konca spravy (ELEN <c>04</c>, napr. cislo pisma bez bitu <c>0x40</c>) - tabula spravu
+    /// ukonci skor a odmietne.
+    /// </summary>
+    [JsonStringEnumMemberName("eotInData")] EotInData
 }
 
 /// <summary>

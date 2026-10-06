@@ -19,5 +19,8 @@ public enum FrameStatus
     [JsonStringEnumMemberName("fault")] Fault,
 
     /// <summary>Bajty mimo sprav.</summary>
-    [JsonStringEnumMemberName("noise")] Noise
+    [JsonStringEnumMemberName("noise")] Noise,
+
+    /// <summary>V obsahu je bajt konca spravy - tabula ju odmietne.</summary>
+    [JsonStringEnumMemberName("eotInData")] EotInData
 }

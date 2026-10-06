@@ -165,7 +165,7 @@ export interface Frame {
   direction: "rx" | "tx";
   address: number | null;
   hex: string;
-  status: "ok" | "badChecksum" | "noBoard" | "fault" | "noise";
+  status: "ok" | "badChecksum" | "noBoard" | "fault" | "noise" | "eotInData";
   kind: string;
   args: Record<string, string> | null;
 }

@@ -131,6 +131,10 @@ export const sk = {
   "log.status.noBoard": "na adrese nikto nie je",
   "log.status.fault": "porucha",
   "log.status.noise": "šum",
+  "log.status.eotInData": "04 v dátach",
+  "log.status.eotInData.hint": "V obsahu správy je bajt 04 – v protokole ELEN koniec správy. Býva to číslo písma bez bitu 0x40 (napr. 4 v zozname písiem stanice); tabuľa ELEN správu ukončí už pri ňom, súčet jej nesedí a správu odmietne. Číslo písma pre ELEN má bit 0x40, napr. 82 tenké zelené, 98 tučné zelené.",
+  "log.shown": "Zobrazených {shown} z {total} správ.",
+  "log.more": "Zobraziť staršie",
   "log.broadcast": "hromadne",
 
   "kind.elen.row": "Riadok {row}: „{text}“",

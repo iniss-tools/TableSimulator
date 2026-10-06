@@ -42,6 +42,12 @@ public sealed record ElenFrame(int Address, int Command, byte[] Parameters, byte
     public bool IsBroadcast => Address == 0;
 
     /// <summary>
+    /// V obsahu je bajt <c>04</c> (EOT) - napr. cislo pisma bez bitu <c>0x40</c>. Skladac spravu dokoncil az pri
+    /// skutocnom konci (za EOT nesli dva bajty suctu s hornym bitom), tabula ELEN by ju vsak ukoncila uz pri nom.
+    /// </summary>
+    public bool EotInData => Parameters.AsSpan().Contains(Eot);
+
+    /// <summary>
     /// Zostavi spravu (na testy a nastroje): doplni rámec a kontrolny sucet.
     /// </summary>
     public static byte[] Build(int address, int command, ReadOnlySpan<byte> parameters)
@@ -58,7 +64,9 @@ public sealed record ElenFrame(int Address, int Command, byte[] Parameters, byte
 }
 
 /// <summary>
-/// Sklada spravy ELEN z prudu bajtov - spravy mozu prist po castiach aj viac naraz.
+/// Sklada spravy ELEN z prudu bajtov - spravy mozu prist po castiach aj viac naraz. Za koncom spravy (<c>04</c>)
+/// idu dva bajty suctu, oba s hornym bitom; ak nasleduje iny bajt, <c>04</c> bolo v obsahu a sprava pokracuje
+/// (<see cref="ElenFrame.EotInData" />).
 /// </summary>
 public sealed class ElenFramer
 {
@@ -96,14 +104,20 @@ public sealed class ElenFramer
 
             if (_checksumBytes >= 0)
             {
-                _buffer.Add(b);
-                if (++_checksumBytes == 2)
+                if ((b & 0x80) != 0)
                 {
-                    (frames ??= []).Add(Complete());
-                    Reset();
+                    _buffer.Add(b);
+                    if (++_checksumBytes == 2)
+                    {
+                        (frames ??= []).Add(Complete());
+                        Reset();
+                    }
+
+                    continue;
                 }
 
-                continue;
+                // bajt bez horneho bitu nemoze byt sucet - 04 aj doterajsie bajty patria do obsahu
+                _checksumBytes = -1;
             }
 
             if (b == ElenFrame.Soh)

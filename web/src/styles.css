@@ -393,8 +393,41 @@ th {
   color: var(--muted);
 }
 
+/* pevne rozlozenie - pri novom riadku sa nemeraju vsetky ostatne */
+table.log {
+  table-layout: fixed;
+}
+
+table.log col.log-time {
+  width: 7.5em;
+}
+
+table.log col.log-line {
+  width: 4em;
+}
+
+table.log col.log-dir {
+  width: 8.5em;
+}
+
+table.log col.log-address {
+  width: 4.5em;
+}
+
+table.log col.log-bytes {
+  width: 38%;
+}
+
 table.log td {
   font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.log-more {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 table.log tr.dir-tx td {
@@ -402,6 +435,7 @@ table.log tr.dir-tx td {
 }
 
 table.log tr.st-badChecksum td,
+table.log tr.st-eotInData td,
 table.log tr.st-fault td,
 table.log tr.st-noBoard td {
   background: color-mix(in srgb, var(--bad) 10%, transparent);

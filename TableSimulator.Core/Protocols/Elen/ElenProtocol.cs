@@ -55,13 +55,16 @@ internal sealed class ElenProtocol : ILineProtocol
     private static void Handle(ElenFrame frame, ILineContext context)
     {
         context.Line.Stats.Frames++;
-        if (!frame.ChecksumOk)
+        // tabula ELEN konci spravu prvym 04 - pri 04 v obsahu jej sucet nesedi a spravu odmietne
+        var accepted = frame.ChecksumOk && !frame.EotInData;
+        var status = !frame.ChecksumOk ? FrameStatus.BadChecksum : frame.EotInData ? FrameStatus.EotInData : FrameStatus.Ok;
+        if (!accepted)
             context.Line.Stats.BadFrames++;
 
         if (frame.IsBroadcast)
         {
             var info = Describe(frame, context.Line.Manufacturer);
-            if (frame.ChecksumOk)
+            if (accepted)
             {
                 foreach (var board in context.Boards)
                 {
@@ -72,7 +75,7 @@ internal sealed class ElenProtocol : ILineProtocol
                 }
             }
 
-            context.LogReceived(frame.Raw, 0, frame.ChecksumOk ? FrameStatus.Ok : FrameStatus.BadChecksum, Broadcast(info));
+            context.LogReceived(frame.Raw, 0, status, Broadcast(info));
             return;
         }
 
@@ -86,9 +89,9 @@ internal sealed class ElenProtocol : ILineProtocol
         target.Stats.Frames++;
         target.Stats.LastFrameAt = context.Now;
 
-        if (!frame.ChecksumOk)
+        if (!accepted)
         {
-            context.LogReceived(frame.Raw, frame.Address, FrameStatus.BadChecksum, Describe(frame, target.ManufacturerKey));
+            context.LogReceived(frame.Raw, frame.Address, status, Describe(frame, target.ManufacturerKey));
             context.Reply(target, [ElenFrame.Nak], new FrameInfo("nak"), false);
             return;
         }

@@ -61,6 +61,36 @@ public class ElenFrameTests
     }
 
     [TestMethod]
+    public void Skladanie_Eot04VObsahu_SpravaAzPoSkutocnyKoniec()
+    {
+        var framer = new ElenFramer();
+        // riadok 1 tabule 101, stlpec 0, pismo 4 ("Standartne" z [FONT] stanice), text "St"
+        var raw = ElenFrame.Build(101, 1, Hex("81 10 80 1B 04 53 74"));
+
+        var frames = framer.Push(raw);
+
+        Assert.HasCount(1, frames);
+        Assert.IsTrue(frames[0].ChecksumOk);
+        Assert.IsTrue(frames[0].EotInData);
+        CollectionAssert.AreEqual(raw, frames[0].Raw);
+        Assert.AreEqual(0, framer.DiscardedBytes);
+    }
+
+    [TestMethod]
+    public void Skladanie_Eot04APoNomSucetSHornymBitom_KoniecSpravy()
+    {
+        var framer = new ElenFramer();
+
+        // za 04 dva bajty s hornym bitom - bezny koniec (zly sucet), nasledujuca sprava sa slozi normalne
+        var frames = framer.Push(Hex("01 85 81 80 04 82 85 01 85 81 80 04 82 84"));
+
+        Assert.HasCount(2, frames);
+        Assert.IsFalse(frames[0].ChecksumOk);
+        Assert.IsFalse(frames[0].EotInData);
+        Assert.IsTrue(frames[1].ChecksumOk);
+    }
+
+    [TestMethod]
     public void Skladanie_NovyZaciatokUprostredSpravy()
     {
         var framer = new ElenFramer();
