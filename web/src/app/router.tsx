@@ -74,7 +74,7 @@ const pages = [
   createRoute({ getParentRoute: () => shell, path: "/users", component: lazyRouteComponent(() => import("@/features/users/UsersPage"), "UsersPage") }),
   createRoute({ getParentRoute: () => shell, path: "/keys", component: lazyRouteComponent(() => import("@/features/keys/KeysPage"), "KeysPage") }),
   createRoute({ getParentRoute: () => shell, path: "/audit", component: lazyRouteComponent(() => import("@/features/audit/AuditPage"), "AuditPage") }),
-  createRoute({ getParentRoute: () => shell, path: "/settings", component: lazyRouteComponent(() => import("@/components/SettingsPage"), "SettingsPage") }),
+  createRoute({ getParentRoute: () => shell, path: "/settings", component: lazyRouteComponent(() => import("@/features/settings/SettingsPage"), "SettingsPage") }),
 ] as const;
 
 const routeTree = rootRoute.addChildren([boardKiosk, wall, virtualKiosk, shell.addChildren(pages)]);

@@ -22,8 +22,6 @@ export interface NavItem {
   label: TextKey;
   icon: LucideIcon;
   permission: Permission;
-  /** DOCASNE (E3): stranka este v starom vzhlade - ram ju obali triedou .legacy (legacy.css). */
-  legacy?: true;
 }
 
 export interface NavGroup {
@@ -55,7 +53,7 @@ export const NAV: NavGroup[] = [
       { to: "/users", label: "nav.users", icon: Users, permission: PERMISSIONS.users },
       { to: "/keys", label: "nav.keys", icon: KeyRound, permission: PERMISSIONS.users },
       { to: "/audit", label: "nav.audit", icon: History, permission: PERMISSIONS.audit },
-      { to: "/settings", label: "nav.settings", icon: Settings, permission: PERMISSIONS.settings, legacy: true },
+      { to: "/settings", label: "nav.settings", icon: Settings, permission: PERMISSIONS.settings },
     ],
   },
 ];

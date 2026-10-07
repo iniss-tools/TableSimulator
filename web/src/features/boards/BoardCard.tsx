@@ -153,7 +153,8 @@ export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: ()
         <BoardView board={board} />
         {!board.profile.fontFile && <p className="text-xs text-muted-foreground">{t("board.approxFont")}</p>}
       </CardContent>
-      <CardFooter className="flex flex-wrap items-center justify-between gap-2">
+      {/* stav tabule vzdy na spodku karty - karty v riadku mriezky maju rovnaku vysku */}
+      <CardFooter className="mt-auto flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs text-muted-foreground">
           {last ? t("board.lastFrame", { time: last }) : t("board.noFrames")} · {t("board.stats", { frames: board.stats.frames, acks: board.stats.acks, naks: board.stats.naks })} ·{" "}
           {d.brightness > 0 ? t("board.brightness", { value: d.brightness }) : t("board.dark")}

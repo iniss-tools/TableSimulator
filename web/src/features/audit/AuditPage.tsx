@@ -1,6 +1,6 @@
 // Audit - kto co v simulatore urobil (kazda zmena aj neuspesne prihlasenie); filtruje server, starsie po strankach.
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { History, RefreshCw } from "lucide-react";
+import { CircleX, History, RefreshCw } from "lucide-react";
 import { errorText, getAudit, type AuditEntryDto } from "@/api";
 import { OptionSelect } from "@/components/common/option-select";
 import { PageHeader } from "@/components/common/page-header";
@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTimeParts } from "@/lib/format";
 import { hasText, t } from "@/i18n";
 
 const PAGE = 100;
@@ -88,7 +88,17 @@ export function AuditPage() {
 
   const columns = useMemo(
     () => [
-      column.accessor("time", { header: t("audit.col.time"), cell: ({ getValue }) => <span className="whitespace-nowrap">{formatDateTime(getValue())}</span> }),
+      column.accessor("time", {
+        header: t("audit.col.time"),
+        // datum a cas sa v uzkej tabulke zalomia pod seba
+        cell: ({ getValue }) => (
+          <span className="flex flex-wrap gap-x-1">
+            {formatDateTimeParts(getValue()).map((part, i) => (
+              <span key={i}>{part}</span>
+            ))}
+          </span>
+        ),
+      }),
       column.accessor((e) => userText(e.user), {
         id: "user",
         header: t("audit.col.user"),
@@ -99,8 +109,8 @@ export function AuditPage() {
             <code className="font-mono text-xs">{row.original.user}</code>
           ),
       }),
-      column.accessor((e) => actionText(e.action), { id: "action", header: t("audit.col.action") }),
-      column.accessor("target", { header: t("audit.col.target") }),
+      column.accessor((e) => actionText(e.action), { id: "action", header: t("audit.col.action"), meta: { className: "whitespace-normal" } }),
+      column.accessor("target", { header: t("audit.col.target"), meta: { className: "whitespace-normal break-words" } }),
       column.accessor((e) => (e.success ? t("audit.ok") : (e.error ?? "")), {
         id: "result",
         header: t("audit.col.result"),
@@ -108,7 +118,13 @@ export function AuditPage() {
           const e = row.original;
           if (e.success) return <StatusBadge tone="ok">{t("audit.ok")}</StatusBadge>;
           const key = `error.${e.error}`;
-          return <StatusBadge tone="bad">{hasText(key) ? t(key) : e.error}</StatusBadge>;
+          // text chyby moze byt dlhy - zalomi sa namiesto stitku, aby tabulka nemusela posuvat do strany
+          return (
+            <span className="flex max-w-md min-w-40 items-start gap-1.5 whitespace-normal text-red-700 dark:text-red-400">
+              <CircleX className="mt-0.5 size-3.5 shrink-0" />
+              {hasText(key) ? t(key) : e.error}
+            </span>
+          );
         },
       }),
       column.accessor((e) => e.address ?? "", { id: "address", header: t("audit.col.address"), cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue()}</span> }),

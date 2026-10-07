@@ -1,12 +1,37 @@
 // Ziva tabula: rasterizacia obsahu + LED renderer, prisposobena velkosti miesta.
 import { useEffect, useRef, useState } from "react";
 import { useConnection, type BoardDto as Board } from "@/api";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { DEFAULT_DESIGN, defaultDesignId, loadDesign, type LedDesign } from "@/render/design";
 import { CanvasGlyphSource, CellGlyphSource, ElenGlyphSource, loadFontSet, type ElenFontSet, type GlyphSource } from "@/render/fonts";
 import { CHAR_WIDTH } from "@/render/chars";
 import { blinkPhase, boardClock, hasClock, isAnimated, rasterize } from "@/render/rasterize";
 import { LedRenderer, ledSize } from "@/render/led";
+
+// Prve kreslenie tabule trva desiatky ms - stranka s mnohymi tabulami ich kresli po jednej v samostatnych ulohach,
+// aby sa medzitym vykreslila (kostry na miestach tabul) a nezamrzla.
+const firstDraws: (() => void)[] = [];
+let drawing = false;
+
+function nextFirstDraw() {
+  firstDraws.shift()?.();
+  if (firstDraws.length) setTimeout(nextFirstDraw, 0);
+  else drawing = false;
+}
+
+/** Zaradi prve kreslenie; vrati zrusenie. */
+function queueFirstDraw(job: () => void): () => void {
+  let cancelled = false;
+  firstDraws.push(() => !cancelled && job());
+  if (!drawing) {
+    drawing = true;
+    setTimeout(nextFirstDraw, 0);
+  }
+  return () => {
+    cancelled = true;
+  };
+}
 
 interface Props {
   board: Board;
@@ -22,11 +47,21 @@ export function BoardView({ board, fit = "width", className }: Props) {
   const [design, setDesign] = useState<LedDesign>(DEFAULT_DESIGN);
   const [fontSet, setFontSet] = useState<ElenFontSet | null>(null);
   const [space, setSpace] = useState({ width: 0, height: 0 });
+  // co uz je nacitane - prvy raz sa kresli az so spravnym vzhladom a pismom (bez mihnutia nahradnych)
+  const [loadedDesign, setLoadedDesign] = useState<string | null>(null);
+  const [loadedFont, setLoadedFont] = useState<string | null>(null);
+  const [drawn, setDrawn] = useState(false);
+  const firstDone = useRef(false);
 
   const designId = board.design || defaultDesignId(board.display.family);
+  const designKey = `${designId}|${designVersion}`;
   useEffect(() => {
     let live = true;
-    loadDesign(designId, designVersion).then((d) => live && setDesign(d));
+    loadDesign(designId, designVersion).then((d) => {
+      if (!live) return;
+      setDesign(d);
+      setLoadedDesign(`${designId}|${designVersion}`);
+    });
     return () => {
       live = false;
     };
@@ -36,7 +71,12 @@ export function BoardView({ board, fit = "width", className }: Props) {
   useEffect(() => {
     let live = true;
     if (!fontFile) setFontSet(null);
-    else loadFontSet(fontFile).then((f) => live && setFontSet(f));
+    else
+      loadFontSet(fontFile).then((f) => {
+        if (!live) return;
+        setFontSet(f);
+        setLoadedFont(fontFile);
+      });
     return () => {
       live = false;
     };
@@ -61,8 +101,10 @@ export function BoardView({ board, fit = "width", className }: Props) {
   const source = fontSet ? new ElenGlyphSource(fontSet, board.profile.fontMap) : null;
   inputs.current = { board, design, source, scale: cssScale * (window.devicePixelRatio || 1) };
 
+  const ready = loadedDesign === designKey && (!fontFile || loadedFont === fontFile);
+
   useEffect(() => {
-    if (!canvas.current || cssScale <= 0) return;
+    if (!canvas.current || cssScale <= 0 || (!firstDone.current && !ready)) return;
     renderer.current ??= new LedRenderer(canvas.current);
     let fallback: GlyphSource | null = null;
     let fallbackKey = "";
@@ -102,27 +144,43 @@ export function BoardView({ board, fit = "width", className }: Props) {
       last = now;
     };
 
-    draw(performance.now());
-    // animacia: striedanie, blikanie a posun ~30× za sekundu; samotne hodiny staci raz za sekundu
-    const animated = isAnimated(board);
-    if (animated || hasClock(board)) {
-      const interval = animated ? 33 : 1000;
-      const tick = (now: number) => {
-        if (now - last >= interval) draw(now);
+    const start = () => {
+      draw(performance.now());
+      // animacia: striedanie, blikanie a posun ~30× za sekundu; samotne hodiny staci raz za sekundu
+      const animated = isAnimated(board);
+      if (animated || hasClock(board)) {
+        const interval = animated ? 33 : 1000;
+        const tick = (now: number) => {
+          if (now - last >= interval) draw(now);
+          raf = requestAnimationFrame(tick);
+        };
         raf = requestAnimationFrame(tick);
-      };
-      raf = requestAnimationFrame(tick);
-    }
-    return () => cancelAnimationFrame(raf);
-  }, [board, design, fontSet, cssScale]);
+      }
+    };
+    let cancel: (() => void) | null = null;
+    if (firstDone.current) start();
+    else
+      cancel = queueFirstDraw(() => {
+        firstDone.current = true;
+        start();
+        setDrawn(true);
+      });
+    return () => {
+      cancel?.();
+      cancelAnimationFrame(raf);
+    };
+  }, [board, design, fontSet, cssScale, ready]);
 
   return (
     <div ref={box} className={cn("w-full leading-0", fit === "contain" && "flex h-full items-center justify-center", className)}>
-      <canvas
-        ref={canvas}
-        className="block max-w-full"
-        style={cssScale > 0 ? { width: `${natural.width * cssScale}px`, height: `${natural.height * cssScale}px` } : { visibility: "hidden" }}
-      />
+      <div className="relative max-w-full">
+        <canvas
+          ref={canvas}
+          className={cn("block max-w-full", !drawn && "invisible")}
+          style={cssScale > 0 ? { width: `${natural.width * cssScale}px`, height: `${natural.height * cssScale}px` } : { visibility: "hidden" }}
+        />
+        {!drawn && <Skeleton className="absolute inset-0 rounded-sm" />}
+      </div>
     </div>
   );
 }

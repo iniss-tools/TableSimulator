@@ -33,11 +33,14 @@
 		<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
 	</ItemGroup>
 
-	<!-- Webove rozhranie (bun + vite) sa zostavi do wwwroot pred buildom; -p:SkipWebBuild=true ho vynecha. -->
-	<ItemGroup>
-		<WebSource Include="$(WebDir)\src\**\*;$(WebDir)\public\**\*;$(WebDir)\index.html;$(WebDir)\package.json;$(WebDir)\vite.config.ts;$(WebDir)\tsconfig.json" />
-	</ItemGroup>
-	<Target Name="BuildWeb" BeforeTargets="BeforeBuild" Inputs="@(WebSource)" Outputs="$(MSBuildProjectDirectory)\wwwroot\index.html"
+	<!-- Webove rozhranie (bun + vite) sa zostavi do wwwroot pred buildom; -p:SkipWebBuild=true ho vynecha.
+	     Zdroje webu su polozky az v cieli - staticku ItemGroup by IDE ukazovalo ako odkazy v koreni projektu. -->
+	<Target Name="CollectWebSource">
+		<ItemGroup>
+			<WebSource Include="$(WebDir)\src\**\*;$(WebDir)\public\**\*;$(WebDir)\index.html;$(WebDir)\package.json;$(WebDir)\bun.lock;$(WebDir)\vite.config.ts;$(WebDir)\tsconfig.json" />
+		</ItemGroup>
+	</Target>
+	<Target Name="BuildWeb" DependsOnTargets="CollectWebSource" BeforeTargets="BeforeBuild" Inputs="@(WebSource)" Outputs="$(MSBuildProjectDirectory)\wwwroot\index.html"
 			Condition="'$(SkipWebBuild)' != 'true'">
 		<Exec Command="bun install" WorkingDirectory="$(WebDir)" Condition="!Exists('$(WebDir)\node_modules')" />
 		<Exec Command="bun run build" WorkingDirectory="$(WebDir)" />

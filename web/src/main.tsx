@@ -11,7 +11,6 @@ import { getLanguage } from "./i18n";
 // tema hned pri starte - aj pre kiosk a prihlasenie
 import "./lib/theme";
 import "./index.css";
-import "./legacy.css";
 
 document.documentElement.lang = getLanguage();
 
@@ -33,7 +32,7 @@ createRoot(document.getElementById("root")!).render(
       <TooltipProvider>
         <RouterProvider router={router} />
         <ConfirmHost />
-        <Toaster richColors closeButton />
+        <Toaster position="top-right" richColors closeButton />
       </TooltipProvider>
     </QueryClientProvider>
   </StrictMode>,
