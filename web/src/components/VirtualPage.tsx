@@ -156,28 +156,10 @@ function ImportResult({ result, folders, onClose }: { result: InissViewImported;
   );
 }
 
-/** Virtualne tabule a archiv INISSu - zalozky jednej stranky. */
+/** Virtualne tabule a archiv INISSu - kazda cast ma vlastnu polozku menu. */
 export function VirtualPage({ tab }: { tab: "boards" | "tables" | "reports" }) {
   useLanguage();
-  return (
-    <section>
-      <div className="toolbar">
-        <h2>{t("virtual.title")}</h2>
-        <nav className="tabs">
-          <a href="#/virtual" className={tab === "boards" ? "active" : ""}>
-            {t("virtual.tab.boards")}
-          </a>
-          <a href="#/archive/tables" className={tab === "tables" ? "active" : ""}>
-            {t("virtual.tab.tables")}
-          </a>
-          <a href="#/archive/reports" className={tab === "reports" ? "active" : ""}>
-            {t("virtual.tab.reports")}
-          </a>
-        </nav>
-      </div>
-      {tab === "boards" ? <VirtualBoardsTab /> : <ArchiveTab key={tab} kind={tab} />}
-    </section>
-  );
+  return <section>{tab === "boards" ? <VirtualBoardsTab /> : <ArchiveTab key={tab} kind={tab} />}</section>;
 }
 
 function VirtualBoardsTab() {

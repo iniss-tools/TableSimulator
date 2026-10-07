@@ -12,7 +12,8 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["bun", "vite/client"]
+    "types": ["bun", "vite/client"],
+    "paths": { "@/*": ["./src/*"] }
   },
   "include": ["src"]
 }

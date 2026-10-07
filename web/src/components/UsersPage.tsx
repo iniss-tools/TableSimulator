@@ -9,13 +9,11 @@ import {
   getAudit,
   getUsersOptions,
   getUsersQueryKey,
-  PERMISSIONS,
   queryClient,
   ROLES,
   setUserPasswordMutation,
   unlockUser,
   updateUserMutation,
-  useCan,
   useMe,
   type AuditEntryDto as AuditEntry,
   type Role,
@@ -399,35 +397,8 @@ function AuditTab() {
   );
 }
 
+/** Pouzivatelia, pristupove kluce a audit - kazda cast ma vlastnu polozku menu (opravnenie strazi ram). */
 export function UsersPage({ tab }: { tab: "users" | "audit" | "keys" }) {
   useLanguage();
-  const can = useCan();
-  const showUsers = can(PERMISSIONS.users);
-  const showAudit = can(PERMISSIONS.audit);
-  const active = tab === "audit" && showAudit ? "audit" : showUsers ? (tab === "keys" ? "keys" : "users") : "audit";
-  return (
-    <section>
-      <div className="toolbar">
-        <h2>{t("users.title")}</h2>
-        <nav className="tabs">
-          {showUsers && (
-            <a href="#/users" className={active === "users" ? "active" : ""}>
-              {t("users.tab.users")}
-            </a>
-          )}
-          {showUsers && (
-            <a href="#/keys" className={active === "keys" ? "active" : ""}>
-              {t("users.tab.keys")}
-            </a>
-          )}
-          {showAudit && (
-            <a href="#/audit" className={active === "audit" ? "active" : ""}>
-              {t("users.tab.audit")}
-            </a>
-          )}
-        </nav>
-      </div>
-      {active === "users" ? <UsersTab /> : active === "keys" ? <KeysTab /> : <AuditTab />}
-    </section>
-  );
+  return <section>{tab === "users" ? <UsersTab /> : tab === "keys" ? <KeysTab /> : <AuditTab />}</section>;
 }
