@@ -70,6 +70,30 @@ function level(brightness: number): number {
   return brightness <= 0 ? 0 : 0.35 + (0.65 * Math.min(100, brightness)) / 100;
 }
 
+/**
+ * Zhasnute body celej matice: jeden riadok bodov sa nakresli do pomocneho platna (pre kazdu vysku riadku zvlast)
+ * a skopiruje na kazdy riadok - namiesto sirka × vyska volani drawImage len sirka + vyska.
+ */
+function drawOffRows(ctx: CanvasRenderingContext2D, off: HTMLCanvasElement, xs: Int32Array, ys: Int32Array, hs: Int32Array) {
+  const left = xs[0];
+  const width = xs[xs.length - 1] - left;
+  if (width <= 0) return;
+  const strips = new Map<number, HTMLCanvasElement>();
+  for (let y = 0; y < hs.length; y++) {
+    const h = hs[y];
+    let strip = strips.get(h);
+    if (!strip) {
+      strip = document.createElement("canvas");
+      strip.width = width;
+      strip.height = h;
+      const sctx = strip.getContext("2d")!;
+      for (let x = 0; x + 1 < xs.length; x++) sctx.drawImage(off, xs[x] - left, 0, Math.max(1, xs[x + 1] - xs[x]), h);
+      strips.set(h, strip);
+    }
+    ctx.drawImage(strip, left, ys[y]);
+  }
+}
+
 export class LedRenderer {
   private key = "";
   private prev: Uint8Array | null = null;
@@ -101,6 +125,8 @@ export class LedRenderer {
     for (let x = 0; x <= frame.width; x++) xs[x] = Math.round(originX + x * p);
     const ys = new Int32Array(frame.height + 1);
     for (let y = 0; y <= frame.height; y++) ys[y] = Math.round(originY + y * p + Math.floor(Math.min(y, frame.height - 1) / Math.max(1, rowHeight)) * gap);
+    const hs = new Int32Array(frame.height);
+    for (let y = 0; y < frame.height; y++) hs[y] = Math.max(1, Math.round(originY + (y + 1) * p + Math.floor(y / Math.max(1, rowHeight)) * gap) - ys[y]);
 
     if (full) {
       this.key = key;
@@ -132,7 +158,8 @@ export class LedRenderer {
           ctx.fillRect(fw, top, cw - 2 * fw, Math.round(gap));
         }
       }
-      this.prev = new Uint8Array(frame.color.length).fill(255);
+      if (this.sprites.off) drawOffRows(ctx, this.sprites.off, xs, ys, hs);
+      this.prev = new Uint8Array(frame.color.length);
     }
 
     if (header && headerHeight > 0) this.drawHeader(ctx, header, design, options.clock, fw, cw - 2 * fw, Math.round(headerHeight), p);
@@ -141,7 +168,7 @@ export class LedRenderer {
     const prev = this.prev!;
     for (let y = 0; y < frame.height; y++) {
       const py = ys[y];
-      const h = Math.max(1, Math.round(originY + (y + 1) * p + Math.floor(y / Math.max(1, rowHeight)) * gap) - py);
+      const h = hs[y];
       for (let x = 0; x < frame.width; x++) {
         const i = y * frame.width + x;
         let v = frame.color[i];
@@ -150,13 +177,17 @@ export class LedRenderer {
         const alpha = v === 0 ? 0 : levels[v === 4 ? 3 : v];
         if (alpha === 0) v = 0;
         else if (options.monochrome) v = MONO;
+        // po celom prekresleni su vsetky body zhasnute (prev = 0) - kresli sa len rozsvietene
         if (v === prev[i]) continue;
+        const wasLit = prev[i] !== 0;
         prev[i] = v;
         const px = xs[x];
         const w = Math.max(1, xs[x + 1] - px);
-        ctx.fillStyle = design.background;
-        ctx.fillRect(px, py, w, h);
-        if (sprites.off) ctx.drawImage(sprites.off, px, py, w, h);
+        if (wasLit) {
+          ctx.fillStyle = design.background;
+          ctx.fillRect(px, py, w, h);
+          if (sprites.off) ctx.drawImage(sprites.off, px, py, w, h);
+        }
         if (v !== 0) {
           ctx.globalAlpha = alpha;
           ctx.drawImage(sprites.lit[v], px, py, w, h);
