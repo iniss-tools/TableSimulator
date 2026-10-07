@@ -1,18 +1,29 @@
 // Nastavenie servera: pisma ELEN, vlastne vzhlady, siet.
 import { useEffect, useState } from "react";
-import { api, ApiError, type DesignInfo, type Settings } from "../api";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  errorText,
+  getDesignsOptions,
+  getFontsOptions,
+  getHttpsStatusQueryKey,
+  getStateQueryKey,
+  queryClient,
+  updateSettingsMutation,
+  useSimulatorState,
+  type SettingsDto,
+} from "../api";
 import { t } from "../i18n";
 import { clearFontCache } from "../render/fonts";
-import { reload, useLive } from "../store";
 import { Field } from "./Dialog";
 import { HttpsSettings } from "./HttpsSettings";
 
 export function SettingsPage() {
-  const live = useLive();
-  const [form, setForm] = useState<Settings | null>(live.settings);
-  const [fonts, setFonts] = useState<string[]>([]);
-  const [designs, setDesigns] = useState<DesignInfo[]>([]);
+  const live = useSimulatorState();
+  const [form, setForm] = useState<SettingsDto | null>(live.settings);
+  const fonts = useQuery(getFontsOptions()).data ?? [];
+  const designs = useQuery(getDesignsOptions()).data ?? [];
   const [message, setMessage] = useState<string | null>(null);
+  const update = useMutation(updateSettingsMutation());
   // text pola s priecinkami (riadok = priecinok) - prazdne riadky vynecha az server
   const [folders, setFolders] = useState((live.settings?.virtualFolders ?? []).join("\n"));
   // nove heslo certifikatu; null = nechat ulozene
@@ -25,25 +36,23 @@ export function SettingsPage() {
     }
   }, [live.settings, form]);
 
-  useEffect(() => {
-    api.fonts().then(setFonts).catch(() => setFonts([]));
-    api.designs().then(setDesigns).catch(() => setDesigns([]));
-  }, [live.settings]);
-
   if (!form) return null;
 
-  const save = async () => {
-    try {
-      const result = await api.putSettings(form, httpsPassword);
-      setHttpsPassword(null);
-      setForm({ ...form, httpsPasswordSet: httpsPassword === null ? form.httpsPasswordSet : httpsPassword !== "" });
-      clearFontCache();
-      setMessage(result.restart ? t("settings.restart") : t("settings.saved"));
-      await reload();
-    } catch (e) {
-      setMessage(e instanceof ApiError ? e.message : String(e));
-    }
-  };
+  const save = () =>
+    update.mutate(
+      { body: { ...form, httpsPassword } },
+      {
+        onSuccess: (result) => {
+          setHttpsPassword(null);
+          setForm({ ...form, httpsPasswordSet: httpsPassword === null ? form.httpsPasswordSet : httpsPassword !== "" });
+          clearFontCache();
+          setMessage(result.restart ? t("settings.restart") : t("settings.saved"));
+          queryClient.invalidateQueries({ queryKey: getStateQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getHttpsStatusQueryKey() });
+        },
+        onError: (e) => setMessage(errorText(e)),
+      },
+    );
 
   return (
     <section className="settings">

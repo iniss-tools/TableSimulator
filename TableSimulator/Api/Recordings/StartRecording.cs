@@ -13,5 +13,6 @@ public sealed class StartRecording : IEndpoint
         app.MapPost("recordings/start", async (StartRecordingRequest request, ICommandHandler<StartRecordingCommand, RecorderStatusDto> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new StartRecordingCommand(request.Note), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .Produces<RecorderStatusDto>()
             .RequireAuthorization(Permissions.RecordingsManage);
 }

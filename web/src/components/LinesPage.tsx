@@ -1,8 +1,20 @@
 // Komunikacne linky - zodpovedaju sekciam Driver v INISSe.
 import { useRef, useState } from "react";
-import { api, ApiError, lineConfig, PERMISSIONS, type ConfigImported, type LineConfig, type LineMode } from "../api";
+import { useMutation } from "@tanstack/react-query";
+import {
+  deleteLine,
+  errorText,
+  importConfigMutation,
+  manufacturersFor,
+  PERMISSIONS,
+  setLineMutation,
+  useCan,
+  useSimulatorState,
+  type LineMode,
+  type SetLineRequest,
+} from "../api";
+import { lineConfig } from "../lib/boards";
 import { t, type TextKey } from "../i18n";
-import { manufacturersFor, useCan, useLive } from "../store";
 import { Dialog, Field } from "./Dialog";
 
 function CopyButton({ text }: { text: string }) {
@@ -23,27 +35,19 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function LineDialog({ initial, isNew, onClose }: { initial: LineConfig; isNew: boolean; onClose: () => void }) {
-  const live = useLive();
+function LineDialog({ initial, isNew, onClose }: { initial: SetLineRequest; isNew: boolean; onClose: () => void }) {
+  const live = useSimulatorState();
   const [config, setConfig] = useState(initial);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const save = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await api.putLine(config);
-      onClose();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : String(e));
-    } finally {
-      setBusy(false);
-    }
-  };
+  const save = useMutation({ ...setLineMutation(), onSuccess: onClose });
 
   return (
-    <Dialog title={isNew ? t("dialog.line.new") : t("dialog.line.edit", { number: config.number })} onClose={onClose} onSubmit={save} error={error} busy={busy}>
+    <Dialog
+      title={isNew ? t("dialog.line.new") : t("dialog.line.edit", { number: config.number })}
+      onClose={onClose}
+      onSubmit={() => save.mutate({ path: { number: config.number }, body: config })}
+      error={save.error && errorText(save.error)}
+      busy={save.isPending}
+    >
       <div className="form-grid">
         <Field label={t("field.number")}>
           <input
@@ -106,12 +110,12 @@ function LineDialog({ initial, isNew, onClose }: { initial: LineConfig; isNew: b
 }
 
 export function LinesPage() {
-  const live = useLive();
+  const live = useSimulatorState();
   const edit = useCan()(PERMISSIONS.edit);
-  const [editing, setEditing] = useState<{ config: LineConfig; isNew: boolean } | null>(null);
+  const [editing, setEditing] = useState<{ config: SetLineRequest; isNew: boolean } | null>(null);
   const [replace, setReplace] = useState(false);
-  const [imported, setImported] = useState<ConfigImported | null>(null);
-  const [importError, setImportError] = useState<string | null>(null);
+  const importing = useMutation(importConfigMutation());
+  const imported = importing.data;
   const upload = useRef<HTMLInputElement>(null);
 
   // nahradenie zmaze linky a tabule, ktore v subore nie su - len s potvrdenim
@@ -119,13 +123,7 @@ export function LinesPage() {
     const file = files?.[0];
     if (upload.current) upload.current.value = "";
     if (!file || (replace && !confirm(t("lines.import.replaceConfirm")))) return;
-    try {
-      setImported(await api.importConfig(await file.text(), replace));
-      setImportError(null);
-    } catch (e) {
-      setImported(null);
-      setImportError(e instanceof ApiError ? e.message : String(e));
-    }
+    importing.mutate({ body: { content: await file.text(), replace } });
   };
 
   const add = () => {
@@ -143,7 +141,7 @@ export function LinesPage() {
       <div className="toolbar">
         <h2>{t("lines.title")}</h2>
         <span className="spacer" />
-        <a className="button secondary" href={api.configUrl} download title={t("lines.export.hint")}>
+        <a className="button secondary" href="/api/config" download title={t("lines.export.hint")}>
           {t("lines.export")}
         </a>
         {edit && (
@@ -161,11 +159,11 @@ export function LinesPage() {
         )}
       </div>
       <p className="hint">{t("lines.hint")}</p>
-      {importError && <p className="error">{importError}</p>}
+      {importing.error && <p className="error">{errorText(importing.error)}</p>}
       {imported && (
         <p className="banner-info">
           {t(imported.replaced ? "lines.import.replaced" : "lines.import.added", { lines: imported.lines, boards: imported.boards })}{" "}
-          <button className="secondary" onClick={() => setImported(null)}>
+          <button className="secondary" onClick={() => importing.reset()}>
             {t("common.close")}
           </button>
         </p>
@@ -224,7 +222,7 @@ export function LinesPage() {
                       <button
                         className="icon-button"
                         title={t("common.delete")}
-                        onClick={() => confirm(t("line.delete.confirm", { number: l.number })) && api.deleteLine(l.number)}
+                        onClick={() => confirm(t("line.delete.confirm", { number: l.number })) && deleteLine({ path: { number: l.number } })}
                       >
                         ✕
                       </button>

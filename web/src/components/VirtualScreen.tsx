@@ -1,6 +1,6 @@
 // Obrazovka virtualnej tabule podla rozlozenia - kiosk (#/virtual/<cislo>) aj nahlad v editore rozlozenia.
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import type { VirtualLayout, VirtualView } from "../api";
+import type { VirtualLayoutDto as VirtualLayout, VirtualViewDto as VirtualView } from "../api";
 import { hasText, t } from "../i18n";
 import { columnColor, columnText, columnWidth, labelKey, layoutColumns, layoutTitle } from "../render/virtual";
 

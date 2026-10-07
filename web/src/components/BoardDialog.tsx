@@ -1,12 +1,25 @@
 // Uprava tabule: identita, profil (hardver vratane hlavicky) a vzhlad.
-import { useEffect, useState } from "react";
-import { api, ApiError, defaultProfile, type BoardConfig, type BoardHeader, type BoardTemplate, type DesignInfo, type HeaderText, type Profile } from "../api";
+import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  errorText,
+  getDesignsOptions,
+  getFontsOptions,
+  getMonitorOptions,
+  manufacturersFor,
+  setBoardMutation,
+  useSimulatorState,
+  type BoardHeaderDto,
+  type BoardProfileDto,
+  type HeaderTextDto,
+  type SetBoardRequest,
+} from "../api";
+import { defaultProfile } from "../lib/boards";
 import { t } from "../i18n";
-import { manufacturersFor, useLive } from "../store";
 import { Dialog, Field } from "./Dialog";
 
 interface Props {
-  initial: BoardConfig;
+  initial: SetBoardRequest;
   isNew: boolean;
   onClose: () => void;
 }
@@ -14,7 +27,7 @@ interface Props {
 const num = (value: string) => Number.parseInt(value, 10) || 0;
 
 /** Editor hlavicky: vyska, texty s polohou a hodiny. */
-function HeaderEditor({ header, width, onChange }: { header: BoardHeader | null; width: number; onChange: (h: BoardHeader | null) => void }) {
+function HeaderEditor({ header, width, onChange }: { header: BoardHeaderDto | null; width: number; onChange: (h: BoardHeaderDto | null) => void }) {
   if (!header) {
     return (
       <button type="button" className="secondary" onClick={() => onChange({ height: 20, texts: [], clock: null })}>
@@ -23,7 +36,7 @@ function HeaderEditor({ header, width, onChange }: { header: BoardHeader | null;
     );
   }
 
-  const setText = (i: number, patch: Partial<HeaderText>) => onChange({ ...header, texts: header.texts.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
+  const setText = (i: number, patch: Partial<HeaderTextDto>) => onChange({ ...header, texts: header.texts.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
 
   return (
     <div className="header-editor">
@@ -103,24 +116,14 @@ function HeaderEditor({ header, width, onChange }: { header: BoardHeader | null;
 }
 
 export function BoardDialog({ initial, isNew, onClose }: Props) {
-  const live = useLive();
-  const [config, setConfig] = useState<BoardConfig>(initial);
-  const [fonts, setFonts] = useState<string[]>([]);
-  const [designs, setDesigns] = useState<DesignInfo[]>([]);
-  const [templates, setTemplates] = useState<BoardTemplate[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const live = useSimulatorState();
+  const [config, setConfig] = useState<SetBoardRequest>(initial);
+  const fonts = useQuery(getFontsOptions()).data ?? [];
+  const designs = useQuery(getDesignsOptions()).data ?? [];
+  const templates = useQuery(getMonitorOptions()).data?.panels ?? [];
+  const save = useMutation({ ...setBoardMutation(), onSuccess: onClose });
 
-  useEffect(() => {
-    api.fonts().then(setFonts).catch(() => setFonts([]));
-    api.designs().then(setDesigns).catch(() => setDesigns([]));
-    api
-      .monitor()
-      .then((m) => setTemplates(m.panels))
-      .catch(() => setTemplates([]));
-  }, []);
-
-  const profile = (patch: Partial<Profile>) => setConfig({ ...config, profile: { ...config.profile, ...patch } });
+  const profile = (patch: Partial<BoardProfileDto>) => setConfig({ ...config, profile: { ...config.profile, ...patch } });
   const lineManufacturers = (line: number) => manufacturersFor(live, live.lines.find((l) => l.number === line)?.tableClass);
   const manufacturers = lineManufacturers(config.line);
   const shownManufacturers = config.manufacturer && !manufacturers.includes(config.manufacturer) ? [config.manufacturer, ...manufacturers] : manufacturers;
@@ -130,22 +133,16 @@ export function BoardDialog({ initial, isNew, onClose }: Props) {
     if (template) setConfig({ ...config, profile: { ...template.profile, autoSize: false }, name: config.name || template.name });
   };
 
-  const save = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await api.putBoard(config);
-      onClose();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : String(e));
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const title = isNew ? t("dialog.board.new") : t("dialog.board.edit", { name: config.name || t("board.unnamed", { address: config.address }) });
   return (
-    <Dialog title={title} onClose={onClose} onSubmit={save} error={error} busy={busy}>
+    <Dialog
+      title={title}
+      onClose={onClose}
+      onSubmit={() => save.mutate({ path: { line: config.line, address: config.address }, body: config })}
+      error={save.error && errorText(save.error)}
+      busy={save.isPending}
+    >
       <div className="form-grid">
         <Field label={t("field.line")}>
           <select

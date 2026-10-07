@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { Board, Run } from "../api";
+import type { BoardDto as Board, RunDto as Run } from "../api/generated/types.gen";
 import { ElenGlyphSource, fontIndex, tallDigitCode, type ElenFontSet } from "./fonts";
 import { blinkPhase, COLOR_NONE, isAnimated, rasterize } from "./rasterize";
 

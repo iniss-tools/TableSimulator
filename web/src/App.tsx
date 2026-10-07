@@ -1,8 +1,7 @@
 // Hlavny ramec: navigacia, jazyk, tema a zobrazenie na celu obrazovku (#/view/<id>, #/wall).
 import { useEffect, useRef, useState } from "react";
-import { setLanguage, t, useLanguage, type Language } from "./i18n";
-import { api, forgetAccessKey, PERMISSIONS } from "./api";
-import { can, loadMe, openSocket, useLive } from "./store";
+import { setLanguage, t, useLanguage, type Language, type TextKey } from "./i18n";
+import { can, forgetAccessKey, logout, openSocket, PERMISSIONS, queryClient, useConnection, useMe, useSimulatorState, type MeDto, type Permission } from "./api";
 import { AuthPage } from "./components/AuthPage";
 import { BoardsPage } from "./components/BoardsPage";
 import { BoardView } from "./components/BoardView";
@@ -50,7 +49,8 @@ function useTheme(): [Theme, (t: Theme) => void] {
 
 /** Tabula alebo vsetky tabule bez ovladania - pre televizor, tablet, druhu obrazovku. */
 function Kiosk({ boardId }: { boardId: string | null }) {
-  const live = useLive();
+  const live = useSimulatorState();
+  const { connected } = useConnection();
   const boards = boardId ? live.boards.filter((b) => b.id === boardId) : live.boards;
   const fullscreen = () => {
     if (document.fullscreenElement) document.exitFullscreen();
@@ -61,32 +61,32 @@ function Kiosk({ boardId }: { boardId: string | null }) {
       {boards.map((b) => (
         <BoardView key={b.id} board={b} fit={boardId ? "contain" : "width"} />
       ))}
-      {!live.connected && <div className="kiosk-offline">{t("server.offline")}</div>}
+      {!connected && <div className="kiosk-offline">{t("server.offline")}</div>}
     </div>
   );
+}
+
+/** Odhlasenie - cache patri predchadzajucemu pouzivatelovi, zahodi sa a zisti sa znova, kto je prihlaseny. */
+function signOut() {
+  logout().finally(() => queryClient.resetQueries());
 }
 
 export function App() {
   const hash = useHash();
   const language = useLanguage();
-  const [theme, setTheme] = useTheme();
-  const live = useLive();
-  const [password, setPassword] = useState(false);
-  const userMenu = useRef<HTMLDetailsElement>(null);
-  const [passwordDone, setPasswordDone] = useState(false);
+  // tema plati aj pre kiosk a prihlasenie
+  const theme = useTheme();
+  const me = useMe();
 
-  const authenticated = live.me?.authenticated ?? false;
-  useEffect(() => {
-    loadMe().catch(() => undefined);
-  }, []);
+  const authenticated = me?.authenticated ?? false;
   useEffect(() => (authenticated ? openSocket() : undefined), [authenticated]);
   useEffect(() => {
     document.title = t("app.title");
   }, [language]);
 
   // kym sa nezisti pouzivatel, nic; neprihlaseny dostane prihlasenie (aj na adrese kiosku - po prihlaseni tam ostane)
-  if (!live.me) return null;
-  if (live.me.loginRequired && !live.me.authenticated) return <AuthPage setup={live.me.setupRequired} />;
+  if (!me) return null;
+  if (me.loginRequired && !me.authenticated) return <AuthPage setup={me.setupRequired} />;
 
   const view = hash.match(/^#\/view\/(.+)$/);
   if (view) return <Kiosk boardId={decodeURIComponent(view[1])} />;
@@ -94,8 +94,19 @@ export function App() {
   const virtual = hash.match(/^#\/virtual\/(\d+)$/);
   if (virtual) return <VirtualKiosk id={Number(virtual[1])} />;
 
+  return <Shell me={me} hash={hash} theme={theme} />;
+}
+
+function Shell({ me, hash, theme: [theme, setTheme] }: { me: MeDto; hash: string; theme: [Theme, (t: Theme) => void] }) {
+  const language = useLanguage();
+  const live = useSimulatorState();
+  const { connected } = useConnection();
+  const [password, setPassword] = useState(false);
+  const userMenu = useRef<HTMLDetailsElement>(null);
+  const [passwordDone, setPasswordDone] = useState(false);
+
   const page = hash.replace(/^#\//, "") || "boards";
-  const nav: [string, string, string][] = [
+  const nav: [string, string, Permission][] = [
     ["boards", t("nav.boards"), PERMISSIONS.view],
     ["lines", t("nav.lines"), PERMISSIONS.view],
     ["log", t("nav.log"), PERMISSIONS.log],
@@ -103,9 +114,9 @@ export function App() {
     ["virtual", t("nav.virtual"), PERMISSIONS.view],
     ["settings", t("nav.settings"), PERMISSIONS.settings],
   ];
-  const allowed = nav.filter(([, , permission]) => can(live.me, permission));
+  const allowed = nav.filter(([, , permission]) => can(me, permission));
   // pouzivatelia a audit su jedna stranka so zalozkami
-  if (can(live.me, PERMISSIONS.users) || can(live.me, PERMISSIONS.audit)) allowed.push(["users", t("nav.users"), PERMISSIONS.users]);
+  if (can(me, PERMISSIONS.users) || can(me, PERMISSIONS.audit)) allowed.push(["users", t("nav.users"), PERMISSIONS.users]);
 
   return (
     <div className="app">
@@ -122,13 +133,13 @@ export function App() {
           ))}
         </nav>
         <span className="spacer" />
-        {live.me.loginRequired && (
+        {me.loginRequired && (
           <details className="user-menu" ref={userMenu}>
-            <summary title={live.me.userName ?? ""}>
-              {live.me.displayName || live.me.userName} · {t(`role.${live.me.role ?? "viewer"}`)}
+            <summary title={me.userName ?? ""}>
+              {me.displayName || me.userName} · {t(`role.${me.role ?? "viewer"}` as TextKey)}
             </summary>
             <div className="user-menu-items">
-              {live.me.accessKey ? (
+              {me.accessKey ? (
                 <>
                   <span className="muted small">{t("keys.thisTab")}</span>
                   <button
@@ -153,7 +164,7 @@ export function App() {
                   >
                     {t("users.ownPassword")}
                   </button>
-                  <button className="secondary" onClick={() => api.logout().finally(() => loadMe())}>
+                  <button className="secondary" onClick={signOut}>
                     {t("auth.logout")}
                   </button>
                 </>
@@ -169,7 +180,7 @@ export function App() {
           {theme === "dark" ? "☾" : theme === "light" ? "☀" : "◐"}
         </button>
       </header>
-      {!live.connected && live.loaded && <div className="banner">{t("server.offline")}</div>}
+      {!connected && live.loaded && <div className="banner">{t("server.offline")}</div>}
       <main>
         {page === "lines" ? (
           <LinesPage />

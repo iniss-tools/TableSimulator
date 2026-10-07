@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { VirtualLayout, VirtualRow } from "../api";
+import type { VirtualLayoutDto as VirtualLayout, VirtualRowDto as VirtualRow } from "../api/generated/types.gen";
 import { cellText, columnColor, columnText, defaultColumn, DEFAULT_TIMING, labelKey, layoutColumns, layoutTitle, virtualColumns } from "./virtual";
 
 const row = (cells: Record<string, string>): VirtualRow => ({ cells: Object.entries(cells).map(([name, text]) => ({ name, text })) });

@@ -13,5 +13,6 @@ public sealed class UpdateUser : IEndpoint
         app.MapPut("users/{userName}", async (string userName, UpdateUserRequest request, ICommandHandler<UpdateUserCommand> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new UpdateUserCommand(userName, request), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
+            .Produces(StatusCodes.Status204NoContent)
             .RequireAuthorization(Permissions.UsersManage);
 }

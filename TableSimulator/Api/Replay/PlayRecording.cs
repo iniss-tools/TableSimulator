@@ -13,5 +13,6 @@ public sealed class PlayRecording : IEndpoint
         app.MapPost("replay", async (PlayRequest request, ICommandHandler<PlayRecordingCommand, ReplayStatusDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new PlayRecordingCommand(request.Name, request.Speed, request.Loop), cancellationToken))
             .Match(Results.Ok, CustomResults.Problem))
+            .Produces<ReplayStatusDto>()
             .RequireAuthorization(Permissions.RecordingsManage);
 }

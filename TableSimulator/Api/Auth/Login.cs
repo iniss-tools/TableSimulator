@@ -12,5 +12,6 @@ public sealed class Login : IEndpoint
         app.MapPost("auth/login", async (LoginRequest request, ICommandHandler<LoginCommand, MeDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new LoginCommand(request.UserName ?? "", request.Password ?? "", request.Remember), cancellationToken))
             .Match(Results.Ok, CustomResults.Problem))
+            .Produces<MeDto>()
             .AllowAnonymous();
 }

@@ -1,5 +1,5 @@
 // Pisma ELEN zo servera (/api/fonts/<subor>) a zdroje znakov pre rasterizaciu.
-import { authHeaders } from "../auth";
+import { authHeaders } from "../api";
 
 export interface ElenFontData {
   name: string;

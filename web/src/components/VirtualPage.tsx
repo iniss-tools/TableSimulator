@@ -1,8 +1,25 @@
 // Virtualne tabule: definicie (ako vo Web.config INISSView) a XML tabul najdene v priecinkoch logov INISSu.
-import { useEffect, useRef, useState } from "react";
-import { api, ApiError, PERMISSIONS, type InissViewImported, type VirtualBoard, type VirtualLayout, type VirtualOverview, type VirtualSource } from "../api";
+import { useRef, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  deleteVirtualBoard,
+  deleteVirtualLayout,
+  errorText,
+  getStateQueryKey,
+  getVirtualOverviewOptions,
+  importInissViewMutation,
+  PERMISSIONS,
+  queryClient,
+  setVirtualBoardMutation,
+  updateSettings,
+  useCan,
+  useSimulatorState,
+  type InissViewImportedDto as InissViewImported,
+  type VirtualBoardDto as VirtualBoard,
+  type VirtualLayoutDto as VirtualLayout,
+  type VirtualSourceDto as VirtualSource,
+} from "../api";
 import { t, useLanguage, type TextKey } from "../i18n";
-import { onVirtualChanged, reload, useCan, useLive } from "../store";
 import { ArchiveTab } from "./ArchiveTab";
 import { Dialog, Field } from "./Dialog";
 import { layoutName, VirtualLayoutDialog } from "./VirtualLayoutDialog";
@@ -39,25 +56,17 @@ interface VirtualDialogProps {
 function VirtualDialog({ initial, isNew, sources, layouts, defaultLayout, onClose }: VirtualDialogProps) {
   const fallback = layouts.find((l) => l.id === defaultLayout);
   const [board, setBoard] = useState(initial);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const number = (value: string) => Number.parseInt(value, 10);
-
-  const save = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await api.putVirtual(board);
-      onClose();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : String(e));
-    } finally {
-      setBusy(false);
-    }
-  };
+  const save = useMutation({ ...setVirtualBoardMutation(), onSuccess: onClose });
 
   return (
-    <Dialog title={isNew ? t("dialog.virtual.new") : t("dialog.virtual.edit", { id: board.id })} onClose={onClose} onSubmit={save} error={error} busy={busy}>
+    <Dialog
+      title={isNew ? t("dialog.virtual.new") : t("dialog.virtual.edit", { id: board.id })}
+      onClose={onClose}
+      onSubmit={() => save.mutate({ path: { id: board.id }, body: board })}
+      error={save.error && errorText(save.error)}
+      busy={save.isPending}
+    >
       <div className="form-grid">
         <Field label={t("virtual.field.id")} hint={t("virtual.field.id.hint")}>
           <input type="number" min={1} max={99999} value={board.id} disabled={!isNew} onChange={(e) => setBoard({ ...board, id: number(e.target.value) || 1 })} />
@@ -116,13 +125,14 @@ function VirtualDialog({ initial, isNew, sources, layouts, defaultLayout, onClos
 
 /** Nacitanie definicii z Web.config INISSView a ponuka sledovat jeho priecinky. */
 function ImportResult({ result, folders, onClose }: { result: InissViewImported; folders: string[]; onClose: () => void }) {
-  const live = useLive();
+  const live = useSimulatorState();
   const can = useCan();
   const missing = result.folders.filter((f) => !folders.some((g) => g.toLowerCase() === f.toLowerCase()));
   const watchFolders = async () => {
     if (!live.settings) return;
-    await api.putSettings({ ...live.settings, virtualFolders: [...folders, ...missing] });
-    await reload();
+    // heslo certifikatu ostava ulozene (null)
+    await updateSettings({ body: { ...live.settings, virtualFolders: [...folders, ...missing], httpsPassword: null }, throwOnError: true });
+    await queryClient.invalidateQueries({ queryKey: getStateQueryKey() });
     onClose();
   };
   return (
@@ -173,26 +183,18 @@ export function VirtualPage({ tab }: { tab: "boards" | "tables" | "reports" }) {
 function VirtualBoardsTab() {
   const can = useCan();
   const edit = can(PERMISSIONS.edit);
-  const [data, setData] = useState<VirtualOverview | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // zmeny XML a definicii prinasa WebSocket (live.ts)
+  const overview = useQuery(getVirtualOverviewOptions());
+  const data = overview.data;
+  const [actionError, setActionError] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ board: VirtualBoard; isNew: boolean } | null>(null);
   const [editingLayout, setEditingLayout] = useState<{ layout: VirtualLayout; isNew: boolean } | null>(null);
   const [replace, setReplace] = useState(false);
-  const [imported, setImported] = useState<InissViewImported | null>(null);
+  const importing = useMutation(importInissViewMutation());
+  const imported = importing.data;
   const upload = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const load = () =>
-      api
-        .virtual()
-        .then((d) => {
-          setData(d);
-          setError(null);
-        })
-        .catch((e) => setError(e instanceof ApiError ? e.message : String(e)));
-    load();
-    return onVirtualChanged(() => load());
-  }, []);
+  const failure = importing.error ?? overview.error;
+  const error = actionError ?? (failure && errorText(failure));
 
   const nextId = () => {
     const used = new Set(data?.boards.map((b) => b.id));
@@ -219,15 +221,9 @@ function VirtualBoardsTab() {
 
   const onImport = async (files: FileList | null) => {
     const file = files?.[0];
+    if (upload.current) upload.current.value = "";
     if (!file) return;
-    try {
-      setImported(await api.importInissView(await file.text(), replace));
-      setError(null);
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : String(e));
-    } finally {
-      if (upload.current) upload.current.value = "";
-    }
+    importing.mutate({ body: { content: await file.text(), replace } });
   };
 
   // kopia rozlozenia - nazov s priponou, kluc s prvym volnym cislom
@@ -239,7 +235,7 @@ function VirtualBoardsTab() {
   };
   const deleteLayout = (layout: VirtualLayout) => {
     if (confirm(t("virtual.layout.delete.confirm", { name: layoutName(layout) })))
-      api.deleteLayout(layout.id).catch((e) => setError(e instanceof ApiError ? e.message : String(e)));
+      deleteVirtualLayout({ path: { id: layout.id } }).catch((e) => setActionError(errorText(e)));
   };
 
   if (!data) return error ? <p className="error">{error}</p> : null;
@@ -267,7 +263,7 @@ function VirtualBoardsTab() {
         )}
       </div>
       {error && <p className="error">{error}</p>}
-      {imported && <ImportResult result={imported} folders={folders} onClose={() => setImported(null)} />}
+      {imported && <ImportResult result={imported} folders={folders} onClose={() => importing.reset()} />}
       {data.folders.length === 0 ? (
         <p className="banner-warn">
           {t("virtual.noFolders")}{" "}
@@ -336,7 +332,7 @@ function VirtualBoardsTab() {
                           <button
                             className="icon-button"
                             title={t("common.delete")}
-                            onClick={() => confirm(t("virtual.delete.confirm", { id: b.id })) && api.deleteVirtual(b.id).catch((e) => setError(String(e)))}
+                            onClick={() => confirm(t("virtual.delete.confirm", { id: b.id })) && deleteVirtualBoard({ path: { id: b.id } }).catch((e) => setActionError(errorText(e)))}
                           >
                             ✕
                           </button>

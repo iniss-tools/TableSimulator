@@ -1,6 +1,6 @@
 // Rasterizacia obsahu tabule ELEN na body: co tabula v danom okamihu ukazuje (striedanie, pohyblivy text,
 // blikanie). Ako body vyzeraju, rozhoduje az LED renderer podla vzhladu.
-import type { Board, Profile, Run } from "../api";
+import type { BoardDto as Board, BoardProfileDto as Profile, RunDto as Run } from "../api/generated/types.gen";
 import type { GlyphSource } from "./fonts";
 import { isCharsAnimated, rasterizeChars } from "./chars";
 import { COLOR_NONE, type DotFrame } from "./frame";

@@ -13,5 +13,6 @@ public sealed class ExportConfig : IEndpoint
         app.MapGet("config", async (IQueryHandler<ExportConfigQuery, ConfigFile> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new ExportConfigQuery(), cancellationToken))
             .Match(file => Results.File(Encoding.UTF8.GetBytes(file.Content), "application/json", file.FileName), CustomResults.Problem))
+            .Produces(StatusCodes.Status200OK, contentType: "application/json")
             .RequireAuthorization(Permissions.SimulatorView);
 }

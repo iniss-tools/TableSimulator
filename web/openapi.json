@@ -1,0 +1,5030 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "TableSimulator API",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/virtual/{id}": {
+      "delete": {
+        "tags": [
+          "Virtual"
+        ],
+        "operationId": "DeleteVirtualBoard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Virtual"
+        ],
+        "operationId": "GetVirtualView",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VirtualViewDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Virtual"
+        ],
+        "operationId": "SetVirtualBoard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetVirtualBoardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/virtual/layouts/{id}": {
+      "delete": {
+        "tags": [
+          "Virtual"
+        ],
+        "operationId": "DeleteVirtualLayout",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Virtual"
+        ],
+        "operationId": "SetVirtualLayout",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VirtualLayoutDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/virtual": {
+      "get": {
+        "tags": [
+          "Virtual"
+        ],
+        "operationId": "GetVirtualOverview",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VirtualOverviewDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/virtual/import": {
+      "post": {
+        "tags": [
+          "Virtual"
+        ],
+        "operationId": "ImportInissView",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InissViewImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InissViewImportedDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "CreateUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "GetUsers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserDto"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{userName}": {
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "DeleteUser",
+        "parameters": [
+          {
+            "name": "userName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "UpdateUser",
+        "parameters": [
+          {
+            "name": "userName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{userName}/password": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "SetUserPassword",
+        "parameters": [
+          {
+            "name": "userName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{userName}/unlock": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "UnlockUser",
+        "parameters": [
+          {
+            "name": "userName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/station": {
+      "post": {
+        "tags": [
+          "Station"
+        ],
+        "operationId": "ImportStation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StationImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StationImportedDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/state": {
+      "get": {
+        "tags": [
+          "State"
+        ],
+        "operationId": "GetState",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StateDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "operationId": "GetSettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Settings"
+        ],
+        "operationId": "UpdateSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsUpdatedDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/replay": {
+      "post": {
+        "tags": [
+          "Replay"
+        ],
+        "operationId": "PlayRecording",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayStatusDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/replay/stop": {
+      "post": {
+        "tags": [
+          "Replay"
+        ],
+        "operationId": "StopReplay",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings/{name}": {
+      "delete": {
+        "tags": [
+          "Recordings"
+        ],
+        "operationId": "DeleteRecording",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings/{name}/file": {
+      "get": {
+        "tags": [
+          "Recordings"
+        ],
+        "operationId": "DownloadRecording",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings": {
+      "get": {
+        "tags": [
+          "Recordings"
+        ],
+        "operationId": "GetRecordings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingsDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings/start": {
+      "post": {
+        "tags": [
+          "Recordings"
+        ],
+        "operationId": "StartRecording",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartRecordingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecorderStatusDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings/stop": {
+      "post": {
+        "tags": [
+          "Recordings"
+        ],
+        "operationId": "StopRecording",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecorderStatusDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings/upload": {
+      "post": {
+        "tags": [
+          "Recordings"
+        ],
+        "operationId": "UploadRecording",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "$ref": "#/components/schemas/Stream"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingInfoDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/monitor": {
+      "get": {
+        "tags": [
+          "Monitor"
+        ],
+        "operationId": "GetMonitor",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitorDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/monitor/import": {
+      "post": {
+        "tags": [
+          "Monitor"
+        ],
+        "operationId": "ImportMonitorProject",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MonitorImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitorImportedDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lines/{number}": {
+      "delete": {
+        "tags": [
+          "Lines"
+        ],
+        "operationId": "DeleteLine",
+        "parameters": [
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Lines"
+        ],
+        "operationId": "SetLine",
+        "parameters": [
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetLineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/keys": {
+      "post": {
+        "tags": [
+          "Keys"
+        ],
+        "operationId": "CreateAccessKey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccessKeyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessKeyCreatedDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Keys"
+        ],
+        "operationId": "GetAccessKeys",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccessKeyDto"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/keys/{id}": {
+      "delete": {
+        "tags": [
+          "Keys"
+        ],
+        "operationId": "DeleteAccessKey",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/https/certificate": {
+      "get": {
+        "tags": [
+          "Https"
+        ],
+        "operationId": "DownloadHttpsCertificate",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/https": {
+      "get": {
+        "tags": [
+          "Https"
+        ],
+        "operationId": "GetHttpsStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpsStatusDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/log": {
+      "delete": {
+        "tags": [
+          "Frames"
+        ],
+        "operationId": "ClearLog",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Frames"
+        ],
+        "operationId": "GetLog",
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FrameDto"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/fonts/{file}": {
+      "get": {
+        "tags": [
+          "Fonts"
+        ],
+        "operationId": "GetFont",
+        "parameters": [
+          {
+            "name": "file",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FontFileDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/fonts": {
+      "get": {
+        "tags": [
+          "Fonts"
+        ],
+        "operationId": "GetFonts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/designs": {
+      "get": {
+        "tags": [
+          "Designs"
+        ],
+        "operationId": "GetDesigns",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DesignInfoDto"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/config": {
+      "get": {
+        "tags": [
+          "Config"
+        ],
+        "operationId": "ExportConfig",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/config/import": {
+      "post": {
+        "tags": [
+          "Config"
+        ],
+        "operationId": "ImportConfig",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigImportedDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/boards/{id}/clear": {
+      "post": {
+        "tags": [
+          "Boards"
+        ],
+        "operationId": "ClearBoard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/boards/{id}": {
+      "delete": {
+        "tags": [
+          "Boards"
+        ],
+        "operationId": "DeleteBoard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Boards"
+        ],
+        "operationId": "GetBoard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/boards/{line}/{address}": {
+      "put": {
+        "tags": [
+          "Boards"
+        ],
+        "operationId": "SetBoard",
+        "parameters": [
+          {
+            "name": "line",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetBoardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/boards/{id}/fault": {
+      "post": {
+        "tags": [
+          "Boards"
+        ],
+        "operationId": "SetBoardFault",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BoardFaultDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "ChangePassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "GetMe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "Login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "Logout",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/setup": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "Setup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/audit": {
+      "get": {
+        "tags": [
+          "Audit"
+        ],
+        "operationId": "GetAudit",
+        "parameters": [
+          {
+            "name": "before",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "user",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPageDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/archive": {
+      "get": {
+        "tags": [
+          "Archive"
+        ],
+        "operationId": "GetArchiveDays",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArchiveDaysDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/archive/reports/{date}": {
+      "get": {
+        "tags": [
+          "Archive"
+        ],
+        "operationId": "GetReportArchive",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "train",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "newest",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportArchivePageDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/archive/tables/{date}": {
+      "get": {
+        "tags": [
+          "Archive"
+        ],
+        "operationId": "GetTableArchive",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "train",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "newest",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableArchivePageDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccessKeyCreatedDto": {
+        "required": [
+          "key",
+          "secret"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "$ref": "#/components/schemas/AccessKeyDto"
+          },
+          "secret": {
+            "type": "string"
+          }
+        }
+      },
+      "AccessKeyDto": {
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "role",
+          "prefix",
+          "createdAt",
+          "createdBy",
+          "lastUsedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AccessKeyKind"
+          },
+          "role": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "AccessKeyKind": {
+        "enum": [
+          "device",
+          "api"
+        ]
+      },
+      "ApiProblem": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errors": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "required": [
+                "code",
+                "description"
+              ],
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ArchiveDaysDto": {
+        "required": [
+          "tables",
+          "reports"
+        ],
+        "type": "object",
+        "properties": {
+          "tables": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "reports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        }
+      },
+      "ArchiveDetailDto": {
+        "required": [
+          "key",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "ArchiveTrainDto": {
+        "required": [
+          "type",
+          "number",
+          "name",
+          "date"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "date": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "AuditEntryDto": {
+        "required": [
+          "id",
+          "time",
+          "user",
+          "action",
+          "target",
+          "success",
+          "error",
+          "details",
+          "address"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "details": {
+            "type": "string"
+          },
+          "address": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AuditPageDto": {
+        "required": [
+          "entries",
+          "hasMore"
+        ],
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryDto"
+            }
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BoardDto": {
+        "required": [
+          "id",
+          "line",
+          "address",
+          "name",
+          "manufacturer",
+          "profile",
+          "design",
+          "fault",
+          "autoCreated",
+          "stats",
+          "display",
+          "version",
+          "secondAddress",
+          "mismatch"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "address": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/BoardProfileDto"
+          },
+          "design": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fault": {
+            "$ref": "#/components/schemas/BoardFaultDto"
+          },
+          "autoCreated": {
+            "type": "boolean"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/BoardStatsDto"
+          },
+          "display": {
+            "$ref": "#/components/schemas/DisplayDto"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "secondAddress": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "mismatch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ManufacturerMismatchDto"
+              }
+            ]
+          }
+        }
+      },
+      "BoardFaultDto": {
+        "required": [
+          "kind",
+          "delayMs",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/FaultKind"
+          },
+          "delayMs": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          }
+        }
+      },
+      "BoardHeaderDto": {
+        "required": [
+          "height",
+          "texts",
+          "clock"
+        ],
+        "type": "object",
+        "properties": {
+          "height": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "texts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HeaderTextDto"
+            }
+          },
+          "clock": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/HeaderClockDto"
+              }
+            ]
+          }
+        }
+      },
+      "BoardProfileDto": {
+        "required": [
+          "width",
+          "rows",
+          "rowHeight",
+          "fontFile",
+          "fontMap",
+          "alternationMs",
+          "blinkOnMs",
+          "blinkOffMs",
+          "scrollSpeed",
+          "monochrome",
+          "swapRedGreen",
+          "header",
+          "movingFont",
+          "autoSize"
+        ],
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowHeight": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fontFile": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fontMap": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "alternationMs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "blinkOnMs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "blinkOffMs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scrollSpeed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "monochrome": {
+            "type": "boolean"
+          },
+          "swapRedGreen": {
+            "type": "boolean"
+          },
+          "header": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BoardHeaderDto"
+              }
+            ]
+          },
+          "movingFont": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "autoSize": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BoardStatsDto": {
+        "required": [
+          "frames",
+          "acks",
+          "naks",
+          "unanswered",
+          "lastFrameAt"
+        ],
+        "type": "object",
+        "properties": {
+          "frames": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "acks": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "naks": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unanswered": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lastFrameAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "BoardTemplateDto": {
+        "required": [
+          "file",
+          "name",
+          "profile"
+        ],
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/BoardProfileDto"
+          }
+        }
+      },
+      "ConfigImportedDto": {
+        "required": [
+          "lines",
+          "boards",
+          "replaced"
+        ],
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "boards": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "replaced": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateAccessKeyRequest": {
+        "required": [
+          "name",
+          "kind",
+          "role"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AccessKeyKind"
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateUserRequest": {
+        "required": [
+          "userName",
+          "displayName",
+          "role",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "userName": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "DesignInfoDto": {
+        "required": [
+          "id",
+          "name",
+          "renderer",
+          "builtIn"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "renderer": {
+            "type": "string"
+          },
+          "builtIn": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DisplayDto": {
+        "required": [
+          "family",
+          "brightness",
+          "clock",
+          "clockSetAt",
+          "rows",
+          "movingRow",
+          "movingCodes",
+          "movingText",
+          "brightnessGreen",
+          "flashOnMs",
+          "flashOffMs",
+          "charRows"
+        ],
+        "type": "object",
+        "properties": {
+          "family": {
+            "type": "string"
+          },
+          "brightness": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clock": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "clockSetAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RowDto"
+            }
+          },
+          "movingRow": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "movingCodes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "movingText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "brightnessGreen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "flashOnMs": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "flashOffMs": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "charRows": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CharRowDto"
+            }
+          }
+        }
+      },
+      "ElementDto": {
+        "required": [
+          "type",
+          "run",
+          "parts"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "run": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RunDto"
+              }
+            ]
+          },
+          "parts": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/RunDto"
+              }
+            }
+          }
+        }
+      },
+      "FaultKind": {
+        "enum": [
+          "none",
+          "noReply",
+          "nak",
+          "delay",
+          "garbage",
+          "status"
+        ]
+      },
+      "FontDto": {
+        "required": [
+          "name",
+          "maxWidth",
+          "height",
+          "proportional",
+          "bytesPerRow",
+          "widths",
+          "glyphs"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "maxWidth": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "height": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "proportional": {
+            "type": "boolean"
+          },
+          "bytesPerRow": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "widths": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "glyphs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "FontFileDto": {
+        "required": [
+          "file",
+          "name",
+          "fonts"
+        ],
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "fonts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FontDto"
+            }
+          }
+        }
+      },
+      "FrameDirection": {
+        "enum": [
+          "rx",
+          "tx"
+        ]
+      },
+      "FrameDto": {
+        "required": [
+          "seq",
+          "time",
+          "line",
+          "direction",
+          "address",
+          "hex",
+          "status",
+          "kind",
+          "args"
+        ],
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "line": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/FrameDirection"
+          },
+          "address": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "hex": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FrameStatus"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "args": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "FrameStatus": {
+        "enum": [
+          "ok",
+          "badChecksum",
+          "noBoard",
+          "fault",
+          "noise",
+          "eotInData"
+        ]
+      },
+      "HeaderClockDto": {
+        "required": [
+          "x",
+          "y",
+          "height"
+        ],
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "y": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "height": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "HeaderTextDto": {
+        "required": [
+          "x",
+          "y",
+          "height",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "y": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "height": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "HttpsSource": {
+        "enum": [
+          "generated",
+          "file"
+        ]
+      },
+      "HttpsStatusDto": {
+        "required": [
+          "enabled",
+          "port",
+          "redirect",
+          "source",
+          "subject",
+          "issuer",
+          "thumbprint",
+          "notAfter",
+          "names",
+          "error",
+          "errorDetail"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "redirect": {
+            "type": "boolean"
+          },
+          "source": {
+            "$ref": "#/components/schemas/HttpsSource"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "thumbprint": {
+            "type": "string"
+          },
+          "notAfter": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errorDetail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ChangePasswordRequest": {
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
+          }
+        }
+      },
+      "CharLayerDto": {
+        "required": [
+          "layer",
+          "codes",
+          "fonts",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "layer": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "codes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "fonts": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "CharRowDto": {
+        "required": [
+          "row",
+          "layers"
+        ],
+        "type": "object",
+        "properties": {
+          "row": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "layers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CharLayerDto"
+            }
+          }
+        }
+      },
+      "ImportConfigRequest": {
+        "required": [
+          "content",
+          "replace"
+        ],
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "replace": {
+            "type": "boolean"
+          }
+        }
+      },
+      "InissViewImportedDto": {
+        "required": [
+          "added",
+          "replaced",
+          "skipped",
+          "duplicates",
+          "folders"
+        ],
+        "type": "object",
+        "properties": {
+          "added": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "replaced": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "duplicates": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "folders": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "InissViewImportRequest": {
+        "required": [
+          "content",
+          "replace"
+        ],
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "replace": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LineDto": {
+        "required": [
+          "number",
+          "name",
+          "tableClass",
+          "endpoint",
+          "mode",
+          "autoLearn",
+          "manufacturer",
+          "status",
+          "statusDetail",
+          "inissTablePort",
+          "stats",
+          "version",
+          "mirror",
+          "mirrorError"
+        ],
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tableClass": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "endpoint": {
+            "type": "string"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/LineMode"
+          },
+          "autoLearn": {
+            "type": "boolean"
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LineStatus"
+          },
+          "statusDetail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "inissTablePort": {
+            "type": "string"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/LineStatsDto"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mirror": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mirrorError": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "LineMode": {
+        "enum": [
+          "display",
+          "monitor"
+        ]
+      },
+      "LineStatsDto": {
+        "required": [
+          "bytesIn",
+          "bytesOut",
+          "frames",
+          "badFrames",
+          "discarded",
+          "connections"
+        ],
+        "type": "object",
+        "properties": {
+          "bytesIn": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bytesOut": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "frames": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "badFrames": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "discarded": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "connections": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "LineStatus": {
+        "enum": [
+          "stopped",
+          "listening",
+          "connected",
+          "error"
+        ]
+      },
+      "LoginRequest": {
+        "required": [
+          "userName",
+          "password",
+          "remember"
+        ],
+        "type": "object",
+        "properties": {
+          "userName": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "remember": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ManufacturerMismatchDto": {
+        "required": [
+          "evidence",
+          "suggested"
+        ],
+        "type": "object",
+        "properties": {
+          "evidence": {
+            "type": "string"
+          },
+          "suggested": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "MeDto": {
+        "required": [
+          "loginRequired",
+          "setupRequired",
+          "authenticated",
+          "userName",
+          "displayName",
+          "role",
+          "permissions",
+          "accessKey"
+        ],
+        "type": "object",
+        "properties": {
+          "loginRequired": {
+            "type": "boolean"
+          },
+          "setupRequired": {
+            "type": "boolean"
+          },
+          "authenticated": {
+            "type": "boolean"
+          },
+          "userName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "role": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accessKey": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MonitorDto": {
+        "required": [
+          "available",
+          "folder",
+          "panels",
+          "projects",
+          "look"
+        ],
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "folder": {
+            "type": "string"
+          },
+          "panels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardTemplateDto"
+            }
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "look": {
+            "$ref": "#/components/schemas/MonitorLookDto"
+          }
+        }
+      },
+      "MonitorImportedDto": {
+        "required": [
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "MonitorImportRequest": {
+        "required": [
+          "project",
+          "line"
+        ],
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "MonitorLookDto": {
+        "required": [
+          "fontName",
+          "fontColor",
+          "headerColor",
+          "displayColor"
+        ],
+        "type": "object",
+        "properties": {
+          "fontName": {
+            "type": "string"
+          },
+          "fontColor": {
+            "type": "string"
+          },
+          "headerColor": {
+            "type": "string"
+          },
+          "displayColor": {
+            "type": "string"
+          }
+        }
+      },
+      "PlayRequest": {
+        "required": [
+          "name",
+          "speed",
+          "loop"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "speed": {
+            "type": "number",
+            "format": "double"
+          },
+          "loop": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RecorderStatusDto": {
+        "required": [
+          "recording",
+          "name",
+          "started",
+          "entries",
+          "bytes"
+        ],
+        "type": "object",
+        "properties": {
+          "recording": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "started": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "entries": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bytes": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "RecordingInfoDto": {
+        "required": [
+          "name",
+          "size",
+          "created",
+          "duration",
+          "lines",
+          "frames",
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "duration": {
+            "type": "number",
+            "format": "double"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "frames": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "RecordingsDto": {
+        "required": [
+          "items",
+          "recorder",
+          "replay"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordingInfoDto"
+            }
+          },
+          "recorder": {
+            "$ref": "#/components/schemas/RecorderStatusDto"
+          },
+          "replay": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReplayStatusDto"
+              }
+            ]
+          }
+        }
+      },
+      "ReplayState": {
+        "enum": [
+          "running",
+          "finished",
+          "stopped"
+        ]
+      },
+      "ReplayStatusDto": {
+        "required": [
+          "name",
+          "state",
+          "position",
+          "duration",
+          "speed",
+          "loop",
+          "pass"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ReplayState"
+          },
+          "position": {
+            "type": "number",
+            "format": "double"
+          },
+          "duration": {
+            "type": "number",
+            "format": "double"
+          },
+          "speed": {
+            "type": "number",
+            "format": "double"
+          },
+          "loop": {
+            "type": "boolean"
+          },
+          "pass": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ReportArchiveEntryDto": {
+        "required": [
+          "time",
+          "kind",
+          "name",
+          "auto",
+          "station",
+          "train",
+          "arrivalTrack",
+          "departureTrack",
+          "arrivalDelay",
+          "departureDelay",
+          "text",
+          "result",
+          "details"
+        ],
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "time"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "auto": {
+            "type": "boolean"
+          },
+          "station": {
+            "type": "string"
+          },
+          "train": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ArchiveTrainDto"
+              }
+            ]
+          },
+          "arrivalTrack": {
+            "type": "string"
+          },
+          "departureTrack": {
+            "type": "string"
+          },
+          "arrivalDelay": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "departureDelay": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "text": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchiveDetailDto"
+            }
+          }
+        }
+      },
+      "ReportArchivePageDto": {
+        "required": [
+          "date",
+          "entries",
+          "total",
+          "skipped"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportArchiveEntryDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "RowDto": {
+        "required": [
+          "row",
+          "elements"
+        ],
+        "type": "object",
+        "properties": {
+          "row": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "elements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ElementDto"
+            }
+          }
+        }
+      },
+      "RunDto": {
+        "required": [
+          "x",
+          "font",
+          "codes",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "font": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "codes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "SetBoardRequest": {
+        "required": [
+          "line",
+          "address",
+          "manufacturer",
+          "name",
+          "profile",
+          "design",
+          "fault",
+          "secondAddress"
+        ],
+        "type": "object",
+        "properties": {
+          "line": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "address": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/BoardProfileDto"
+          },
+          "design": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fault": {
+            "$ref": "#/components/schemas/BoardFaultDto"
+          },
+          "secondAddress": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "SetLineRequest": {
+        "required": [
+          "number",
+          "tableClass",
+          "endpoint",
+          "name",
+          "mode",
+          "autoLearn",
+          "manufacturer",
+          "mirror"
+        ],
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tableClass": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "endpoint": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/LineMode"
+          },
+          "autoLearn": {
+            "type": "boolean"
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "mirror": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SetPasswordRequest": {
+        "required": [
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "SettingsDto": {
+        "required": [
+          "httpPort",
+          "allowNetwork",
+          "fontsFolder",
+          "designsFolder",
+          "connectHost",
+          "databasePath",
+          "monitorFolder",
+          "requireLogin",
+          "virtualFolders",
+          "httpsPort",
+          "httpsRedirect",
+          "httpsCertificate",
+          "httpsKey",
+          "httpsPasswordSet"
+        ],
+        "type": "object",
+        "properties": {
+          "httpPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "allowNetwork": {
+            "type": "boolean"
+          },
+          "fontsFolder": {
+            "type": "string"
+          },
+          "designsFolder": {
+            "type": "string"
+          },
+          "connectHost": {
+            "type": "string"
+          },
+          "databasePath": {
+            "type": "string"
+          },
+          "monitorFolder": {
+            "type": "string"
+          },
+          "requireLogin": {
+            "type": "boolean"
+          },
+          "virtualFolders": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "httpsPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "httpsRedirect": {
+            "type": "boolean"
+          },
+          "httpsCertificate": {
+            "type": "string"
+          },
+          "httpsKey": {
+            "type": "string"
+          },
+          "httpsPasswordSet": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SettingsUpdatedDto": {
+        "required": [
+          "restart"
+        ],
+        "type": "object",
+        "properties": {
+          "restart": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SetupRequest": {
+        "required": [
+          "userName",
+          "displayName",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "userName": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "SetVirtualBoardRequest": {
+        "required": [
+          "name",
+          "description",
+          "source",
+          "rowCount",
+          "rowStart",
+          "separator",
+          "template",
+          "parameter",
+          "layout"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "rowCount": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "rowStart": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "separator": {
+            "type": "string"
+          },
+          "template": {
+            "type": "string"
+          },
+          "parameter": {
+            "type": "string"
+          },
+          "layout": {
+            "type": "string"
+          }
+        }
+      },
+      "StartRecordingRequest": {
+        "required": [
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "StateDto": {
+        "required": [
+          "lines",
+          "boards",
+          "supportedClasses",
+          "manufacturers",
+          "settings"
+        ],
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LineDto"
+            }
+          },
+          "boards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardDto"
+            }
+          },
+          "supportedClasses": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "manufacturers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "settings": {
+            "$ref": "#/components/schemas/SettingsDto"
+          }
+        }
+      },
+      "StationBoardDto": {
+        "required": [
+          "line",
+          "address",
+          "manufacturer",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "line": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "address": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "StationImportedDto": {
+        "required": [
+          "linesAdded",
+          "linesUpdated",
+          "boardsAdded",
+          "boardsKept",
+          "unsupportedLines",
+          "skippedBoards",
+          "virtualBoardsAdded",
+          "virtualBoardsKept",
+          "logFolder"
+        ],
+        "type": "object",
+        "properties": {
+          "linesAdded": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "linesUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "boardsAdded": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "boardsKept": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unsupportedLines": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "skippedBoards": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "virtualBoardsAdded": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "virtualBoardsKept": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "logFolder": {
+            "$ref": "#/components/schemas/StationLogFolder"
+          }
+        }
+      },
+      "StationImportRequest": {
+        "required": [
+          "lines",
+          "boards",
+          "logFolder",
+          "xmlTables"
+        ],
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationLineDto"
+            }
+          },
+          "boards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationBoardDto"
+            }
+          },
+          "logFolder": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "xmlTables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationXmlTableDto"
+            }
+          }
+        }
+      },
+      "StationLineDto": {
+        "required": [
+          "number",
+          "tableClass",
+          "port",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tableClass": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "StationLogFolder": {
+        "enum": [
+          "none",
+          "added",
+          "watched",
+          "missing",
+          "full"
+        ]
+      },
+      "StationXmlTableDto": {
+        "required": [
+          "name",
+          "source"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      },
+      "Stream": {
+        "type": "string",
+        "format": "binary"
+      },
+      "TableArchiveColumnDto": {
+        "required": [
+          "name",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "TableArchiveEntryDto": {
+        "required": [
+          "time",
+          "station",
+          "train",
+          "text",
+          "tables"
+        ],
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "time"
+          },
+          "station": {
+            "type": "string"
+          },
+          "train": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ArchiveTrainDto"
+              }
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableArchiveTableDto"
+            }
+          }
+        }
+      },
+      "TableArchivePageDto": {
+        "required": [
+          "date",
+          "entries",
+          "total",
+          "skipped"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableArchiveEntryDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "TableArchiveTableDto": {
+        "required": [
+          "names",
+          "columns",
+          "logical",
+          "row"
+        ],
+        "type": "object",
+        "properties": {
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableArchiveColumnDto"
+            }
+          },
+          "logical": {
+            "type": "string"
+          },
+          "row": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateSettingsRequest": {
+        "required": [
+          "httpPort",
+          "allowNetwork",
+          "fontsFolder",
+          "designsFolder",
+          "connectHost",
+          "monitorFolder",
+          "requireLogin",
+          "virtualFolders",
+          "httpsPort",
+          "httpsRedirect",
+          "httpsCertificate",
+          "httpsKey",
+          "httpsPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "httpPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "allowNetwork": {
+            "type": "boolean"
+          },
+          "fontsFolder": {
+            "type": "string"
+          },
+          "designsFolder": {
+            "type": "string"
+          },
+          "connectHost": {
+            "type": "string"
+          },
+          "monitorFolder": {
+            "type": "string"
+          },
+          "requireLogin": {
+            "type": "boolean"
+          },
+          "virtualFolders": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "httpsPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "httpsRedirect": {
+            "type": "boolean"
+          },
+          "httpsCertificate": {
+            "type": "string"
+          },
+          "httpsKey": {
+            "type": "string"
+          },
+          "httpsPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "UpdateUserRequest": {
+        "required": [
+          "displayName",
+          "role",
+          "disabled"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UserDto": {
+        "required": [
+          "userName",
+          "displayName",
+          "role",
+          "disabled",
+          "lockedUntil",
+          "createdAt",
+          "lastLoginAt"
+        ],
+        "type": "object",
+        "properties": {
+          "userName": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          },
+          "lockedUntil": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastLoginAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "VirtualAlign": {
+        "enum": [
+          "left",
+          "center",
+          "right"
+        ]
+      },
+      "VirtualBoardDto": {
+        "required": [
+          "id",
+          "name",
+          "description",
+          "source",
+          "rowCount",
+          "rowStart",
+          "separator",
+          "template",
+          "parameter",
+          "layout"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "rowCount": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "rowStart": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "separator": {
+            "type": "string"
+          },
+          "template": {
+            "type": "string"
+          },
+          "parameter": {
+            "type": "string"
+          },
+          "layout": {
+            "type": "string"
+          }
+        }
+      },
+      "VirtualCellDto": {
+        "required": [
+          "name",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "VirtualClock": {
+        "enum": [
+          "none",
+          "minutes",
+          "seconds"
+        ]
+      },
+      "VirtualColorsDto": {
+        "required": [
+          "background",
+          "text",
+          "headBackground",
+          "headText",
+          "accent",
+          "muted",
+          "delay",
+          "rowLine",
+          "rowAlternate"
+        ],
+        "type": "object",
+        "properties": {
+          "background": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "headBackground": {
+            "type": "string"
+          },
+          "headText": {
+            "type": "string"
+          },
+          "accent": {
+            "type": "string"
+          },
+          "muted": {
+            "type": "string"
+          },
+          "delay": {
+            "type": "string"
+          },
+          "rowLine": {
+            "type": "string"
+          },
+          "rowAlternate": {
+            "type": "string"
+          }
+        }
+      },
+      "VirtualColumnDto": {
+        "required": [
+          "cells",
+          "label",
+          "width",
+          "align",
+          "color",
+          "bold",
+          "size",
+          "separator"
+        ],
+        "type": "object",
+        "properties": {
+          "cells": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "label": {
+            "type": "string"
+          },
+          "width": {
+            "type": "string"
+          },
+          "align": {
+            "$ref": "#/components/schemas/VirtualAlign"
+          },
+          "color": {
+            "type": "string"
+          },
+          "bold": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "separator": {
+            "type": "string"
+          }
+        }
+      },
+      "VirtualFolderDto": {
+        "required": [
+          "path",
+          "exists"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "exists": {
+            "type": "boolean"
+          }
+        }
+      },
+      "VirtualLayoutDto": {
+        "required": [
+          "id",
+          "name",
+          "builtIn",
+          "title",
+          "showStation",
+          "clock",
+          "showDate",
+          "columnHeaders",
+          "rows",
+          "font",
+          "colors",
+          "columns",
+          "alternationMs",
+          "blinkMs",
+          "blinkPhases"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "builtIn": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          },
+          "showStation": {
+            "type": "boolean"
+          },
+          "clock": {
+            "$ref": "#/components/schemas/VirtualClock"
+          },
+          "showDate": {
+            "type": "boolean"
+          },
+          "columnHeaders": {
+            "type": "boolean"
+          },
+          "rows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "font": {
+            "type": "string"
+          },
+          "colors": {
+            "$ref": "#/components/schemas/VirtualColorsDto"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VirtualColumnDto"
+            }
+          },
+          "alternationMs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "blinkMs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "blinkPhases": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "VirtualOverviewDto": {
+        "required": [
+          "boards",
+          "sources",
+          "folders",
+          "layouts",
+          "defaultLayout"
+        ],
+        "type": "object",
+        "properties": {
+          "boards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VirtualBoardDto"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VirtualSourceDto"
+            }
+          },
+          "folders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VirtualFolderDto"
+            }
+          },
+          "layouts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VirtualLayoutDto"
+            }
+          },
+          "defaultLayout": {
+            "type": "string"
+          }
+        }
+      },
+      "VirtualRowDto": {
+        "required": [
+          "cells"
+        ],
+        "type": "object",
+        "properties": {
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VirtualCellDto"
+            }
+          }
+        }
+      },
+      "VirtualSourceDto": {
+        "required": [
+          "name",
+          "path",
+          "modified",
+          "station",
+          "key",
+          "written",
+          "validTo",
+          "rows",
+          "stale",
+          "error"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "modified": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "station": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "key": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "written": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "validTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "rows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "VirtualViewDto": {
+        "required": [
+          "board",
+          "source",
+          "rows",
+          "layout"
+        ],
+        "type": "object",
+        "properties": {
+          "board": {
+            "$ref": "#/components/schemas/VirtualBoardDto"
+          },
+          "source": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/VirtualSourceDto"
+              }
+            ]
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VirtualRowDto"
+            }
+          },
+          "layout": {
+            "$ref": "#/components/schemas/VirtualLayoutDto"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Virtual"
+    },
+    {
+      "name": "Users"
+    },
+    {
+      "name": "Station"
+    },
+    {
+      "name": "State"
+    },
+    {
+      "name": "Settings"
+    },
+    {
+      "name": "Replay"
+    },
+    {
+      "name": "Recordings"
+    },
+    {
+      "name": "Monitor"
+    },
+    {
+      "name": "Lines"
+    },
+    {
+      "name": "Keys"
+    },
+    {
+      "name": "Https"
+    },
+    {
+      "name": "Frames"
+    },
+    {
+      "name": "Fonts"
+    },
+    {
+      "name": "Designs"
+    },
+    {
+      "name": "Config"
+    },
+    {
+      "name": "Boards"
+    },
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Audit"
+    },
+    {
+      "name": "Archive"
+    }
+  ]
+}

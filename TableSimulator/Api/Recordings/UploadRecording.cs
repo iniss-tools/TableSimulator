@@ -18,5 +18,7 @@ public sealed class UploadRecording : IEndpoint
             var result = await handler.Handle(new UploadRecordingCommand(name ?? "zaznam", buffer.ToArray()), cancellationToken);
             return result.Match(Results.Ok, CustomResults.Problem);
         })
+            .Accepts<Stream>("application/octet-stream")
+            .Produces<RecordingInfoDto>()
             .RequireAuthorization(Permissions.RecordingsManage);
 }

@@ -12,5 +12,6 @@ public sealed class GetVirtualOverview : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapGet("virtual", async (IQueryHandler<GetVirtualOverviewQuery, VirtualOverviewDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new GetVirtualOverviewQuery(), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .Produces<VirtualOverviewDto>()
             .RequireAuthorization(Permissions.SimulatorView);
 }

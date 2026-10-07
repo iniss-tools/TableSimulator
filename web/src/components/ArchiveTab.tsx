@@ -1,14 +1,25 @@
 // Archiv tabul a hlaseni INISSu - denne subory TAB/REP z priecinkov logov (ako v INISSView).
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { api, ApiError, PERMISSIONS, type ArchiveDays, type ArchiveQuery, type ArchiveTrain, type ReportArchiveEntry, type TableArchiveEntry } from "../api";
+import {
+  errorText,
+  getArchiveDays,
+  getReportArchive,
+  getTableArchive,
+  PERMISSIONS,
+  useCan,
+  type ArchiveDaysDto as ArchiveDays,
+  type ArchiveTrainDto as ArchiveTrain,
+  type GetTableArchiveData,
+  type ReportArchiveEntryDto as ReportArchiveEntry,
+  type TableArchiveEntryDto as TableArchiveEntry,
+} from "../api";
 import { hasText, t, useLanguage } from "../i18n";
-import { useCan } from "../store";
 
 const PAGE = 200;
 
 export type ArchiveKind = "tables" | "reports";
 
-const errorText = (e: unknown) => (e instanceof ApiError ? e.message : String(e));
+type ArchiveQuery = NonNullable<GetTableArchiveData["query"]>;
 
 /** Den z API (rrrr-mm-dd) ako d. m. rrrr. */
 function dayText(value: string): string {
@@ -169,9 +180,8 @@ export function ArchiveTab({ kind }: { kind: ArchiveKind }) {
 
   const loadDays = useCallback(
     () =>
-      api
-        .archiveDays()
-        .then((d) => {
+      getArchiveDays({ throwOnError: true })
+        .then(({ data: d }) => {
           const list = kind === "tables" ? d.tables : d.reports;
           setDays(d);
           setDate((old) => (old && list.includes(old) ? old : (list[0] ?? "")));
@@ -195,11 +205,11 @@ export function ArchiveTab({ kind }: { kind: ArchiveKind }) {
       };
       const request =
         kind === "tables"
-          ? api.tableArchive(date, query).then((page) => {
+          ? getTableArchive({ path: { date }, query, throwOnError: true }).then(({ data: page }) => {
               setTables((old) => (offset ? [...old, ...page.entries] : page.entries));
               done(page);
             })
-          : api.reportArchive(date, query).then((page) => {
+          : getReportArchive({ path: { date }, query, throwOnError: true }).then(({ data: page }) => {
               setReports((old) => (offset ? [...old, ...page.entries] : page.entries));
               done(page);
             });

@@ -8,6 +8,7 @@ using TableSimulator.Infrastructure.Auth;
 using TableSimulator.Infrastructure.Hosting;
 using TableSimulator.Infrastructure.Https;
 using TableSimulator.Infrastructure.Logging;
+using TableSimulator.Infrastructure.OpenApi;
 using TableSimulator.Infrastructure.Persistence;
 using TableSimulator.Infrastructure.Realtime;
 using TableSimulator.Infrastructure.Settings;
@@ -37,6 +38,7 @@ try
     builder.Services.AddAuth(paths, new AuthMode(settings.Current.LoginRequired));
     builder.Services.AddApplication();
     builder.Services.AddEndpoints(typeof(Program).Assembly);
+    builder.Services.AddApiDocument();
 
     var app = builder.Build();
     await DatabaseInitializer.InitializeAsync(app.Services);
@@ -57,6 +59,7 @@ try
     app.UseCsrfHeader();
     app.UseUserLogContext();
     app.MapLiveSocket("/ws");
+    app.MapApiDocument();
     app.MapEndpoints(app.MapGroup("/api"));
 
     app.Lifetime.ApplicationStarted.Register(() =>

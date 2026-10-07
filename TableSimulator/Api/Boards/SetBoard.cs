@@ -13,5 +13,6 @@ public sealed class SetBoard : IEndpoint
         app.MapPut("boards/{line:int}/{address:int}", async (int line, int address, SetBoardRequest request, ICommandHandler<SetBoardCommand> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new SetBoardCommand(line, address, request), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
+            .Produces(StatusCodes.Status204NoContent)
             .RequireAuthorization(Permissions.SimulatorEdit);
 }

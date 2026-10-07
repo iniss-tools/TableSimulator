@@ -1,15 +1,17 @@
 // Editor rozlozenia virtualnej tabule s nahladom na udajoch vybranej tabule.
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-  api,
-  ApiError,
+  errorText,
+  getVirtualViewOptions,
+  setVirtualLayoutMutation,
   type VirtualAlign,
-  type VirtualBoard,
+  type VirtualBoardDto as VirtualBoard,
   type VirtualClock,
-  type VirtualColors,
-  type VirtualColumn,
-  type VirtualLayout,
-  type VirtualView,
+  type VirtualColorsDto as VirtualColors,
+  type VirtualColumnDto as VirtualColumn,
+  type VirtualLayoutDto as VirtualLayout,
+  type VirtualViewDto as VirtualView,
 } from "../api";
 import { hasText, t, type TextKey } from "../i18n";
 import { CELL_NAMES, defaultColumn, layoutColumns } from "../render/virtual";
@@ -60,20 +62,11 @@ interface Props {
 
 export function VirtualLayoutDialog({ initial, isNew, boards, onClose }: Props) {
   const [layout, setLayout] = useState(initial);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [boardId, setBoardId] = useState<number | null>(boards.find((b) => b.layout === initial.id)?.id ?? boards[0]?.id ?? null);
-  const [view, setView] = useState<VirtualView | null>(null);
+  // nahlad na datach vybranej tabule
+  const view: VirtualView | null = useQuery({ ...getVirtualViewOptions({ path: { id: boardId ?? 0 } }), enabled: boardId !== null }).data ?? null;
   const now = useNow(250);
-
-  useEffect(() => {
-    if (boardId === null) setView(null);
-    else
-      api
-        .virtualView(boardId)
-        .then(setView)
-        .catch(() => setView(null));
-  }, [boardId]);
+  const save = useMutation({ ...setVirtualLayoutMutation(), onSuccess: onClose });
 
   const set = (patch: Partial<VirtualLayout>) => setLayout({ ...layout, ...patch });
   const setColor = (key: keyof VirtualColors, value: string) => set({ colors: { ...layout.colors, [key]: value } });
@@ -87,26 +80,14 @@ export function VirtualLayoutDialog({ initial, isNew, boards, onClose }: Props) 
   const preview = view ?? sample(layout);
   const number = (value: string, fallback: number) => Number.parseInt(value, 10) || fallback;
 
-  const save = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await api.putLayout(layout);
-      onClose();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : String(e));
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <Dialog
       title={isNew ? t("dialog.layout.new") : t("dialog.layout.edit", { name: layoutName(layout) })}
       onClose={onClose}
-      onSubmit={save}
-      error={error}
-      busy={busy}
+      onSubmit={() => save.mutate({ path: { id: layout.id }, body: layout })}
+      error={save.error && errorText(save.error)}
+      busy={save.isPending}
       wide
     >
       <div className="layout-editor">

@@ -15,5 +15,6 @@ public sealed class GetAudit : IEndpoint
         app.MapGet("audit", async (long? before, string? user, string? action, int? limit, IQueryHandler<GetAuditQuery, AuditPageDto> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new GetAuditQuery(before, user, action, limit ?? DefaultLimit), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .Produces<AuditPageDto>()
             .RequireAuthorization(Permissions.AuditView);
 }

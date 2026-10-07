@@ -13,5 +13,6 @@ public sealed class SetVirtualBoard : IEndpoint
         app.MapPut("virtual/{id:int}", async (int id, SetVirtualBoardRequest request, ICommandHandler<SetVirtualBoardCommand> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new SetVirtualBoardCommand(id, request), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
+            .Produces(StatusCodes.Status204NoContent)
             .RequireAuthorization(Permissions.SimulatorEdit);
 }

@@ -1,8 +1,27 @@
 // Sprava pouzivatelov a audit (kto co urobil) - len pre spravcu.
 import { useCallback, useEffect, useState } from "react";
-import { api, ApiError, PERMISSIONS, ROLES, type AuditEntry, type Role, type UserInfo } from "../api";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  changePasswordMutation,
+  createUserMutation,
+  deleteUser,
+  errorText,
+  getAudit,
+  getUsersOptions,
+  getUsersQueryKey,
+  PERMISSIONS,
+  queryClient,
+  ROLES,
+  setUserPasswordMutation,
+  unlockUser,
+  updateUserMutation,
+  useCan,
+  useMe,
+  type AuditEntryDto as AuditEntry,
+  type Role,
+  type UserDto as UserInfo,
+} from "../api";
 import { getLanguage, hasText, t, useLanguage, type TextKey } from "../i18n";
-import { useCan, useLive } from "../store";
 import { Dialog, Field } from "./Dialog";
 import { KeysTab } from "./KeysTab";
 
@@ -12,7 +31,8 @@ export function formatDateTime(value: string | null | undefined): string {
   return new Date(value).toLocaleString(getLanguage() === "cs" ? "cs-CZ" : "sk-SK", { dateStyle: "short", timeStyle: "medium" });
 }
 
-const errorText = (e: unknown) => (e instanceof ApiError ? e.message : String(e));
+/** Zoznam pouzivatelov sa po zmene nacita znova. */
+const refreshUsers = () => queryClient.invalidateQueries({ queryKey: getUsersQueryKey() });
 
 /** Akcie auditu - mena prikazov servera. */
 const ACTIONS = [
@@ -61,29 +81,30 @@ function UserDialog({ initial, isNew, onClose }: { initial: UserInfo; isNew: boo
   const [user, setUser] = useState(initial);
   const [password, setPassword] = useState("");
   const [again, setAgain] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [mismatch, setMismatch] = useState(false);
+  const saved = () => {
+    refreshUsers();
+    onClose();
+  };
+  const create = useMutation({ ...createUserMutation(), onSuccess: saved });
+  const update = useMutation({ ...updateUserMutation(), onSuccess: saved });
+  const failure = create.error ?? update.error;
 
-  const save = async () => {
-    if (isNew && password !== again) {
-      setError(t("auth.passwordMismatch"));
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      if (isNew) await api.createUser({ userName: user.userName, displayName: user.displayName, role: user.role, password });
-      else await api.updateUser(user.userName, { displayName: user.displayName, role: user.role, disabled: user.disabled });
-      onClose();
-    } catch (e) {
-      setError(errorText(e));
-    } finally {
-      setBusy(false);
-    }
+  const save = () => {
+    setMismatch(isNew && password !== again);
+    if (isNew && password !== again) return;
+    if (isNew) create.mutate({ body: { userName: user.userName, displayName: user.displayName, role: user.role, password } });
+    else update.mutate({ path: { userName: user.userName }, body: { displayName: user.displayName, role: user.role, disabled: user.disabled } });
   };
 
   return (
-    <Dialog title={isNew ? t("dialog.user.new") : t("dialog.user.edit", { name: user.userName })} onClose={onClose} onSubmit={save} error={error} busy={busy}>
+    <Dialog
+      title={isNew ? t("dialog.user.new") : t("dialog.user.edit", { name: user.userName })}
+      onClose={onClose}
+      onSubmit={save}
+      error={mismatch ? t("auth.passwordMismatch") : failure && errorText(failure)}
+      busy={create.isPending || update.isPending}
+    >
       <div className="form-grid">
         <Field label={t("auth.userName")} hint={isNew ? t("users.userName.hint") : undefined}>
           <input value={user.userName} disabled={!isNew} autoComplete="off" onChange={(e) => setUser({ ...user, userName: e.target.value })} />
@@ -126,25 +147,18 @@ export function PasswordDialog({ userName, onClose }: { userName: string | null;
   const [current, setCurrent] = useState("");
   const [password, setPassword] = useState("");
   const [again, setAgain] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [mismatch, setMismatch] = useState(false);
+  const changeOwn = useMutation({ ...changePasswordMutation(), onSuccess: () => onClose(true) });
+  const changeUser = useMutation({ ...setUserPasswordMutation(), onSuccess: () => onClose(true) });
+  const failure = changeOwn.error ?? changeUser.error;
+  const error = mismatch ? t("auth.passwordMismatch") : failure && errorText(failure);
+  const busy = changeOwn.isPending || changeUser.isPending;
 
-  const save = async () => {
-    if (password !== again) {
-      setError(t("auth.passwordMismatch"));
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      if (own) await api.changePassword(current, password);
-      else await api.setUserPassword(userName, password);
-      onClose(true);
-    } catch (e) {
-      setError(errorText(e));
-    } finally {
-      setBusy(false);
-    }
+  const save = () => {
+    setMismatch(password !== again);
+    if (password !== again) return;
+    if (own) changeOwn.mutate({ body: { currentPassword: current, newPassword: password } });
+    else changeUser.mutate({ path: { userName }, body: { password } });
   };
 
   return (
@@ -173,28 +187,22 @@ export function PasswordDialog({ userName, onClose }: { userName: string | null;
 }
 
 function UsersTab() {
-  const live = useLive();
-  const [users, setUsers] = useState<UserInfo[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const me = useMe();
+  const query = useQuery(getUsersOptions());
+  const users = query.data ?? [];
+  const [actionError, setActionError] = useState<string | null>(null);
+  const error = actionError ?? (query.error && errorText(query.error));
   const [editing, setEditing] = useState<{ user: UserInfo; isNew: boolean } | null>(null);
   const [password, setPassword] = useState<string | null>(null);
 
-  const load = useCallback(() => {
-    api
-      .users()
-      .then((u) => {
-        setUsers(u);
-        setError(null);
-      })
-      .catch((e) => setError(errorText(e)));
-  }, []);
-  useEffect(load, [load]);
-
   const act = (action: Promise<unknown>) =>
     action
-      .then(load)
-      .catch((e) => setError(errorText(e)));
-  const self = (u: UserInfo) => live.me?.loginRequired === true && live.me.userName?.toLowerCase() === u.userName.toLowerCase();
+      .then(() => {
+        setActionError(null);
+        return refreshUsers();
+      })
+      .catch((e) => setActionError(errorText(e)));
+  const self = (u: UserInfo) => me?.loginRequired === true && me.userName?.toLowerCase() === u.userName.toLowerCase();
 
   return (
     <>
@@ -209,7 +217,7 @@ function UsersTab() {
           {t("users.add")}
         </button>
       </div>
-      {!live.me?.loginRequired && <p className="banner-warn">{t("users.loginOff")}</p>}
+      {!me?.loginRequired && <p className="banner-warn">{t("users.loginOff")}</p>}
       {error && <p className="error">{error}</p>}
       <div className="table-wrap">
         <table>
@@ -251,7 +259,7 @@ function UsersTab() {
                     {t("users.setPassword")}
                   </button>
                   {u.lockedUntil && (
-                    <button className="secondary" onClick={() => act(api.unlockUser(u.userName))}>
+                    <button className="secondary" onClick={() => act(unlockUser({ path: { userName: u.userName } }))}>
                       {t("users.unlock")}
                     </button>
                   )}
@@ -259,7 +267,7 @@ function UsersTab() {
                     <button
                       className="icon-button"
                       title={t("common.delete")}
-                      onClick={() => confirm(t("users.delete.confirm", { name: u.userName })) && act(api.deleteUser(u.userName))}
+                      onClick={() => confirm(t("users.delete.confirm", { name: u.userName })) && act(deleteUser({ path: { userName: u.userName } }))}
                     >
                       ✕
                     </button>
@@ -274,10 +282,7 @@ function UsersTab() {
         <UserDialog
           initial={editing.user}
           isNew={editing.isNew}
-          onClose={() => {
-            setEditing(null);
-            load();
-          }}
+          onClose={() => setEditing(null)}
         />
       )}
       {password && (
@@ -285,7 +290,7 @@ function UsersTab() {
           userName={password}
           onClose={() => {
             setPassword(null);
-            load();
+            refreshUsers();
           }}
         />
       )}
@@ -304,9 +309,8 @@ function AuditTab() {
 
   const load = useCallback(
     (before?: number) => {
-      api
-        .audit({ before, user: user.trim() || undefined, action: action || undefined, limit: PAGE })
-        .then((page) => {
+      getAudit({ query: { before, user: user.trim() || undefined, action: action || undefined, limit: PAGE }, throwOnError: true })
+        .then(({ data: page }) => {
           setEntries((old) => (before ? [...old, ...page.entries] : page.entries));
           setHasMore(page.hasMore);
           setError(null);

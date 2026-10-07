@@ -13,5 +13,6 @@ public sealed class CreateAccessKey : IEndpoint
         app.MapPost("keys", async (CreateAccessKeyRequest request, ICommandHandler<CreateAccessKeyCommand, AccessKeyCreatedDto> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new CreateAccessKeyCommand(request), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .Produces<AccessKeyCreatedDto>()
             .RequireAuthorization(Permissions.UsersManage);
 }

@@ -1,8 +1,8 @@
 // Prihlasenie a zalozenie prveho spravcu (kym na serveri nie je ziaden pouzivatel).
 import { useState } from "react";
-import { accessKey, api, ApiError, forgetAccessKey } from "../api";
+import { useMutation } from "@tanstack/react-query";
+import { accessKey, errorText, forgetAccessKey, getMeQueryKey, loginMutation, queryClient, setupMutation, type MeDto } from "../api";
 import { t } from "../i18n";
-import { loadMe } from "../store";
 import { Field } from "./Dialog";
 
 export function AuthPage({ setup }: { setup: boolean }) {
@@ -11,30 +11,26 @@ export function AuthPage({ setup }: { setup: boolean }) {
   const [password, setPassword] = useState("");
   const [again, setAgain] = useState("");
   const [remember, setRemember] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [mismatch, setMismatch] = useState(false);
   // karta ma kluc zariadenia, ktory server neprijal (odstraneny alebo zle skopirovany)
   const [keyInvalid, setKeyInvalid] = useState(accessKey() !== null);
 
-  const submit = async () => {
-    if (setup && password !== again) {
-      setError(t("auth.passwordMismatch"));
-      return;
-    }
-    setBusy(true);
-    setError(null);
+  // odpoved je prihlaseny pouzivatel - rozhranie sa hned prepne
+  const signedIn = (me: MeDto) => queryClient.setQueryData(getMeQueryKey(), me);
+  const login = useMutation({ ...loginMutation(), onSuccess: signedIn });
+  const create = useMutation({ ...setupMutation(), onSuccess: signedIn });
+  const busy = login.isPending || create.isPending;
+  const failure = login.error ?? create.error;
+  const error = mismatch ? t("auth.passwordMismatch") : failure ? errorText(failure) : null;
+
+  const submit = () => {
+    setMismatch(setup && password !== again);
+    if (setup && password !== again) return;
     // prihlasenie heslom - neplatny kluc by ho prebil
     forgetAccessKey();
     setKeyInvalid(false);
-    try {
-      if (setup) await api.setup(userName.trim(), displayName.trim(), password);
-      else await api.login(userName.trim(), password, remember);
-      await loadMe();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : String(e));
-    } finally {
-      setBusy(false);
-    }
+    if (setup) create.mutate({ body: { userName: userName.trim(), displayName: displayName.trim(), password } });
+    else login.mutate({ body: { userName: userName.trim(), password, remember } });
   };
 
   return (

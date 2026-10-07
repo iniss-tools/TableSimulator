@@ -1,8 +1,24 @@
 // Zaznamy komunikacie: nahravanie prevadzky liniek a jej prehratie do simulatora.
 import { useEffect, useRef, useState } from "react";
-import { api, PERMISSIONS, type RecordingInfo } from "../api";
+import { useQuery } from "@tanstack/react-query";
+import {
+  deleteRecording,
+  getRecordingsOptions,
+  getRecordingsQueryKey,
+  PERMISSIONS,
+  playRecording,
+  queryClient,
+  startRecording,
+  stopRecording,
+  stopReplay,
+  uploadRecording,
+  useCan,
+} from "../api";
 import { locale, t } from "../i18n";
-import { useCan, useLive } from "../store";
+
+/** Zaznamy, nahravanie a prehravanie - zmeny prinasa WebSocket. */
+const useRecordings = () => useQuery(getRecordingsOptions()).data;
+const refresh = () => queryClient.invalidateQueries({ queryKey: getRecordingsQueryKey() });
 
 const SPEEDS = [1, 2, 5, 10, 0];
 
@@ -21,7 +37,7 @@ function size(bytes: number): string {
 }
 
 function Recorder() {
-  const { recorder } = useLive();
+  const recorder = useRecordings()?.recorder;
   const can = useCan();
   const [note, setNote] = useState("");
   const [, tick] = useState(0);
@@ -40,7 +56,7 @@ function Recorder() {
         <span className="rec-dot" />
         <span>{t("rec.running", { name: recorder.name ?? "", duration: duration(elapsed), entries: recorder.entries, size: size(recorder.bytes) })}</span>
         <span className="spacer" />
-        {can(PERMISSIONS.recordings) && <button onClick={() => api.stopRecording()}>{t("rec.stop")}</button>}
+        {can(PERMISSIONS.recordings) && <button onClick={() => stopRecording()}>{t("rec.stop")}</button>}
       </div>
     );
   }
@@ -52,7 +68,7 @@ function Recorder() {
       className="toolbar recorder"
       onSubmit={(e) => {
         e.preventDefault();
-        api.startRecording(note).then(() => setNote(""));
+        startRecording({ body: { note } }).then(() => setNote(""));
       }}
     >
       <input className="grow" placeholder={t("rec.note")} value={note} onChange={(e) => setNote(e.target.value)} />
@@ -64,7 +80,7 @@ function Recorder() {
 }
 
 function Replay() {
-  const { replay } = useLive();
+  const replay = useRecordings()?.replay;
   const can = useCan();
   if (!replay) return null;
   const percent = replay.duration > 0 ? Math.min(100, (replay.position / replay.duration) * 100) : 100;
@@ -79,7 +95,7 @@ function Replay() {
         </span>
         <span className="spacer" />
         {running && (
-          <button className="secondary" hidden={!can(PERMISSIONS.recordings)} onClick={() => api.stopReplay()}>
+          <button className="secondary" hidden={!can(PERMISSIONS.recordings)} onClick={() => stopReplay()}>
             {t("replay.stop")}
           </button>
         )}
@@ -92,28 +108,26 @@ function Replay() {
 }
 
 export function RecordingsPage() {
-  const live = useLive();
+  const recordings = useRecordings();
+  const items = recordings?.items ?? [];
+  const recorder = recordings?.recorder;
   const can = useCan();
-  const [items, setItems] = useState<RecordingInfo[]>([]);
   const [speed, setSpeed] = useState(1);
   const [loop, setLoop] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const upload = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    api.recordings().then((r) => setItems(r.items)).catch(() => setItems([]));
-  }, [live.recordingsVersion, live.recorder?.recording]);
-
   const onUpload = async (files: FileList | null) => {
     setError(null);
     for (const file of Array.from(files ?? [])) {
       try {
-        await api.uploadRecording(file);
+        await uploadRecording({ body: file, query: { name: file.name }, throwOnError: true });
       } catch {
         setError(t("rec.uploadBad"));
       }
     }
     if (upload.current) upload.current.value = "";
+    refresh();
   };
 
   return (
@@ -176,18 +190,18 @@ export function RecordingsPage() {
                   <td className="nowrap">{size(r.size)}</td>
                   <td>{r.note}</td>
                   <td className="nowrap">
-                    <button hidden={!can(PERMISSIONS.recordings)} onClick={() => api.play(r.name, speed, loop)} disabled={live.recorder?.name === r.name}>
+                    <button hidden={!can(PERMISSIONS.recordings)} onClick={() => playRecording({ body: { name: r.name, speed, loop } })} disabled={recorder?.name === r.name}>
                       {t("rec.play")}
                     </button>{" "}
-                    <a className="icon-button" href={api.recordingUrl(r.name)} download title={t("rec.download")}>
+                    <a className="icon-button" href={`/api/recordings/${encodeURIComponent(r.name)}/file`} download title={t("rec.download")}>
                       ⤓
                     </a>
                     <button
                       className="icon-button"
                       title={t("common.delete")}
                       hidden={!can(PERMISSIONS.recordings)}
-                      disabled={live.recorder?.name === r.name}
-                      onClick={() => confirm(t("rec.delete.confirm", { name: r.name })) && api.deleteRecording(r.name).then(() => setItems(items.filter((i) => i.name !== r.name)))}
+                      disabled={recorder?.name === r.name}
+                      onClick={() => confirm(t("rec.delete.confirm", { name: r.name })) && deleteRecording({ path: { name: r.name } }).then(refresh)}
                     >
                       ✕
                     </button>

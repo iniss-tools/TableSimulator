@@ -12,5 +12,6 @@ public sealed class GetState : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapGet("state", async (IQueryHandler<GetStateQuery, StateDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new GetStateQuery(), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .Produces<StateDto>()
             .RequireAuthorization(Permissions.SimulatorView);
 }

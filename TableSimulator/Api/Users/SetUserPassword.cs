@@ -13,5 +13,6 @@ public sealed class SetUserPassword : IEndpoint
         app.MapPost("users/{userName}/password", async (string userName, SetPasswordRequest request, ICommandHandler<SetUserPasswordCommand> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new SetUserPasswordCommand(userName, request), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
+            .Produces(StatusCodes.Status204NoContent)
             .RequireAuthorization(Permissions.UsersManage);
 }

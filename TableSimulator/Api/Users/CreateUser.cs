@@ -12,5 +12,6 @@ public sealed class CreateUser : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapPost("users", async (CreateUserRequest request, ICommandHandler<CreateUserCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new CreateUserCommand(request), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
+            .Produces(StatusCodes.Status204NoContent)
             .RequireAuthorization(Permissions.UsersManage);
 }

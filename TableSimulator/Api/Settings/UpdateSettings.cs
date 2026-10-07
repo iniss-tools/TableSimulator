@@ -13,5 +13,6 @@ public sealed class UpdateSettings : IEndpoint
         app.MapPut("settings", async (UpdateSettingsRequest request, ICommandHandler<UpdateSettingsCommand, SettingsUpdatedDto> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new UpdateSettingsCommand(request), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .Produces<SettingsUpdatedDto>()
             .RequireAuthorization(Permissions.SettingsManage);
 }

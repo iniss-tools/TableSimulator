@@ -15,5 +15,6 @@ public sealed class DownloadHttpsCertificate : IEndpoint
             (await handler.Handle(new GetHttpsCertificateQuery(), cancellationToken))
             .Match(file => Results.File(file.Content, file.Authority ? "application/x-x509-ca-cert" : "application/pkix-cert", file.FileName),
                 CustomResults.Problem))
+            .Produces(StatusCodes.Status200OK, null, "application/pkix-cert", "application/x-x509-ca-cert")
             .AllowAnonymous();
 }

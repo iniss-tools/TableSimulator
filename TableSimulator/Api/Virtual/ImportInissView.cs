@@ -13,5 +13,6 @@ public sealed class ImportInissView : IEndpoint
         app.MapPost("virtual/import", async (InissViewImportRequest request, ICommandHandler<ImportInissViewCommand, InissViewImportedDto> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new ImportInissViewCommand(request.Content, request.Replace), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .Produces<InissViewImportedDto>()
             .RequireAuthorization(Permissions.SimulatorEdit);
 }

@@ -16,5 +16,6 @@ public sealed class GetTableArchive : IEndpoint
             IQueryHandler<GetTableArchiveQuery, TableArchivePageDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new GetTableArchiveQuery(date, train, text, newest ?? false, offset ?? 0, limit ?? DefaultLimit), cancellationToken))
             .Match(Results.Ok, CustomResults.Problem))
+            .Produces<TableArchivePageDto>()
             .RequireAuthorization(Permissions.SimulatorView);
 }

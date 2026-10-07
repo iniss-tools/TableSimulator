@@ -13,5 +13,6 @@ public sealed class DownloadRecording : IEndpoint
             CancellationToken cancellationToken) =>
             (await handler.Handle(new GetRecordingFileQuery(name), cancellationToken))
             .Match(file => Results.File(file.Path, "application/x-ndjson", file.DownloadName), CustomResults.Problem))
+            .Produces(StatusCodes.Status200OK, contentType: "application/x-ndjson")
             .RequireAuthorization(Permissions.SimulatorView);
 }

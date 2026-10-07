@@ -13,5 +13,6 @@ public sealed class SetVirtualLayout : IEndpoint
         app.MapPut("virtual/layouts/{id}", async (string id, VirtualLayoutDto layout, ICommandHandler<SetVirtualLayoutCommand> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new SetVirtualLayoutCommand(id, layout), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
+            .Produces(StatusCodes.Status204NoContent)
             .RequireAuthorization(Permissions.SimulatorEdit);
 }

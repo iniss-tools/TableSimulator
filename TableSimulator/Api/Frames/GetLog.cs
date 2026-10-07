@@ -12,5 +12,6 @@ public sealed class GetLog : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapGet("log", async (long? after, IQueryHandler<GetLogQuery, FrameDto[]> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new GetLogQuery(after ?? 0), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .Produces<FrameDto[]>()
             .RequireAuthorization(Permissions.LogView);
 }

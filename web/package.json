@@ -7,9 +7,11 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "api": "cd tools/api && bun install && bun run gen"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.104.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },

@@ -1,5 +1,5 @@
 // Virtualna tabula: stlpce podla rozlozenia alebo podla XML INISSu, striedanie a blikanie textov ako v INISSView.
-import type { VirtualColors, VirtualColumn, VirtualLayout, VirtualRow } from "../api";
+import type { VirtualColorsDto as VirtualColors, VirtualColumnDto as VirtualColumn, VirtualLayoutDto as VirtualLayout, VirtualRowDto as VirtualRow } from "../api/generated/types.gen";
 
 /** Casovanie textov - z rozlozenia (INISSView Jscript.iNextString, iBlinkPause, iMaxBlinkPhase). */
 export interface Timing {

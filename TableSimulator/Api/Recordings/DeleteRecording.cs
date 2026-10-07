@@ -11,5 +11,6 @@ public sealed class DeleteRecording : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapDelete("recordings/{name}", async (string name, ICommandHandler<DeleteRecordingCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new DeleteRecordingCommand(name), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
+            .Produces(StatusCodes.Status204NoContent)
             .RequireAuthorization(Permissions.RecordingsManage);
 }

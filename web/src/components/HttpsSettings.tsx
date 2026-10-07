@@ -1,6 +1,6 @@
 // HTTPS v nastaveniach: port, presmerovanie, vlastny certifikat a stav certifikatu na serveri.
-import { useEffect, useState } from "react";
-import { api, ApiError, type HttpsStatus, type Settings } from "../api";
+import { useQuery } from "@tanstack/react-query";
+import { errorText, getHttpsStatusOptions, type HttpsStatusDto as HttpsStatus, type SettingsDto as Settings } from "../api";
 import { hasText, t } from "../i18n";
 import { Field } from "./Dialog";
 import { formatDateTime } from "./UsersPage";
@@ -49,15 +49,8 @@ function HttpsState({ status, form }: { status: HttpsStatus; form: Settings }) {
 }
 
 export function HttpsSettings({ form, setForm, password, setPassword }: HttpsSettingsProps) {
-  const [status, setStatus] = useState<HttpsStatus | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api
-      .httpsStatus()
-      .then(setStatus)
-      .catch((e) => setError(e instanceof ApiError ? e.message : String(e)));
-  }, [form.httpsPasswordSet, form.httpsCertificate]);
+  // po ulozeni nastavenia ho SettingsPage zisti znova (iny certifikat alebo heslo)
+  const { data: status, error } = useQuery(getHttpsStatusOptions());
 
   return (
     <fieldset className="settings-group">
@@ -108,7 +101,7 @@ export function HttpsSettings({ form, setForm, password, setPassword }: HttpsSet
             ))}
         </>
       )}
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error">{errorText(error)}</p>}
       {status && <HttpsState status={status} form={form} />}
     </fieldset>
   );

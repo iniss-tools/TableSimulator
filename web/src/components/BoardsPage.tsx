@@ -1,8 +1,25 @@
 // Prehlad tabul: zive zobrazenie, stav komunikacie, poruchy.
-import { useEffect, useState } from "react";
-import { api, ApiError, boardConfig, defaultProfile, PERMISSIONS, type Board, type BoardConfig, type FaultKind, type MonitorInfo } from "../api";
+import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  clearBoard,
+  deleteBoard,
+  errorText,
+  getMonitorOptions,
+  importMonitorProjectMutation,
+  PERMISSIONS,
+  setBoard,
+  setBoardFault,
+  useCan,
+  useSimulatorState,
+  type BoardDto as Board,
+  type BoardFaultDto,
+  type FaultKind,
+  type MonitorDto,
+  type SetBoardRequest,
+} from "../api";
+import { boardConfig, defaultProfile } from "../lib/boards";
 import { hasText, locale, t } from "../i18n";
-import { useCan, useLive } from "../store";
 import { BoardDialog } from "./BoardDialog";
 import { BoardView } from "./BoardView";
 import { Dialog, Field } from "./Dialog";
@@ -12,7 +29,7 @@ const FAULTS: FaultKind[] = ["none", "noReply", "nak", "delay", "garbage", "stat
 /** Poruchy, ktore tabula danej rodiny vie predstierat - stav hlasia len tabule so stavovou odpovedou. */
 const faultsFor = (board: Board) => FAULTS.filter((f) => f !== "status" || board.display.family === "chars");
 
-function newBoard(line: number, manufacturer: string): BoardConfig {
+function newBoard(line: number, manufacturer: string): SetBoardRequest {
   return {
     line,
     address: 1,
@@ -37,7 +54,7 @@ function MismatchWarning({ board, edit }: { board: Board; edit: boolean }) {
       </div>
       <div className="mismatch-actions">
         {edit && mismatch.suggested.map((m) => (
-          <button key={m} className="secondary" onClick={() => api.putBoard({ ...boardConfig(board), manufacturer: m })}>
+          <button key={m} className="secondary" onClick={() => setBoard({ path: { line: board.line, address: board.address }, body: { ...boardConfig(board), manufacturer: m } })}>
             {t("mismatch.switch", { manufacturer: m })}
           </button>
         ))}
@@ -53,15 +70,16 @@ function BoardCard({ board, onEdit, edit }: { board: Board; onEdit: () => void; 
   // hodiny tabule idu od nastavenia dalej
   const clock = d.clock && d.clockSetAt ? new Date(Date.parse(d.clock) + (Date.now() - Date.parse(d.clockSetAt))).toLocaleString(locale()) : null;
 
+  const fault = (body: BoardFaultDto) => setBoardFault({ path: { id: board.id }, body });
   const setFault = (kind: FaultKind) =>
-    api.setFault(board.id, {
+    fault({
       kind,
       delayMs: kind === "delay" ? Math.max(board.fault.delayMs, 500) : 0,
       // predvolene "chybna sprava"
       status: kind === "status" ? board.fault.status || 0x01 : 0,
     });
   const remove = () => {
-    if (confirm(t("board.delete.confirm", { name }))) api.deleteBoard(board.id);
+    if (confirm(t("board.delete.confirm", { name }))) deleteBoard({ path: { id: board.id } });
   };
 
   return (
@@ -86,7 +104,7 @@ function BoardCard({ board, onEdit, edit }: { board: Board; onEdit: () => void; 
           <button className="icon-button" onClick={onEdit} title={t("common.edit")}>
             ✎
           </button>
-          <button className="icon-button" onClick={() => api.clearBoard(board.id)} title={t("board.clear")}>
+          <button className="icon-button" onClick={() => clearBoard({ path: { id: board.id } })} title={t("board.clear")}>
             ⌫
           </button>
           <button className="icon-button" onClick={remove} title={t("common.delete")}>
@@ -122,7 +140,7 @@ function BoardCard({ board, onEdit, edit }: { board: Board; onEdit: () => void; 
               step={100}
               value={board.fault.delayMs}
               title={t("fault.delayMs")}
-              onChange={(e) => api.setFault(board.id, { kind: "delay", delayMs: Number.parseInt(e.target.value, 10) || 0, status: 0 })}
+              onChange={(e) => fault({ kind: "delay", delayMs: Number.parseInt(e.target.value, 10) || 0, status: 0 })}
             />
           )}
           {board.fault.kind === "status" && (
@@ -132,7 +150,7 @@ function BoardCard({ board, onEdit, edit }: { board: Board; onEdit: () => void; 
               title={t("fault.statusBits")}
               onBlur={(e) => {
                 const status = Number.parseInt(e.target.value, 16);
-                if (!Number.isNaN(status)) api.setFault(board.id, { kind: "status", delayMs: 0, status: status & 0xff });
+                if (!Number.isNaN(status)) fault({ kind: "status", delayMs: 0, status: status & 0xff });
               }}
             />
           )}
@@ -144,23 +162,20 @@ function BoardCard({ board, onEdit, edit }: { board: Board; onEdit: () => void; 
 }
 
 /** Import projektu ELEN Monitora: simulatory projektu sa stanu tabulami na zvolenej linke. */
-function MonitorImportDialog({ monitor, onClose }: { monitor: MonitorInfo; onClose: () => void }) {
-  const live = useLive();
+function MonitorImportDialog({ monitor, onClose }: { monitor: MonitorDto; onClose: () => void }) {
+  const live = useSimulatorState();
   const [project, setProject] = useState(monitor.projects[0] ?? "");
   const [line, setLine] = useState(live.lines[0]?.number ?? 1);
-  const [error, setError] = useState<string | null>(null);
-
-  const save = async () => {
-    try {
-      await api.importMonitor(project, line);
-      onClose();
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : String(e));
-    }
-  };
+  const save = useMutation({ ...importMonitorProjectMutation(), onSuccess: onClose });
 
   return (
-    <Dialog title={t("monitor.import.title")} onClose={onClose} onSubmit={save} error={error}>
+    <Dialog
+      title={t("monitor.import.title")}
+      onClose={onClose}
+      onSubmit={() => save.mutate({ body: { project, line } })}
+      error={save.error && errorText(save.error)}
+      busy={save.isPending}
+    >
       <p className="hint">{t("monitor.import.hint")}</p>
       <div className="form-grid">
         <Field label={t("monitor.import.project")} wide>
@@ -186,19 +201,12 @@ function MonitorImportDialog({ monitor, onClose }: { monitor: MonitorInfo; onClo
 }
 
 export function BoardsPage() {
-  const live = useLive();
+  const live = useSimulatorState();
   const edit = useCan()(PERMISSIONS.edit);
   const [filter, setFilter] = useState<number | null>(null);
-  const [editing, setEditing] = useState<{ config: BoardConfig; isNew: boolean } | null>(null);
-  const [monitor, setMonitor] = useState<MonitorInfo | null>(null);
+  const [editing, setEditing] = useState<{ config: SetBoardRequest; isNew: boolean } | null>(null);
+  const monitor = useQuery(getMonitorOptions()).data;
   const [importing, setImporting] = useState(false);
-
-  useEffect(() => {
-    api
-      .monitor()
-      .then(setMonitor)
-      .catch(() => setMonitor(null));
-  }, [live.settings]);
 
   const boards = live.boards.filter((b) => filter === null || b.line === filter);
   const firstLine = live.lines[0];

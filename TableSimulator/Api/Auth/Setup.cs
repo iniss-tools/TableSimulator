@@ -12,5 +12,6 @@ public sealed class Setup : IEndpoint
         app.MapPost("auth/setup", async (SetupRequest request, ICommandHandler<SetupCommand, MeDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new SetupCommand(request.UserName ?? "", request.DisplayName ?? "", request.Password ?? ""), cancellationToken))
             .Match(Results.Ok, CustomResults.Problem))
+            .Produces<MeDto>()
             .AllowAnonymous();
 }

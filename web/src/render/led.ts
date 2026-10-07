@@ -1,6 +1,6 @@
 // Vykreslenie bodov tabule ako LED matice podla vzhladu, s hlavickou nad maticou. Prekresluju sa len body, ktore
 // sa zmenili; hlavicka (texty a hodiny) sa kresli pri kazdom prekresleni.
-import type { BoardHeader } from "../api";
+import type { BoardHeaderDto as BoardHeader } from "../api/generated/types.gen";
 import type { LedDesign } from "./design";
 import type { DotFrame } from "./rasterize";
 

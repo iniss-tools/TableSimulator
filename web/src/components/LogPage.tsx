@@ -1,8 +1,7 @@
 // Ziva komunikacia na linkach - spravy INISSu a odpovede tabul, rozlozene aj v hex.
 import { memo, useEffect, useRef, useState } from "react";
-import { api, PERMISSIONS, type Frame } from "../api";
+import { clearLog, getLog, openSocket, PERMISSIONS, useCan, type FrameDto as Frame } from "../api";
 import { hasText, locale, t, useLanguage, type Language } from "../i18n";
-import { openSocket, useCan } from "../store";
 
 /** Najviac drzanych sprav. */
 const MAX = 3000;
@@ -82,7 +81,7 @@ export function LogPage() {
       lastSeq = fresh[fresh.length - 1].seq;
       if (!pausedRef.current) pending.push(...fresh);
     };
-    api.log().then(add).catch(() => undefined);
+    getLog({ throwOnError: true }).then(({ data }) => add(data)).catch(() => undefined);
     const close = openSocket(add, true);
     return () => {
       clearInterval(timer);
@@ -122,7 +121,7 @@ export function LogPage() {
           <button
             className="secondary"
             onClick={() => {
-              api.clearLog();
+              clearLog();
               setFrames([]);
               setLimit(PAGE);
             }}

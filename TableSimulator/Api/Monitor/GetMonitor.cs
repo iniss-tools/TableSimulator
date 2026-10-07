@@ -12,5 +12,6 @@ public sealed class GetMonitor : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapGet("monitor", async (IQueryHandler<GetMonitorQuery, MonitorDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new GetMonitorQuery(), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .Produces<MonitorDto>()
             .RequireAuthorization(Permissions.SimulatorView);
 }

@@ -1,12 +1,27 @@
 // Pristupove kluce: zariadenia (odkaz s klucom, len pozeranie) a programy (GVDEditor, skripty).
-import { useCallback, useEffect, useState } from "react";
-import { api, ApiError, deviceLink, ROLES, type AccessKeyCreated, type AccessKeyInfo, type AccessKeyKind, type Role, type VirtualBoard } from "../api";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  createAccessKeyMutation,
+  deleteAccessKey,
+  deviceLink,
+  errorText,
+  getAccessKeysOptions,
+  getAccessKeysQueryKey,
+  getHttpsStatusOptions,
+  getVirtualOverviewOptions,
+  queryClient,
+  ROLES,
+  useSimulatorState,
+  type AccessKeyCreatedDto as AccessKeyCreated,
+  type AccessKeyKind,
+  type Role,
+} from "../api";
 import { t, type TextKey } from "../i18n";
-import { useLive } from "../store";
 import { Dialog, Field } from "./Dialog";
 import { formatDateTime } from "./UsersPage";
 
-const errorText = (e: unknown) => (e instanceof ApiError ? e.message : String(e));
+const refreshKeys = () => queryClient.invalidateQueries({ queryKey: getAccessKeysQueryKey() });
 
 function CopyField({ value }: { value: string }) {
   const [done, setDone] = useState(false);
@@ -33,23 +48,18 @@ function NewKeyDialog({ onClose }: { onClose: (created: AccessKeyCreated | null)
   const [name, setName] = useState("");
   const [kind, setKind] = useState<AccessKeyKind>("device");
   const [role, setRole] = useState<Role>("operator");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const save = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      onClose(await api.createKey(name, kind, kind === "device" ? "viewer" : role));
-    } catch (e) {
-      setError(errorText(e));
-    } finally {
-      setBusy(false);
-    }
-  };
+  const create = useMutation({ ...createAccessKeyMutation(), onSuccess: onClose });
+  const save = () => create.mutate({ body: { name, kind, role: kind === "device" ? "viewer" : role } });
 
   return (
-    <Dialog title={t("dialog.key.new")} onClose={() => onClose(null)} onSubmit={save} error={error} busy={busy} submitLabel={t("keys.create")}>
+    <Dialog
+      title={t("dialog.key.new")}
+      onClose={() => onClose(null)}
+      onSubmit={save}
+      error={create.error && errorText(create.error)}
+      busy={create.isPending}
+      submitLabel={t("keys.create")}
+    >
       <div className="form-grid">
         <Field label={t("keys.name")} hint={t("keys.name.hint")} wide>
           <input value={name} onChange={(e) => setName(e.target.value)} />
@@ -76,27 +86,18 @@ function NewKeyDialog({ onClose }: { onClose: (created: AccessKeyCreated | null)
 
 /** Novy kluc: tajna hodnota (len teraz) a pre zariadenie odkaz na vybranu stranku. */
 function CreatedDialog({ created, onClose }: { created: AccessKeyCreated; onClose: () => void }) {
-  const live = useLive();
-  const [virtual, setVirtual] = useState<VirtualBoard[]>([]);
-  const [page, setPage] = useState("#/wall");
-  const [httpsPort, setHttpsPort] = useState<number | null>(null);
+  const live = useSimulatorState();
   const device = created.key.kind === "device";
+  const virtual = useQuery({ ...getVirtualOverviewOptions(), enabled: device }).data?.boards ?? [];
+  const https = useQuery({ ...getHttpsStatusOptions(), enabled: device }).data;
+  const httpsPort = https?.enabled ? https.port : null;
+  const [page, setPage] = useState("#/wall");
 
+  // predvolene prva virtualna tabula
+  const firstVirtual = virtual[0]?.id;
   useEffect(() => {
-    if (device)
-      api
-        .virtual()
-        .then((v) => {
-          setVirtual(v.boards);
-          if (v.boards.length > 0) setPage(`#/virtual/${v.boards[0].id}`);
-        })
-        .catch(() => undefined);
-    if (device)
-      api
-        .httpsStatus()
-        .then((s) => setHttpsPort(s.enabled ? s.port : null))
-        .catch(() => undefined);
-  }, [device]);
+    if (firstVirtual !== undefined) setPage(`#/virtual/${firstVirtual}`);
+  }, [firstVirtual]);
 
   return (
     <Dialog title={t("dialog.key.created", { name: created.key.name })} onClose={onClose} onSubmit={onClose} submitLabel={t("common.close")} noCancel>
@@ -133,21 +134,12 @@ function CreatedDialog({ created, onClose }: { created: AccessKeyCreated; onClos
 }
 
 export function KeysTab() {
-  const [keys, setKeys] = useState<AccessKeyInfo[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const query = useQuery(getAccessKeysOptions());
+  const keys = query.data ?? [];
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const error = deleteError ?? (query.error && errorText(query.error));
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<AccessKeyCreated | null>(null);
-
-  const load = useCallback(() => {
-    api
-      .keys()
-      .then((k) => {
-        setKeys(k);
-        setError(null);
-      })
-      .catch((e) => setError(errorText(e)));
-  }, []);
-  useEffect(load, [load]);
 
   return (
     <>
@@ -191,7 +183,7 @@ export function KeysTab() {
                     <button
                       className="icon-button"
                       title={t("common.delete")}
-                      onClick={() => confirm(t("keys.delete.confirm", { name: k.name })) && api.deleteKey(k.id).then(load).catch((e) => setError(errorText(e)))}
+                      onClick={() => confirm(t("keys.delete.confirm", { name: k.name })) && deleteAccessKey({ path: { id: k.id } }).then(() => { setDeleteError(null); return refreshKeys(); }).catch((e) => setDeleteError(errorText(e)))}
                     >
                       ✕
                     </button>
@@ -208,7 +200,7 @@ export function KeysTab() {
             setCreating(false);
             if (result) {
               setCreated(result);
-              load();
+              refreshKeys();
             }
           }}
         />

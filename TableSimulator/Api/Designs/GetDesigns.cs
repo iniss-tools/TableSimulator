@@ -14,5 +14,6 @@ public sealed class GetDesigns : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapGet("designs", async (IQueryHandler<GetDesignsQuery, DesignInfoDto[]> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new GetDesignsQuery(), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .Produces<DesignInfoDto[]>()
             .RequireAuthorization(Permissions.SimulatorView);
 }

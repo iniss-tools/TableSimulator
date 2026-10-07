@@ -13,5 +13,6 @@ public sealed class ImportStation : IEndpoint
         app.MapPost("station", async (StationImportRequest request, ICommandHandler<ImportStationCommand, StationImportedDto> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new ImportStationCommand(request), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .Produces<StationImportedDto>()
             .RequireAuthorization(Permissions.SimulatorEdit);
 }

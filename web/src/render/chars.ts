@@ -1,7 +1,7 @@
 // Rasterizacia znakovej tabule Elektrocas (LCD, LCD1, ERP) na body: znak = bunka 8 bodov × vyska riadku, riadky
 // zhora od 0. Co tabula v danom okamihu ukazuje (vrstvy striedania, blikanie), urcuje tento subor; ako body
 // vyzeraju, rozhoduje renderer podla vzhladu - rovnako ako pri ELEN.
-import type { Board, CharRow } from "../api";
+import type { BoardDto as Board, CharRowDto as CharRow } from "../api/generated/types.gen";
 import type { GlyphSource } from "./fonts";
 import { COLOR_NONE, type DotFrame } from "./frame";
 

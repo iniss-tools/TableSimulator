@@ -1,7 +1,6 @@
 // Ziva tabula: rasterizacia obsahu + LED renderer, prisposobena velkosti miesta.
 import { useEffect, useRef, useState } from "react";
-import type { Board } from "../api";
-import { useLive } from "../store";
+import { useConnection, type BoardDto as Board } from "../api";
 import { DEFAULT_DESIGN, defaultDesignId, loadDesign, type LedDesign } from "../render/design";
 import { CanvasGlyphSource, CellGlyphSource, ElenGlyphSource, loadFontSet, type ElenFontSet, type GlyphSource } from "../render/fonts";
 import { CHAR_WIDTH } from "../render/chars";
@@ -15,7 +14,7 @@ interface Props {
 }
 
 export function BoardView({ board, fit = "width" }: Props) {
-  const { designVersion } = useLive();
+  const { designVersion } = useConnection();
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [design, setDesign] = useState<LedDesign>(DEFAULT_DESIGN);

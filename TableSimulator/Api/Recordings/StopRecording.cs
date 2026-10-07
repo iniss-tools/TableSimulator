@@ -12,5 +12,6 @@ public sealed class StopRecording : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapPost("recordings/stop", async (ICommandHandler<StopRecordingCommand, RecorderStatusDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new StopRecordingCommand(), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
+            .Produces<RecorderStatusDto>()
             .RequireAuthorization(Permissions.RecordingsManage);
 }

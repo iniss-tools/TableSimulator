@@ -12,5 +12,6 @@ public sealed class ChangePassword : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app) =>
         app.MapPost("auth/password", async (ChangePasswordRequest request, ICommandHandler<ChangePasswordCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new ChangePasswordCommand(request), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
+            .Produces(StatusCodes.Status204NoContent)
             .RequireAuthorization(Permissions.SimulatorView);
 }

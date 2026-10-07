@@ -13,5 +13,6 @@ public sealed class SetBoardFault : IEndpoint
         app.MapPost("boards/{id}/fault", async (string id, BoardFaultDto fault, ICommandHandler<SetBoardFaultCommand> handler,
             CancellationToken cancellationToken) =>
             (await handler.Handle(new SetBoardFaultCommand(id, fault), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
+            .Produces(StatusCodes.Status204NoContent)
             .RequireAuthorization(Permissions.SimulatorEdit);
 }
