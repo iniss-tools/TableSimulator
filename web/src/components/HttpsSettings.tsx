@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { errorText, getHttpsStatusOptions, type HttpsStatusDto as HttpsStatus, type SettingsDto as Settings } from "../api";
 import { hasText, t } from "../i18n";
 import { Field } from "./Dialog";
-import { formatDateTime } from "./UsersPage";
+import { formatDateTime } from "@/lib/format";
 
 interface HttpsSettingsProps {
   form: Settings;

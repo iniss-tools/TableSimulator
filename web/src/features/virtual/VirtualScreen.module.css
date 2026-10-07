@@ -1,0 +1,103 @@
+/* Virtualna tabula - farby a pismo z rozlozenia (premenne --vb-* na .board), velkost podla kontajnera (kiosk aj nahlad).
+   Zamerne CSS modul, nie Tailwind: vzhlad urcuju data rozlozenia, nie trieda rozhrania. */
+.screen {
+  container-type: size;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.preview {
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.board {
+  --rows: 8;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--vb-bg);
+  color: var(--vb-text);
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: min(calc(84cqh / (var(--rows) + 1) * 0.55), 3cqw);
+  line-height: 1.45;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 1em;
+  padding: 0.35em 0.8em;
+  background: var(--vb-head-bg);
+  color: var(--vb-head-text);
+  border-bottom: 0.08em solid var(--vb-accent);
+  font-size: 1.15em;
+  white-space: nowrap;
+}
+
+.title {
+  font-weight: 700;
+}
+
+.muted {
+  color: var(--vb-muted);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.clock {
+  color: var(--vb-accent);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  color: var(--vb-muted);
+  font-size: 0.55em;
+  font-weight: 500;
+  text-align: left;
+  padding: 0.3em 0.8em;
+  border-bottom: 1px solid var(--vb-line);
+}
+
+.table td {
+  padding: 0.2em 0.8em;
+  border-bottom: 1px solid var(--vb-line);
+  white-space: nowrap;
+  max-width: 22cqw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+.table tr:nth-child(even) td {
+  background: var(--vb-alt);
+}
+
+/* hlasenie na tabuli (chyba, neaktualny subor) */
+.note {
+  padding: 0.3em 0.8em;
+  background: #5a1a1a;
+  color: #ffd0d0;
+  font-size: 0.55em;
+}
+
+.empty {
+  padding: 1em 0.8em;
+  color: var(--vb-muted);
+}
+
+.stale .table {
+  opacity: 0.45;
+}

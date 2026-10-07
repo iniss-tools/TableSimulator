@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { ChevronsUpDown, KeyRound, Languages, LogOut, Monitor, Moon, Sun, SunMoon } from "lucide-react";
 import { forgetAccessKey, logout, queryClient, type MeDto } from "@/api";
-import { PasswordDialog } from "@/components/UsersPage";
+import { PasswordDialog } from "@/features/users/PasswordDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -138,15 +138,13 @@ export function UserMenu({ me }: { me: MeDto }) {
         </SidebarMenuItem>
       </SidebarMenu>
       {password && (
-        <div className="legacy">
-          <PasswordDialog
-            userName={null}
-            onClose={(changed) => {
-              setPassword(false);
-              setPasswordDone(changed);
-            }}
-          />
-        </div>
+        <PasswordDialog
+          userName={null}
+          onClose={(changed) => {
+            setPassword(false);
+            setPasswordDone(changed);
+          }}
+        />
       )}
     </>
   );

@@ -1,0 +1,255 @@
+// Zaznamy komunikacie: nahravanie prevadzky liniek a jej prehratie do simulatora.
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Download, Play, Square, Trash2, Upload } from "lucide-react";
+import { toast } from "sonner";
+import {
+  deleteRecording,
+  errorText,
+  getRecordingsOptions,
+  getRecordingsQueryKey,
+  PERMISSIONS,
+  playRecording,
+  queryClient,
+  startRecording,
+  stopRecording,
+  stopReplay,
+  uploadRecording,
+  useCan,
+  type RecorderStatusDto,
+  type RecordingInfoDto,
+  type ReplayStatusDto,
+} from "@/api";
+import { confirmAction } from "@/components/common/confirm";
+import { OptionSelect } from "@/components/common/option-select";
+import { PageHeader } from "@/components/common/page-header";
+import { RowActions } from "@/components/common/row-actions";
+import { DataTable } from "@/components/data-table/data-table";
+import { columnsFor } from "@/components/data-table/features";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { locale, t } from "@/i18n";
+
+const SPEEDS = [1, 2, 5, 10, 0];
+
+/** Zaznamy, nahravanie a prehravanie - zmeny prinasa WebSocket. */
+const useRecordings = () => useQuery(getRecordingsOptions()).data;
+const refresh = () => queryClient.invalidateQueries({ queryKey: getRecordingsQueryKey() });
+const failed = (e: unknown) => toast.error(errorText(e));
+
+function duration(seconds: number): string {
+  const s = Math.max(0, Math.round(seconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return h > 0 ? `${h}:${pad(m)}:${pad(s % 60)}` : `${m}:${pad(s % 60)}`;
+}
+
+function size(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toLocaleString(locale(), { maximumFractionDigits: 1 })} kB`;
+  return `${(bytes / 1024 / 1024).toLocaleString(locale(), { maximumFractionDigits: 1 })} MB`;
+}
+
+/** Nahravanie: poznamka a start, pocas nahravania priebeh a zastavenie. */
+function Recorder({ recorder, manage }: { recorder: RecorderStatusDto | undefined; manage: boolean }) {
+  const [note, setNote] = useState("");
+  const [, tick] = useState(0);
+
+  // dlzka zaznamu bezi aj medzi spravami servera
+  useEffect(() => {
+    if (!recorder?.recording) return;
+    const timer = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(timer);
+  }, [recorder?.recording]);
+
+  if (recorder?.recording) {
+    const elapsed = recorder.started ? (Date.now() - Date.parse(recorder.started)) / 1000 : 0;
+    return (
+      <Card className="border-red-500/40 bg-red-500/5">
+        <CardContent className="flex flex-wrap items-center gap-3">
+          <span className="size-3 animate-pulse rounded-full bg-red-500" />
+          <span className="flex-1 text-sm">
+            {t("rec.running", { name: recorder.name ?? "", duration: duration(elapsed), entries: recorder.entries, size: size(recorder.bytes) })}
+          </span>
+          {manage && (
+            <Button variant="destructive" onClick={() => stopRecording({ throwOnError: true }).catch(failed)}>
+              <Square />
+              {t("rec.stop")}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!manage) return null;
+  return (
+    <form
+      className="flex flex-wrap items-center gap-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        startRecording({ body: { note }, throwOnError: true })
+          .then(() => setNote(""))
+          .catch(failed);
+      }}
+    >
+      <Input className="max-w-sm flex-1" placeholder={t("rec.note")} aria-label={t("rec.note")} value={note} onChange={(e) => setNote(e.target.value)} />
+      <Button type="submit">
+        <span className="size-2.5 rounded-full bg-red-500" />
+        {t("rec.start")}
+      </Button>
+    </form>
+  );
+}
+
+/** Posledne prehravanie: stav, poloha a zastavenie. */
+function Replay({ replay, manage }: { replay: ReplayStatusDto; manage: boolean }) {
+  const percent = replay.duration > 0 ? Math.min(100, (replay.position / replay.duration) * 100) : 100;
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="font-medium">{t(`replay.${replay.state}`, { name: replay.name })}</span>
+          <span className="flex-1 text-sm text-muted-foreground">
+            {duration(replay.position)} / {duration(replay.duration)} · {replay.speed > 0 ? `${replay.speed}×` : t("rec.speed.max")}
+            {replay.loop && <> · {t("replay.pass", { pass: replay.pass })}</>}
+          </span>
+          {replay.state === "running" && manage && (
+            <Button variant="outline" onClick={() => stopReplay({ throwOnError: true }).catch(failed)}>
+              <Square />
+              {t("replay.stop")}
+            </Button>
+          )}
+        </div>
+        <Progress value={percent} />
+      </CardContent>
+    </Card>
+  );
+}
+
+const column = columnsFor<RecordingInfoDto>();
+
+export function RecordingsPage() {
+  const recordings = useRecordings();
+  const recorder = recordings?.recorder;
+  const manage = useCan()(PERMISSIONS.recordings);
+  const [speed, setSpeed] = useState(1);
+  const [loop, setLoop] = useState(false);
+  const upload = useRef<HTMLInputElement>(null);
+  // nahravany zaznam sa neda prehrat ani zmazat
+  const recordingName = recorder?.recording ? recorder.name : null;
+
+  const onUpload = async (files: FileList | null) => {
+    for (const file of Array.from(files ?? [])) {
+      try {
+        await uploadRecording({ body: file, query: { name: file.name }, throwOnError: true });
+      } catch {
+        toast.error(t("rec.uploadBad"), { description: file.name });
+      }
+    }
+    if (upload.current) upload.current.value = "";
+    refresh();
+  };
+
+  const remove = async (name: string) => {
+    if (!(await confirmAction({ title: t("rec.delete.confirm", { name }), destructive: true }))) return;
+    deleteRecording({ path: { name }, throwOnError: true }).then(refresh, failed);
+  };
+
+  const columns = useMemo(
+    () => [
+      column.accessor("name", { header: t("rec.col.name"), cell: ({ getValue }) => <span className="font-medium whitespace-nowrap">{getValue()}</span> }),
+      column.accessor("created", {
+        header: t("rec.col.created"),
+        sortFn: "datetime",
+        cell: ({ getValue }) => <span className="whitespace-nowrap">{new Date(getValue()).toLocaleString(locale())}</span>,
+      }),
+      column.accessor("duration", { header: t("rec.col.duration"), cell: ({ getValue }) => duration(getValue()) }),
+      column.accessor((r) => r.lines.join(", "), { id: "lines", header: t("rec.col.lines") }),
+      column.accessor("frames", { header: t("rec.col.frames") }),
+      column.accessor("size", { header: t("rec.col.size"), cell: ({ getValue }) => <span className="whitespace-nowrap">{size(getValue())}</span> }),
+      column.accessor((r) => r.note ?? "", { id: "note", header: t("rec.col.note") }),
+      column.display({
+        id: "actions",
+        meta: { className: "w-px whitespace-nowrap text-right" },
+        cell: ({ row }) => {
+          const r = row.original;
+          return (
+            <div className="flex items-center justify-end gap-1">
+              {manage && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={recordingName === r.name}
+                  onClick={() => playRecording({ body: { name: r.name, speed, loop }, throwOnError: true }).catch(failed)}
+                >
+                  <Play />
+                  {t("rec.play")}
+                </Button>
+              )}
+              <RowActions
+                actions={[
+                  {
+                    label: t("rec.download"),
+                    icon: Download,
+                    onClick: () => window.open(`/api/recordings/${encodeURIComponent(r.name)}/file`, "_self"),
+                  },
+                  { label: t("common.delete"), icon: Trash2, destructive: true, hidden: !manage, disabled: recordingName === r.name, onClick: () => remove(r.name) },
+                ]}
+              />
+            </div>
+          );
+        },
+      }),
+    ],
+    [manage, speed, loop, recordingName],
+  );
+
+  return (
+    <>
+      <PageHeader description={t("rec.hint")} />
+      <div className="mb-6 flex flex-col gap-3">
+        <Recorder recorder={recorder} manage={manage} />
+        {recordings?.replay && <Replay replay={recordings.replay} manage={manage} />}
+      </div>
+      <DataTable
+        columns={columns}
+        data={recordings?.items ?? []}
+        getRowId={(r) => r.name}
+        initialSorting={[{ id: "created", desc: true }]}
+        empty={t("rec.empty")}
+        toolbar={
+          <>
+            <div className="flex items-center gap-2">
+              <Label>{t("rec.speed")}</Label>
+              <OptionSelect
+                value={speed}
+                onValueChange={setSpeed}
+                options={SPEEDS.map((s) => ({ value: s, label: s > 0 ? `${s}×` : t("rec.speed.max") }))}
+                ariaLabel={t("rec.speed")}
+              />
+            </div>
+            <Label className="font-normal">
+              <Checkbox checked={loop} onCheckedChange={(value) => setLoop(value === true)} />
+              {t("rec.loop")}
+            </Label>
+            {manage && (
+              <>
+                <input ref={upload} type="file" accept=".tsrec" multiple hidden onChange={(e) => onUpload(e.target.files)} />
+                <Button variant="outline" className="ml-auto" onClick={() => upload.current?.click()}>
+                  <Upload />
+                  {t("rec.upload")}
+                </Button>
+              </>
+            )}
+          </>
+        }
+      />
+    </>
+  );
+}

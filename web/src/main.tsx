@@ -4,6 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { queryClient } from "./api";
 import { router } from "./app/router";
+import { ConfirmHost } from "./components/common/confirm";
+import { Toaster } from "./components/ui/sonner";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { getLanguage } from "./i18n";
 // tema hned pri starte - aj pre kiosk a prihlasenie
@@ -12,11 +14,26 @@ import "./index.css";
 import "./legacy.css";
 
 document.documentElement.lang = getLanguage();
+
+// po aktualizacii servera otvorena stranka nenajde stare casti rozhrania - nacita sa znova (najviac raz za minutu)
+addEventListener("vite:preloadError", (event) => {
+  try {
+    const last = Number(sessionStorage.getItem("reloadedAt") ?? 0);
+    if (Date.now() - last < 60_000) return;
+    sessionStorage.setItem("reloadedAt", String(Date.now()));
+  } catch {
+    // ulozisko nedostupne - nacita sa aj tak
+  }
+  event.preventDefault();
+  location.reload();
+});
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <RouterProvider router={router} />
+        <ConfirmHost />
+        <Toaster richColors closeButton />
       </TooltipProvider>
     </QueryClientProvider>
   </StrictMode>,

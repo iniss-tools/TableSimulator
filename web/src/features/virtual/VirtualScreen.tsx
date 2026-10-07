@@ -1,8 +1,10 @@
 // Obrazovka virtualnej tabule podla rozlozenia - kiosk (#/virtual/<cislo>) aj nahlad v editore rozlozenia.
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import type { VirtualLayoutDto as VirtualLayout, VirtualViewDto as VirtualView } from "../api";
-import { hasText, t } from "../i18n";
-import { columnColor, columnText, columnWidth, labelKey, layoutColumns, layoutTitle } from "../render/virtual";
+import type { VirtualLayoutDto as VirtualLayout, VirtualViewDto as VirtualView } from "@/api";
+import { cn } from "@/lib/utils";
+import { hasText, t } from "@/i18n";
+import { columnColor, columnText, columnWidth, labelKey, layoutColumns, layoutTitle } from "@/render/virtual";
+import styles from "./VirtualScreen.module.css";
 
 /** Aktualny cas, obnovovany po intervale (hodiny, striedanie a blikanie textov). */
 export function useNow(interval: number): number {
@@ -73,22 +75,22 @@ export function VirtualScreen({ view, layout, now, error, preview }: Props) {
   } as CSSProperties;
 
   return (
-    <div className={preview ? "vscreen vscreen-preview" : "vscreen"}>
-      <div className={view.source?.stale ? "vboard vboard-stale" : "vboard"} style={style}>
-        <header className="vboard-head">
-          <span className="vboard-title">{layoutTitle(layout.title, view.board.name, view.source?.station)}</span>
-          {layout.showStation && <span className="vboard-station">{view.source?.station}</span>}
-          <span className="vboard-spacer" />
-          {layout.showDate && <span className="vboard-date">{date(now)}</span>}
-          {layout.clock !== "none" && <span className="vboard-clock">{clock(now, layout.clock === "seconds")}</span>}
+    <div className={cn(styles.screen, preview && styles.preview)}>
+      <div className={cn(styles.board, view.source?.stale && styles.stale)} style={style}>
+        <header className={styles.head}>
+          <span className={styles.title}>{layoutTitle(layout.title, view.board.name, view.source?.station)}</span>
+          {layout.showStation && <span className={styles.muted}>{view.source?.station}</span>}
+          <span className={styles.spacer} />
+          {layout.showDate && <span className={styles.muted}>{date(now)}</span>}
+          {layout.clock !== "none" && <span className={styles.clock}>{clock(now, layout.clock === "seconds")}</span>}
         </header>
-        {error && <div className="vboard-note">{error}</div>}
-        {!view.source && <div className="vboard-note">{t("virtual.view.missing", { name: view.board.source })}</div>}
-        {view.source?.stale && <div className="vboard-note">{t("virtual.view.stale", { time: time(view.source.validTo, now) })}</div>}
-        {view.source?.error && <div className="vboard-note">{t("virtual.view.error", { error: view.source.error })}</div>}
-        {view.source && rows.length === 0 && <div className="vboard-empty">{t("virtual.view.empty")}</div>}
+        {error && <div className={styles.note}>{error}</div>}
+        {!view.source && <div className={styles.note}>{t("virtual.view.missing", { name: view.board.source })}</div>}
+        {view.source?.stale && <div className={styles.note}>{t("virtual.view.stale", { time: time(view.source.validTo, now) })}</div>}
+        {view.source?.error && <div className={styles.note}>{t("virtual.view.error", { error: view.source.error })}</div>}
+        {view.source && rows.length === 0 && <div className={styles.empty}>{t("virtual.view.empty")}</div>}
         {rows.length > 0 && (
-          <table className="vboard-table">
+          <table className={styles.table}>
             <colgroup>
               {columns.map((c) => (
                 <col key={c.key} style={{ width: columnWidth(c.width) }} />

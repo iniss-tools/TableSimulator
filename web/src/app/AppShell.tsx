@@ -3,6 +3,7 @@ import { Outlet, useRouterState } from "@tanstack/react-router";
 import { CircleAlert } from "lucide-react";
 import { can, useConnection, useMe, useSimulatorState } from "@/api";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { t } from "@/i18n";
 import { AppSidebar } from "./AppSidebar";
@@ -32,7 +33,7 @@ export function AppShell() {
             {t("server.offline")}
           </div>
         )}
-        <div className="legacy mx-auto w-full max-w-[1600px] flex-1 p-4">
+        <div className={cn("mx-auto w-full max-w-[1600px] flex-1 p-4", item?.legacy && "legacy")}>
           {allowed ? <Outlet /> : <p className="text-sm text-muted-foreground">{t("nav.forbidden")}</p>}
         </div>
       </SidebarInset>

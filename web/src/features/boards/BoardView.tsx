@@ -1,19 +1,21 @@
 // Ziva tabula: rasterizacia obsahu + LED renderer, prisposobena velkosti miesta.
 import { useEffect, useRef, useState } from "react";
-import { useConnection, type BoardDto as Board } from "../api";
-import { DEFAULT_DESIGN, defaultDesignId, loadDesign, type LedDesign } from "../render/design";
-import { CanvasGlyphSource, CellGlyphSource, ElenGlyphSource, loadFontSet, type ElenFontSet, type GlyphSource } from "../render/fonts";
-import { CHAR_WIDTH } from "../render/chars";
-import { blinkPhase, boardClock, hasClock, isAnimated, rasterize } from "../render/rasterize";
-import { LedRenderer, ledSize } from "../render/led";
+import { useConnection, type BoardDto as Board } from "@/api";
+import { cn } from "@/lib/utils";
+import { DEFAULT_DESIGN, defaultDesignId, loadDesign, type LedDesign } from "@/render/design";
+import { CanvasGlyphSource, CellGlyphSource, ElenGlyphSource, loadFontSet, type ElenFontSet, type GlyphSource } from "@/render/fonts";
+import { CHAR_WIDTH } from "@/render/chars";
+import { blinkPhase, boardClock, hasClock, isAnimated, rasterize } from "@/render/rasterize";
+import { LedRenderer, ledSize } from "@/render/led";
 
 interface Props {
   board: Board;
   /** width = na sirku miesta, contain = cela tabula do miesta (kiosk). */
   fit?: "width" | "contain";
+  className?: string;
 }
 
-export function BoardView({ board, fit = "width" }: Props) {
+export function BoardView({ board, fit = "width", className }: Props) {
   const { designVersion } = useConnection();
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -115,9 +117,10 @@ export function BoardView({ board, fit = "width" }: Props) {
   }, [board, design, fontSet, cssScale]);
 
   return (
-    <div ref={box} className={fit === "contain" ? "board-view board-view-contain" : "board-view"}>
+    <div ref={box} className={cn("w-full leading-0", fit === "contain" && "flex h-full items-center justify-center", className)}>
       <canvas
         ref={canvas}
+        className="block max-w-full"
         style={cssScale > 0 ? { width: `${natural.width * cssScale}px`, height: `${natural.height * cssScale}px` } : { visibility: "hidden" }}
       />
     </div>
