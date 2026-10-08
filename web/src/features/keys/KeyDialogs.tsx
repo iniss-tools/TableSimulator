@@ -2,11 +2,13 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { TriangleAlert } from "lucide-react";
+import { renderSVG } from "uqr";
 import {
   createAccessKeyMutation,
   deviceLink,
   errorText,
   getHttpsStatusOptions,
+  getServerInfoOptions,
   getVirtualOverviewOptions,
   ROLES,
   useSimulatorState,
@@ -22,6 +24,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { t, type TextKey } from "@/i18n";
+
+const LOOPBACK = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
+/** QR kod odkazu ako obrazok (naskenuje ho tablet alebo televizor s kamerou ci telefonom). */
+function qrImage(text: string): string {
+  return `data:image/svg+xml;utf8,${encodeURIComponent(renderSVG(text, { border: 2 }))}`;
+}
 
 /** Text na skopirovanie: pole len na citanie (oznaci sa cele) a tlacidlo. */
 function CopyField({ value, id }: { value: string; id?: string }) {
@@ -85,11 +94,18 @@ export function CreatedKeyDialog({ created, onClose }: { created: AccessKeyCreat
   const virtual = useQuery({ ...getVirtualOverviewOptions(), enabled: device }).data?.boards ?? [];
   const https = useQuery({ ...getHttpsStatusOptions(), enabled: device }).data;
   const httpsPort = https?.enabled ? https.port : null;
+  // rozhranie otvorene na tomto pocitaci (localhost) - zariadenie potrebuje adresu pocitaca v sieti
+  const loopback = LOOPBACK.has(location.hostname);
+  const addresses = useQuery({ ...getServerInfoOptions(), enabled: device && loopback }).data?.addresses ?? [];
+  const [chosenHost, setHost] = useState<string | null>(null);
+  const host = loopback ? (chosenHost ?? addresses[0] ?? null) : null;
   // vybrana stranka; kym obsluha nevyberie, prva virtualna tabula (inak stena tabul)
   const [chosen, setPage] = useState<string | null>(null);
 
   const firstVirtual = virtual[0]?.id;
   const page = chosen ?? (firstVirtual !== undefined ? `#/virtual/${firstVirtual}` : "#/wall");
+
+  const link = deviceLink(created.secret, page, httpsPort, host);
 
   const pages = [
     ...virtual.map((b) => ({ value: `#/virtual/${b.id}`, label: t("keys.page.virtual", { id: b.id, name: b.name }) })),
@@ -119,9 +135,24 @@ export function CreatedKeyDialog({ created, onClose }: { created: AccessKeyCreat
             <FormField label={t("keys.page")} hint={t("keys.page.hint")}>
               <OptionSelect value={page} onValueChange={setPage} options={pages} className="w-full" />
             </FormField>
+            {loopback && addresses.length > 0 && (
+              <FormField label={t("keys.host")} hint={t("keys.host.hint")}>
+                <OptionSelect value={host ?? ""} onValueChange={setHost} options={addresses.map((a) => ({ value: a, label: a }))} className="w-full" />
+              </FormField>
+            )}
+            {!live.settings?.allowNetwork && (
+              <Alert className="border-amber-500/40 text-amber-800 dark:text-amber-300">
+                <TriangleAlert />
+                <AlertDescription className="text-current">{t("keys.networkOff")}</AlertDescription>
+              </Alert>
+            )}
             <FormField label={t("keys.link")}>
-              <CopyField value={deviceLink(created.secret, page, httpsPort)} />
+              <CopyField value={link} />
             </FormField>
+            <div className="flex flex-wrap items-start gap-4">
+              <img src={qrImage(link)} alt={t("keys.qr")} className="size-44 shrink-0 rounded-md bg-white p-1" />
+              <p className="max-w-sm text-sm text-muted-foreground">{t("keys.install.hint")}</p>
+            </div>
           </>
         ) : (
           <p className="text-sm text-muted-foreground">{t("keys.api.hint")}</p>

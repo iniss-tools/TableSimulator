@@ -11,7 +11,7 @@ test("novy vzhlad, uprava a zmazanie", async ({ page }) => {
   await expect(dialog.getByLabel("ID (priečinok)")).toHaveValue("test-e2e");
   await dialog.getByRole("button", { name: "Vytvoriť" }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByText("test-e2e", { exact: true })).toBeVisible();
+  await expect(page.locator("code", { hasText: /^test-e2e$/ })).toBeVisible();
 
   // uprava: rozostup bodov a farba pozadia hlavicky
   await page.getByLabel("Rozostup bodov").fill("7");
@@ -26,7 +26,7 @@ test("novy vzhlad, uprava a zmazanie", async ({ page }) => {
 
   await page.getByRole("button", { name: "Odstrániť" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Odstrániť" }).click();
-  await expect(page.getByText("elen-led", { exact: true })).toBeVisible();
+  await expect(page.locator("code", { hasText: /^elen-led$/ })).toBeVisible();
   const list = (await (await page.request.get("/api/designs")).json()) as { id: string }[];
   expect(list.some((d) => d.id === "test-e2e")).toBe(false);
 });

@@ -867,7 +867,7 @@ export const sk = {
   "designs.section.dots": "Body",
   "designs.section.colors": "Farby písma",
   "designs.section.surface": "Plocha a rám",
-  "designs.section.header": "Hlavička",
+  "designs.section.header": "Hlavička (štítok nad bodmi)",
   "designs.name": "Názov",
   "designs.id": "ID (priečinok)",
   "designs.id.hint": "Malé písmená bez diakritiky, číslice a pomlčky. Rovnaké ID ako vstavaný vzhľad ho prekryje.",
@@ -902,7 +902,7 @@ export const sk = {
   "designs.frame.color": "Farba rámu",
   "designs.header.background": "Pozadie hlavičky",
   "designs.header.color": "Farba textov",
-  "designs.header.font": "Písmo textov",
+  "designs.header.font": "Písmo textov štítku",
   "designs.header.bold": "Tučné texty",
   "designs.header.clockColor": "Farba hodín",
   "designs.header.clockBackground": "Pozadie hodín",
@@ -922,6 +922,19 @@ export const sk = {
   "error.designs.notCustom": "Taký vlastný vzhľad neexistuje.",
   "audit.action.SetDesign": "Uloženie vzhľadu",
   "audit.action.DeleteDesign": "Odstránenie vzhľadu",
+  "designs.section.header.hint":
+    "Hlavička je potlačený štítok nad bodmi tabule (ako panel v ELEN Monitore) – texty a hodiny sa kreslia písmom prehliadača, nie bodovým písmom.",
+  "kiosk.install": "Nainštalovať",
+  "kiosk.fullscreen": "Celá obrazovka",
+  "kiosk.exitFullscreen": "Zrušiť celú obrazovku",
+  "kiosk.virtualName": "Virtuálna tabuľa {id}",
+  "server.waiting": "Čakám na server simulátora – stránka sa pripojí sama.",
+  "keys.host": "Adresa simulátora v sieti",
+  "keys.host.hint": "Rozhranie je otvorené na tomto počítači (localhost) – zariadenie sa pripojí na adresu počítača v sieti.",
+  "keys.networkOff": "Prístup zo siete je vypnutý – zariadenie sa k simulátoru nepripojí. Zapnite ho v Nastaveniach (Sieť a prístup).",
+  "keys.qr": "QR kód odkazu",
+  "keys.install.hint":
+    "Naskenujte kód alebo otvorte odkaz na zariadení. Kiosk sa dá pridať na plochu (tlačidlo Nainštalovať na kiosku alebo ponuka prehliadača Pridať na plochu) – spustí sa rovno na tejto stránke na celú obrazovku. Inštalácia a nezhasínanie obrazovky fungujú cez HTTPS.",
 } as const;
 
 export type TextKey = keyof typeof sk;

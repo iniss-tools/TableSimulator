@@ -350,6 +350,17 @@ počúva na všetkých rozhraniach; Windows sa môže spýtať na bránu firewal
 prihlásenie – zariadenie s tabuľou sa nemusí prihlasovať, stačí mu odkaz s kľúčom zariadenia (pozri
 [Prístupové kľúče](#prístupové-kľúče)). Heslá a kľúče idú sieťou čitateľne, kým nie je zapnuté [HTTPS](#https).
 
+### Kiosk na tablete a televízore
+
+Okno nového kľúča zariadenia ukáže odkaz aj **QR kód** (na počítači so serverom ponúkne adresu počítača v sieti
+namiesto `localhost`). Stránky kiosku (`#/view/…`, `#/wall`, `#/virtual/N`) majú vlastný manifest (`GET
+/api/manifest?view=…&name=…&key=…`): „Nainštalovať“ / „Pridať na plochu“ vytvorí aplikáciu, ktorá sa spustí rovno
+na kiosku na celú obrazovku a s kľúčom zariadenia (`/?view=…` web prevedie na adresu za `#`). Kiosk drží obrazovku
+zapnutú (Wake Lock), kurzor a tlačidlá (Celá obrazovka, Nainštalovať) sa po 3 s nečinnosti skryjú. Keď server
+nebeží (reštart, zariadenie zapnuté skôr), stránka ukáže „Čakám na server…“ a pripojí sa sama; service worker
+(`sw.js`) drží rozhranie v pamäti prehliadača, takže sa kiosk načíta aj bez servera. Inštalácia, Wake Lock a service
+worker fungujú len cez HTTPS (alebo na tomto počítači). Ikony aplikácie kreslí `web/tools/icons/make-icons.py`.
+
 ## Prihlasovanie a oprávnenia
 
 Kým je server dostupný len z tohto počítača a v **Nastaveniach** nie je zapnuté *Vyžadovať prihlásenie aj na tomto

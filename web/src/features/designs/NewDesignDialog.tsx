@@ -1,7 +1,7 @@
 // Novy vlastny vzhlad z aktualneho (kopia): nazov a id priecinka (z nazvu bez diakritiky).
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { errorText, getDesignsQueryKey, queryClient, setDesignMutation } from "@/api";
+import { errorText, getDesignsQueryKey, queryClient, setDesignMutation, type DesignInfoDto } from "@/api";
 import { FormDialog } from "@/components/common/form-dialog";
 import { FormField } from "@/components/common/form-field";
 import { FieldGroup } from "@/components/ui/field";
@@ -36,6 +36,11 @@ export function NewDesignDialog({ design, existing, onClose, onCreated }: NewDes
   const create = useMutation({
     ...setDesignMutation(),
     onSuccess: () => {
+      // novy vzhlad do zoznamu hned - vyber inak kym sa zoznam nacita ukaze len id
+      queryClient.setQueryData<DesignInfoDto[]>(getDesignsQueryKey(), (old) => [
+        ...(old ?? []),
+        { id: effectiveId, name: name.trim(), renderer: design.renderer, builtIn: false, overrides: false },
+      ]);
       void queryClient.invalidateQueries({ queryKey: getDesignsQueryKey() });
       onCreated(effectiveId);
     },

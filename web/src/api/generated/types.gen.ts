@@ -497,6 +497,7 @@ export type ServerInfoDto = {
     service: boolean;
     version: string;
     dataFolder: string;
+    addresses: Array<string>;
 };
 
 export type SetBoardRequest = {
@@ -802,6 +803,27 @@ export type VirtualViewDto = {
     source: null | VirtualSourceDto;
     rows: Array<VirtualRowDto>;
     layout: VirtualLayoutDto;
+};
+
+export type WebManifestDto = {
+    id: string;
+    name: string;
+    short_name: string;
+    start_url: string;
+    scope: string;
+    display: string;
+    display_override: Array<string>;
+    orientation: string;
+    background_color: string;
+    theme_color: string;
+    icons: Array<WebManifestIconDto>;
+};
+
+export type WebManifestIconDto = {
+    src: string;
+    sizes: string;
+    type: string;
+    purpose: string;
 };
 
 export type DeleteVirtualBoardData = {
@@ -1550,6 +1572,35 @@ export type UploadRecordingResponses = {
 };
 
 export type UploadRecordingResponse = UploadRecordingResponses[keyof UploadRecordingResponses];
+
+export type GetWebManifestData = {
+    body?: never;
+    path?: never;
+    query: {
+        view: string;
+        name?: string;
+        key?: string;
+    };
+    url: '/api/manifest';
+};
+
+export type GetWebManifestErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetWebManifestError = GetWebManifestErrors[keyof GetWebManifestErrors];
+
+export type GetWebManifestResponses = {
+    /**
+     * OK
+     */
+    200: WebManifestDto;
+};
+
+export type GetWebManifestResponse = GetWebManifestResponses[keyof GetWebManifestResponses];
 
 export type GetMonitorData = {
     body?: never;

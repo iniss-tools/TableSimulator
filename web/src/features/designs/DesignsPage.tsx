@@ -14,7 +14,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { StatusBadge } from "@/components/common/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,11 +27,12 @@ import { SAMPLE_BOARD, SAMPLE_BOARD_ID } from "./sample-board";
 
 const COLOR_KEYS = ["0", "1", "2", "3", "mono"] as const;
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
     <Card size="sm">
       <CardHeader className="border-b">
         <CardTitle>{title}</CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
         <FieldGroup className="grid gap-4 sm:grid-cols-2">{children}</FieldGroup>
@@ -254,7 +255,7 @@ export function DesignsPage() {
             <ColorField label={t("designs.frame.color")} value={form.frame.color} onChange={(color) => changeFrame({ color: color ?? "#000000" })} />
           </Section>
 
-          <Section title={t("designs.section.header")}>
+          <Section title={t("designs.section.header")} description={t("designs.section.header.hint")}>
             <ColorField label={t("designs.header.background")} value={form.header.background} onChange={(v) => changeHeader({ background: v ?? "#000000" })} />
             <ColorField label={t("designs.header.color")} value={form.header.color} onChange={(v) => changeHeader({ color: v ?? "#ffffff" })} />
             <FormField label={t("designs.header.font")} hint={t("designs.font.hint")}>

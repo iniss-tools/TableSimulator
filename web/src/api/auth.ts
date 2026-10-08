@@ -62,7 +62,14 @@ export function socketUrl(withLog: boolean): string {
  * Odkaz pre zobrazovacie zariadenie s klucom (hash = stranka, napr. #/virtual/3). Pri zapnutom HTTPS
  * (httpsPort) vzdy cez HTTPS - kluc v adrese by inak isiel sietou citatelne.
  */
-export function deviceLink(secret: string, hash: string, httpsPort: number | null = null): string {
-  const origin = httpsPort && location.protocol === "http:" ? `https://${location.hostname}:${httpsPort}` : location.origin;
+export function deviceLink(secret: string, hash: string, httpsPort: number | null = null, host: string | null = null): string {
+  // host = adresa tohto pocitaca v sieti (rozhranie otvorene cez localhost by zariadeniu nepomohlo)
+  const name = host ?? location.hostname;
+  const origin =
+    httpsPort && location.protocol === "http:"
+      ? `https://${name}:${httpsPort}`
+      : host
+        ? `${location.protocol}//${name}${location.port ? `:${location.port}` : ""}`
+        : location.origin;
   return `${origin}/?${KEY_PARAM}=${encodeURIComponent(secret)}${hash}`;
 }

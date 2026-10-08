@@ -2,9 +2,11 @@
 // Adresy su rovnake ako pred prestavbou - odkazy zariadeni (?key=…#/virtual/3) a ulozene zalozky ostavaju platne.
 import { lazy, useEffect } from "react";
 import { createHashHistory, createRootRoute, createRoute, createRouter, lazyRouteComponent, Outlet, redirect } from "@tanstack/react-router";
-import { openSocket, useMe } from "@/api";
+import { useQuery } from "@tanstack/react-query";
+import { ApiError, getMeOptions, openSocket } from "@/api";
 import { t, useLanguage } from "@/i18n";
 import { NotFound } from "./NotFound";
+import { ServerWaiting } from "./ServerWaiting";
 
 // stranky sa nacitaju az pri prvom zobrazeni - kiosk (televizor, tablet) nestahuje ovladanie a naopak
 const AuthPage = lazy(() => import("@/features/auth/AuthPage").then((m) => ({ default: m.AuthPage })));
@@ -15,14 +17,20 @@ const ArchivePage = lazy(() => import("@/features/archive/ArchivePage").then((m)
 /** Kym sa nezisti pouzivatel, nic; neprihlaseny dostane prihlasenie (aj na adrese kiosku - po prihlaseni tam ostane). */
 function Root() {
   const language = useLanguage();
-  const me = useMe();
+  // kym server neodpoveda (vypadok, restart, zariadenie zapnute skor), skusa to znova kazde 3 s
+  const meQuery = useQuery({
+    ...getMeOptions(),
+    retry: (_, error) => !(error instanceof ApiError) || error.status === 0 || error.status >= 500,
+    retryDelay: 3000,
+  });
+  const me = meQuery.data;
   const authenticated = me?.authenticated ?? false;
   useEffect(() => (authenticated ? openSocket() : undefined), [authenticated]);
   useEffect(() => {
     document.title = t("app.title");
   }, [language]);
 
-  if (!me) return null;
+  if (!me) return meQuery.failureCount > 0 ? <ServerWaiting /> : null;
   if (me.loginRequired && !me.authenticated) return <AuthPage setup={me.setupRequired} />;
   // zmena jazyka nakresli stranky znova (texty sa beru pri kresleni)
   return <Outlet key={language} />;

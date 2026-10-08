@@ -8,5 +8,5 @@ namespace TableSimulator.Application.Server;
 public sealed class GetServerInfoQueryHandler(IServerHost host, AppPaths paths) : IQueryHandler<GetServerInfoQuery, ServerInfoDto>
 {
     public Task<Result<ServerInfoDto>> Handle(GetServerInfoQuery query, CancellationToken cancellationToken) =>
-        Task.FromResult(Result.Success(new ServerInfoDto(host.RunningAsService, host.Version, paths.DataFolder)));
+        Task.FromResult(Result.Success(new ServerInfoDto(host.RunningAsService, host.Version, paths.DataFolder, host.Addresses)));
 }

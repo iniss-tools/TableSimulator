@@ -1008,6 +1008,60 @@
         }
       }
     },
+    "/api/manifest": {
+      "get": {
+        "tags": [
+          "Pwa"
+        ],
+        "operationId": "GetWebManifest",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/manifest\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebManifestDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/monitor": {
       "get": {
         "tags": [
@@ -4283,7 +4337,8 @@
         "required": [
           "service",
           "version",
-          "dataFolder"
+          "dataFolder",
+          "addresses"
         ],
         "type": "object",
         "properties": {
@@ -4295,6 +4350,12 @@
           },
           "dataFolder": {
             "type": "string"
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -5529,6 +5590,86 @@
             "$ref": "#/components/schemas/VirtualLayoutDto"
           }
         }
+      },
+      "WebManifestDto": {
+        "required": [
+          "id",
+          "name",
+          "short_name",
+          "start_url",
+          "scope",
+          "display",
+          "display_override",
+          "orientation",
+          "background_color",
+          "theme_color",
+          "icons"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "short_name": {
+            "type": "string"
+          },
+          "start_url": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "display": {
+            "type": "string"
+          },
+          "display_override": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "orientation": {
+            "type": "string"
+          },
+          "background_color": {
+            "type": "string"
+          },
+          "theme_color": {
+            "type": "string"
+          },
+          "icons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebManifestIconDto"
+            }
+          }
+        }
+      },
+      "WebManifestIconDto": {
+        "required": [
+          "src",
+          "sizes",
+          "type",
+          "purpose"
+        ],
+        "type": "object",
+        "properties": {
+          "src": {
+            "type": "string"
+          },
+          "sizes": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          }
+        }
       }
     }
   },
@@ -5556,6 +5697,9 @@
     },
     {
       "name": "Recordings"
+    },
+    {
+      "name": "Pwa"
     },
     {
       "name": "Monitor"

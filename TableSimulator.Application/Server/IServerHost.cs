@@ -9,6 +9,9 @@ public interface IServerHost
     /// <summary>Verzia servera.</summary>
     string Version { get; }
 
+    /// <summary>Adresy tohto pocitaca v sieti: IPv4 aktivnych rozhrani a meno pocitaca.</summary>
+    IReadOnlyList<string> Addresses { get; }
+
     /// <summary>Ukonci server tak, aby ho Windows spustil znova (po odoslani odpovede).</summary>
     void Restart();
 }

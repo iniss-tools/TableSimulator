@@ -1,3 +1,7 @@
+// kiosk z plochy: ?view= na adresu za # este pred smerovacom
+import "./app/start-view";
+// ponuka instalacie prichadza hned po nacitani - zachytit skor, nez sa otvori kiosk
+import "./app/install";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -26,6 +30,11 @@ addEventListener("vite:preloadError", (event) => {
   event.preventDefault();
   location.reload();
 });
+// rozhranie v pamati prehliadaca - kiosk sa nacita aj pocas restartu servera (len HTTPS alebo tento pocitac)
+if (import.meta.env.PROD && "serviceWorker" in navigator && isSecureContext) {
+  void navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
