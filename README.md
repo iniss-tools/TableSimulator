@@ -28,6 +28,24 @@ inštalácia alebo oddelené prostredie), `--reset-admin [meno]` (obnova prístu
 `TABLESIMULATOR_NO_BROWSER=1` (využívajú ju testy servera). Zrušený `--config` server len ohlási – linky a tabule
 sú v databáze a prenášajú sa exportom a importom (pozri [Údaje servera](#údaje-servera)).
 
+### Služba Windows
+
+Aby simulátor bežal bez prihláseného používateľa a štartoval so systémom, nainštaluje sa ako služba (príkazový riadok
+spustený ako správca):
+
+```bash
+TableSimulator.exe --install-service [--data <priečinok>] [--port <číslo>]
+TableSimulator.exe --uninstall-service
+```
+
+Služba `TableSimulator` (účet LocalSystem) štartuje oneskorene so systémom, po páde ju Windows spustí znova a v
+Nastaveniach (sekcia Server) sa dá reštartovať – server sa ukončí s kódom 3 a Windows ho spustí znova. Bez `--data`
+použije inštalácia priečinok nastavení používateľa, ktorý ju spustil (tie isté linky, tabule a používatelia); služba
+spustená bez `--data` má predvolený `%ProgramData%\TableSimulator`. Kľúče ochrany dát sa šifrujú DPAPI pre počítač
+(prečíta ich server spustený používateľom aj služba); staršie kľúče šifrované pre používateľa inštalácia prevedie.
+Opätovná inštalácia zmení nastavenie existujúcej služby, odinštalovanie ponechá nastavenia aj databázu. Služba nevidí
+vetvu registra INISSu v HKCU prihláseného používateľa (načítanie stanice z INISSu číta HKLM a súbor .INI).
+
 ## Údaje servera
 
 Všetko, čo server uchováva, je v databáze `tablesimulator.db` (SQLite) v priečinku nastavení: nastavenie servera,

@@ -758,7 +758,6 @@ export const sk = {
   "settings.folders.hint": "Kde simulátor hľadá písma tabúľ, predlohy z ELEN Monitora, vlastné vzhľady a XML tabúľ INISSu.",
   "settings.network": "Sieť a prístup",
   "settings.network.hint": "Port webového rozhrania, kto sa k simulátoru dostane a akú adresu dostane INISS pri presmerovaní liniek.",
-  "settings.database": "Databáza",
   "settings.database.hint":
     "Nastavenie, linky, tabule, virtuálne tabule, používatelia a audit sú uložené v databáze. Linky s tabuľami prenesiete na iný počítač exportom a importom na stránke Linky.",
   "settings.unsaved": "Neuložené zmeny",
@@ -833,6 +832,24 @@ export const sk = {
   "error.iniss.dataNotFound": "Vedľa programu INISSu nie je priečinok DATA.",
   "error.iniss.unreadable": "Zoznam grafikonov INISSu sa nedá prečítať.",
   "audit.action.ImportInissStation": "Linky a tabule z INISSu",
+  "settings.server": "Server",
+  "settings.server.hint": "Ako simulátor beží a kde má svoje údaje.",
+  "settings.restart.service": "Uložené. Porty, prístup zo siete, HTTPS a prihlasovanie sa prejavia po reštarte simulátora – môžete ho reštartovať hneď.",
+  "server.mode": "Spustenie",
+  "server.mode.service": "služba Windows",
+  "server.mode.window": "program v okne",
+  "server.version": "verzia {version}",
+  "server.dataFolder": "Priečinok nastavení",
+  "server.database": "Databáza",
+  "server.restart": "Reštartovať simulátor",
+  "server.restart.hint": "Windows službu hneď spustí znova; spojenia s INISSom sa na chvíľu prerušia.",
+  "server.restart.confirm": "Reštartovať simulátor?",
+  "server.restart.text": "Server sa ukončí a Windows ho o pár sekúnd spustí znova. INISS sa na linky pripojí sám, keď budú opäť počúvať.",
+  "server.restarting": "Simulátor sa reštartuje – stránka sa pripojí sama.",
+  "server.install.hint":
+    "Aby simulátor bežal aj bez prihláseného používateľa a štartoval so systémom, nainštalujte ho ako službu Windows – v príkazovom riadku spustenom ako správca v priečinku programu:",
+  "error.server.restartUnavailable": "Reštartovať sa dá len simulátor bežiaci ako služba Windows.",
+  "audit.action.RestartServer": "Reštart simulátora",
 } as const;
 
 export type TextKey = keyof typeof sk;

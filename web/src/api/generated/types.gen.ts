@@ -474,6 +474,12 @@ export type RunDto = {
     text: string;
 };
 
+export type ServerInfoDto = {
+    service: boolean;
+    version: string;
+    dataFolder: string;
+};
+
 export type SetBoardRequest = {
     line: number;
     address: number;
@@ -1252,6 +1258,56 @@ export type UpdateSettingsResponses = {
 };
 
 export type UpdateSettingsResponse = UpdateSettingsResponses[keyof UpdateSettingsResponses];
+
+export type GetServerInfoData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/server';
+};
+
+export type GetServerInfoErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetServerInfoError = GetServerInfoErrors[keyof GetServerInfoErrors];
+
+export type GetServerInfoResponses = {
+    /**
+     * OK
+     */
+    200: ServerInfoDto;
+};
+
+export type GetServerInfoResponse = GetServerInfoResponses[keyof GetServerInfoResponses];
+
+export type RestartServerData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/server/restart';
+};
+
+export type RestartServerErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type RestartServerError = RestartServerErrors[keyof RestartServerErrors];
+
+export type RestartServerResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type RestartServerResponse = RestartServerResponses[keyof RestartServerResponses];
 
 export type PlayRecordingData = {
     body: PlayRequest;

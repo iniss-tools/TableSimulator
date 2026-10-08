@@ -3,12 +3,13 @@
 import { useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useBlocker } from "@tanstack/react-router";
-import { CircleAlert, Database, FolderOpen, Network, Save, ShieldCheck, TrainFront, Undo2, type LucideIcon } from "lucide-react";
+import { CircleAlert, FolderOpen, Network, Save, Server, ShieldCheck, TrainFront, Undo2, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
   errorText,
   getDesignsOptions,
   getFontsOptions,
+  getServerInfoOptions,
   getHttpsStatusQueryKey,
   getStateQueryKey,
   queryClient,
@@ -17,7 +18,6 @@ import {
   type SettingsDto,
 } from "@/api";
 import { confirmAction } from "@/components/common/confirm";
-import { CopyButton } from "@/components/common/copy-button";
 import { CheckField, FormField } from "@/components/common/form-field";
 import { PageHeader } from "@/components/common/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -31,16 +31,18 @@ import { clearFontCache } from "@/render/fonts";
 import { t, type TextKey } from "@/i18n";
 import { DesignsFound, FontsFound } from "./found-lists";
 import { HttpsSection } from "./HttpsSection";
+import { ServerSection } from "./server-section";
+import { useRestartServer } from "./use-restart-server";
 import { RestartBadge } from "./restart-badge";
 
-type SectionId = "folders" | "iniss" | "network" | "https" | "database";
+type SectionId = "folders" | "iniss" | "network" | "https" | "server";
 
 const SECTIONS: { id: SectionId; label: TextKey; icon: LucideIcon }[] = [
   { id: "folders", label: "settings.folders", icon: FolderOpen },
   { id: "iniss", label: "settings.iniss", icon: TrainFront },
   { id: "network", label: "settings.network", icon: Network },
   { id: "https", label: "settings.https", icon: ShieldCheck },
-  { id: "database", label: "settings.database", icon: Database },
+  { id: "server", label: "settings.server", icon: Server },
 ];
 
 function Section({ id, description, children }: { id: SectionId; description: ReactNode; children: ReactNode }) {
@@ -94,6 +96,9 @@ export function SettingsPage() {
   const [draft, setDraft] = useState<SettingsDto | null>(null);
   // nove heslo certifikatu; null = nechat ulozene
   const [password, setPassword] = useState<string | null>(null);
+  // sluzbu Windows sa da po ulozeni hned restartovat
+  const service = useQuery(getServerInfoOptions()).data?.service === true;
+  const restart = useRestartServer();
 
   const update = useMutation({
     ...updateSettingsMutation(),
@@ -106,7 +111,11 @@ export function SettingsPage() {
       ]);
       setDraft(null);
       setPassword(null);
-      if (result.restart) toast.info(t("settings.restart"), { duration: 10_000 });
+      if (result.restart)
+        toast.info(t(service ? "settings.restart.service" : "settings.restart"), {
+          duration: 10_000,
+          action: service ? { label: t("server.restart"), onClick: () => void restart.run() } : undefined,
+        });
       else toast.success(t("settings.saved"));
     },
   });
@@ -229,11 +238,8 @@ export function SettingsPage() {
             <HttpsSection form={form} change={change} password={password} setPassword={setPassword} />
           </Section>
 
-          <Section id="database" description={t("settings.database.hint")}>
-            <div className="flex items-center gap-1 rounded-lg border bg-muted/40 px-3 py-1.5">
-              <code className="min-w-0 flex-1 font-mono text-xs break-all">{form.databasePath}</code>
-              <CopyButton text={form.databasePath} />
-            </div>
+          <Section id="server" description={t("settings.server.hint")}>
+            <ServerSection databasePath={form.databasePath} />
           </Section>
 
           {/* lista ostava na spodku okna - aj chyba ulozenia je viditelna pri ktorejkolvek casti */}

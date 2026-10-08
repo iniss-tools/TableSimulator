@@ -53,6 +53,7 @@ const ACTIONS = [
   "ResetAdmin",
   "ImportConfig",
   "ImportInissStation",
+  "RestartServer",
 ];
 
 function actionText(action: string): string {

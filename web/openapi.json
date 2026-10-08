@@ -677,6 +677,59 @@
         }
       }
     },
+    "/api/server": {
+      "get": {
+        "tags": [
+          "Server"
+        ],
+        "operationId": "GetServerInfo",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerInfoDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/server/restart": {
+      "post": {
+        "tags": [
+          "Server"
+        ],
+        "operationId": "RestartServer",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/replay": {
       "post": {
         "tags": [
@@ -4085,6 +4138,25 @@
           }
         }
       },
+      "ServerInfoDto": {
+        "required": [
+          "service",
+          "version",
+          "dataFolder"
+        ],
+        "type": "object",
+        "properties": {
+          "service": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "string"
+          },
+          "dataFolder": {
+            "type": "string"
+          }
+        }
+      },
       "SetBoardRequest": {
         "required": [
           "line",
@@ -5257,6 +5329,9 @@
     },
     {
       "name": "Settings"
+    },
+    {
+      "name": "Server"
     },
     {
       "name": "Replay"

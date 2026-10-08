@@ -1,5 +1,6 @@
 using TableSimulator.Application.Https;
 using TableSimulator.Application.Live;
+using TableSimulator.Application.Server;
 using TableSimulator.Application.Settings;
 using TableSimulator.Core.Simulation;
 using TableSimulator.Core.Transport;
@@ -23,6 +24,7 @@ public static class DependencyInjection
         services.AddSingleton<HttpsCertificates>();
         services.AddSingleton<IHttpsCertificates>(sp => sp.GetRequiredService<HttpsCertificates>());
         services.AddSingleton(_ => new Simulator());
+        services.AddSingleton<IServerHost, ServerHost>();
         services.AddSingleton<TransportManager>();
         services.AddSingleton<SimulatorConfigStore>();
         services.AddSingleton(TimeProvider.System);

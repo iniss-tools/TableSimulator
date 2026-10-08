@@ -15,11 +15,15 @@ using TableSimulator.Infrastructure.Settings;
 using TableSimulator.Persistence;
 
 // parametre: --data <priecinok> (nastavenia a databaza), --port <cislo>, --no-browser, --reset-admin [meno] (nove heslo
-// spravcu a koniec)
+// spravcu a koniec), --install-service / --uninstall-service (sluzba Windows a koniec)
 Log.Logger = SerilogSetup.CreateBootstrapLogger();
 try
 {
-    var commandLine = CommandLine.Parse(args, AppContext.BaseDirectory);
+    var commandLine = CommandLine.Parse(args, AppContext.BaseDirectory, WindowsService.IsRunning);
+    if (commandLine.InstallService)
+        return WindowsService.Install(commandLine, Console.Out);
+    if (commandLine.UninstallService)
+        return WindowsService.Uninstall(Console.Out);
     var paths = commandLine.Paths;
     if (commandLine.ObsoleteConfig)
         Log.Warning("Parameter --config je zruseny - linky a tabule su v databaze; subor nahrajte na stranke Linky (Importovat)");
@@ -31,6 +35,8 @@ try
 
     var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args, ContentRootPath = AppContext.BaseDirectory, WebRootPath = paths.WebRoot });
     builder.WebHost.ConfigureKestrel(endpoints.Configure);
+    // mimo sluzby Windows bez ucinku
+    builder.Host.UseWindowsService(options => options.ServiceName = WindowsService.Name);
     builder.Services.AddSerilog((_, logger) => SerilogSetup.Configure(logger, paths));
     builder.Services.AddProblemDetails();
     builder.Services.AddInfrastructure(paths, settings, endpoints);
