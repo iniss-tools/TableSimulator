@@ -24,6 +24,7 @@ export default tseslint.config(
       // obsluha udalosti v JSX moze byt async (chyby riesi sama)
       "@typescript-eslint/no-misused-promises": ["error", { checksVoidReturn: { attributes: false } }],
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-deprecated": "error",
       // hlasi len to, co nevie React Compiler - ten sa nepouziva
       "react-hooks/incompatible-library": "off",
     },

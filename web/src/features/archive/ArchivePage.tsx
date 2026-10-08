@@ -1,5 +1,5 @@
 // Archiv tabul a hlaseni INISSu - denne subory TAB/REP z priecinkov logov (ako v INISSView). Filtruje a strankuje server.
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type SubmitEvent } from "react";
 import { ListPlus, RefreshCw, Search, TriangleAlert } from "lucide-react";
 import {
   errorText,
@@ -224,7 +224,7 @@ export function ArchivePage({ kind }: { kind: ArchiveKind }) {
   );
   useEffect(() => load(0), [load]);
 
-  const search = (e: FormEvent) => {
+  const search = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFilter({ train: train.trim(), text: text.trim() });
   };
