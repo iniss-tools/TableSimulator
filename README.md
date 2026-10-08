@@ -290,8 +290,11 @@ pohyblivý text, jas, hodiny). Prehliadač rozhoduje, **ako** to vyzerá. Medzi 
    Predvolený je `elen-led` pre tabule ELEN a `lcd-dark` pre znakové tabule Elektročas (ďalej `lcd-green`,
    `lcd-blue`); oba druhy tabúľ kreslí ten istý renderer bodov, takže sa dá použiť ktorýkoľvek vzhľad.
 3. **Písma ELEN** – súbory `.bin` z priečinka písiem (napr. `Sim\FONT` programu ELEN Monitor). Bez písma sa text
-   kreslí približným písmom prehliadača; polohy textu sedia, tvary znakov nie. Znakové tabule Elektročas kreslia
-   písmo prehliadača s pevnou šírkou do bunky znaku.
+   kreslí vstavaným bodovým písmom – bitmapové písma misc-fixed (X.org, voľné dielo) od 5x7 po 10x20 podľa výšky
+   riadku (6x10 pre 10 riadkov, 9x15 pre 16), so všetkými znakmi CP1250; polohy textu sedia, tvary znakov sa od
+   tabule môžu líšiť. Rez písma ELEN: pevná šírka (6 bodov, od 16 riadkov 8), proporcionálne alebo tučné. Znakové
+   tabule Elektročas kreslia písmo 7x14 do bunky 8×16. Dáta písiem generuje `web/tools/pixel-fonts/bdf2ts.py`
+   (bodky ako štvorčeky 2×2, ď ť ľ Ľ s apostrofom); pod 7 riadkov ostáva písmo prehliadača.
 
 ### `design.json`
 

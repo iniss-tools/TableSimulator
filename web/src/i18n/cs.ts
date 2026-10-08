@@ -57,7 +57,7 @@ export const cs: Record<TextKey, string> = {
   "board.dark": "zhasnutá",
   "board.clock": "hodiny {time}",
   "board.delete.confirm": "Odstranit tabuli {name}?",
-  "board.approxFont": "Bez písma ELEN – zobrazuje se přibližné písmo prohlížeče.",
+  "board.approxFont": "Bez písma ELEN – zobrazuje se vestavěné bodové písmo, tvary znaků se mohou od tabule lišit.",
 
   "fault.label": "Porucha",
   "fault.none": "Bez poruchy",
@@ -168,7 +168,7 @@ export const cs: Record<TextKey, string> = {
 
   "settings.fontsFolder": "Složka písem ELEN (.bin)",
   "settings.fontsFolder.hint":
-    "Písma tabulí ELEN – např. složka Sim\\FONT programu Monitor nebo písma z ElenFontEditoru. Bez nich se text kreslí přibližným písmem prohlížeče.",
+    "Písma tabulí ELEN – např. složka Sim\\FONT programu Monitor nebo písma z ElenFontEditoru. Bez nich se text kreslí vestavěným bodovým písmem (tvary znaků se mohou od tabule lišit).",
   "settings.fontsFound": "Nalezená písma: {count}",
   "settings.noFonts": "Ve složce nejsou žádná písma ELEN.",
   "settings.designsFolder": "Složka vlastních vzhledů",

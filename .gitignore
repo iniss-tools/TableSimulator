@@ -339,6 +339,8 @@ node_modules/
 web/dist/
 # testy Playwright - data serverov, zostaveny server, vysledky
 web/e2e/.run/
+# zdrojove BDF pisiem misc-fixed - stiahne ich web/tools/pixel-fonts/bdf2ts.py
+web/tools/pixel-fonts/.bdf/
 # vystup buildu webu - generuje sa pri dotnet build
 TableSimulator/wwwroot/
 *.tsbuildinfo

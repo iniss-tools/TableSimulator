@@ -5,3 +5,6 @@ tools/*/node_modules
 bun.lock
 # vysledky testov Playwright
 e2e/.run
+# generovane pisma (tools/pixel-fonts/bdf2ts.py)
+src/render/pixel-fonts.data.ts
+tools/pixel-fonts/.bdf

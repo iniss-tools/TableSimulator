@@ -55,7 +55,7 @@ export const sk = {
   "board.dark": "zhasnutá",
   "board.clock": "hodiny {time}",
   "board.delete.confirm": "Odstrániť tabuľu {name}?",
-  "board.approxFont": "Bez písma ELEN – zobrazuje sa približné písmo prehliadača.",
+  "board.approxFont": "Bez písma ELEN – zobrazuje sa vstavané bodové písmo, tvary znakov sa môžu od tabule líšiť.",
 
   "fault.label": "Porucha",
   "fault.none": "Bez poruchy",
@@ -166,7 +166,7 @@ export const sk = {
 
   "settings.fontsFolder": "Priečinok písiem ELEN (.bin)",
   "settings.fontsFolder.hint":
-    "Písma tabúľ ELEN – napr. priečinok Sim\\FONT programu Monitor alebo písma z ElenFontEditora. Bez nich sa text kreslí približným písmom prehliadača.",
+    "Písma tabúľ ELEN – napr. priečinok Sim\\FONT programu Monitor alebo písma z ElenFontEditora. Bez nich sa text kreslí vstavaným bodovým písmom (tvary znakov sa môžu od tabule líšiť).",
   "settings.fontsFound": "Nájdené písma: {count}",
   "settings.noFonts": "V priečinku nie sú žiadne písma ELEN.",
   "settings.designsFolder": "Priečinok vlastných vzhľadov",

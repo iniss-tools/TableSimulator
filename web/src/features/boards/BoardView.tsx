@@ -4,7 +4,8 @@ import { useConnection, type BoardDto as Board } from "@/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { DEFAULT_DESIGN, defaultDesignId, loadDesign, type LedDesign } from "@/render/design";
-import { CanvasGlyphSource, CellGlyphSource, ElenGlyphSource, loadFontSet, type ElenFontSet, type GlyphSource } from "@/render/fonts";
+import { ElenGlyphSource, loadFontSet, type ElenFontSet, type GlyphSource } from "@/render/fonts";
+import { fallbackGlyphSource } from "@/render/pixel-fonts";
 import { CHAR_WIDTH } from "@/render/chars";
 import { blinkPhase, boardClock, hasClock, isAnimated, rasterize } from "@/render/rasterize";
 import { LedRenderer, ledSize } from "@/render/led";
@@ -128,7 +129,7 @@ export function BoardView({ board, fit = "width", className, design: override }:
         // znakova tabula ma pevnu bunku na znak, ELEN pismo s vlastnymi sirkami znakov
         const key = `${b.display.family}|${b.profile.rowHeight}`;
         if (!fallback || fallbackKey !== key) {
-          fallback = b.display.family === "chars" ? new CellGlyphSource(CHAR_WIDTH, b.profile.rowHeight) : new CanvasGlyphSource(b.profile.rowHeight);
+          fallback = fallbackGlyphSource(b.display.family, b.profile.rowHeight, CHAR_WIDTH);
           fallbackKey = key;
         }
         glyphs = fallback;
