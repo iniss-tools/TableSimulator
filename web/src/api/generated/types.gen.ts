@@ -355,6 +355,8 @@ export type LineDto = {
     version: number;
     mirror: null | string;
     mirrorError: null | string;
+    statusSince: string;
+    lastReceivedAt: null | string;
 };
 
 export type LineMode = 'display' | 'monitor';
@@ -368,7 +370,7 @@ export type LineStatsDto = {
     connections: number;
 };
 
-export type LineStatus = 'stopped' | 'listening' | 'connected' | 'error';
+export type LineStatus = 'stopped' | 'listening' | 'connected' | 'error' | 'lost';
 
 export type LoginRequest = {
     userName: string;

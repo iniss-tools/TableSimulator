@@ -14,7 +14,7 @@ internal static partial class TransportLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Linka {Line}: INISS pripojeny ({Remote})")]
     public static partial void Connected(ILogger logger, int line, string? remote);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Linka {Line}: INISS odpojeny")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Linka {Line}: INISS odpojeny")]
     public static partial void Disconnected(ILogger logger, int line);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Linka {Line} ({Endpoint}) nebezi: {Error}")]

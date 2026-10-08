@@ -936,4 +936,17 @@ export const cs: Record<TextKey, string> = {
   "keys.qr": "QR kód odkazu",
   "keys.install.hint":
     "Naskenujte kód nebo otevřete odkaz na zařízení. Kiosk lze přidat na plochu (tlačítko Nainstalovat na kiosku nebo nabídka prohlížeče Přidat na plochu) – spustí se rovnou na této stránce na celou obrazovku. Instalace a nezhasínání obrazovky fungují přes HTTPS.",
+  "line.status.lost": "INISS se odpojil",
+  "line.lastMessage": "poslední zpráva {ago}",
+  "line.noMessage": "zatím bez zpráv",
+  "alert.lost": "{line}: INISS se odpojil",
+  "alert.lost.hint": "Tabule na lince nedostávají nové údaje. Linka čeká, až se INISS znovu připojí.",
+  "alert.error": "{line}: linka neběží",
+  "alert.error.hint": "Spojení linky se nepodařilo otevřít.",
+  "alert.back": "{line}: INISS je znovu připojen",
+  "alert.showLines": "Linky",
+  "alert.badge": "Linky s výpadkem",
+  "notify.label": "Systémová oznámení",
+  "notify.hint": "Oznámí výpadek linky i tehdy, když okno simulátoru není vidět.",
+  "notify.denied": "Prohlížeč oznámení nepovolil – povolte je v nastavení stránky.",
 };

@@ -1,10 +1,13 @@
-// Pata bocneho panela: kto je prihlaseny a jeho ponuka - jazyk, vzhlad, vlastne heslo, odhlasenie (alebo kluc karty).
+// Pata bocneho panela: kto je prihlaseny a jeho ponuka - jazyk, vzhlad, systemove oznamenia, vlastne heslo, odhlasenie
+// (alebo kluc karty).
 import { useState } from "react";
-import { ChevronsUpDown, KeyRound, Languages, LogOut, Monitor, Moon, Sun, SunMoon } from "lucide-react";
+import { Bell, ChevronsUpDown, KeyRound, Languages, LogOut, Monitor, Moon, Sun, SunMoon } from "lucide-react";
+import { toast } from "sonner";
 import { forgetAccessKey, logout, queryClient, type MeDto } from "@/api";
 import { PasswordDialog } from "@/features/users/PasswordDialog";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -20,6 +23,7 @@ import {
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { setLanguage, t, useLanguage, type Language, type TextKey } from "@/i18n";
 import { setTheme, THEMES, useTheme, type Theme } from "@/lib/theme";
+import { notificationsSupported, setNotifications, useNotifications } from "./notifications";
 
 const LANGUAGES: Language[] = ["sk", "cs"];
 const THEME_ICONS = { light: Sun, dark: Moon, auto: Monitor } satisfies Record<Theme, unknown>;
@@ -38,6 +42,7 @@ export function UserMenu({ me }: { me: MeDto }) {
   const { isMobile } = useSidebar();
   const language = useLanguage();
   const theme = useTheme();
+  const notifications = useNotifications();
   const [password, setPassword] = useState(false);
   const [passwordDone, setPasswordDone] = useState(false);
 
@@ -104,6 +109,16 @@ export function UserMenu({ me }: { me: MeDto }) {
                   </DropdownMenuRadioGroup>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
+              {notificationsSupported() && (
+                <DropdownMenuCheckboxItem
+                  checked={notifications}
+                  title={t("notify.hint")}
+                  onCheckedChange={(on) => void setNotifications(on).then((done) => done || toast.error(t("notify.denied")))}
+                >
+                  <Bell />
+                  {t("notify.label")}
+                </DropdownMenuCheckboxItem>
+              )}
               {me.accessKey ? (
                 <>
                   <DropdownMenuSeparator />

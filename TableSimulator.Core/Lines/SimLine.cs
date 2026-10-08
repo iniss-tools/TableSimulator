@@ -134,7 +134,10 @@ public enum LineStatus
     [JsonStringEnumMemberName("stopped")] Stopped,
     [JsonStringEnumMemberName("listening")] Listening,
     [JsonStringEnumMemberName("connected")] Connected,
-    [JsonStringEnumMemberName("error")] Error
+    [JsonStringEnumMemberName("error")] Error,
+
+    /// <summary>INISS sa odpojil (TCP, rura) - linka caka, kym sa pripoji znova.</summary>
+    [JsonStringEnumMemberName("lost")] Lost
 }
 
 /// <summary>
@@ -194,6 +197,12 @@ public sealed class SimLine
 
     /// <summary>Podrobnosti stavu - pripojeny klient alebo chyba.</summary>
     public string? StatusDetail { get; internal set; }
+
+    /// <summary>Od kedy linka je v sucasnom stave.</summary>
+    public DateTimeOffset StatusSince { get; internal set; }
+
+    /// <summary>Kedy prisli posledne bajty od INISSu (nie zo zaznamu); null = este nic.</summary>
+    public DateTimeOffset? LastReceivedAt { get; internal set; }
 
     /// <summary>Pocitadla (pri zmene nastavenia linky ostanu).</summary>
     public LineStats Stats { get; init; } = new();

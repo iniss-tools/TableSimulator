@@ -1,6 +1,7 @@
-// Bocny panel: nazov aplikacie, skupiny menu (len stranky, na ktore ma pouzivatel opravnenie) a ponuka pouzivatela.
+// Bocny panel: nazov aplikacie, skupiny menu (len stranky, na ktore ma pouzivatel opravnenie; pri Linkach pocet
+// vypadkov) a ponuka pouzivatela.
 import { Link, useRouterState } from "@tanstack/react-router";
-import { can, type MeDto } from "@/api";
+import { can, useSimulatorState, type MeDto } from "@/api";
 import {
   Sidebar,
   SidebarContent,
@@ -9,11 +10,13 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { isOutage } from "@/features/lines/line-status";
 import { t } from "@/i18n";
 import { NAV } from "./navigation";
 import { UserMenu } from "./UserMenu";
@@ -23,6 +26,7 @@ export function AppSidebar({ me }: { me: MeDto }) {
   const { isMobile, setOpenMobile } = useSidebar();
   // na mobile sa panel po vybere stranky zavrie
   const navigated = () => isMobile && setOpenMobile(false);
+  const outages = useSimulatorState().lines.filter((l) => isOutage(l.status)).length;
 
   return (
     <Sidebar collapsible="icon">
@@ -55,6 +59,14 @@ export function AppSidebar({ me }: { me: MeDto }) {
                       <item.icon />
                       <span>{t(item.label)}</span>
                     </SidebarMenuButton>
+                    {item.to === "/lines" && outages > 0 && (
+                      <SidebarMenuBadge
+                        className="bg-red-600 text-white peer-hover/menu-button:text-white peer-data-active/menu-button:text-white"
+                        title={t("alert.badge")}
+                      >
+                        {outages}
+                      </SidebarMenuBadge>
+                    )}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>

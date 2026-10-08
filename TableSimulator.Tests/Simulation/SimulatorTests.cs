@@ -162,4 +162,55 @@ public class SimulatorTests
         Assert.AreEqual(512, board.Profile.Width);
         Assert.AreEqual("ELEN10", copy.Read(s => s.FindLine(3))!.Manufacturer);
     }
+
+    [TestMethod]
+    public void StavLinky_PoOdpojeniHlasiStratuACasZmeny()
+    {
+        var time = new ManualTime();
+        var sim = new Simulator(time);
+        sim.SetLine(new LineConfig(3, 4, "TCP://127.0.0.1:47003"));
+        var start = time.GetUtcNow();
+        sim.SetLineStatus(3, LineStatus.Listening, null);
+        Assert.AreEqual(LineStatus.Listening, sim.Read(s => s.FindLine(3))!.Status);
+
+        time.Advance(TimeSpan.FromMinutes(1));
+        sim.SetLineStatus(3, LineStatus.Connected, "127.0.0.1:50000");
+        var connected = time.GetUtcNow();
+        time.Advance(TimeSpan.FromSeconds(5));
+        // UDP hlasi spojenie pri kazdom datagrame - cas zmeny ostava
+        sim.SetLineStatus(3, LineStatus.Connected, "127.0.0.1:50000");
+        Assert.AreEqual(connected, sim.Read(s => s.FindLine(3))!.StatusSince);
+
+        time.Advance(TimeSpan.FromMinutes(2));
+        sim.SetLineStatus(3, LineStatus.Listening, null);
+        var line = sim.Read(s => s.FindLine(3))!;
+        Assert.AreEqual(LineStatus.Lost, line.Status);
+        Assert.AreEqual(time.GetUtcNow(), line.StatusSince);
+
+        // zmena nastavenia linky stav aj cas zachova
+        sim.SetLine(new LineConfig(3, 4, "TCP://127.0.0.1:47003") { Name = "Nástupištia" });
+        Assert.AreEqual(LineStatus.Lost, sim.Read(s => s.FindLine(3))!.Status);
+
+        // novy koncovy bod: linka sa zastavi a zase len caka na INISS
+        sim.SetLineStatus(3, LineStatus.Stopped, null);
+        sim.SetLineStatus(3, LineStatus.Listening, null);
+        Assert.AreEqual(LineStatus.Listening, sim.Read(s => s.FindLine(3))!.Status);
+        Assert.AreNotEqual(start, sim.Read(s => s.FindLine(3))!.StatusSince);
+    }
+
+    [TestMethod]
+    public void PoslednaSprava_LenOdInissu()
+    {
+        var time = new ManualTime();
+        var sim = new Simulator(time);
+        sim.SetLine(new LineConfig(3, 4, "TCP://127.0.0.1:47003"));
+        Assert.IsNull(sim.Read(s => s.FindLine(3))!.LastReceivedAt);
+
+        sim.Receive(3, Hex("01 85 81 80 04 82 84"), TrafficSource.Replay);
+        Assert.IsNull(sim.Read(s => s.FindLine(3))!.LastReceivedAt);
+
+        time.Advance(TimeSpan.FromSeconds(30));
+        sim.Receive(3, Hex("01 85 81 80 04 82 84"));
+        Assert.AreEqual(time.GetUtcNow(), sim.Read(s => s.FindLine(3))!.LastReceivedAt);
+    }
 }

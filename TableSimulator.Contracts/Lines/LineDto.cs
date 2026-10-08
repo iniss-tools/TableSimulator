@@ -21,4 +21,10 @@ public sealed record LineDto(
 
     /// <summary>Chyba zrkadla; null = v poriadku.</summary>
     public string? MirrorError { get; init; }
+
+    /// <summary>Od kedy linka je v sucasnom stave.</summary>
+    public DateTimeOffset StatusSince { get; init; }
+
+    /// <summary>Kedy prisla posledna sprava od INISSu; null = este ziadna.</summary>
+    public DateTimeOffset? LastReceivedAt { get; init; }
 }

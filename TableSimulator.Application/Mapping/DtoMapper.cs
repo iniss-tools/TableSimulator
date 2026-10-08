@@ -39,7 +39,9 @@ public static partial class DtoMapper
             new LineStatsDto(s.BytesIn, s.BytesOut, s.Frames, s.BadFrames, s.Discarded, s.Connections), line.Version)
         {
             Mirror = line.Mirror?.ToString(),
-            MirrorError = line.MirrorError
+            MirrorError = line.MirrorError,
+            StatusSince = line.StatusSince,
+            LastReceivedAt = line.LastReceivedAt
         };
     }
 
@@ -185,6 +187,7 @@ public static partial class DtoMapper
         Core.Lines.LineStatus.Listening => Contracts.Lines.LineStatus.Listening,
         Core.Lines.LineStatus.Connected => Contracts.Lines.LineStatus.Connected,
         Core.Lines.LineStatus.Error => Contracts.Lines.LineStatus.Error,
+        Core.Lines.LineStatus.Lost => Contracts.Lines.LineStatus.Lost,
         _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
     };
 

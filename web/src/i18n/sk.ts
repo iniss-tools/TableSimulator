@@ -935,6 +935,19 @@ export const sk = {
   "keys.qr": "QR kód odkazu",
   "keys.install.hint":
     "Naskenujte kód alebo otvorte odkaz na zariadení. Kiosk sa dá pridať na plochu (tlačidlo Nainštalovať na kiosku alebo ponuka prehliadača Pridať na plochu) – spustí sa rovno na tejto stránke na celú obrazovku. Inštalácia a nezhasínanie obrazovky fungujú cez HTTPS.",
+  "line.status.lost": "INISS sa odpojil",
+  "line.lastMessage": "posledná správa {ago}",
+  "line.noMessage": "zatiaľ bez správ",
+  "alert.lost": "{line}: INISS sa odpojil",
+  "alert.lost.hint": "Tabule na linke nedostávajú nové údaje. Linka čaká, kým sa INISS pripojí znova.",
+  "alert.error": "{line}: linka nebeží",
+  "alert.error.hint": "Spojenie linky sa nepodarilo otvoriť.",
+  "alert.back": "{line}: INISS je znova pripojený",
+  "alert.showLines": "Linky",
+  "alert.badge": "Linky s výpadkom",
+  "notify.label": "Systémové oznámenia",
+  "notify.hint": "Oznámi výpadok linky aj vtedy, keď okno simulátora nie je vidieť.",
+  "notify.denied": "Prehliadač oznámenia nepovolil – povoľte ich v nastaveniach stránky.",
 } as const;
 
 export type TextKey = keyof typeof sk;

@@ -313,7 +313,10 @@ public sealed class Simulator
         return true;
     }
 
-    /// <summary>Zmeni stav spojenia linky (volá prenos).</summary>
+    /// <summary>
+    /// Zmeni stav spojenia linky (vola prenos). Cakanie po pripojenom INISSe je <see cref="LineStatus.Lost" /> - INISS
+    /// sa odpojil; po zastaveni linky (zmena koncoveho bodu) linka zase len caka.
+    /// </summary>
     public void SetLineStatus(int number, LineStatus status, string? detail)
     {
         lock (_lock)
@@ -326,6 +329,10 @@ public sealed class Simulator
                 line.Protocol.Reset();
             }
 
+            if (status == LineStatus.Listening && line.Status is LineStatus.Connected or LineStatus.Lost)
+                status = LineStatus.Lost;
+            if (status != line.Status)
+                line.StatusSince = Now;
             line.Status = status;
             line.StatusDetail = detail;
             line.Version++;
@@ -349,6 +356,8 @@ public sealed class Simulator
                 return [];
 
             line.Stats.BytesIn += data.Length;
+            if (source == TrafficSource.Line)
+                line.LastReceivedAt = Now;
             context = new Context(this, line);
             line.Protocol.Receive(data, context);
             foreach (var reply in context.Replies)
@@ -484,6 +493,12 @@ public sealed class Simulator
         {
             line.Status = old.Status;
             line.StatusDetail = old.StatusDetail;
+            line.StatusSince = old.StatusSince;
+            line.LastReceivedAt = old.LastReceivedAt;
+        }
+        else
+        {
+            line.StatusSince = Now;
         }
 
         _lines[config.Number] = line;

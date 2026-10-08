@@ -3,24 +3,36 @@ import { useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { ChevronDown, Download, MonitorDown, Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { deleteLine, errorText, importConfigMutation, PERMISSIONS, useCan, useSimulatorState, type LineDto, type LineStatus, type SetLineRequest } from "@/api";
+import { deleteLine, errorText, importConfigMutation, PERMISSIONS, useCan, useSimulatorState, type LineDto, type SetLineRequest } from "@/api";
 import { confirmAction } from "@/components/common/confirm";
 import { CopyButton } from "@/components/common/copy-button";
 import { PageHeader } from "@/components/common/page-header";
 import { RowActions } from "@/components/common/row-actions";
-import { StatusBadge, type Tone } from "@/components/common/status-badge";
+import { StatusBadge } from "@/components/common/status-badge";
 import { DataTable } from "@/components/data-table/data-table";
 import { columnsFor } from "@/components/data-table/features";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useNow } from "@/hooks/use-now";
 import { defaultEndpoint, lineConfig } from "@/lib/boards";
 import { t, type TextKey } from "@/i18n";
 import { InissStationDialog } from "./InissStationDialog";
 import { LineDialog } from "./LineDialog";
-
-const STATUS_TONES: Record<LineStatus, Tone> = { connected: "ok", listening: "wait", error: "bad", stopped: "off" };
+import { lineStatusTime, STATUS_TONES } from "./line-status";
 
 const column = columnsFor<LineDto>();
+
+/** Stav linky s podrobnostou (klient, chyba) a casom - posledna sprava alebo od kedy trva vypadok. */
+function StatusCell({ line }: { line: LineDto }) {
+  const time = lineStatusTime(line, useNow(1000));
+  return (
+    <div className="flex flex-col items-start gap-0.5">
+      <StatusBadge tone={STATUS_TONES[line.status]}>{t(`line.status.${line.status}`)}</StatusBadge>
+      {line.statusDetail && <span className="text-xs text-muted-foreground">{line.statusDetail}</span>}
+      {time && <span className="text-xs text-muted-foreground">{time}</span>}
+    </div>
+  );
+}
 
 export function LinesPage() {
   const live = useSimulatorState();
@@ -94,15 +106,7 @@ export function LinesPage() {
       column.accessor((l) => t(`line.status.${l.status}`), {
         id: "status",
         header: t("lines.col.status"),
-        cell: ({ row }) => {
-          const l = row.original;
-          return (
-            <div className="flex flex-col items-start gap-0.5">
-              <StatusBadge tone={STATUS_TONES[l.status]}>{t(`line.status.${l.status}`)}</StatusBadge>
-              {l.statusDetail && <span className="text-xs text-muted-foreground">{l.statusDetail}</span>}
-            </div>
-          );
-        },
+        cell: ({ row }) => <StatusCell line={row.original} />,
       }),
       column.accessor("inissTablePort", {
         header: t("lines.col.tablePort"),

@@ -16,5 +16,8 @@ public enum LineStatus
     [JsonStringEnumMemberName("connected")] Connected,
 
     /// <summary>Linku sa nepodarilo spustit (obsadeny port, chybajuci seriovy port).</summary>
-    [JsonStringEnumMemberName("error")] Error
+    [JsonStringEnumMemberName("error")] Error,
+
+    /// <summary>INISS sa odpojil (TCP, rura) - linka caka, kym sa pripoji znova.</summary>
+    [JsonStringEnumMemberName("lost")] Lost
 }

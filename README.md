@@ -111,6 +111,17 @@ posiela správy, ktoré patria inému výrobcovi (rozšírené písmo `19 h` tab
 zápis `10` tabuli `LCD1`/`ERP`), karta tabule na to upozorní a ponúkne prepnutie na správneho výrobcu. Režim linky **len počúvať** neodpovedá – hodí sa na sledovanie
 linky, na ktorej odpovedajú skutočné tabule.
 
+### Stav liniek
+
+Nad tabuľami je prehľad liniek: stav spojenia s INISSom a pri pripojenom INISSe čas poslednej správy (klik na linku
+ukáže len jej tabule). INISS tabuliam posiela len pri zmene (a čas raz za hodinu), takže ticho na linke nie je
+porucha. **Výpadok** je odpojenie INISSu po TCP alebo rúre (stav *INISS sa odpojil* – linka čaká, kým sa pripojí
+znova) alebo linka, ktorá nebeží (obsadený port, chýbajúci sériový port). Pri UDP a sériovom porte simulátor
+odchod INISSu nepozná – ukazuje len čas poslednej správy. Výpadok ukáže oznámenie, ktoré trvá do návratu linky
+(návrat krátko potvrdí), a počet liniek s výpadkom pri položke **Linky** v menu; odpojenie zapíše aj log servera
+ako varovanie. *Systémové oznámenia* v ponuke používateľa (len cez HTTPS alebo na tomto počítači) ohlásia výpadok
+aj vtedy, keď okno simulátora nie je vidieť.
+
 ## ELEN Monitor
 
 V **Nastaveniach** sa dá zadať priečinok programu ELEN Monitor (napr. `D:\INISSroot\Tools\Monitor`). Simulátor

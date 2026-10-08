@@ -1,4 +1,5 @@
-// Ram aplikacie: bocny panel, zahlavie s nazvom stranky a stav spojenia, obsah stranky (ak na nu ma pouzivatel pravo).
+// Ram aplikacie: bocny panel, zahlavie s nazvom stranky a stav spojenia, obsah stranky (ak na nu ma pouzivatel pravo),
+// upozornenia na vypadky liniek.
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import { CircleAlert } from "lucide-react";
 import { can, useConnection, useMe, useSimulatorState } from "@/api";
@@ -6,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { t } from "@/i18n";
 import { AppSidebar } from "./AppSidebar";
+import { useLineAlerts } from "./line-alerts";
 import { navItem } from "./navigation";
 
 export function AppShell() {
@@ -16,6 +18,7 @@ export function AppShell() {
   const { loaded } = useSimulatorState();
   const item = navItem(pathname);
   const allowed = item === undefined || can(me, item.permission);
+  useLineAlerts();
 
   return (
     <SidebarProvider>

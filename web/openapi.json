@@ -3715,7 +3715,9 @@
           "stats",
           "version",
           "mirror",
-          "mirrorError"
+          "mirrorError",
+          "statusSince",
+          "lastReceivedAt"
         ],
         "type": "object",
         "properties": {
@@ -3772,6 +3774,17 @@
               "null",
               "string"
             ]
+          },
+          "statusSince": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastReceivedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -3823,7 +3836,8 @@
           "stopped",
           "listening",
           "connected",
-          "error"
+          "error",
+          "lost"
         ]
       },
       "LoginRequest": {

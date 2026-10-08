@@ -60,3 +60,18 @@ self.addEventListener("fetch", (event) => {
   else if (url.pathname.startsWith("/assets/")) event.respondWith(cacheFirst(request));
   else if (STATIC.includes(url.pathname)) event.respondWith(networkFirst(request, url.pathname));
 });
+
+// klik na systemove oznamenie (Android ho ukazuje len cez service worker): okno simulatora do popredia a na stranku
+// z oznamenia; bez otvoreneho okna nove
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const hash = event.notification.data?.hash ?? "";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      const client = clients[0];
+      if (!client) return self.clients.openWindow("/" + hash);
+      client.postMessage({ type: "open", hash });
+      return client.focus();
+    }),
+  );
+});
