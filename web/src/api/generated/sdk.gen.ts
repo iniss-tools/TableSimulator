@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ClearBoardData, ClearBoardErrors, ClearBoardResponses, ClearLogData, ClearLogErrors, ClearLogResponses, CreateAccessKeyData, CreateAccessKeyErrors, CreateAccessKeyResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DeleteAccessKeyData, DeleteAccessKeyErrors, DeleteAccessKeyResponses, DeleteBoardData, DeleteBoardErrors, DeleteBoardResponses, DeleteDesignData, DeleteDesignErrors, DeleteDesignResponses, DeleteLineData, DeleteLineErrors, DeleteLineResponses, DeleteRecordingData, DeleteRecordingErrors, DeleteRecordingResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, DeleteVirtualBoardData, DeleteVirtualBoardErrors, DeleteVirtualBoardResponses, DeleteVirtualLayoutData, DeleteVirtualLayoutErrors, DeleteVirtualLayoutResponses, DownloadHttpsCertificateData, DownloadHttpsCertificateErrors, DownloadHttpsCertificateResponses, DownloadRecordingData, DownloadRecordingErrors, DownloadRecordingResponses, ExportConfigData, ExportConfigErrors, ExportConfigResponses, GetAccessKeysData, GetAccessKeysErrors, GetAccessKeysResponses, GetArchiveDaysData, GetArchiveDaysErrors, GetArchiveDaysResponses, GetAuditData, GetAuditErrors, GetAuditResponses, GetBoardData, GetBoardErrors, GetBoardResponses, GetDesignsData, GetDesignsErrors, GetDesignsResponses, GetFontData, GetFontErrors, GetFontResponses, GetFontsData, GetFontsErrors, GetFontsResponses, GetHttpsStatusData, GetHttpsStatusErrors, GetHttpsStatusResponses, GetInissStationData, GetInissStationErrors, GetInissStationResponses, GetLogData, GetLogErrors, GetLogResponses, GetMeData, GetMeErrors, GetMeResponses, GetMonitorData, GetMonitorErrors, GetMonitorResponses, GetRecordingsData, GetRecordingsErrors, GetRecordingsResponses, GetReportArchiveData, GetReportArchiveErrors, GetReportArchiveResponses, GetServerInfoData, GetServerInfoErrors, GetServerInfoResponses, GetSettingsData, GetSettingsErrors, GetSettingsResponses, GetStateData, GetStateErrors, GetStateResponses, GetTableArchiveData, GetTableArchiveErrors, GetTableArchiveResponses, GetUsersData, GetUsersErrors, GetUsersResponses, GetVirtualOverviewData, GetVirtualOverviewErrors, GetVirtualOverviewResponses, GetVirtualViewData, GetVirtualViewErrors, GetVirtualViewResponses, GetWebManifestData, GetWebManifestErrors, GetWebManifestResponses, ChangePasswordData, ChangePasswordErrors, ChangePasswordResponses, ImportConfigData, ImportConfigErrors, ImportConfigResponses, ImportInissStationData, ImportInissStationErrors, ImportInissStationResponses, ImportInissViewData, ImportInissViewErrors, ImportInissViewResponses, ImportMonitorProjectData, ImportMonitorProjectErrors, ImportMonitorProjectResponses, ImportStationData, ImportStationErrors, ImportStationResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, PlayRecordingData, PlayRecordingErrors, PlayRecordingResponses, RestartServerData, RestartServerErrors, RestartServerResponses, SetBoardData, SetBoardErrors, SetBoardFaultData, SetBoardFaultErrors, SetBoardFaultResponses, SetBoardResponses, SetDesignData, SetDesignErrors, SetDesignResponses, SetLineData, SetLineErrors, SetLineResponses, SetupData, SetupErrors, SetupResponses, SetUserPasswordData, SetUserPasswordErrors, SetUserPasswordResponses, SetVirtualBoardData, SetVirtualBoardErrors, SetVirtualBoardResponses, SetVirtualLayoutData, SetVirtualLayoutErrors, SetVirtualLayoutResponses, StartRecordingData, StartRecordingErrors, StartRecordingResponses, StopRecordingData, StopRecordingErrors, StopRecordingResponses, StopReplayData, StopReplayErrors, StopReplayResponses, UnlockUserData, UnlockUserErrors, UnlockUserResponses, UpdateSettingsData, UpdateSettingsErrors, UpdateSettingsResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UploadRecordingData, UploadRecordingErrors, UploadRecordingResponses } from './types.gen';
+import type { ClearBoardData, ClearBoardErrors, ClearBoardResponses, ClearLogData, ClearLogErrors, ClearLogResponses, CreateAccessKeyData, CreateAccessKeyErrors, CreateAccessKeyResponses, CreateSignageGroupData, CreateSignageGroupErrors, CreateSignageGroupResponses, CreateSignageMessageData, CreateSignageMessageErrors, CreateSignageMessageResponses, CreateSignagePanelData, CreateSignagePanelErrors, CreateSignagePanelResponses, CreateSignagePlaylistData, CreateSignagePlaylistErrors, CreateSignagePlaylistResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DeleteAccessKeyData, DeleteAccessKeyErrors, DeleteAccessKeyResponses, DeleteBoardData, DeleteBoardErrors, DeleteBoardResponses, DeleteDesignData, DeleteDesignErrors, DeleteDesignResponses, DeleteLineData, DeleteLineErrors, DeleteLineResponses, DeleteRecordingData, DeleteRecordingErrors, DeleteRecordingResponses, DeleteSignageGroupData, DeleteSignageGroupErrors, DeleteSignageGroupResponses, DeleteSignageMessageData, DeleteSignageMessageErrors, DeleteSignageMessageResponses, DeleteSignagePanelData, DeleteSignagePanelErrors, DeleteSignagePanelResponses, DeleteSignagePlaylistData, DeleteSignagePlaylistErrors, DeleteSignagePlaylistResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, DeleteVirtualBoardData, DeleteVirtualBoardErrors, DeleteVirtualBoardResponses, DeleteVirtualLayoutData, DeleteVirtualLayoutErrors, DeleteVirtualLayoutResponses, DownloadHttpsCertificateData, DownloadHttpsCertificateErrors, DownloadHttpsCertificateResponses, DownloadRecordingData, DownloadRecordingErrors, DownloadRecordingResponses, ExportConfigData, ExportConfigErrors, ExportConfigResponses, GetAccessKeysData, GetAccessKeysErrors, GetAccessKeysResponses, GetArchiveDaysData, GetArchiveDaysErrors, GetArchiveDaysResponses, GetAuditData, GetAuditErrors, GetAuditResponses, GetBoardData, GetBoardErrors, GetBoardResponses, GetDesignsData, GetDesignsErrors, GetDesignsResponses, GetFontData, GetFontErrors, GetFontResponses, GetFontsData, GetFontsErrors, GetFontsResponses, GetHttpsStatusData, GetHttpsStatusErrors, GetHttpsStatusResponses, GetInissStationData, GetInissStationErrors, GetInissStationResponses, GetLogData, GetLogErrors, GetLogResponses, GetMeData, GetMeErrors, GetMeResponses, GetMonitorData, GetMonitorErrors, GetMonitorResponses, GetRecordingsData, GetRecordingsErrors, GetRecordingsResponses, GetReportArchiveData, GetReportArchiveErrors, GetReportArchiveResponses, GetServerInfoData, GetServerInfoErrors, GetServerInfoResponses, GetSettingsData, GetSettingsErrors, GetSettingsResponses, GetSignageMediaData, GetSignageMediaErrors, GetSignageMediaResponses, GetSignageOverviewData, GetSignageOverviewErrors, GetSignageOverviewResponses, GetSignageProgramData, GetSignageProgramErrors, GetSignageProgramResponses, GetStateData, GetStateErrors, GetStateResponses, GetTableArchiveData, GetTableArchiveErrors, GetTableArchiveResponses, GetUsersData, GetUsersErrors, GetUsersResponses, GetVirtualOverviewData, GetVirtualOverviewErrors, GetVirtualOverviewResponses, GetVirtualViewData, GetVirtualViewErrors, GetVirtualViewResponses, GetWebManifestData, GetWebManifestErrors, GetWebManifestResponses, ChangePasswordData, ChangePasswordErrors, ChangePasswordResponses, ImportConfigData, ImportConfigErrors, ImportConfigResponses, ImportInissStationData, ImportInissStationErrors, ImportInissStationResponses, ImportInissViewData, ImportInissViewErrors, ImportInissViewResponses, ImportMonitorProjectData, ImportMonitorProjectErrors, ImportMonitorProjectResponses, ImportStationData, ImportStationErrors, ImportStationResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, PlayRecordingData, PlayRecordingErrors, PlayRecordingResponses, RestartServerData, RestartServerErrors, RestartServerResponses, SetBoardData, SetBoardErrors, SetBoardFaultData, SetBoardFaultErrors, SetBoardFaultResponses, SetBoardResponses, SetDesignData, SetDesignErrors, SetDesignResponses, SetLineData, SetLineErrors, SetLineResponses, SetupData, SetupErrors, SetupResponses, SetUserPasswordData, SetUserPasswordErrors, SetUserPasswordResponses, SetVirtualBoardData, SetVirtualBoardErrors, SetVirtualBoardResponses, SetVirtualLayoutData, SetVirtualLayoutErrors, SetVirtualLayoutResponses, StartRecordingData, StartRecordingErrors, StartRecordingResponses, StopRecordingData, StopRecordingErrors, StopRecordingResponses, StopReplayData, StopReplayErrors, StopReplayResponses, UnlockUserData, UnlockUserErrors, UnlockUserResponses, UpdateSettingsData, UpdateSettingsErrors, UpdateSettingsResponses, UpdateSignageGroupData, UpdateSignageGroupErrors, UpdateSignageGroupResponses, UpdateSignageMessageData, UpdateSignageMessageErrors, UpdateSignageMessageResponses, UpdateSignagePanelData, UpdateSignagePanelErrors, UpdateSignagePanelResponses, UpdateSignagePlaylistData, UpdateSignagePlaylistErrors, UpdateSignagePlaylistResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UploadRecordingData, UploadRecordingErrors, UploadRecordingResponses, UploadSignageMediaData, UploadSignageMediaErrors, UploadSignageMediaResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -100,6 +100,102 @@ export const importStation = <ThrowOnError extends boolean = false>(options: Opt
 });
 
 export const getState = <ThrowOnError extends boolean = false>(options?: Options<GetStateData, ThrowOnError>): RequestResult<GetStateResponses, GetStateErrors, ThrowOnError> => (options?.client ?? client).get<GetStateResponses, GetStateErrors, ThrowOnError>({ url: '/api/state', ...options });
+
+export const createSignageGroup = <ThrowOnError extends boolean = false>(options: Options<CreateSignageGroupData, ThrowOnError>): RequestResult<CreateSignageGroupResponses, CreateSignageGroupErrors, ThrowOnError> => (options.client ?? client).post<CreateSignageGroupResponses, CreateSignageGroupErrors, ThrowOnError>({
+    url: '/api/signage/groups',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const createSignageMessage = <ThrowOnError extends boolean = false>(options: Options<CreateSignageMessageData, ThrowOnError>): RequestResult<CreateSignageMessageResponses, CreateSignageMessageErrors, ThrowOnError> => (options.client ?? client).post<CreateSignageMessageResponses, CreateSignageMessageErrors, ThrowOnError>({
+    url: '/api/signage/messages',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const createSignagePanel = <ThrowOnError extends boolean = false>(options: Options<CreateSignagePanelData, ThrowOnError>): RequestResult<CreateSignagePanelResponses, CreateSignagePanelErrors, ThrowOnError> => (options.client ?? client).post<CreateSignagePanelResponses, CreateSignagePanelErrors, ThrowOnError>({
+    url: '/api/signage/panels',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const createSignagePlaylist = <ThrowOnError extends boolean = false>(options: Options<CreateSignagePlaylistData, ThrowOnError>): RequestResult<CreateSignagePlaylistResponses, CreateSignagePlaylistErrors, ThrowOnError> => (options.client ?? client).post<CreateSignagePlaylistResponses, CreateSignagePlaylistErrors, ThrowOnError>({
+    url: '/api/signage/playlists',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteSignageGroup = <ThrowOnError extends boolean = false>(options: Options<DeleteSignageGroupData, ThrowOnError>): RequestResult<DeleteSignageGroupResponses, DeleteSignageGroupErrors, ThrowOnError> => (options.client ?? client).delete<DeleteSignageGroupResponses, DeleteSignageGroupErrors, ThrowOnError>({ url: '/api/signage/groups/{id}', ...options });
+
+export const updateSignageGroup = <ThrowOnError extends boolean = false>(options: Options<UpdateSignageGroupData, ThrowOnError>): RequestResult<UpdateSignageGroupResponses, UpdateSignageGroupErrors, ThrowOnError> => (options.client ?? client).put<UpdateSignageGroupResponses, UpdateSignageGroupErrors, ThrowOnError>({
+    url: '/api/signage/groups/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteSignageMessage = <ThrowOnError extends boolean = false>(options: Options<DeleteSignageMessageData, ThrowOnError>): RequestResult<DeleteSignageMessageResponses, DeleteSignageMessageErrors, ThrowOnError> => (options.client ?? client).delete<DeleteSignageMessageResponses, DeleteSignageMessageErrors, ThrowOnError>({ url: '/api/signage/messages/{id}', ...options });
+
+export const updateSignageMessage = <ThrowOnError extends boolean = false>(options: Options<UpdateSignageMessageData, ThrowOnError>): RequestResult<UpdateSignageMessageResponses, UpdateSignageMessageErrors, ThrowOnError> => (options.client ?? client).put<UpdateSignageMessageResponses, UpdateSignageMessageErrors, ThrowOnError>({
+    url: '/api/signage/messages/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteSignagePanel = <ThrowOnError extends boolean = false>(options: Options<DeleteSignagePanelData, ThrowOnError>): RequestResult<DeleteSignagePanelResponses, DeleteSignagePanelErrors, ThrowOnError> => (options.client ?? client).delete<DeleteSignagePanelResponses, DeleteSignagePanelErrors, ThrowOnError>({ url: '/api/signage/panels/{id}', ...options });
+
+export const updateSignagePanel = <ThrowOnError extends boolean = false>(options: Options<UpdateSignagePanelData, ThrowOnError>): RequestResult<UpdateSignagePanelResponses, UpdateSignagePanelErrors, ThrowOnError> => (options.client ?? client).put<UpdateSignagePanelResponses, UpdateSignagePanelErrors, ThrowOnError>({
+    url: '/api/signage/panels/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteSignagePlaylist = <ThrowOnError extends boolean = false>(options: Options<DeleteSignagePlaylistData, ThrowOnError>): RequestResult<DeleteSignagePlaylistResponses, DeleteSignagePlaylistErrors, ThrowOnError> => (options.client ?? client).delete<DeleteSignagePlaylistResponses, DeleteSignagePlaylistErrors, ThrowOnError>({ url: '/api/signage/playlists/{id}', ...options });
+
+export const updateSignagePlaylist = <ThrowOnError extends boolean = false>(options: Options<UpdateSignagePlaylistData, ThrowOnError>): RequestResult<UpdateSignagePlaylistResponses, UpdateSignagePlaylistErrors, ThrowOnError> => (options.client ?? client).put<UpdateSignagePlaylistResponses, UpdateSignagePlaylistErrors, ThrowOnError>({
+    url: '/api/signage/playlists/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getSignageMedia = <ThrowOnError extends boolean = false>(options: Options<GetSignageMediaData, ThrowOnError>): RequestResult<GetSignageMediaResponses, GetSignageMediaErrors, ThrowOnError> => (options.client ?? client).get<GetSignageMediaResponses, GetSignageMediaErrors, ThrowOnError>({ url: '/api/signage/media/{id}', ...options });
+
+export const getSignageOverview = <ThrowOnError extends boolean = false>(options?: Options<GetSignageOverviewData, ThrowOnError>): RequestResult<GetSignageOverviewResponses, GetSignageOverviewErrors, ThrowOnError> => (options?.client ?? client).get<GetSignageOverviewResponses, GetSignageOverviewErrors, ThrowOnError>({ url: '/api/signage', ...options });
+
+export const getSignageProgram = <ThrowOnError extends boolean = false>(options: Options<GetSignageProgramData, ThrowOnError>): RequestResult<GetSignageProgramResponses, GetSignageProgramErrors, ThrowOnError> => (options.client ?? client).get<GetSignageProgramResponses, GetSignageProgramErrors, ThrowOnError>({ url: '/api/signage/panels/{id}/program', ...options });
+
+export const uploadSignageMedia = <ThrowOnError extends boolean = false>(options: Options<UploadSignageMediaData, ThrowOnError>): RequestResult<UploadSignageMediaResponses, UploadSignageMediaErrors, ThrowOnError> => (options.client ?? client).post<UploadSignageMediaResponses, UploadSignageMediaErrors, ThrowOnError>({
+    bodySerializer: null,
+    url: '/api/signage/media',
+    ...options,
+    headers: {
+        'Content-Type': 'application/octet-stream',
+        ...options.headers
+    }
+});
 
 export const getSettings = <ThrowOnError extends boolean = false>(options?: Options<GetSettingsData, ThrowOnError>): RequestResult<GetSettingsResponses, GetSettingsErrors, ThrowOnError> => (options?.client ?? client).get<GetSettingsResponses, GetSettingsErrors, ThrowOnError>({ url: '/api/settings', ...options });
 

@@ -609,6 +609,633 @@
         }
       }
     },
+    "/api/signage/groups": {
+      "post": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "CreateSignageGroup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSignageGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignageCreatedDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signage/messages": {
+      "post": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "CreateSignageMessage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSignageMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignageCreatedDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signage/panels": {
+      "post": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "CreateSignagePanel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSignagePanelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignageCreatedDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signage/playlists": {
+      "post": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "CreateSignagePlaylist",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSignagePlaylistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignageCreatedDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signage/groups/{id}": {
+      "delete": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "DeleteSignageGroup",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "UpdateSignageGroup",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSignageGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signage/messages/{id}": {
+      "delete": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "DeleteSignageMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "UpdateSignageMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSignageMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signage/panels/{id}": {
+      "delete": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "DeleteSignagePanel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "UpdateSignagePanel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSignagePanelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signage/playlists/{id}": {
+      "delete": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "DeleteSignagePlaylist",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "UpdateSignagePlaylist",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSignagePlaylistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signage/media/{id}": {
+      "get": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "GetSignageMedia",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signage": {
+      "get": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "GetSignageOverview",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignageOverviewDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signage/panels/{id}/program": {
+      "get": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "GetSignageProgram",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignageProgramDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signage/media": {
+      "post": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "UploadSignageMedia",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "$ref": "#/components/schemas/Stream"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignageMediaDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/settings": {
       "get": {
         "tags": [
@@ -4553,6 +5180,186 @@
           }
         }
       },
+      "SetSignageGroupRequest": {
+        "required": [
+          "name",
+          "note",
+          "playlists",
+          "defaultPlaylist",
+          "defaultMessage"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "playlists": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "defaultPlaylist": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "defaultMessage": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "SetSignageMessageRequest": {
+        "required": [
+          "name",
+          "note",
+          "kind",
+          "duration",
+          "virtualBoard",
+          "board",
+          "paragraphs",
+          "background",
+          "media",
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/SignageMessageKind"
+          },
+          "duration": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "virtualBoard": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "board": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paragraphs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignageParagraphDto"
+            }
+          },
+          "background": {
+            "type": "string"
+          },
+          "media": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SetSignagePanelRequest": {
+        "required": [
+          "name",
+          "note",
+          "group"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "group": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "SetSignagePlaylistRequest": {
+        "required": [
+          "name",
+          "period",
+          "start",
+          "end",
+          "weekdays",
+          "from",
+          "to",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "period": {
+            "$ref": "#/components/schemas/SignagePeriod"
+          },
+          "start": {
+            "type": "string",
+            "format": "date"
+          },
+          "end": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "weekdays": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "from": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "to": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignagePlaylistItemDto"
+            }
+          }
+        }
+      },
       "SettingsDto": {
         "required": [
           "httpPort",
@@ -4710,6 +5517,352 @@
             "type": "string"
           }
         }
+      },
+      "SignageAlign": {
+        "enum": [
+          "left",
+          "center",
+          "right"
+        ]
+      },
+      "SignageCreatedDto": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SignageGroupDto": {
+        "required": [
+          "id",
+          "definition"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/SetSignageGroupRequest"
+          }
+        }
+      },
+      "SignageMediaDto": {
+        "required": [
+          "id",
+          "name",
+          "contentType",
+          "size"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "SignageMessageDto": {
+        "required": [
+          "id",
+          "definition",
+          "mediaName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/SetSignageMessageRequest"
+          },
+          "mediaName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SignageMessageKind": {
+        "enum": [
+          "virtual",
+          "text",
+          "image",
+          "board",
+          "web",
+          "video"
+        ]
+      },
+      "SignageOffline": {
+        "enum": [
+          "noGroup",
+          "noProgram",
+          "empty",
+          null
+        ]
+      },
+      "SignageOverviewDto": {
+        "required": [
+          "messages",
+          "playlists",
+          "groups",
+          "panels"
+        ],
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignageMessageDto"
+            }
+          },
+          "playlists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignagePlaylistDto"
+            }
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignageGroupDto"
+            }
+          },
+          "panels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignagePanelDto"
+            }
+          }
+        }
+      },
+      "SignagePanelDto": {
+        "required": [
+          "id",
+          "definition",
+          "status",
+          "playing"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/SetSignagePanelRequest"
+          },
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SignagePanelStatusDto"
+              }
+            ]
+          },
+          "playing": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "SignagePanelStatusDto": {
+        "required": [
+          "lastSeenAt",
+          "address",
+          "online"
+        ],
+        "type": "object",
+        "properties": {
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "address": {
+            "type": "string"
+          },
+          "online": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SignageParagraphDto": {
+        "required": [
+          "text",
+          "color",
+          "size",
+          "align"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "size": {
+            "$ref": "#/components/schemas/SignageTextSize"
+          },
+          "align": {
+            "$ref": "#/components/schemas/SignageAlign"
+          }
+        }
+      },
+      "SignagePeriod": {
+        "enum": [
+          "once",
+          "daily",
+          "weekly"
+        ]
+      },
+      "SignagePlaylistDto": {
+        "required": [
+          "id",
+          "definition"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/SetSignagePlaylistRequest"
+          }
+        }
+      },
+      "SignagePlaylistItemDto": {
+        "required": [
+          "message",
+          "duration"
+        ],
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "duration": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "SignageProgramDto": {
+        "required": [
+          "now",
+          "panel",
+          "group",
+          "playlist",
+          "anchor",
+          "items",
+          "validUntil",
+          "offline"
+        ],
+        "type": "object",
+        "properties": {
+          "now": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "panel": {
+            "type": "string"
+          },
+          "group": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SignageGroupDto"
+              }
+            ]
+          },
+          "playlist": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SignagePlaylistDto"
+              }
+            ]
+          },
+          "anchor": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignageSlotDto"
+            }
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "offline": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SignageOffline"
+              }
+            ]
+          }
+        }
+      },
+      "SignageSlotDto": {
+        "required": [
+          "message",
+          "duration"
+        ],
+        "type": "object",
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/SignageMessageDto"
+          },
+          "duration": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SignageTextSize": {
+        "enum": [
+          "small",
+          "medium",
+          "large"
+        ]
       },
       "StartRecordingRequest": {
         "required": [
@@ -5699,6 +6852,9 @@
     },
     {
       "name": "State"
+    },
+    {
+      "name": "Signage"
     },
     {
       "name": "Settings"

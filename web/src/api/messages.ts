@@ -15,4 +15,6 @@ export type LiveMessage =
   | { type: "recorder"; status: RecorderStatusDto }
   | { type: "replay"; status: ReplayStatusDto }
   /** Zmenili sa XML tabul (mena suborov) alebo definicie virtualnych tabul. */
-  | { type: "virtual"; sources: string[]; definitions: boolean };
+  | { type: "virtual"; sources: string[]; definitions: boolean }
+  /** Zmenili sa spravy, playlisty, skupiny alebo panely informacnych panelov. */
+  | { type: "signage" };

@@ -50,10 +50,10 @@ vetvu registra INISSu v HKCU prihláseného používateľa (načítanie stanice 
 
 Všetko, čo server uchováva, je v databáze `tablesimulator.db` (SQLite) v priečinku nastavení: nastavenie servera,
 linky a tabule (profil tabule ako JSON v stĺpci, ostatné údaje v stĺpcoch, enumy kľúčmi z JSON – `display`,
-`noReply`…), používatelia, prístupové kľúče, audit, virtuálne tabule a ich rozloženia. Mimo nej ostávajú súbory,
-ktoré sa upravujú alebo prenášajú ako súbory: záznamy komunikácie (`recordings\*.tsrec`), vlastné vzhľady
-(`designs\<id>\design.json`, menia sa ručne a server ich načíta hneď), certifikáty HTTPS (`https\`), kľúče
-ochrany dát (`keys\`) a logy.
+`noReply`…), používatelia, prístupové kľúče, audit, virtuálne tabule a ich rozloženia, informačné panely (správy,
+playlisty a skupiny ako JSON v stĺpci). Mimo nej ostávajú súbory, ktoré sa upravujú alebo prenášajú ako súbory:
+záznamy komunikácie (`recordings\*.tsrec`), vlastné vzhľady (`designs\<id>\design.json`, menia sa ručne a server ich
+načíta hneď), obrázky a videá správ (`media\`), certifikáty HTTPS (`https\`), kľúče ochrany dát (`keys\`) a logy.
 
 Nastavenie servera sa číta pri štarte ešte pred zostavením servera (porty, prístup zo siete, prihlasovanie);
 linky a tabule sa po každej zmene uložia celé s krátkym odkladom a pri zastavení servera. **Prvý štart**
@@ -235,6 +235,39 @@ Definície a vlastné rozloženia sú v databáze servera (`tablesimulator.db`).
 súbory, priečinky, rozloženia), `GET /api/virtual/{číslo}` (vybrané záznamy a rozloženie), `PUT`/`DELETE
 /api/virtual/{číslo}`, `PUT`/`DELETE /api/virtual/layouts/{kľúč}`, `POST /api/virtual/import`; zmenu súboru,
 definícií alebo rozložení ohlási WebSocket správou `virtual`.
+
+## Informačné panely
+
+Ako INISSView 2: **panel** (monitor, televízor) otvorí stránku `#/panel/<číslo>` – s kľúčom zariadenia, odkaz ponúka
+okno nového kľúča – a hrá program svojej **skupiny**. Skupina má **playlisty** (správy po poradí s trvaním a časom
+platnosti) a pre čas mimo nich predvolený playlist alebo správu. Všetko sa spravuje v menu *Informačné panely*
+(Panely, Skupiny panelov, Playlisty, Správy). Panel sa nezapisuje adresou IP ako v INISSView 2 a nepotrebuje klienta
+INISSBrowser2 – stačí prehliadač; skupinu panelu obsluha zmení centrálne.
+
+**Správy** (s náhľadom v okne): *tabuľa príchodov/odchodov* (virtuálna tabuľa z XML INISSu s rozložením – obdoba
+správy P/O), *text* (odseky s farbou, veľkosťou malé/stredné/veľké ako 50/70/100 px na šírke 1920 px
+a zarovnaním), *obrázok* a *video* (nahrané PNG, JPEG, GIF, WebP, MP4, WebM do 512 MB; video bez zvuku v slučke),
+*tabuľa simulátora* (živá tabuľa LED) a *webová stránka* (v rámci – mnohé cudzie stránky vloženie zakazujú).
+Súbory sú v priečinku `media\` priečinka nastavení; súbor, ktorý deň po nahratí žiadna správa nepoužíva, sa pri
+ďalšom nahratí odstráni, so správou sa odstráni aj jej súbor. Obrázok a video si panel načíta s kľúčom
+v parametri `access_token` (ako WebSocket).
+
+**Rozvrh** počíta server podľa svojho miestneho času, bez stavu panelov – všetky panely skupiny ukazujú v tej istej
+sekunde tú istú položku. Playlist platí *jeden deň*, *každý deň* alebo *vo vybrané dni v týždni* od–do (koniec
+nepovinný) v časovom okne; rovnaký začiatok a koniec = celý deň, koniec skôr ako začiatok = cez polnoc (okno patrí
+dňu, v ktorom začína – na rozdiel od INISSView 2 sa dá aj zadať). Pri prekrytí vyhrá jeden deň pred dňami v týždni
+a tie pred každým dňom, potom neskôr začaté okno a nižšie číslo. Správy sa striedajú od začiatku okna dokola; trvanie
+položky (prázdne = trvanie správy) platí len v tom playliste. Bez platného playlistu hrá predvolený playlist od konca
+posledného dnes skončeného okna (inak od polnoci), bez neho predvolená správa, inak je panel *mimo prevádzky*
+(s dôvodom: bez skupiny, bez programu, prázdny playlist). Panel si program vypýta pri zmene na serveri (WebSocket),
+pri zmene výberu playlistu a aspoň raz za minútu – tým sa zároveň ohlási; stránka Panely ukazuje, či je pripojený
+(ozval sa za posledné 2,5 minúty, od štartu servera), jeho adresu a čo práve hrá. Bez spojenia so serverom panel
+hrá posledný program ďalej podľa vlastných hodín (posun voči serveru si zapamätá).
+
+Správu, playlist alebo skupinu, ktorú niečo používa, server neodstráni (`signage.messageInUse`, `playlistInUse`,
+`groupInUse`). API: `GET /api/signage` (všetko a čo panely hrajú), `POST`/`PUT`/`DELETE`
+`/api/signage/{messages,playlists,groups,panels}[/{id}]`, `POST /api/signage/media?name=` (telo = súbor ako
+`application/octet-stream`, typ podľa prípony), `GET /api/signage/media/{id}`, `GET /api/signage/panels/{id}/program`.
 
 ## Archív tabúľ a hlásení
 

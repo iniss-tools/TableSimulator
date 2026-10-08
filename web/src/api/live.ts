@@ -9,6 +9,8 @@ import {
   getMeQueryKey,
   getMonitorQueryKey,
   getRecordingsQueryKey,
+  getSignageOverviewQueryKey,
+  getSignageProgramQueryKey,
   getStateQueryKey,
   getVirtualOverviewQueryKey,
   getVirtualViewQueryKey,
@@ -63,6 +65,7 @@ function upsert<T>(items: T[], item: T, key: (x: T) => string | number): T[] {
 const stateKey: QueryKey = getStateQueryKey();
 const recordingsKey: QueryKey = getRecordingsQueryKey();
 const virtualViewId = getVirtualViewQueryKey({ path: { id: 0 } })[0]._id;
+const programId = getSignageProgramQueryKey({ path: { id: 0 } })[0]._id;
 
 function updateState(update: (state: StateDto) => StateDto) {
   queryClient.setQueryData<StateDto>(stateKey, (state) => state && update(state));
@@ -84,6 +87,12 @@ function invalidateVirtual(sources: string[], definitions: boolean) {
       return definitions || !view || changed.has(view.board.source.toLowerCase());
     },
   });
+}
+
+/** Prehlad informacnych panelov a programy panelov. */
+function invalidateSignage() {
+  void queryClient.invalidateQueries({ queryKey: getSignageOverviewQueryKey() });
+  void queryClient.invalidateQueries({ predicate: (query) => (query.queryKey[0] as { _id?: string } | undefined)?._id === programId });
 }
 
 function apply(message: LiveMessage) {
@@ -122,6 +131,9 @@ function apply(message: LiveMessage) {
     case "virtual":
       invalidateVirtual(message.sources, message.definitions);
       break;
+    case "signage":
+      invalidateSignage();
+      break;
   }
 }
 
@@ -143,6 +155,7 @@ export function openSocket(onFrames?: (frames: FrameDto[]) => void, withLog = fa
       void queryClient.invalidateQueries({ queryKey: stateKey });
       void queryClient.invalidateQueries({ queryKey: recordingsKey });
       invalidateVirtual([], true);
+      invalidateSignage();
     };
     socket.onclose = () => {
       if (!withLog) setConnection({ connected: false });

@@ -5,6 +5,7 @@ using TableSimulator.Contracts.Boards;
 using TableSimulator.Contracts.Frames;
 using TableSimulator.Contracts.Lines;
 using TableSimulator.Contracts.Live;
+using TableSimulator.Contracts.Signage;
 using TableSimulator.Core.Boards;
 using TableSimulator.Core.Protocols;
 using TableSimulator.Core.Simulation;
@@ -72,6 +73,26 @@ public class ContractsJsonTests
         Assert.AreEqual("""{"type":"structure"}""", JsonSerializer.Serialize<LiveMessage>(new StructureMessage(), Web));
         Assert.AreEqual("""{"type":"virtual","sources":["KosiceO"],"definitions":false}""",
             JsonSerializer.Serialize<LiveMessage>(new VirtualMessage(["KosiceO"], false), Web));
+        Assert.AreEqual("""{"type":"signage"}""", JsonSerializer.Serialize<LiveMessage>(new SignageChangedMessage(), Web));
+    }
+
+    [TestMethod]
+    public void InformacnePanely_KluceEnumovADatumy()
+    {
+        var message = new SetSignageMessageRequest("Oznam", "", SignageMessageKind.Text, 15, null, null,
+            [new SignageParagraphDto("Text", "#ffffff", SignageTextSize.Medium, SignageAlign.Right)], "#000000", null, null);
+        var playlist = new SetSignagePlaylistRequest("Ráno", SignagePeriod.Weekly, new DateOnly(2026, 10, 1), null, [1, 5], 360, 540, []);
+
+        var m = Json(message);
+        var p = Json(playlist);
+
+        Assert.AreEqual("text", m.GetProperty("kind").GetString());
+        Assert.AreEqual("medium", m.GetProperty("paragraphs")[0].GetProperty("size").GetString());
+        Assert.AreEqual("right", m.GetProperty("paragraphs")[0].GetProperty("align").GetString());
+        Assert.AreEqual("weekly", p.GetProperty("period").GetString());
+        Assert.AreEqual("2026-10-01", p.GetProperty("start").GetString());
+        Assert.AreEqual(JsonValueKind.Null, p.GetProperty("end").ValueKind);
+        Assert.AreEqual("noGroup", JsonSerializer.SerializeToElement(SignageOffline.NoGroup, Web).GetString());
     }
 
     [TestMethod]

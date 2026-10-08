@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TableSimulator.Application.Audit;
 using TableSimulator.Application.Keys;
+using TableSimulator.Application.Signage;
 using TableSimulator.Application.Virtual;
 using TableSimulator.Core.Boards;
 using TableSimulator.Core.Lines;
@@ -14,7 +15,7 @@ namespace TableSimulator.Persistence;
 
 /// <summary>
 /// Databaza simulatora: nastavenie servera, linky a tabule, pouzivatelia a roly (ASP.NET Core Identity), pristupove
-/// kluce, audit a virtualne tabule. Model je nezavisly od poskytovatela - kazdy
+/// kluce, audit, virtualne tabule a informacne panely. Model je nezavisly od poskytovatela - kazdy
 /// poskytovatel ma vlastnu odvodenu triedu a vlastne migracie (<see cref="Sqlite.SqliteAppDbContext" />).
 /// </summary>
 public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext<AppUser, AppRole, Guid>(options)
@@ -39,6 +40,21 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
 
     /// <summary>Pristupove kluce zariadeni a programov.</summary>
     public DbSet<AccessKey> AccessKeys => Set<AccessKey>();
+
+    /// <summary>Spravy informacnych panelov.</summary>
+    public DbSet<SignageMessageRecord> SignageMessages => Set<SignageMessageRecord>();
+
+    /// <summary>Playlisty informacnych panelov.</summary>
+    public DbSet<SignagePlaylistRecord> SignagePlaylists => Set<SignagePlaylistRecord>();
+
+    /// <summary>Skupiny informacnych panelov.</summary>
+    public DbSet<SignageGroupRecord> SignageGroups => Set<SignageGroupRecord>();
+
+    /// <summary>Informacne panely (monitory).</summary>
+    public DbSet<SignagePanelRecord> SignagePanels => Set<SignagePanelRecord>();
+
+    /// <summary>Nahrate obrazky a videa sprav.</summary>
+    public DbSet<SignageMediaRecord> SignageMedia => Set<SignageMediaRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -128,6 +144,44 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
             layout.HasKey(l => l.Id);
             layout.Property(l => l.Id).HasMaxLength(40);
             layout.Property(l => l.Name).HasMaxLength(100);
+        });
+        // obsah sprav, playlistov a skupin je JSON ako v API - je ich malo a citaju sa vzdy vsetky
+        builder.Entity<SignageMessageRecord>(message =>
+        {
+            message.ToTable("SignageMessages");
+            message.HasKey(m => m.Id);
+            message.Property(m => m.Id).ValueGeneratedOnAdd();
+            message.Property(m => m.Name).HasMaxLength(100);
+        });
+        builder.Entity<SignagePlaylistRecord>(playlist =>
+        {
+            playlist.ToTable("SignagePlaylists");
+            playlist.HasKey(p => p.Id);
+            playlist.Property(p => p.Id).ValueGeneratedOnAdd();
+            playlist.Property(p => p.Name).HasMaxLength(100);
+        });
+        builder.Entity<SignageGroupRecord>(group =>
+        {
+            group.ToTable("SignageGroups");
+            group.HasKey(g => g.Id);
+            group.Property(g => g.Id).ValueGeneratedOnAdd();
+            group.Property(g => g.Name).HasMaxLength(100);
+        });
+        builder.Entity<SignagePanelRecord>(panel =>
+        {
+            panel.ToTable("SignagePanels");
+            panel.HasKey(p => p.Id);
+            panel.Property(p => p.Id).ValueGeneratedOnAdd();
+            panel.Property(p => p.Name).HasMaxLength(100);
+            panel.Property(p => p.Note).HasMaxLength(500);
+        });
+        builder.Entity<SignageMediaRecord>(media =>
+        {
+            media.ToTable("SignageMedia");
+            media.HasKey(m => m.Id);
+            media.Property(m => m.Name).HasMaxLength(200);
+            media.Property(m => m.ContentType).HasMaxLength(50);
+            media.Property(m => m.FileName).HasMaxLength(60);
         });
     }
 }

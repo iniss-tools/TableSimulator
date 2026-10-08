@@ -23,7 +23,7 @@ public sealed class AccessKeyAuthenticationHandler(
     /// <summary>Nazov schemy.</summary>
     public const string SchemeName = "AccessKey";
 
-    /// <summary>Parameter s klucom v adrese WebSocketu.</summary>
+    /// <summary>Parameter s klucom v adrese WebSocketu a suborov sprav panelov.</summary>
     public const string QueryParameter = "access_token";
 
     /// <summary>Predpona mena v prihlaseni (a v audite): <c>key:nazov</c>.</summary>
@@ -38,7 +38,10 @@ public sealed class AccessKeyAuthenticationHandler(
         var header = request.Headers.Authorization.ToString();
         if (header.StartsWith(Bearer, StringComparison.OrdinalIgnoreCase))
             return header[Bearer.Length..].Trim();
-        return request.Path.StartsWithSegments("/ws") && request.Query[QueryParameter] is { Count: > 0 } query ? query[0] : null;
+        // WebSocket a obrazky/videa sprav panelov prehliadac nacita bez hlavicky
+        return (request.Path.StartsWithSegments("/ws") || request.Path.StartsWithSegments("/api/signage/media")) && request.Query[QueryParameter] is { Count: > 0 } query
+            ? query[0]
+            : null;
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()

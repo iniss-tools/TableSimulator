@@ -9,6 +9,7 @@ import {
   errorText,
   getHttpsStatusOptions,
   getServerInfoOptions,
+  getSignageOverviewOptions,
   getVirtualOverviewOptions,
   ROLES,
   useSimulatorState,
@@ -92,6 +93,7 @@ export function CreatedKeyDialog({ created, onClose }: { created: AccessKeyCreat
   const live = useSimulatorState();
   const device = created.key.kind === "device";
   const virtual = useQuery({ ...getVirtualOverviewOptions(), enabled: device }).data?.boards ?? [];
+  const panels = useQuery({ ...getSignageOverviewOptions(), enabled: device }).data?.panels ?? [];
   const https = useQuery({ ...getHttpsStatusOptions(), enabled: device }).data;
   const httpsPort = https?.enabled ? https.port : null;
   // rozhranie otvorene na tomto pocitaci (localhost) - zariadenie potrebuje adresu pocitaca v sieti
@@ -99,15 +101,17 @@ export function CreatedKeyDialog({ created, onClose }: { created: AccessKeyCreat
   const addresses = useQuery({ ...getServerInfoOptions(), enabled: device && loopback }).data?.addresses ?? [];
   const [chosenHost, setHost] = useState<string | null>(null);
   const host = loopback ? (chosenHost ?? addresses[0] ?? null) : null;
-  // vybrana stranka; kym obsluha nevyberie, prva virtualna tabula (inak stena tabul)
+  // vybrana stranka; kym obsluha nevyberie, prvy informacny panel, prva virtualna tabula (inak stena tabul)
   const [chosen, setPage] = useState<string | null>(null);
 
   const firstVirtual = virtual[0]?.id;
-  const page = chosen ?? (firstVirtual !== undefined ? `#/virtual/${firstVirtual}` : "#/wall");
+  const firstPanel = panels[0]?.id;
+  const page = chosen ?? (firstPanel !== undefined ? `#/panel/${firstPanel}` : firstVirtual !== undefined ? `#/virtual/${firstVirtual}` : "#/wall");
 
   const link = deviceLink(created.secret, page, httpsPort, host);
 
   const pages = [
+    ...panels.map((p) => ({ value: `#/panel/${p.id}`, label: t("keys.page.panel", { id: p.id, name: p.definition.name }) })),
     ...virtual.map((b) => ({ value: `#/virtual/${b.id}`, label: t("keys.page.virtual", { id: b.id, name: b.name }) })),
     { value: "#/wall", label: t("keys.page.wall") },
     ...live.boards.map((b) => ({ value: `#/view/${b.id}`, label: t("keys.page.board", { name: b.name ? `${b.name} (${b.id})` : b.id }) })),

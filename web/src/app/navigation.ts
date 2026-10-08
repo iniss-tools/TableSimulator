@@ -4,10 +4,14 @@ import {
   Archive,
   Cable,
   Disc3,
+  Group,
   History,
   KeyRound,
   LayoutGrid,
+  ListVideo,
   Megaphone,
+  MessageSquareText,
+  Monitor,
   MonitorPlay,
   Palette,
   Settings,
@@ -19,7 +23,22 @@ import type { TextKey } from "@/i18n";
 
 /** Stranky v rame (adresy za # - rovnake ako pred prestavbou, aby ulozene odkazy platili). */
 export type NavPath =
-  "/" | "/designs" | "/lines" | "/log" | "/recordings" | "/virtual" | "/archive/tables" | "/archive/reports" | "/users" | "/keys" | "/audit" | "/settings";
+  | "/"
+  | "/designs"
+  | "/lines"
+  | "/log"
+  | "/recordings"
+  | "/virtual"
+  | "/archive/tables"
+  | "/archive/reports"
+  | "/signage/panels"
+  | "/signage/groups"
+  | "/signage/playlists"
+  | "/signage/messages"
+  | "/users"
+  | "/keys"
+  | "/audit"
+  | "/settings";
 
 export interface NavItem {
   to: NavPath;
@@ -50,6 +69,15 @@ export const NAV: NavGroup[] = [
       { to: "/virtual", label: "nav.virtual", icon: MonitorPlay, permission: PERMISSIONS.view },
       { to: "/archive/tables", label: "nav.archiveTables", icon: Archive, permission: PERMISSIONS.view },
       { to: "/archive/reports", label: "nav.archiveReports", icon: Megaphone, permission: PERMISSIONS.view },
+    ],
+  },
+  {
+    label: "nav.group.signage",
+    items: [
+      { to: "/signage/panels", label: "nav.signagePanels", icon: Monitor, permission: PERMISSIONS.view },
+      { to: "/signage/groups", label: "nav.signageGroups", icon: Group, permission: PERMISSIONS.view },
+      { to: "/signage/playlists", label: "nav.signagePlaylists", icon: ListVideo, permission: PERMISSIONS.view },
+      { to: "/signage/messages", label: "nav.signageMessages", icon: MessageSquareText, permission: PERMISSIONS.view },
     ],
   },
   {

@@ -12,6 +12,7 @@ import { ServerWaiting } from "./ServerWaiting";
 const AuthPage = lazy(() => import("@/features/auth/AuthPage").then((m) => ({ default: m.AuthPage })));
 const BoardKiosk = lazy(() => import("./BoardKiosk").then((m) => ({ default: m.BoardKiosk })));
 const VirtualKiosk = lazy(() => import("@/features/virtual/VirtualKiosk").then((m) => ({ default: m.VirtualKiosk })));
+const PanelKiosk = lazy(() => import("@/features/signage/PanelKiosk").then((m) => ({ default: m.PanelKiosk })));
 const ArchivePage = lazy(() => import("@/features/archive/ArchivePage").then((m) => ({ default: m.ArchivePage })));
 
 /** Kym sa nezisti pouzivatel, nic; neprihlaseny dostane prihlasenie (aj na adrese kiosku - po prihlaseni tam ostane). */
@@ -62,6 +63,15 @@ const virtualKiosk = createRoute({
   },
 });
 
+const panelKiosk = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/panel/$id",
+  component: function PanelKioskRoute() {
+    const { id } = panelKiosk.useParams();
+    return <PanelKiosk id={Number(id)} />;
+  },
+});
+
 const shell = createRoute({
   getParentRoute: () => rootRoute,
   id: "shell",
@@ -93,6 +103,26 @@ const pages = [
     path: "/virtual",
     component: lazyRouteComponent(() => import("@/features/virtual/VirtualBoardsPage"), "VirtualBoardsPage"),
   }),
+  createRoute({
+    getParentRoute: () => shell,
+    path: "/signage/panels",
+    component: lazyRouteComponent(() => import("@/features/signage/PanelsPage"), "PanelsPage"),
+  }),
+  createRoute({
+    getParentRoute: () => shell,
+    path: "/signage/groups",
+    component: lazyRouteComponent(() => import("@/features/signage/GroupsPage"), "GroupsPage"),
+  }),
+  createRoute({
+    getParentRoute: () => shell,
+    path: "/signage/playlists",
+    component: lazyRouteComponent(() => import("@/features/signage/PlaylistsPage"), "PlaylistsPage"),
+  }),
+  createRoute({
+    getParentRoute: () => shell,
+    path: "/signage/messages",
+    component: lazyRouteComponent(() => import("@/features/signage/MessagesPage"), "MessagesPage"),
+  }),
   createRoute({ getParentRoute: () => shell, path: "/archive/tables", component: () => <ArchivePage key="tables" kind="tables" /> }),
   createRoute({ getParentRoute: () => shell, path: "/archive/reports", component: () => <ArchivePage key="reports" kind="reports" /> }),
   createRoute({ getParentRoute: () => shell, path: "/users", component: lazyRouteComponent(() => import("@/features/users/UsersPage"), "UsersPage") }),
@@ -105,7 +135,7 @@ const pages = [
   }),
 ] as const;
 
-const routeTree = rootRoute.addChildren([boardKiosk, wall, virtualKiosk, shell.addChildren(pages)]);
+const routeTree = rootRoute.addChildren([boardKiosk, wall, virtualKiosk, panelKiosk, shell.addChildren(pages)]);
 
 export const router = createRouter({ routeTree, history: createHashHistory(), defaultNotFoundComponent: NotFound });
 

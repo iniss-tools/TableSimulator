@@ -27,6 +27,9 @@ public sealed record AppPaths(string DataFolder, string WebRoot)
     /// <summary>Kluce ochrany dat (podpis prihlasovacich cookie) - s priecinkom nastaveni sa prenasaju.</summary>
     public string KeysFolder => Path.Combine(DataFolder, "keys");
 
+    /// <summary>Obrazky a videa sprav informacnych panelov.</summary>
+    public string MediaFolder => Path.Combine(DataFolder, "media");
+
     /// <summary>Logy servera.</summary>
     public string LogsFolder => Path.Combine(DataFolder, "logs");
 

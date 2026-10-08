@@ -3,8 +3,8 @@
 import { type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { clearBoard, clearLog, createAccessKey, createUser, deleteAccessKey, deleteBoard, deleteDesign, deleteLine, deleteRecording, deleteUser, deleteVirtualBoard, deleteVirtualLayout, downloadHttpsCertificate, downloadRecording, exportConfig, getAccessKeys, getArchiveDays, getAudit, getBoard, getDesigns, getFont, getFonts, getHttpsStatus, getInissStation, getLog, getMe, getMonitor, getRecordings, getReportArchive, getServerInfo, getSettings, getState, getTableArchive, getUsers, getVirtualOverview, getVirtualView, getWebManifest, changePassword, importConfig, importInissStation, importInissView, importMonitorProject, importStation, login, logout, type Options, playRecording, restartServer, setBoard, setBoardFault, setDesign, setLine, setup, setUserPassword, setVirtualBoard, setVirtualLayout, startRecording, stopRecording, stopReplay, unlockUser, updateSettings, updateUser, uploadRecording } from '../sdk.gen';
-import type { ClearBoardData, ClearBoardError, ClearBoardResponse, ClearLogData, ClearLogError, ClearLogResponse, CreateAccessKeyData, CreateAccessKeyError, CreateAccessKeyResponse, CreateUserData, CreateUserError, CreateUserResponse, DeleteAccessKeyData, DeleteAccessKeyError, DeleteAccessKeyResponse, DeleteBoardData, DeleteBoardError, DeleteBoardResponse, DeleteDesignData, DeleteDesignError, DeleteDesignResponse, DeleteLineData, DeleteLineError, DeleteLineResponse, DeleteRecordingData, DeleteRecordingError, DeleteRecordingResponse, DeleteUserData, DeleteUserError, DeleteUserResponse, DeleteVirtualBoardData, DeleteVirtualBoardError, DeleteVirtualBoardResponse, DeleteVirtualLayoutData, DeleteVirtualLayoutError, DeleteVirtualLayoutResponse, DownloadHttpsCertificateData, DownloadHttpsCertificateError, DownloadRecordingData, DownloadRecordingError, ExportConfigData, ExportConfigError, GetAccessKeysData, GetAccessKeysError, GetAccessKeysResponse, GetArchiveDaysData, GetArchiveDaysError, GetArchiveDaysResponse, GetAuditData, GetAuditError, GetAuditResponse, GetBoardData, GetBoardError, GetBoardResponse, GetDesignsData, GetDesignsError, GetDesignsResponse, GetFontData, GetFontError, GetFontResponse, GetFontsData, GetFontsError, GetFontsResponse, GetHttpsStatusData, GetHttpsStatusError, GetHttpsStatusResponse, GetInissStationData, GetInissStationError, GetInissStationResponse, GetLogData, GetLogError, GetLogResponse, GetMeData, GetMeError, GetMeResponse, GetMonitorData, GetMonitorError, GetMonitorResponse, GetRecordingsData, GetRecordingsError, GetRecordingsResponse, GetReportArchiveData, GetReportArchiveError, GetReportArchiveResponse, GetServerInfoData, GetServerInfoError, GetServerInfoResponse, GetSettingsData, GetSettingsError, GetSettingsResponse, GetStateData, GetStateError, GetStateResponse, GetTableArchiveData, GetTableArchiveError, GetTableArchiveResponse, GetUsersData, GetUsersError, GetUsersResponse, GetVirtualOverviewData, GetVirtualOverviewError, GetVirtualOverviewResponse, GetVirtualViewData, GetVirtualViewError, GetVirtualViewResponse, GetWebManifestData, GetWebManifestError, GetWebManifestResponse, ChangePasswordData, ChangePasswordError, ChangePasswordResponse, ImportConfigData, ImportConfigError, ImportConfigResponse, ImportInissStationData, ImportInissStationError, ImportInissStationResponse, ImportInissViewData, ImportInissViewError, ImportInissViewResponse, ImportMonitorProjectData, ImportMonitorProjectError, ImportMonitorProjectResponse, ImportStationData, ImportStationError, ImportStationResponse, LoginData, LoginError, LoginResponse, LogoutData, LogoutError, LogoutResponse, PlayRecordingData, PlayRecordingError, PlayRecordingResponse, RestartServerData, RestartServerError, RestartServerResponse, SetBoardData, SetBoardError, SetBoardFaultData, SetBoardFaultError, SetBoardFaultResponse, SetBoardResponse, SetDesignData, SetDesignError, SetDesignResponse, SetLineData, SetLineError, SetLineResponse, SetupData, SetupError, SetupResponse, SetUserPasswordData, SetUserPasswordError, SetUserPasswordResponse, SetVirtualBoardData, SetVirtualBoardError, SetVirtualBoardResponse, SetVirtualLayoutData, SetVirtualLayoutError, SetVirtualLayoutResponse, StartRecordingData, StartRecordingError, StartRecordingResponse, StopRecordingData, StopRecordingError, StopRecordingResponse, StopReplayData, StopReplayError, StopReplayResponse, UnlockUserData, UnlockUserError, UnlockUserResponse, UpdateSettingsData, UpdateSettingsError, UpdateSettingsResponse, UpdateUserData, UpdateUserError, UpdateUserResponse, UploadRecordingData, UploadRecordingError, UploadRecordingResponse } from '../types.gen';
+import { clearBoard, clearLog, createAccessKey, createSignageGroup, createSignageMessage, createSignagePanel, createSignagePlaylist, createUser, deleteAccessKey, deleteBoard, deleteDesign, deleteLine, deleteRecording, deleteSignageGroup, deleteSignageMessage, deleteSignagePanel, deleteSignagePlaylist, deleteUser, deleteVirtualBoard, deleteVirtualLayout, downloadHttpsCertificate, downloadRecording, exportConfig, getAccessKeys, getArchiveDays, getAudit, getBoard, getDesigns, getFont, getFonts, getHttpsStatus, getInissStation, getLog, getMe, getMonitor, getRecordings, getReportArchive, getServerInfo, getSettings, getSignageMedia, getSignageOverview, getSignageProgram, getState, getTableArchive, getUsers, getVirtualOverview, getVirtualView, getWebManifest, changePassword, importConfig, importInissStation, importInissView, importMonitorProject, importStation, login, logout, type Options, playRecording, restartServer, setBoard, setBoardFault, setDesign, setLine, setup, setUserPassword, setVirtualBoard, setVirtualLayout, startRecording, stopRecording, stopReplay, unlockUser, updateSettings, updateSignageGroup, updateSignageMessage, updateSignagePanel, updateSignagePlaylist, updateUser, uploadRecording, uploadSignageMedia } from '../sdk.gen';
+import type { ClearBoardData, ClearBoardError, ClearBoardResponse, ClearLogData, ClearLogError, ClearLogResponse, CreateAccessKeyData, CreateAccessKeyError, CreateAccessKeyResponse, CreateSignageGroupData, CreateSignageGroupError, CreateSignageGroupResponse, CreateSignageMessageData, CreateSignageMessageError, CreateSignageMessageResponse, CreateSignagePanelData, CreateSignagePanelError, CreateSignagePanelResponse, CreateSignagePlaylistData, CreateSignagePlaylistError, CreateSignagePlaylistResponse, CreateUserData, CreateUserError, CreateUserResponse, DeleteAccessKeyData, DeleteAccessKeyError, DeleteAccessKeyResponse, DeleteBoardData, DeleteBoardError, DeleteBoardResponse, DeleteDesignData, DeleteDesignError, DeleteDesignResponse, DeleteLineData, DeleteLineError, DeleteLineResponse, DeleteRecordingData, DeleteRecordingError, DeleteRecordingResponse, DeleteSignageGroupData, DeleteSignageGroupError, DeleteSignageGroupResponse, DeleteSignageMessageData, DeleteSignageMessageError, DeleteSignageMessageResponse, DeleteSignagePanelData, DeleteSignagePanelError, DeleteSignagePanelResponse, DeleteSignagePlaylistData, DeleteSignagePlaylistError, DeleteSignagePlaylistResponse, DeleteUserData, DeleteUserError, DeleteUserResponse, DeleteVirtualBoardData, DeleteVirtualBoardError, DeleteVirtualBoardResponse, DeleteVirtualLayoutData, DeleteVirtualLayoutError, DeleteVirtualLayoutResponse, DownloadHttpsCertificateData, DownloadHttpsCertificateError, DownloadRecordingData, DownloadRecordingError, ExportConfigData, ExportConfigError, GetAccessKeysData, GetAccessKeysError, GetAccessKeysResponse, GetArchiveDaysData, GetArchiveDaysError, GetArchiveDaysResponse, GetAuditData, GetAuditError, GetAuditResponse, GetBoardData, GetBoardError, GetBoardResponse, GetDesignsData, GetDesignsError, GetDesignsResponse, GetFontData, GetFontError, GetFontResponse, GetFontsData, GetFontsError, GetFontsResponse, GetHttpsStatusData, GetHttpsStatusError, GetHttpsStatusResponse, GetInissStationData, GetInissStationError, GetInissStationResponse, GetLogData, GetLogError, GetLogResponse, GetMeData, GetMeError, GetMeResponse, GetMonitorData, GetMonitorError, GetMonitorResponse, GetRecordingsData, GetRecordingsError, GetRecordingsResponse, GetReportArchiveData, GetReportArchiveError, GetReportArchiveResponse, GetServerInfoData, GetServerInfoError, GetServerInfoResponse, GetSettingsData, GetSettingsError, GetSettingsResponse, GetSignageMediaData, GetSignageMediaError, GetSignageOverviewData, GetSignageOverviewError, GetSignageOverviewResponse, GetSignageProgramData, GetSignageProgramError, GetSignageProgramResponse, GetStateData, GetStateError, GetStateResponse, GetTableArchiveData, GetTableArchiveError, GetTableArchiveResponse, GetUsersData, GetUsersError, GetUsersResponse, GetVirtualOverviewData, GetVirtualOverviewError, GetVirtualOverviewResponse, GetVirtualViewData, GetVirtualViewError, GetVirtualViewResponse, GetWebManifestData, GetWebManifestError, GetWebManifestResponse, ChangePasswordData, ChangePasswordError, ChangePasswordResponse, ImportConfigData, ImportConfigError, ImportConfigResponse, ImportInissStationData, ImportInissStationError, ImportInissStationResponse, ImportInissViewData, ImportInissViewError, ImportInissViewResponse, ImportMonitorProjectData, ImportMonitorProjectError, ImportMonitorProjectResponse, ImportStationData, ImportStationError, ImportStationResponse, LoginData, LoginError, LoginResponse, LogoutData, LogoutError, LogoutResponse, PlayRecordingData, PlayRecordingError, PlayRecordingResponse, RestartServerData, RestartServerError, RestartServerResponse, SetBoardData, SetBoardError, SetBoardFaultData, SetBoardFaultError, SetBoardFaultResponse, SetBoardResponse, SetDesignData, SetDesignError, SetDesignResponse, SetLineData, SetLineError, SetLineResponse, SetupData, SetupError, SetupResponse, SetUserPasswordData, SetUserPasswordError, SetUserPasswordResponse, SetVirtualBoardData, SetVirtualBoardError, SetVirtualBoardResponse, SetVirtualLayoutData, SetVirtualLayoutError, SetVirtualLayoutResponse, StartRecordingData, StartRecordingError, StartRecordingResponse, StopRecordingData, StopRecordingError, StopRecordingResponse, StopReplayData, StopReplayError, StopReplayResponse, UnlockUserData, UnlockUserError, UnlockUserResponse, UpdateSettingsData, UpdateSettingsError, UpdateSettingsResponse, UpdateSignageGroupData, UpdateSignageGroupError, UpdateSignageGroupResponse, UpdateSignageMessageData, UpdateSignageMessageError, UpdateSignageMessageResponse, UpdateSignagePanelData, UpdateSignagePanelError, UpdateSignagePanelResponse, UpdateSignagePlaylistData, UpdateSignagePlaylistError, UpdateSignagePlaylistResponse, UpdateUserData, UpdateUserError, UpdateUserResponse, UploadRecordingData, UploadRecordingError, UploadRecordingResponse, UploadSignageMediaData, UploadSignageMediaError, UploadSignageMediaResponse } from '../types.gen';
 
 export const deleteVirtualBoardMutation = (options?: Partial<Options<DeleteVirtualBoardData>>): UseMutationOptions<DeleteVirtualBoardResponse, DeleteVirtualBoardError, Options<DeleteVirtualBoardData>> => {
     const mutationOptions: UseMutationOptions<DeleteVirtualBoardResponse, DeleteVirtualBoardError, Options<DeleteVirtualBoardData>> = {
@@ -281,6 +281,233 @@ export const getStateOptions = (options?: Options<GetStateData>) => queryOptions
     },
     queryKey: getStateQueryKey(options)
 });
+
+export const createSignageGroupMutation = (options?: Partial<Options<CreateSignageGroupData>>): UseMutationOptions<CreateSignageGroupResponse, CreateSignageGroupError, Options<CreateSignageGroupData>> => {
+    const mutationOptions: UseMutationOptions<CreateSignageGroupResponse, CreateSignageGroupError, Options<CreateSignageGroupData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createSignageGroup({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const createSignageMessageMutation = (options?: Partial<Options<CreateSignageMessageData>>): UseMutationOptions<CreateSignageMessageResponse, CreateSignageMessageError, Options<CreateSignageMessageData>> => {
+    const mutationOptions: UseMutationOptions<CreateSignageMessageResponse, CreateSignageMessageError, Options<CreateSignageMessageData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createSignageMessage({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const createSignagePanelMutation = (options?: Partial<Options<CreateSignagePanelData>>): UseMutationOptions<CreateSignagePanelResponse, CreateSignagePanelError, Options<CreateSignagePanelData>> => {
+    const mutationOptions: UseMutationOptions<CreateSignagePanelResponse, CreateSignagePanelError, Options<CreateSignagePanelData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createSignagePanel({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const createSignagePlaylistMutation = (options?: Partial<Options<CreateSignagePlaylistData>>): UseMutationOptions<CreateSignagePlaylistResponse, CreateSignagePlaylistError, Options<CreateSignagePlaylistData>> => {
+    const mutationOptions: UseMutationOptions<CreateSignagePlaylistResponse, CreateSignagePlaylistError, Options<CreateSignagePlaylistData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createSignagePlaylist({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteSignageGroupMutation = (options?: Partial<Options<DeleteSignageGroupData>>): UseMutationOptions<DeleteSignageGroupResponse, DeleteSignageGroupError, Options<DeleteSignageGroupData>> => {
+    const mutationOptions: UseMutationOptions<DeleteSignageGroupResponse, DeleteSignageGroupError, Options<DeleteSignageGroupData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteSignageGroup({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const updateSignageGroupMutation = (options?: Partial<Options<UpdateSignageGroupData>>): UseMutationOptions<UpdateSignageGroupResponse, UpdateSignageGroupError, Options<UpdateSignageGroupData>> => {
+    const mutationOptions: UseMutationOptions<UpdateSignageGroupResponse, UpdateSignageGroupError, Options<UpdateSignageGroupData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateSignageGroup({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteSignageMessageMutation = (options?: Partial<Options<DeleteSignageMessageData>>): UseMutationOptions<DeleteSignageMessageResponse, DeleteSignageMessageError, Options<DeleteSignageMessageData>> => {
+    const mutationOptions: UseMutationOptions<DeleteSignageMessageResponse, DeleteSignageMessageError, Options<DeleteSignageMessageData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteSignageMessage({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const updateSignageMessageMutation = (options?: Partial<Options<UpdateSignageMessageData>>): UseMutationOptions<UpdateSignageMessageResponse, UpdateSignageMessageError, Options<UpdateSignageMessageData>> => {
+    const mutationOptions: UseMutationOptions<UpdateSignageMessageResponse, UpdateSignageMessageError, Options<UpdateSignageMessageData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateSignageMessage({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteSignagePanelMutation = (options?: Partial<Options<DeleteSignagePanelData>>): UseMutationOptions<DeleteSignagePanelResponse, DeleteSignagePanelError, Options<DeleteSignagePanelData>> => {
+    const mutationOptions: UseMutationOptions<DeleteSignagePanelResponse, DeleteSignagePanelError, Options<DeleteSignagePanelData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteSignagePanel({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const updateSignagePanelMutation = (options?: Partial<Options<UpdateSignagePanelData>>): UseMutationOptions<UpdateSignagePanelResponse, UpdateSignagePanelError, Options<UpdateSignagePanelData>> => {
+    const mutationOptions: UseMutationOptions<UpdateSignagePanelResponse, UpdateSignagePanelError, Options<UpdateSignagePanelData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateSignagePanel({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteSignagePlaylistMutation = (options?: Partial<Options<DeleteSignagePlaylistData>>): UseMutationOptions<DeleteSignagePlaylistResponse, DeleteSignagePlaylistError, Options<DeleteSignagePlaylistData>> => {
+    const mutationOptions: UseMutationOptions<DeleteSignagePlaylistResponse, DeleteSignagePlaylistError, Options<DeleteSignagePlaylistData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteSignagePlaylist({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const updateSignagePlaylistMutation = (options?: Partial<Options<UpdateSignagePlaylistData>>): UseMutationOptions<UpdateSignagePlaylistResponse, UpdateSignagePlaylistError, Options<UpdateSignagePlaylistData>> => {
+    const mutationOptions: UseMutationOptions<UpdateSignagePlaylistResponse, UpdateSignagePlaylistError, Options<UpdateSignagePlaylistData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateSignagePlaylist({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getSignageMediaQueryKey = (options: Options<GetSignageMediaData>) => createQueryKey('getSignageMedia', options);
+
+export const getSignageMediaOptions = (options: Options<GetSignageMediaData>) => queryOptions<unknown, GetSignageMediaError, unknown, ReturnType<typeof getSignageMediaQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSignageMedia({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSignageMediaQueryKey(options)
+});
+
+export const getSignageOverviewQueryKey = (options?: Options<GetSignageOverviewData>) => createQueryKey('getSignageOverview', options);
+
+export const getSignageOverviewOptions = (options?: Options<GetSignageOverviewData>) => queryOptions<GetSignageOverviewResponse, GetSignageOverviewError, GetSignageOverviewResponse, ReturnType<typeof getSignageOverviewQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSignageOverview({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSignageOverviewQueryKey(options)
+});
+
+export const getSignageProgramQueryKey = (options: Options<GetSignageProgramData>) => createQueryKey('getSignageProgram', options);
+
+export const getSignageProgramOptions = (options: Options<GetSignageProgramData>) => queryOptions<GetSignageProgramResponse, GetSignageProgramError, GetSignageProgramResponse, ReturnType<typeof getSignageProgramQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSignageProgram({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSignageProgramQueryKey(options)
+});
+
+export const uploadSignageMediaMutation = (options?: Partial<Options<UploadSignageMediaData>>): UseMutationOptions<UploadSignageMediaResponse, UploadSignageMediaError, Options<UploadSignageMediaData>> => {
+    const mutationOptions: UseMutationOptions<UploadSignageMediaResponse, UploadSignageMediaError, Options<UploadSignageMediaData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await uploadSignageMedia({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 export const getSettingsQueryKey = (options?: Options<GetSettingsData>) => createQueryKey('getSettings', options);
 

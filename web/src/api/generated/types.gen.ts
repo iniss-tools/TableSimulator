@@ -547,6 +547,44 @@ export type SetPasswordRequest = {
     password: string;
 };
 
+export type SetSignageGroupRequest = {
+    name: string;
+    note: string;
+    playlists: Array<number>;
+    defaultPlaylist: null | number;
+    defaultMessage: null | number;
+};
+
+export type SetSignageMessageRequest = {
+    name: string;
+    note: string;
+    kind: SignageMessageKind;
+    duration: number;
+    virtualBoard: null | number;
+    board: null | string;
+    paragraphs: Array<SignageParagraphDto>;
+    background: string;
+    media: null | string;
+    url: null | string;
+};
+
+export type SetSignagePanelRequest = {
+    name: string;
+    note: string;
+    group: null | number;
+};
+
+export type SetSignagePlaylistRequest = {
+    name: string;
+    period: SignagePeriod;
+    start: string;
+    end: null | string;
+    weekdays: Array<number>;
+    from: number;
+    to: number;
+    items: Array<SignagePlaylistItemDto>;
+};
+
 export type SettingsDto = {
     httpPort: number;
     allowNetwork: boolean;
@@ -588,6 +626,91 @@ export type SetVirtualBoardRequest = {
     parameter: string;
     layout: string;
 };
+
+export type SignageAlign = 'left' | 'center' | 'right';
+
+export type SignageCreatedDto = {
+    id: number;
+};
+
+export type SignageGroupDto = {
+    id: number;
+    definition: SetSignageGroupRequest;
+};
+
+export type SignageMediaDto = {
+    id: string;
+    name: string;
+    contentType: string;
+    size: number;
+};
+
+export type SignageMessageDto = {
+    id: number;
+    definition: SetSignageMessageRequest;
+    mediaName: null | string;
+};
+
+export type SignageMessageKind = 'virtual' | 'text' | 'image' | 'board' | 'web' | 'video';
+
+export type SignageOffline = 'noGroup' | 'noProgram' | 'empty';
+
+export type SignageOverviewDto = {
+    messages: Array<SignageMessageDto>;
+    playlists: Array<SignagePlaylistDto>;
+    groups: Array<SignageGroupDto>;
+    panels: Array<SignagePanelDto>;
+};
+
+export type SignagePanelDto = {
+    id: number;
+    definition: SetSignagePanelRequest;
+    status: null | SignagePanelStatusDto;
+    playing: null | number;
+};
+
+export type SignagePanelStatusDto = {
+    lastSeenAt: string;
+    address: string;
+    online: boolean;
+};
+
+export type SignageParagraphDto = {
+    text: string;
+    color: string;
+    size: SignageTextSize;
+    align: SignageAlign;
+};
+
+export type SignagePeriod = 'once' | 'daily' | 'weekly';
+
+export type SignagePlaylistDto = {
+    id: number;
+    definition: SetSignagePlaylistRequest;
+};
+
+export type SignagePlaylistItemDto = {
+    message: number;
+    duration: null | number;
+};
+
+export type SignageProgramDto = {
+    now: string;
+    panel: string;
+    group: null | SignageGroupDto;
+    playlist: null | SignagePlaylistDto;
+    anchor: string;
+    items: Array<SignageSlotDto>;
+    validUntil: string;
+    offline: null | SignageOffline;
+};
+
+export type SignageSlotDto = {
+    message: SignageMessageDto;
+    duration: number;
+};
+
+export type SignageTextSize = 'small' | 'medium' | 'large';
 
 export type StartRecordingRequest = {
     note: null | string;
@@ -1270,6 +1393,426 @@ export type GetStateResponses = {
 };
 
 export type GetStateResponse = GetStateResponses[keyof GetStateResponses];
+
+export type CreateSignageGroupData = {
+    body: SetSignageGroupRequest;
+    path?: never;
+    query?: never;
+    url: '/api/signage/groups';
+};
+
+export type CreateSignageGroupErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type CreateSignageGroupError = CreateSignageGroupErrors[keyof CreateSignageGroupErrors];
+
+export type CreateSignageGroupResponses = {
+    /**
+     * OK
+     */
+    200: SignageCreatedDto;
+};
+
+export type CreateSignageGroupResponse = CreateSignageGroupResponses[keyof CreateSignageGroupResponses];
+
+export type CreateSignageMessageData = {
+    body: SetSignageMessageRequest;
+    path?: never;
+    query?: never;
+    url: '/api/signage/messages';
+};
+
+export type CreateSignageMessageErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type CreateSignageMessageError = CreateSignageMessageErrors[keyof CreateSignageMessageErrors];
+
+export type CreateSignageMessageResponses = {
+    /**
+     * OK
+     */
+    200: SignageCreatedDto;
+};
+
+export type CreateSignageMessageResponse = CreateSignageMessageResponses[keyof CreateSignageMessageResponses];
+
+export type CreateSignagePanelData = {
+    body: SetSignagePanelRequest;
+    path?: never;
+    query?: never;
+    url: '/api/signage/panels';
+};
+
+export type CreateSignagePanelErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type CreateSignagePanelError = CreateSignagePanelErrors[keyof CreateSignagePanelErrors];
+
+export type CreateSignagePanelResponses = {
+    /**
+     * OK
+     */
+    200: SignageCreatedDto;
+};
+
+export type CreateSignagePanelResponse = CreateSignagePanelResponses[keyof CreateSignagePanelResponses];
+
+export type CreateSignagePlaylistData = {
+    body: SetSignagePlaylistRequest;
+    path?: never;
+    query?: never;
+    url: '/api/signage/playlists';
+};
+
+export type CreateSignagePlaylistErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type CreateSignagePlaylistError = CreateSignagePlaylistErrors[keyof CreateSignagePlaylistErrors];
+
+export type CreateSignagePlaylistResponses = {
+    /**
+     * OK
+     */
+    200: SignageCreatedDto;
+};
+
+export type CreateSignagePlaylistResponse = CreateSignagePlaylistResponses[keyof CreateSignagePlaylistResponses];
+
+export type DeleteSignageGroupData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/signage/groups/{id}';
+};
+
+export type DeleteSignageGroupErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type DeleteSignageGroupError = DeleteSignageGroupErrors[keyof DeleteSignageGroupErrors];
+
+export type DeleteSignageGroupResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteSignageGroupResponse = DeleteSignageGroupResponses[keyof DeleteSignageGroupResponses];
+
+export type UpdateSignageGroupData = {
+    body: SetSignageGroupRequest;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/signage/groups/{id}';
+};
+
+export type UpdateSignageGroupErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type UpdateSignageGroupError = UpdateSignageGroupErrors[keyof UpdateSignageGroupErrors];
+
+export type UpdateSignageGroupResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type UpdateSignageGroupResponse = UpdateSignageGroupResponses[keyof UpdateSignageGroupResponses];
+
+export type DeleteSignageMessageData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/signage/messages/{id}';
+};
+
+export type DeleteSignageMessageErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type DeleteSignageMessageError = DeleteSignageMessageErrors[keyof DeleteSignageMessageErrors];
+
+export type DeleteSignageMessageResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteSignageMessageResponse = DeleteSignageMessageResponses[keyof DeleteSignageMessageResponses];
+
+export type UpdateSignageMessageData = {
+    body: SetSignageMessageRequest;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/signage/messages/{id}';
+};
+
+export type UpdateSignageMessageErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type UpdateSignageMessageError = UpdateSignageMessageErrors[keyof UpdateSignageMessageErrors];
+
+export type UpdateSignageMessageResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type UpdateSignageMessageResponse = UpdateSignageMessageResponses[keyof UpdateSignageMessageResponses];
+
+export type DeleteSignagePanelData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/signage/panels/{id}';
+};
+
+export type DeleteSignagePanelErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type DeleteSignagePanelError = DeleteSignagePanelErrors[keyof DeleteSignagePanelErrors];
+
+export type DeleteSignagePanelResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteSignagePanelResponse = DeleteSignagePanelResponses[keyof DeleteSignagePanelResponses];
+
+export type UpdateSignagePanelData = {
+    body: SetSignagePanelRequest;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/signage/panels/{id}';
+};
+
+export type UpdateSignagePanelErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type UpdateSignagePanelError = UpdateSignagePanelErrors[keyof UpdateSignagePanelErrors];
+
+export type UpdateSignagePanelResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type UpdateSignagePanelResponse = UpdateSignagePanelResponses[keyof UpdateSignagePanelResponses];
+
+export type DeleteSignagePlaylistData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/signage/playlists/{id}';
+};
+
+export type DeleteSignagePlaylistErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type DeleteSignagePlaylistError = DeleteSignagePlaylistErrors[keyof DeleteSignagePlaylistErrors];
+
+export type DeleteSignagePlaylistResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteSignagePlaylistResponse = DeleteSignagePlaylistResponses[keyof DeleteSignagePlaylistResponses];
+
+export type UpdateSignagePlaylistData = {
+    body: SetSignagePlaylistRequest;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/signage/playlists/{id}';
+};
+
+export type UpdateSignagePlaylistErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type UpdateSignagePlaylistError = UpdateSignagePlaylistErrors[keyof UpdateSignagePlaylistErrors];
+
+export type UpdateSignagePlaylistResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type UpdateSignagePlaylistResponse = UpdateSignagePlaylistResponses[keyof UpdateSignagePlaylistResponses];
+
+export type GetSignageMediaData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/signage/media/{id}';
+};
+
+export type GetSignageMediaErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetSignageMediaError = GetSignageMediaErrors[keyof GetSignageMediaErrors];
+
+export type GetSignageMediaResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetSignageOverviewData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/signage';
+};
+
+export type GetSignageOverviewErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetSignageOverviewError = GetSignageOverviewErrors[keyof GetSignageOverviewErrors];
+
+export type GetSignageOverviewResponses = {
+    /**
+     * OK
+     */
+    200: SignageOverviewDto;
+};
+
+export type GetSignageOverviewResponse = GetSignageOverviewResponses[keyof GetSignageOverviewResponses];
+
+export type GetSignageProgramData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/signage/panels/{id}/program';
+};
+
+export type GetSignageProgramErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetSignageProgramError = GetSignageProgramErrors[keyof GetSignageProgramErrors];
+
+export type GetSignageProgramResponses = {
+    /**
+     * OK
+     */
+    200: SignageProgramDto;
+};
+
+export type GetSignageProgramResponse = GetSignageProgramResponses[keyof GetSignageProgramResponses];
+
+export type UploadSignageMediaData = {
+    body: Stream;
+    path?: never;
+    query?: {
+        name?: string;
+    };
+    url: '/api/signage/media';
+};
+
+export type UploadSignageMediaErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type UploadSignageMediaError = UploadSignageMediaErrors[keyof UploadSignageMediaErrors];
+
+export type UploadSignageMediaResponses = {
+    /**
+     * OK
+     */
+    200: SignageMediaDto;
+};
+
+export type UploadSignageMediaResponse = UploadSignageMediaResponses[keyof UploadSignageMediaResponses];
 
 export type GetSettingsData = {
     body?: never;

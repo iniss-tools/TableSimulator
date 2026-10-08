@@ -53,6 +53,13 @@ export async function createLine(page: Page, number: number, name: string) {
   expect(response.ok(), await response.text()).toBe(true);
 }
 
+/** POST na API ako web; vrati odpoved ako JSON. */
+export async function apiPost<T>(page: Page, url: string, data: unknown): Promise<T> {
+  const response = await page.request.post(url, { headers: API_HEADERS, data });
+  expect(response.ok(), await response.text()).toBe(true);
+  return (await response.json()) as T;
+}
+
 /** Odstrani linku aj s tabulami. */
 export async function deleteLine(page: Page, number: number) {
   await page.request.delete(`/api/lines/${number}`, { headers: API_HEADERS });
