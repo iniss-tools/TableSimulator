@@ -949,4 +949,9 @@ export const cs: Record<TextKey, string> = {
   "notify.label": "Systémová oznámení",
   "notify.hint": "Oznámí výpadek linky i tehdy, když okno simulátoru není vidět.",
   "notify.denied": "Prohlížeč oznámení nepovolil – povolte je v nastavení stránky.",
+  "board.snapshot": "Snímek tabule (PNG)",
+  "board.snapshot.save": "Uložit jako PNG",
+  "board.snapshot.copy": "Kopírovat do schránky",
+  "board.snapshot.copied": "Snímek tabule je ve schránce.",
+  "board.snapshot.file": "tabule-{id}-{time}",
 };

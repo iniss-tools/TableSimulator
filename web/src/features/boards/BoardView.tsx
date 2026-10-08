@@ -1,5 +1,5 @@
-// Ziva tabula: rasterizacia obsahu + LED renderer, prisposobena velkosti miesta.
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+// Ziva tabula: rasterizacia obsahu + LED renderer, prisposobena velkosti miesta; snimka do PNG v pevnej mierke.
+import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from "react";
 import { useConnection, type BoardDto as Board } from "@/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,41 @@ function queueFirstDraw(job: () => void): () => void {
   };
 }
 
+/** Mierka snimky: bod tabule = pitch px vzhladu; mala tabula dvojnasobne, aby sa dala citat. */
+function snapshotScale(width: number): number {
+  return width < 1000 ? 2 : 1;
+}
+
+/** Nahradne bodove pismo, ked tabula nema pismo ELEN (znakova ma pevnu bunku, ELEN vlastne sirky znakov). */
+const fallbackFor = (b: Board) => fallbackGlyphSource(b.display.family, b.profile.rowHeight, CHAR_WIDTH);
+
+/** Nakresli obsah tabule v case t (ms) - striedanie, blikanie, posun aj hodiny ako v danej chvili. */
+function drawBoard(renderer: LedRenderer, b: Board, d: LedDesign, glyphs: GlyphSource, scale: number, t: number) {
+  const frame = rasterize(b, glyphs, t);
+  const clock = boardClock(b, t);
+  renderer.render(
+    frame,
+    d,
+    {
+      rowHeight: b.profile.rowHeight,
+      brightness: b.display.brightness,
+      brightnessGreen: b.display.brightnessGreen ?? b.display.brightness,
+      blinkOn: blinkPhase(b.profile, t, b.display),
+      monochrome: b.profile.monochrome,
+      swapRedGreen: b.profile.swapRedGreen,
+      header: b.profile.header,
+      clock: `${String(clock.getHours()).padStart(2, "0")}:${String(clock.getMinutes()).padStart(2, "0")}`,
+    },
+    scale,
+  );
+}
+
+/** Ovladanie tabule zvonku (karta). */
+export interface BoardViewHandle {
+  /** Obsah tabule v tejto chvili ako PNG - nezavisle od velkosti miesta. */
+  snapshot(): Promise<Blob>;
+}
+
 interface Props {
   board: Board;
   /** width = na sirku miesta, contain = cela tabula do miesta (kiosk). */
@@ -41,9 +76,10 @@ interface Props {
   className?: string;
   /** Vzhlad namiesto vzhladu tabule (nahlad v editore vzhladov). */
   design?: LedDesign;
+  ref?: Ref<BoardViewHandle>;
 }
 
-export function BoardView({ board, fit = "width", className, design: override }: Props) {
+export function BoardView({ board, fit = "width", className, design: override, ref }: Props) {
   const { designVersion } = useConnection();
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -114,6 +150,20 @@ export function BoardView({ board, fit = "width", className, design: override }:
 
   const ready = (override !== undefined || loadedDesign === designKey) && (!fontFile || font?.file === fontFile);
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      snapshot: () => {
+        const { board: b, design: d, source: s } = inputs.current;
+        const canvas = document.createElement("canvas");
+        const size = ledSize({ width: b.profile.width, height: b.profile.rows * b.profile.rowHeight }, d, b.profile.rowHeight, b.profile.header);
+        drawBoard(new LedRenderer(canvas), b, d, s ?? fallbackFor(b), snapshotScale(size.width), Date.now());
+        return new Promise<Blob>((resolve, reject) => canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("PNG"))), "image/png"));
+      },
+    }),
+    [],
+  );
+
   useEffect(() => {
     if (!canvas.current || cssScale <= 0 || (!firstDone.current && !ready)) return;
     renderer.current ??= new LedRenderer(canvas.current);
@@ -126,32 +176,14 @@ export function BoardView({ board, fit = "width", className, design: override }:
       const { board: b, design: d, source: s, scale } = inputs.current;
       let glyphs = s;
       if (!glyphs) {
-        // znakova tabula ma pevnu bunku na znak, ELEN pismo s vlastnymi sirkami znakov
         const key = `${b.display.family}|${b.profile.rowHeight}`;
         if (!fallback || fallbackKey !== key) {
-          fallback = fallbackGlyphSource(b.display.family, b.profile.rowHeight, CHAR_WIDTH);
+          fallback = fallbackFor(b);
           fallbackKey = key;
         }
         glyphs = fallback;
       }
-      const t = Date.now();
-      const frame = rasterize(b, glyphs, t);
-      const clock = boardClock(b, t);
-      renderer.current!.render(
-        frame,
-        d,
-        {
-          rowHeight: b.profile.rowHeight,
-          brightness: b.display.brightness,
-          brightnessGreen: b.display.brightnessGreen ?? b.display.brightness,
-          blinkOn: blinkPhase(b.profile, t, b.display),
-          monochrome: b.profile.monochrome,
-          swapRedGreen: b.profile.swapRedGreen,
-          header: b.profile.header,
-          clock: `${String(clock.getHours()).padStart(2, "0")}:${String(clock.getMinutes()).padStart(2, "0")}`,
-        },
-        scale,
-      );
+      drawBoard(renderer.current!, b, d, glyphs, scale, Date.now());
       last = now;
     };
 

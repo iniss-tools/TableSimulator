@@ -31,3 +31,9 @@ export function formatAgo(value: string, now: number): string {
   }
   return "";
 }
+
+/** Cas do nazvu suboru (miestny): 2026-10-08_203105. */
+export function fileStamp(date: Date): string {
+  const two = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${two(date.getMonth() + 1)}-${two(date.getDate())}_${two(date.getHours())}${two(date.getMinutes())}${two(date.getSeconds())}`;
+}

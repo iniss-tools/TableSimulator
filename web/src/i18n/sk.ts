@@ -948,6 +948,11 @@ export const sk = {
   "notify.label": "Systémové oznámenia",
   "notify.hint": "Oznámi výpadok linky aj vtedy, keď okno simulátora nie je vidieť.",
   "notify.denied": "Prehliadač oznámenia nepovolil – povoľte ich v nastaveniach stránky.",
+  "board.snapshot": "Snímka tabule (PNG)",
+  "board.snapshot.save": "Uložiť ako PNG",
+  "board.snapshot.copy": "Kopírovať do schránky",
+  "board.snapshot.copied": "Snímka tabule je v schránke.",
+  "board.snapshot.file": "tabula-{id}-{time}",
 } as const;
 
 export type TextKey = keyof typeof sk;

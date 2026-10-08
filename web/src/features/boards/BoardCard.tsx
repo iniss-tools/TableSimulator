@@ -1,5 +1,6 @@
-// Karta tabule: zive zobrazenie, stav komunikacie, upozornenie na ineho vyrobcu a predstierana porucha.
-import { Eraser, Maximize, Pencil, Trash2, TriangleAlert } from "lucide-react";
+// Karta tabule: zive zobrazenie, snimka do PNG, stav komunikacie, upozornenie na ineho vyrobcu a predstierana porucha.
+import { useRef, type RefObject } from "react";
+import { Camera, Copy, Download, Eraser, Maximize, Pencil, Trash2, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { clearBoard, deleteBoard, errorText, setBoard, setBoardFault, type BoardDto, type BoardFaultDto, type FaultKind } from "@/api";
 import { confirmAction } from "@/components/common/confirm";
@@ -7,12 +8,15 @@ import { OptionSelect } from "@/components/common/option-select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { boardConfig } from "@/lib/boards";
+import { saveFile } from "@/lib/download";
+import { fileStamp } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useNow } from "@/hooks/use-now";
 import { hasText, locale, t } from "@/i18n";
-import { BoardView } from "./BoardView";
+import { BoardView, type BoardViewHandle } from "./BoardView";
 
 const FAULTS: FaultKind[] = ["none", "noReply", "nak", "delay", "garbage", "status"];
 
@@ -107,6 +111,49 @@ function FaultControl({ board, edit }: { board: BoardDto; edit: boolean }) {
   );
 }
 
+/** Snimka tabule: ulozit ako PNG, alebo (cez HTTPS a na tomto pocitaci) skopirovat do schranky - napr. do hlasenia chyby. */
+function SnapshotMenu({ board, view }: { board: BoardDto; view: RefObject<BoardViewHandle | null> }) {
+  const save = () =>
+    view.current
+      ?.snapshot()
+      .then((blob) => saveFile(blob, `${t("board.snapshot.file", { id: board.id, time: fileStamp(new Date()) })}.png`))
+      .catch(failed);
+  const canCopy = typeof ClipboardItem !== "undefined" && isSecureContext;
+  if (!canCopy)
+    return (
+      <Button variant="ghost" size="icon-sm" title={t("board.snapshot")} onClick={save}>
+        <Camera />
+      </Button>
+    );
+
+  // schranka dostane slub PNG hned pri kliknuti - prehliadac inak zapis bez kliknutia odmietne
+  const copy = () => {
+    const png = view.current?.snapshot();
+    if (!png) return;
+    navigator.clipboard
+      .write([new ClipboardItem({ "image/png": png })])
+      .then(() => toast.success(t("board.snapshot.copied")))
+      .catch(failed);
+  };
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" title={t("board.snapshot")} />}>
+        <Camera />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-48">
+        <DropdownMenuItem onClick={save}>
+          <Download />
+          {t("board.snapshot.save")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={copy}>
+          <Copy />
+          {t("board.snapshot.copy")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 /** Hodiny tabule - idu od nastavenia dalej. */
 function BoardClock({ clock, setAt }: { clock: string; setAt: string }) {
   const now = useNow(1000);
@@ -117,6 +164,7 @@ export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: ()
   const name = board.name || t("board.unnamed", { address: board.address });
   const last = board.stats.lastFrameAt ? new Date(board.stats.lastFrameAt).toLocaleTimeString(locale()) : null;
   const d = board.display;
+  const view = useRef<BoardViewHandle>(null);
 
   const remove = async () => {
     if (await confirmAction({ title: t("board.delete.confirm", { name }), destructive: true }))
@@ -137,6 +185,7 @@ export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: ()
           </div>
         </div>
         <div className="flex shrink-0 items-center">
+          <SnapshotMenu board={board} view={view} />
           <Button variant="ghost" size="icon-sm" title={t("board.fullscreen")} render={<a href={`#/view/${board.id}`} />}>
             <Maximize />
           </Button>
@@ -162,7 +211,7 @@ export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: ()
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {board.mismatch && <MismatchWarning board={board} edit={edit} />}
-        <BoardView board={board} />
+        <BoardView ref={view} board={board} />
         {!board.profile.fontFile && <p className="text-xs text-muted-foreground">{t("board.approxFont")}</p>}
       </CardContent>
       {/* stav tabule vzdy na spodku karty - karty v riadku mriezky maju rovnaku vysku */}

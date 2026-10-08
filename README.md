@@ -162,6 +162,13 @@ neposiela, patrí k profilu tabule; polohy a výšky sú v bodoch matice. Hodiny
 INISS hromadnou správou; kým ho nenastaví, čas počítača. Farby a písmo hlavičky určuje vzhľad (`header` v
 `design.json`).
 
+## Snímka tabule
+
+Fotoaparát na karte tabule uloží jej obsah v tej chvíli ako PNG (`tabula-<linka>-<adresa>-<dátum>_<čas>.png`) –
+do dokumentácie alebo hlásenia chyby – alebo ho skopíruje do schránky (len cez HTTPS alebo na tomto počítači).
+Snímka má pevnú mierku nezávislú od veľkosti karty: bod tabule = `pitch` px vzhľadu, tabuľa užšia ako 1000 px
+dvojnásobne. Kreslí ju ten istý renderer ako kartu, s hlavičkou, hodinami a striedaním v danej chvíli.
+
 ## Záznamy komunikácie
 
 Stránka **Záznamy** nahrá všetko, čo INISS pošle na linky (aj odpovede tabúľ), do súboru `.tsrec` v

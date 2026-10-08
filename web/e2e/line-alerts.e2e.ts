@@ -2,12 +2,10 @@
 // po navrate oznamenie potvrdi spojenie a pocet zmizne.
 import { connect } from "node:net";
 import { expect, test } from "@playwright/test";
-import { collectErrors, elenRow } from "./helpers";
+import { collectErrors, createLine, deleteLine, elenRow } from "./helpers";
 
 const LINE = 62;
 const PORT = 47000 + LINE;
-/** Zmeny cez API ako web (ochrana proti CSRF). */
-const HEADERS = { "X-Requested-With": "TableSimulator" };
 
 /** Spojenie ako INISS: posle riadok a caka na ACK; zavretie = odpojenie INISSu. */
 async function connectIniss() {
@@ -21,20 +19,7 @@ async function connectIniss() {
 
 test("vypadok a navrat linky", async ({ page }) => {
   const errors = collectErrors(page);
-  const created = await page.request.put(`/api/lines/${LINE}`, {
-    headers: HEADERS,
-    data: {
-      number: LINE,
-      tableClass: 4,
-      endpoint: `TCP://0.0.0.0:${PORT}`,
-      name: "Výpadok",
-      mode: "display",
-      autoLearn: true,
-      manufacturer: "ELEN",
-      mirror: null,
-    },
-  });
-  expect(created.ok(), await created.text()).toBe(true);
+  await createLine(page, LINE, "Výpadok");
 
   await page.goto("/#/");
   const chip = page.getByRole("button", { name: /Linka 62 – Výpadok/ });
@@ -63,6 +48,6 @@ test("vypadok a navrat linky", async ({ page }) => {
   else await expect(badge).toBeHidden();
   second.destroy();
 
-  await page.request.delete(`/api/lines/${LINE}`, { headers: HEADERS });
+  await deleteLine(page, LINE);
   expect(errors).toEqual([]);
 });

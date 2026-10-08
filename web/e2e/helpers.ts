@@ -1,4 +1,4 @@
-// Spolocne pre testy: spravy ELEN ako ich posiela INISS (TCP na port linky), chyby stranky, prihlasenie.
+// Spolocne pre testy: spravy ELEN ako ich posiela INISS (TCP na port linky), linky cez API, chyby stranky, prihlasenie.
 import { connect } from "node:net";
 import { expect, type Page } from "@playwright/test";
 
@@ -39,6 +39,23 @@ export async function sendToLine(port: number, frames: number[][]): Promise<numb
   }
   socket.end();
   return replies;
+}
+
+/** Zmeny cez API ako web (ochrana proti CSRF). */
+export const API_HEADERS = { "X-Requested-With": "TableSimulator" };
+
+/** Linka ELEN na TCP porte 47000 + cislo (bez okna - test sa venuje inemu). */
+export async function createLine(page: Page, number: number, name: string) {
+  const response = await page.request.put(`/api/lines/${number}`, {
+    headers: API_HEADERS,
+    data: { number, tableClass: 4, endpoint: `TCP://0.0.0.0:${47000 + number}`, name, mode: "display", autoLearn: true, manufacturer: "ELEN", mirror: null },
+  });
+  expect(response.ok(), await response.text()).toBe(true);
+}
+
+/** Odstrani linku aj s tabulami. */
+export async function deleteLine(page: Page, number: number) {
+  await page.request.delete(`/api/lines/${number}`, { headers: API_HEADERS });
 }
 
 /** Zbiera chyby JavaScriptu a konzoly (okrem padov WebSocketu pri starte a zastaveni servera). */
