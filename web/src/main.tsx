@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { queryClient } from "./api";
 import { router } from "./app/router";
-import { ConfirmHost } from "./components/common/confirm";
+import { ConfirmHost } from "./components/common/confirm-host";
 import { Toaster } from "./components/ui/sonner";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { getLanguage } from "./i18n";

@@ -1,16 +1,14 @@
 // Novy pouzivatel (meno, rola, heslo) alebo uprava existujuceho (meno, rola, vypnutie).
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { createUserMutation, errorText, getUsersQueryKey, queryClient, ROLES, updateUserMutation, type Role, type UserDto } from "@/api";
+import { createUserMutation, errorText, ROLES, updateUserMutation, type Role, type UserDto } from "@/api";
 import { FormDialog } from "@/components/common/form-dialog";
 import { CheckField, FormField } from "@/components/common/form-field";
 import { OptionSelect } from "@/components/common/option-select";
 import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { t, type TextKey } from "@/i18n";
-
-/** Zoznam pouzivatelov sa po zmene nacita znova. */
-export const refreshUsers = () => queryClient.invalidateQueries({ queryKey: getUsersQueryKey() });
+import { refreshUsers } from "./users";
 
 export function UserDialog({ initial, isNew, onClose }: { initial: UserDto; isNew: boolean; onClose: () => void }) {
   const [user, setUser] = useState(initial);
@@ -18,7 +16,7 @@ export function UserDialog({ initial, isNew, onClose }: { initial: UserDto; isNe
   const [again, setAgain] = useState("");
   const [mismatch, setMismatch] = useState(false);
   const saved = () => {
-    refreshUsers();
+    void refreshUsers();
     onClose();
   };
   const create = useMutation({ ...createUserMutation(), onSuccess: saved });

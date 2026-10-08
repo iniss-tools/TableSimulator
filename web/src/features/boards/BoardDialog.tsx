@@ -85,7 +85,14 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
                 />
               </FormField>
               <FormField label={t("field.address")}>
-                <Input type="number" min={1} max={255} value={config.address} disabled={!isNew} onChange={(e) => setConfig({ ...config, address: num(e.target.value) })} />
+                <Input
+                  type="number"
+                  min={1}
+                  max={255}
+                  value={config.address}
+                  disabled={!isNew}
+                  onChange={(e) => setConfig({ ...config, address: num(e.target.value) })}
+                />
               </FormField>
               <FormField label={t("field.secondAddress")}>
                 <Input

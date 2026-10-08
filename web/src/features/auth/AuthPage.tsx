@@ -75,7 +75,12 @@ export function AuthPage({ setup }: { setup: boolean }) {
                 </FormField>
               )}
               <FormField label={t("auth.password")}>
-                <Input type="password" autoComplete={setup ? "new-password" : "current-password"} value={password} onChange={(e) => setPassword(e.target.value)} />
+                <Input
+                  type="password"
+                  autoComplete={setup ? "new-password" : "current-password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </FormField>
               {setup ? (
                 <FormField label={t("auth.passwordAgain")}>

@@ -37,7 +37,14 @@ export function VirtualDialog({ initial, isNew, sources, layouts, defaultLayout,
       <FieldGroup>
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField label={t("virtual.field.id")} hint={t("virtual.field.id.hint")}>
-            <Input type="number" min={1} max={99999} value={board.id} disabled={!isNew} onChange={(e) => setBoard({ ...board, id: number(e.target.value) || 1 })} />
+            <Input
+              type="number"
+              min={1}
+              max={99999}
+              value={board.id}
+              disabled={!isNew}
+              onChange={(e) => setBoard({ ...board, id: number(e.target.value) || 1 })}
+            />
           </FormField>
           <FormField label={t("virtual.field.source")} hint={t("virtual.field.source.hint")}>
             <Input list="virtual-sources" className="font-mono" value={board.source} onChange={(e) => setBoard({ ...board, source: e.target.value })} />

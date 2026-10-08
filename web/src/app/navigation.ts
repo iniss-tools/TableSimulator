@@ -5,17 +5,7 @@ import type { TextKey } from "@/i18n";
 
 /** Stranky v rame (adresy za # - rovnake ako pred prestavbou, aby ulozene odkazy platili). */
 export type NavPath =
-  | "/"
-  | "/lines"
-  | "/log"
-  | "/recordings"
-  | "/virtual"
-  | "/archive/tables"
-  | "/archive/reports"
-  | "/users"
-  | "/keys"
-  | "/audit"
-  | "/settings";
+  "/" | "/lines" | "/log" | "/recordings" | "/virtual" | "/archive/tables" | "/archive/reports" | "/users" | "/keys" | "/audit" | "/settings";
 
 export interface NavItem {
   to: NavPath;

@@ -43,8 +43,7 @@ export function problemError(response: Response, body: unknown): ApiError {
     response.status === 401 ? t("error.auth.required") : response.status === 403 ? t("error.auth.forbidden") : `${response.status} ${response.statusText}`;
   const problem = body !== null && typeof body === "object" ? (body as ApiProblem) : null;
   const code = problem?.code ?? null;
-  if (problem?.errors?.length)
-    return new ApiError(problem.errors.map((e) => describe(e.code, e.description, fallback)).join("\n"), response.status, code);
+  if (problem?.errors?.length) return new ApiError(problem.errors.map((e) => describe(e.code, e.description, fallback)).join("\n"), response.status, code);
   return new ApiError(describe(code, problem?.detail, fallback), response.status, code);
 }
 

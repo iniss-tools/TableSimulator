@@ -13,9 +13,9 @@ import { DataTable } from "@/components/data-table/data-table";
 import { columnsFor } from "@/components/data-table/features";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { lineConfig } from "@/lib/boards";
+import { defaultEndpoint, lineConfig } from "@/lib/boards";
 import { t, type TextKey } from "@/i18n";
-import { defaultEndpoint, LineDialog } from "./LineDialog";
+import { LineDialog } from "./LineDialog";
 
 const STATUS_TONES: Record<LineStatus, Tone> = { connected: "ok", listening: "wait", error: "bad", stopped: "off" };
 
@@ -29,8 +29,7 @@ export function LinesPage() {
   const replace = useRef(false);
   const importing = useMutation({
     ...importConfigMutation(),
-    onSuccess: (result) =>
-      toast.success(t(result.replaced ? "lines.import.replaced" : "lines.import.added", { lines: result.lines, boards: result.boards })),
+    onSuccess: (result) => toast.success(t(result.replaced ? "lines.import.replaced" : "lines.import.added", { lines: result.lines, boards: result.boards })),
     onError: (e) => toast.error(errorText(e)),
   });
 
@@ -44,7 +43,10 @@ export function LinesPage() {
     const file = files?.[0];
     if (upload.current) upload.current.value = "";
     if (!file) return;
-    if (replace.current && !(await confirmAction({ title: t("lines.import.replaceTitle"), description: t("lines.import.replaceConfirm"), confirmLabel: t("lines.import") })))
+    if (
+      replace.current &&
+      !(await confirmAction({ title: t("lines.import.replaceTitle"), description: t("lines.import.replaceConfirm"), confirmLabel: t("lines.import") }))
+    )
       return;
     importing.mutate({ body: { content: await file.text(), replace: replace.current } });
   };
@@ -118,7 +120,9 @@ export function LinesPage() {
         header: t("lines.col.traffic"),
         cell: ({ row }) => {
           const s = row.original.stats;
-          return <span className="text-xs text-muted-foreground">{t("lines.traffic", { frames: s.frames, bad: s.badFrames, connections: s.connections })}</span>;
+          return (
+            <span className="text-xs text-muted-foreground">{t("lines.traffic", { frames: s.frames, bad: s.badFrames, connections: s.connections })}</span>
+          );
         },
       }),
       column.display({

@@ -198,7 +198,16 @@ export class LedRenderer {
   }
 
   /** Hlavicka: pozadie, texty a hodiny; polohy v bodoch × p. */
-  private drawHeader(ctx: CanvasRenderingContext2D, header: BoardHeader, design: LedDesign, clock: string, left: number, width: number, height: number, p: number) {
+  private drawHeader(
+    ctx: CanvasRenderingContext2D,
+    header: BoardHeader,
+    design: LedDesign,
+    clock: string,
+    left: number,
+    width: number,
+    height: number,
+    p: number,
+  ) {
     const style = design.header;
     const top = left;
     ctx.save();

@@ -156,12 +156,7 @@ export function SettingsPage() {
           <Section id="folders" description={t("settings.folders.hint")}>
             <FormField
               label={t("settings.fontsFolder")}
-              hint={
-                <Hint
-                  text={t("settings.fontsFolder.hint")}
-                  found={<FontsFound fonts={fonts} folder={saved?.fontsFolder ?? ""} />}
-                />
-              }
+              hint={<Hint text={t("settings.fontsFolder.hint")} found={<FontsFound fonts={fonts} folder={saved?.fontsFolder ?? ""} />} />}
             >
               <Input value={form.fontsFolder} onChange={(e) => change({ fontsFolder: e.target.value })} />
             </FormField>
@@ -171,10 +166,7 @@ export function SettingsPage() {
             <FormField
               label={<AfterRestart>{t("settings.designsFolder")}</AfterRestart>}
               hint={
-                <Hint
-                  text={t("settings.designsFolder.hint", { folder: "%AppData%\\TableSimulator\\designs" })}
-                  found={<DesignsFound designs={designs} />}
-                />
+                <Hint text={t("settings.designsFolder.hint", { folder: "%AppData%\\TableSimulator\\designs" })} found={<DesignsFound designs={designs} />} />
               }
             >
               <Input value={form.designsFolder} onChange={(e) => change({ designsFolder: e.target.value })} />

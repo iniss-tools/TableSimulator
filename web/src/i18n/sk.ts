@@ -144,7 +144,8 @@ export const sk = {
   "log.status.fault": "porucha",
   "log.status.noise": "šum",
   "log.status.eotInData": "04 v dátach",
-  "log.status.eotInData.hint": "V obsahu správy je bajt 04 – v protokole ELEN koniec správy. Býva to číslo písma bez bitu 0x40 (napr. 4 v zozname písiem stanice); tabuľa ELEN správu ukončí už pri ňom, súčet jej nesedí a správu odmietne. Číslo písma pre ELEN má bit 0x40, napr. 82 tenké zelené, 98 tučné zelené.",
+  "log.status.eotInData.hint":
+    "V obsahu správy je bajt 04 – v protokole ELEN koniec správy. Býva to číslo písma bez bitu 0x40 (napr. 4 v zozname písiem stanice); tabuľa ELEN správu ukončí už pri ňom, súčet jej nesedí a správu odmietne. Číslo písma pre ELEN má bit 0x40, napr. 82 tenké zelené, 98 tučné zelené.",
   "log.broadcast": "hromadne",
 
   "kind.elen.row": "Riadok {row}: „{text}“",
@@ -179,7 +180,8 @@ export const sk = {
   "settings.saved": "Uložené.",
   "settings.restart": "Uložené. Porty, prístup zo siete, HTTPS a prihlasovanie sa prejavia po reštarte simulátora.",
   "nav.recordings": "Záznamy",
-  "rec.hint": "Záznam uloží všetko, čo INISS pošle na linky, aj odpovede tabúľ. Prehratie posiela uložené správy do liniek simulátora, akoby ich posielal INISS – hodí sa na skúšky bez INISSu aj na prenos situácie z inej stanice. Linky a tabule zo záznamu, ktoré tu chýbajú, sa doplnia.",
+  "rec.hint":
+    "Záznam uloží všetko, čo INISS pošle na linky, aj odpovede tabúľ. Prehratie posiela uložené správy do liniek simulátora, akoby ich posielal INISS – hodí sa na skúšky bez INISSu aj na prenos situácie z inej stanice. Linky a tabule zo záznamu, ktoré tu chýbajú, sa doplnia.",
   "rec.start": "Spustiť záznam",
   "rec.stop": "Zastaviť záznam",
   "rec.note": "Poznámka",
@@ -205,7 +207,8 @@ export const sk = {
   "replay.stopped": "Prehratie {name} zastavené",
   "replay.pass": "{pass}. prehratie",
   "replay.stop": "Zastaviť",
-  "field.endpoint.hint": "TCP://0.0.0.0:47003 alebo UDP://… – simulátor počúva a INISS sa pripája. \\\\.\\PIPE\\meno – rúru vytvára INISS a simulátor sa k nej pripája (aj na inom počítači: \\\\pocitac\\PIPE\\meno).",
+  "field.endpoint.hint":
+    "TCP://0.0.0.0:47003 alebo UDP://… – simulátor počúva a INISS sa pripája. \\\\.\\PIPE\\meno – rúru vytvára INISS a simulátor sa k nej pripája (aj na inom počítači: \\\\pocitac\\PIPE\\meno).",
   "board.lineAddress2": "linka {line} · adresy {address} a {second}",
   "field.secondAddress": "Druhá adresa",
   "field.secondAddress.hint": "Panel s dvoma adresami – druhá ovláda hornú polovicu riadkov.",
@@ -327,7 +330,8 @@ export const sk = {
   "role.operator": "operátor",
   "role.viewer": "pozorovateľ",
   "settings.requireLogin": "Vyžadovať prihlásenie aj na tomto počítači",
-  "settings.requireLogin.hint": "Pri prístupe zo siete sa prihlásenie vyžaduje vždy. Bez prihlásenia je každý, kto otvorí simulátor na tomto počítači, správca.",
+  "settings.requireLogin.hint":
+    "Pri prístupe zo siete sa prihlásenie vyžaduje vždy. Bez prihlásenia je každý, kto otvorí simulátor na tomto počítači, správca.",
   "settings.https": "HTTPS",
   "settings.https.hint":
     "Šifrované spojenie pre prístup zo siete – heslá a prístupové kľúče nejdú sieťou čitateľne. Na tomto počítači ostáva aj HTTP (GVDEditor, prehliadač).",
@@ -427,7 +431,8 @@ export const sk = {
   "error.archive.notFound": "Archív za tento deň neexistuje.",
   "error.archive.unreadable": "Súbor archívu sa nedá prečítať.",
   "error.archive.page": "Neplatná stránka archívu.",
-  "virtual.hint": "Tabuľa v INISSe s vyplneným exportom do XML (SAVE_XML) zapisuje svoj obsah do priečinka logov INISSu. Simulátor priečinok sleduje a tabuľu ukáže na celej obrazovke – rovnako ako INISSView. Odkaz Zobraziť dajte prehliadaču na monitore.",
+  "virtual.hint":
+    "Tabuľa v INISSe s vyplneným exportom do XML (SAVE_XML) zapisuje svoj obsah do priečinka logov INISSu. Simulátor priečinok sleduje a tabuľu ukáže na celej obrazovke – rovnako ako INISSView. Odkaz Zobraziť dajte prehliadaču na monitore.",
   "virtual.add": "Pridať tabuľu",
   "virtual.import": "Načítať z INISSView…",
   "virtual.import.done": "Z Web.config: {added} nových, {replaced} prepísaných, {skipped} vynechaných.",
@@ -498,7 +503,8 @@ export const sk = {
   "virtual.cell.company": "Dopravca",
   "virtual.cell.line": "Linka",
   "settings.virtualFolders": "Priečinky XML tabúľ INISSu (virtuálne tabule)",
-  "settings.virtualFolders.hint": "Priečinok logov INISSu (PathNames\\LogPath), kam INISS zapisuje XML tabúľ s vyplneným SAVE_XML – jeden na riadok, najviac 4. Rovnomenný súbor sa berie novší.",
+  "settings.virtualFolders.hint":
+    "Priečinok logov INISSu (PathNames\\LogPath), kam INISS zapisuje XML tabúľ s vyplneným SAVE_XML – jeden na riadok, najviac 4. Rovnomenný súbor sa berie novší.",
   "error.settings.virtualFolders": "Najviac 4 priečinky s XML tabúľ.",
   "error.virtual.id": "Číslo tabule musí byť 1 až 99999.",
   "error.virtual.name": "Zadajte názov (najviac 100 znakov).",
@@ -518,7 +524,8 @@ export const sk = {
   "virtual.layout.default": "predvolené ({name})",
   "virtual.col.layout": "Rozloženie",
   "virtual.layouts.title": "Rozloženia",
-  "virtual.layouts.hint": "Rozloženie určuje vzhľad virtuálnej tabule – nadpis, hodiny, stĺpce, farby, písmo a striedanie textov. Vstavané rozloženia sa nedajú meniť, ale dajú sa skopírovať a kópia upraviť.",
+  "virtual.layouts.hint":
+    "Rozloženie určuje vzhľad virtuálnej tabule – nadpis, hodiny, stĺpce, farby, písmo a striedanie textov. Vstavané rozloženia sa nedajú meniť, ale dajú sa skopírovať a kópia upraviť.",
   "virtual.layout.col.name": "Názov",
   "virtual.layout.col.id": "Kľúč",
   "virtual.layout.col.columns": "Stĺpce",
@@ -565,7 +572,8 @@ export const sk = {
   "layout.preview.sample": "ukážkové údaje",
   "layout.columns": "Stĺpce",
   "layout.columns.auto": "Stĺpce podľa XML (v poradí stĺpcov tabule v INISSe)",
-  "layout.column.hint": "Prvky XML oddelené medzerou (type number = druh a číslo vlaku). Šírka: prázdna = podľa obsahu, fill = zvyšok riadku, 12% alebo 6em. Farba: accent, muted, delay z farieb rozloženia alebo #rrggbb. Prázdny popis = predvolený podľa prvku.",
+  "layout.column.hint":
+    "Prvky XML oddelené medzerou (type number = druh a číslo vlaku). Šírka: prázdna = podľa obsahu, fill = zvyšok riadku, 12% alebo 6em. Farba: accent, muted, delay z farieb rozloženia alebo #rrggbb. Prázdny popis = predvolený podľa prvku.",
   "layout.column.cells": "Prvky XML",
   "layout.column.label": "Popis",
   "layout.column.width": "Šírka",
@@ -596,8 +604,10 @@ export const sk = {
   "error.virtual.layoutBuiltIn": "Vstavané rozloženie sa nedá zmeniť ani odstrániť – skopírujte ho.",
   "error.virtual.layoutInUse": "Rozloženie používajú virtuálne tabule – najprv im nastavte iné.",
   "nav.users": "Používatelia",
-  "users.hint": "Správca smie všetko, operátor mení linky, tabule a záznamy, pozorovateľ len pozerá. Zmena roly sa prihlásenému prejaví do minúty; vypnutie účtu, nové heslo a odstránenie ho odhlásia.",
-  "users.loginOff": "Prihlasovanie je vypnuté – kým ho nezapnete v Nastaveniach (alebo prístup zo siete), používatelia sa neprihlasujú a každý na tomto počítači je správca.",
+  "users.hint":
+    "Správca smie všetko, operátor mení linky, tabule a záznamy, pozorovateľ len pozerá. Zmena roly sa prihlásenému prejaví do minúty; vypnutie účtu, nové heslo a odstránenie ho odhlásia.",
+  "users.loginOff":
+    "Prihlasovanie je vypnuté – kým ho nezapnete v Nastaveniach (alebo prístup zo siete), používatelia sa neprihlasujú a každý na tomto počítači je správca.",
   "users.add": "Pridať používateľa",
   "users.role": "Rola",
   "users.role.admin.hint": "Všetko vrátane nastavení servera, používateľov a auditu.",
@@ -678,7 +688,8 @@ export const sk = {
   "audit.action.SetVirtualLayout": "Zmena rozloženia",
   "audit.action.DeleteVirtualLayout": "Odstránenie rozloženia",
   "auth.keyInvalid": "Kľúč zariadenia v odkaze server neprijal (bol odstránený alebo je neúplný). Požiadajte správcu o nový odkaz, alebo sa prihláste.",
-  "keys.hint": "Prístupový kľúč nahrádza prihlásenie: zariadenie (monitor, kiosk) ho má v odkaze a smie len pozerať, program (GVDEditor, skript) ho posiela v hlavičke Authorization: Bearer s rolou podľa výberu. Odstránený kľúč prestane platiť hneď.",
+  "keys.hint":
+    "Prístupový kľúč nahrádza prihlásenie: zariadenie (monitor, kiosk) ho má v odkaze a smie len pozerať, program (GVDEditor, skript) ho posiela v hlavičke Authorization: Bearer s rolou podľa výberu. Odstránený kľúč prestane platiť hneď.",
   "keys.add": "Nový kľúč",
   "keys.create": "Vytvoriť",
   "keys.empty": "Zatiaľ žiadny kľúč.",
@@ -697,12 +708,13 @@ export const sk = {
   "keys.secretOnce": "Kľúč sa zobrazí len teraz – server si ho nepamätá. Skopírujte ho; ak ho stratíte, vytvorte nový.",
   "keys.secret": "Kľúč",
   "keys.page": "Stránka zariadenia",
-  "keys.page.hint": "Odkaz otvorte v prehliadači zariadenia (napr. msedge --kiosk \"odkaz\"); kľúč sa z adresy po otvorení skryje.",
+  "keys.page.hint": 'Odkaz otvorte v prehliadači zariadenia (napr. msedge --kiosk "odkaz"); kľúč sa z adresy po otvorení skryje.',
   "keys.page.virtual": "virtuálna tabuľa {id} – {name}",
   "keys.page.wall": "všetky tabule pod sebou",
   "keys.page.board": "tabuľa {name}",
   "keys.link": "Odkaz pre zariadenie",
-  "keys.api.hint": "GVDEditor: Nastavenia INISSu → Nástroje → Presmerovať tabule na simulátor → pole API kľúč. Iný program pošle hlavičku Authorization: Bearer kľúč.",
+  "keys.api.hint":
+    "GVDEditor: Nastavenia INISSu → Nástroje → Presmerovať tabule na simulátor → pole API kľúč. Iný program pošle hlavičku Authorization: Bearer kľúč.",
   "keys.thisTab": "Táto karta pristupuje s kľúčom zariadenia.",
   "keys.forget": "Zabudnúť kľúč",
   "dialog.key.new": "Nový prístupový kľúč",
@@ -747,7 +759,8 @@ export const sk = {
   "settings.network": "Sieť a prístup",
   "settings.network.hint": "Port webového rozhrania, kto sa k simulátoru dostane a akú adresu dostane INISS pri presmerovaní liniek.",
   "settings.database": "Databáza",
-  "settings.database.hint": "Nastavenie, linky, tabule, virtuálne tabule, používatelia a audit sú uložené v databáze. Linky s tabuľami prenesiete na iný počítač exportom a importom na stránke Linky.",
+  "settings.database.hint":
+    "Nastavenie, linky, tabule, virtuálne tabule, používatelia a audit sú uložené v databáze. Linky s tabuľami prenesiete na iný počítač exportom a importom na stránke Linky.",
   "settings.unsaved": "Neuložené zmeny",
   "settings.discard": "Zahodiť zmeny",
   "settings.leave.title": "Odísť bez uloženia?",

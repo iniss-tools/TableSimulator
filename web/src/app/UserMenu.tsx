@@ -26,7 +26,7 @@ const THEME_ICONS = { light: Sun, dark: Moon, auto: Monitor } satisfies Record<T
 
 /** Odhlasenie - cache patri predchadzajucemu pouzivatelovi, zahodi sa a zisti sa znova, kto je prihlaseny. */
 function signOut() {
-  logout().finally(() => queryClient.resetQueries());
+  void logout().finally(() => queryClient.resetQueries());
 }
 
 function initials(name: string): string {
@@ -50,7 +50,9 @@ export function UserMenu({ me }: { me: MeDto }) {
       <SidebarMenu>
         <SidebarMenuItem>
           <DropdownMenu>
-            <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground" />}>
+            <DropdownMenuTrigger
+              render={<SidebarMenuButton size="lg" className="data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground" />}
+            >
               <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground">
                 {me.accessKey ? <KeyRound className="size-4" /> : initials(name)}
               </span>

@@ -1,6 +1,9 @@
 // Linky a tabule: nastavenie z aktualneho stavu (na upravu) a predvoleny profil novej tabule.
 import type { BoardDto, BoardProfileDto, LineDto, SetBoardRequest, SetLineRequest } from "../api/generated/types.gen";
 
+/** Predvolene spojenie linky - port 47000 + cislo. */
+export const defaultEndpoint = (number: number) => `TCP://0.0.0.0:${47000 + number}`;
+
 /** Vyrobcovia znakovych tabul Elektrocas (rodina chars). */
 export const CHAR_MANUFACTURERS = ["LCD", "LCD1", "ERP"];
 

@@ -1,5 +1,5 @@
 // Zaznamy komunikacie: nahravanie prevadzky liniek a jej prehratie do simulatora.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Download, Play, Square, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -32,6 +32,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { useNow } from "@/hooks/use-now";
 import { locale, t } from "@/i18n";
 
 const SPEEDS = [1, 2, 5, 10, 0];
@@ -58,17 +59,11 @@ function size(bytes: number): string {
 /** Nahravanie: poznamka a start, pocas nahravania priebeh a zastavenie. */
 function Recorder({ recorder, manage }: { recorder: RecorderStatusDto | undefined; manage: boolean }) {
   const [note, setNote] = useState("");
-  const [, tick] = useState(0);
-
   // dlzka zaznamu bezi aj medzi spravami servera
-  useEffect(() => {
-    if (!recorder?.recording) return;
-    const timer = setInterval(() => tick((n) => n + 1), 1000);
-    return () => clearInterval(timer);
-  }, [recorder?.recording]);
+  const now = useNow(1000);
 
   if (recorder?.recording) {
-    const elapsed = recorder.started ? (Date.now() - Date.parse(recorder.started)) / 1000 : 0;
+    const elapsed = recorder.started ? (now - Date.parse(recorder.started)) / 1000 : 0;
     return (
       <Card className="border-red-500/40 bg-red-500/5">
         <CardContent className="flex flex-wrap items-center gap-3">
@@ -153,7 +148,7 @@ export function RecordingsPage() {
       }
     }
     if (upload.current) upload.current.value = "";
-    refresh();
+    void refresh();
   };
 
   const remove = async (name: string) => {
@@ -199,7 +194,14 @@ export function RecordingsPage() {
                     icon: Download,
                     onClick: () => window.open(`/api/recordings/${encodeURIComponent(r.name)}/file`, "_self"),
                   },
-                  { label: t("common.delete"), icon: Trash2, destructive: true, hidden: !manage, disabled: recordingName === r.name, onClick: () => remove(r.name) },
+                  {
+                    label: t("common.delete"),
+                    icon: Trash2,
+                    destructive: true,
+                    hidden: !manage,
+                    disabled: recordingName === r.name,
+                    onClick: () => remove(r.name),
+                  },
                 ]}
               />
             </div>

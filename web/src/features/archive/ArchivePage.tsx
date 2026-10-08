@@ -141,7 +141,10 @@ function reportColumns() {
     }),
     reportColumn.display({ id: "track", header: t("archive.col.track"), cell: ({ row }) => tracks(row.original.arrivalTrack, row.original.departureTrack) }),
     reportColumn.display({ id: "delay", header: t("archive.col.delay"), cell: ({ row }) => delays(row.original.arrivalDelay, row.original.departureDelay) }),
-    reportColumn.accessor("text", { header: t("archive.col.text"), cell: ({ getValue }) => <div className="max-w-[40em] min-w-[16em] whitespace-normal">{getValue()}</div> }),
+    reportColumn.accessor("text", {
+      header: t("archive.col.text"),
+      cell: ({ getValue }) => <div className="max-w-[40em] min-w-[16em] whitespace-normal">{getValue()}</div>,
+    }),
     reportColumn.display({
       id: "result",
       header: t("archive.col.result"),
@@ -193,7 +196,7 @@ export function ArchivePage({ kind }: { kind: ArchiveKind }) {
     [kind],
   );
   useEffect(() => {
-    loadDays();
+    void loadDays();
   }, [loadDays]);
 
   const load = useCallback(
@@ -226,8 +229,8 @@ export function ArchivePage({ kind }: { kind: ArchiveKind }) {
     setFilter({ train: train.trim(), text: text.trim() });
   };
 
-  const tableCols = useMemo(tableColumns, []);
-  const reportCols = useMemo(reportColumns, []);
+  const tableCols = useMemo(() => tableColumns(), []);
+  const reportCols = useMemo(() => reportColumns(), []);
   const list = days ? (kind === "tables" ? days.tables : days.reports) : [];
   const shown = kind === "tables" ? tables.length : reports.length;
 
@@ -256,8 +259,20 @@ export function ArchivePage({ kind }: { kind: ArchiveKind }) {
           <div className="flex flex-col gap-3">
             <form className="flex flex-wrap items-center gap-2" onSubmit={search}>
               <OptionSelect value={date} onValueChange={setDate} ariaLabel={t("archive.day")} options={list.map((d) => ({ value: d, label: dayText(d) }))} />
-              <Input className="w-36" placeholder={t("archive.filter.train")} aria-label={t("archive.filter.train")} value={train} onChange={(e) => setTrain(e.target.value)} />
-              <Input className="w-56" placeholder={t("archive.filter.text")} aria-label={t("archive.filter.text")} value={text} onChange={(e) => setText(e.target.value)} />
+              <Input
+                className="w-36"
+                placeholder={t("archive.filter.train")}
+                aria-label={t("archive.filter.train")}
+                value={train}
+                onChange={(e) => setTrain(e.target.value)}
+              />
+              <Input
+                className="w-56"
+                placeholder={t("archive.filter.text")}
+                aria-label={t("archive.filter.text")}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
               <Button type="submit" variant="outline">
                 <Search />
                 {t("archive.filter.apply")}

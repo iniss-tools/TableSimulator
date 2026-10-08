@@ -7,10 +7,8 @@ import { FormDialog } from "@/components/common/form-dialog";
 import { OptionSelect } from "@/components/common/option-select";
 import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { defaultEndpoint } from "@/lib/boards";
 import { t, type TextKey } from "@/i18n";
-
-/** Predvolene spojenie linky - port 47000 + cislo. */
-export const defaultEndpoint = (number: number) => `TCP://0.0.0.0:${47000 + number}`;
 
 export function LineDialog({ initial, isNew, onClose }: { initial: SetLineRequest; isNew: boolean; onClose: () => void }) {
   const live = useSimulatorState();

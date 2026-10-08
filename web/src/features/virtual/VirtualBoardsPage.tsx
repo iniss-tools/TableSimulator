@@ -1,5 +1,5 @@
 // Virtualne tabule: definicie (ako vo Web.config INISSView), XML tabul najdene v priecinkoch logov INISSu a rozlozenia.
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown, Copy, ExternalLink, FolderOpen, Info, Pencil, Plus, Trash2, TriangleAlert, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -130,23 +130,43 @@ export function VirtualBoardsPage() {
     importing.mutate({ body: { content: await file.text(), replace: replace.current } });
   };
 
-  const add = (source?: VirtualSourceDto) => {
-    const used = new Set(data?.boards.map((b) => b.id));
-    let id = 1;
-    while (used.has(id)) id++;
-    setEditing({
-      isNew: true,
-      board: { id, name: source?.key ?? "", description: "", source: source?.name ?? "", rowCount: null, rowStart: 1, separator: "", template: "", parameter: "", layout: "" },
-    });
-  };
+  const add = useCallback(
+    (source?: VirtualSourceDto) => {
+      const used = new Set(data?.boards.map((b) => b.id));
+      let id = 1;
+      while (used.has(id)) id++;
+      setEditing({
+        isNew: true,
+        board: {
+          id,
+          name: source?.key ?? "",
+          description: "",
+          source: source?.name ?? "",
+          rowCount: null,
+          rowStart: 1,
+          separator: "",
+          template: "",
+          parameter: "",
+          layout: "",
+        },
+      });
+    },
+    [data],
+  );
 
   // kopia rozlozenia - nazov s priponou, kluc s prvym volnym cislom
-  const copyLayout = (layout: VirtualLayoutDto) => {
-    const used = new Set(data?.layouts.map((l) => l.id));
-    let n = 2;
-    while (used.has(`${layout.id}-${n}`)) n++;
-    setEditingLayout({ isNew: true, layout: { ...layout, id: `${layout.id}-${n}`, name: layoutName(layout) + t("virtual.layout.copySuffix"), builtIn: false } });
-  };
+  const copyLayout = useCallback(
+    (layout: VirtualLayoutDto) => {
+      const used = new Set(data?.layouts.map((l) => l.id));
+      let n = 2;
+      while (used.has(`${layout.id}-${n}`)) n++;
+      setEditingLayout({
+        isNew: true,
+        layout: { ...layout, id: `${layout.id}-${n}`, name: layoutName(layout) + t("virtual.layout.copySuffix"), builtIn: false },
+      });
+    },
+    [data],
+  );
   const removeLayout = async (layout: VirtualLayoutDto) => {
     if (await confirmAction({ title: t("virtual.layout.delete.confirm", { name: layoutName(layout) }), destructive: true }))
       deleteVirtualLayout({ path: { id: layout.id }, throwOnError: true }).catch(failed);
@@ -185,7 +205,12 @@ export function VirtualBoardsPage() {
       boardColumn.accessor(rowsText, { id: "rows", header: t("virtual.col.rows") }),
       boardColumn.accessor("separator", {
         header: t("virtual.col.separator"),
-        cell: ({ getValue }) => (getValue() ? <code className="font-mono text-xs">{`'${getValue()}'`}</code> : <span className="text-xs text-muted-foreground">{t("virtual.separator.none")}</span>),
+        cell: ({ getValue }) =>
+          getValue() ? (
+            <code className="font-mono text-xs">{`'${getValue()}'`}</code>
+          ) : (
+            <span className="text-xs text-muted-foreground">{t("virtual.separator.none")}</span>
+          ),
       }),
       boardColumn.accessor((b) => (layoutOf(b) ? layoutName(layoutOf(b)!) : b.layout), {
         id: "layout",
@@ -255,7 +280,7 @@ export function VirtualBoardsPage() {
       }),
     ],
     // add cita aktualne cisla tabul
-    [data, edit],
+    [add, edit],
   );
 
   const layoutColumns = useMemo(
@@ -276,10 +301,17 @@ export function VirtualBoardsPage() {
         header: t("virtual.layout.col.columns"),
         cell: ({ getValue }) => (getValue() === 0 ? t("virtual.layout.columnsAuto") : getValue()),
       }),
-      layoutColumn.accessor((l) => (data?.boards ?? []).filter((b) => (b.layout || data?.defaultLayout) === l.id).map((b) => b.id).join(", "), {
-        id: "used",
-        header: t("virtual.layout.col.used"),
-      }),
+      layoutColumn.accessor(
+        (l) =>
+          (data?.boards ?? [])
+            .filter((b) => (b.layout || data?.defaultLayout) === l.id)
+            .map((b) => b.id)
+            .join(", "),
+        {
+          id: "used",
+          header: t("virtual.layout.col.used"),
+        },
+      ),
       layoutColumn.display({
         id: "actions",
         meta: { className: "w-10 text-right" },
@@ -287,14 +319,19 @@ export function VirtualBoardsPage() {
           <RowActions
             actions={[
               { label: t("virtual.layout.copy"), icon: Copy, hidden: !edit, onClick: () => copyLayout(row.original) },
-              { label: t("common.edit"), icon: Pencil, hidden: !edit || row.original.builtIn, onClick: () => setEditingLayout({ layout: row.original, isNew: false }) },
+              {
+                label: t("common.edit"),
+                icon: Pencil,
+                hidden: !edit || row.original.builtIn,
+                onClick: () => setEditingLayout({ layout: row.original, isNew: false }),
+              },
               { label: t("common.delete"), icon: Trash2, destructive: true, hidden: !edit || row.original.builtIn, onClick: () => removeLayout(row.original) },
             ]}
           />
         ),
       }),
     ],
-    [data, edit],
+    [copyLayout, data, edit],
   );
 
   if (!data)
@@ -368,7 +405,9 @@ export function VirtualBoardsPage() {
           onClose={() => setEditing(null)}
         />
       )}
-      {editingLayout && <VirtualLayoutDialog initial={editingLayout.layout} isNew={editingLayout.isNew} boards={data.boards} onClose={() => setEditingLayout(null)} />}
+      {editingLayout && (
+        <VirtualLayoutDialog initial={editingLayout.layout} isNew={editingLayout.isNew} boards={data.boards} onClose={() => setEditingLayout(null)} />
+      )}
     </>
   );
 }

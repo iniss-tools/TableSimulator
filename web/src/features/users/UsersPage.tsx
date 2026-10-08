@@ -1,5 +1,5 @@
 // Pouzivatelia simulatora a ich roly - len pre spravcu.
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Info, KeyRound, LockOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/format";
 import { t, type TextKey } from "@/i18n";
 import { PasswordDialog } from "./PasswordDialog";
-import { refreshUsers, UserDialog } from "./UserDialog";
+import { UserDialog } from "./UserDialog";
+import { refreshUsers } from "./users";
 
 const column = columnsFor<UserDto>();
 const NEW_USER: UserDto = { userName: "", displayName: "", role: "viewer", disabled: false, lockedUntil: null, createdAt: "", lastLoginAt: null };
@@ -27,11 +28,11 @@ export function UsersPage() {
   const query = useQuery(getUsersOptions());
   const [editing, setEditing] = useState<{ user: UserDto; isNew: boolean } | null>(null);
   const [password, setPassword] = useState<string | null>(null);
-  const self = (u: UserDto) => me?.loginRequired === true && me.userName?.toLowerCase() === u.userName.toLowerCase();
+  const self = useCallback((u: UserDto) => me?.loginRequired === true && me.userName?.toLowerCase() === u.userName.toLowerCase(), [me]);
 
   const remove = async (u: UserDto) => {
     if (await confirmAction({ title: t("users.delete.confirm", { name: u.userName }), destructive: true }))
-      act(deleteUser({ path: { userName: u.userName }, throwOnError: true }));
+      void act(deleteUser({ path: { userName: u.userName }, throwOnError: true }));
   };
 
   const columns = useMemo(
@@ -64,7 +65,10 @@ export function UsersPage() {
           );
         },
       }),
-      column.accessor("createdAt", { header: t("users.created"), cell: ({ getValue }) => <span className="whitespace-nowrap">{formatDateTime(getValue())}</span> }),
+      column.accessor("createdAt", {
+        header: t("users.created"),
+        cell: ({ getValue }) => <span className="whitespace-nowrap">{formatDateTime(getValue())}</span>,
+      }),
       column.accessor((u) => u.lastLoginAt ?? "", {
         id: "lastLogin",
         header: t("users.lastLogin"),
@@ -85,7 +89,12 @@ export function UsersPage() {
               actions={[
                 { label: t("common.edit"), icon: Pencil, onClick: () => setEditing({ user: u, isNew: false }) },
                 { label: t("users.setPassword"), icon: KeyRound, onClick: () => setPassword(u.userName) },
-                { label: t("users.unlock"), icon: LockOpen, hidden: !u.lockedUntil, onClick: () => act(unlockUser({ path: { userName: u.userName }, throwOnError: true })) },
+                {
+                  label: t("users.unlock"),
+                  icon: LockOpen,
+                  hidden: !u.lockedUntil,
+                  onClick: () => act(unlockUser({ path: { userName: u.userName }, throwOnError: true })),
+                },
                 { label: t("common.delete"), icon: Trash2, destructive: true, hidden: self(u), onClick: () => remove(u) },
               ]}
             />
@@ -94,7 +103,7 @@ export function UsersPage() {
       }),
     ],
     // stlpce zavisia od prihlaseneho (self)
-    [me],
+    [self],
   );
 
   return (
@@ -123,7 +132,7 @@ export function UsersPage() {
           userName={password}
           onClose={() => {
             setPassword(null);
-            refreshUsers();
+            void refreshUsers();
           }}
         />
       )}

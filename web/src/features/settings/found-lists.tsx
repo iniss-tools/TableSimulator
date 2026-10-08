@@ -42,11 +42,20 @@ const designColumn = columnsFor<DesignInfoDto>();
 
 /** Pocet najdenych pisiem ELEN; zoznam suborov v okne. */
 export function FontsFound({ fonts, folder }: { fonts: string[]; folder: string }) {
-  const columns = useMemo(() => [fontColumn.accessor("name", { header: t("settings.fonts.col.file"), cell: ({ getValue }) => <code className="font-mono text-xs">{getValue()}</code> })], []);
+  const columns = useMemo(
+    () => [
+      fontColumn.accessor("name", { header: t("settings.fonts.col.file"), cell: ({ getValue }) => <code className="font-mono text-xs">{getValue()}</code> }),
+    ],
+    [],
+  );
   const rows = useMemo(() => fonts.map((name) => ({ name })), [fonts]);
   if (fonts.length === 0) return t("settings.noFonts");
   return (
-    <ListDialog link={t("settings.fontsFound", { count: fonts.length })} title={t("settings.fonts.title")} description={t("settings.fonts.description", { folder })}>
+    <ListDialog
+      link={t("settings.fontsFound", { count: fonts.length })}
+      title={t("settings.fonts.title")}
+      description={t("settings.fonts.description", { folder })}
+    >
       <DataTable columns={columns} data={rows} getRowId={(f) => f.name} pageSize={null} />
     </ListDialog>
   );
@@ -61,13 +70,21 @@ export function DesignsFound({ designs }: { designs: DesignInfoDto[] }) {
       designColumn.accessor((d) => (d.builtIn ? t("settings.designs.builtIn") : t("settings.designs.custom")), {
         id: "origin",
         header: t("settings.designs.col.origin"),
-        cell: ({ row }) => <StatusBadge tone={row.original.builtIn ? "off" : "ok"}>{row.original.builtIn ? t("settings.designs.builtIn") : t("settings.designs.custom")}</StatusBadge>,
+        cell: ({ row }) => (
+          <StatusBadge tone={row.original.builtIn ? "off" : "ok"}>
+            {row.original.builtIn ? t("settings.designs.builtIn") : t("settings.designs.custom")}
+          </StatusBadge>
+        ),
       }),
     ],
     [],
   );
   return (
-    <ListDialog link={t("settings.designsFound", { count: designs.length })} title={t("settings.designs.title")} description={t("settings.designs.description")}>
+    <ListDialog
+      link={t("settings.designsFound", { count: designs.length })}
+      title={t("settings.designs.title")}
+      description={t("settings.designs.description")}
+    >
       <DataTable columns={columns} data={designs} getRowId={(d) => d.id} pageSize={null} search={false} />
     </ListDialog>
   );

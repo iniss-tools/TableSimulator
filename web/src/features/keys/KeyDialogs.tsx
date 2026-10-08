@@ -1,5 +1,5 @@
 // Novy pristupovy kluc a jeho zobrazenie - tajna hodnota len raz, pre zariadenie aj odkaz na vybranu stranku.
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { TriangleAlert } from "lucide-react";
 import {
@@ -85,13 +85,11 @@ export function CreatedKeyDialog({ created, onClose }: { created: AccessKeyCreat
   const virtual = useQuery({ ...getVirtualOverviewOptions(), enabled: device }).data?.boards ?? [];
   const https = useQuery({ ...getHttpsStatusOptions(), enabled: device }).data;
   const httpsPort = https?.enabled ? https.port : null;
-  const [page, setPage] = useState("#/wall");
+  // vybrana stranka; kym obsluha nevyberie, prva virtualna tabula (inak stena tabul)
+  const [chosen, setPage] = useState<string | null>(null);
 
-  // predvolene prva virtualna tabula
   const firstVirtual = virtual[0]?.id;
-  useEffect(() => {
-    if (firstVirtual !== undefined) setPage(`#/virtual/${firstVirtual}`);
-  }, [firstVirtual]);
+  const page = chosen ?? (firstVirtual !== undefined ? `#/virtual/${firstVirtual}` : "#/wall");
 
   const pages = [
     ...virtual.map((b) => ({ value: `#/virtual/${b.id}`, label: t("keys.page.virtual", { id: b.id, name: b.name }) })),
@@ -100,7 +98,14 @@ export function CreatedKeyDialog({ created, onClose }: { created: AccessKeyCreat
   ];
 
   return (
-    <FormDialog title={t("dialog.key.created", { name: created.key.name })} onClose={onClose} onSubmit={onClose} submitLabel={t("common.close")} noCancel size="lg">
+    <FormDialog
+      title={t("dialog.key.created", { name: created.key.name })}
+      onClose={onClose}
+      onSubmit={onClose}
+      submitLabel={t("common.close")}
+      noCancel
+      size="lg"
+    >
       <Alert className="border-amber-500/40 text-amber-800 dark:text-amber-300">
         <TriangleAlert />
         <AlertDescription className="text-current">{t("keys.secretOnce")}</AlertDescription>

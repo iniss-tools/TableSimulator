@@ -148,13 +148,9 @@ export class CanvasGlyphSource implements GlyphSource {
 
     const h = this.height;
     const fixed = face === 0 || face === 3;
-    ctx.font = fixed
-      ? `${h}px Consolas, "DejaVu Sans Mono", monospace`
-      : `${face === 2 ? "bold " : ""}${h}px "Arial Narrow", Arial, sans-serif`;
+    ctx.font = fixed ? `${h}px Consolas, "DejaVu Sans Mono", monospace` : `${face === 2 ? "bold " : ""}${h}px "Arial Narrow", Arial, sans-serif`;
     ctx.textBaseline = "alphabetic";
-    const advance = fixed
-      ? face === 3 && ch === ":" ? 2 : h >= 16 ? 8 : 6
-      : Math.max(2, Math.round(ctx.measureText(ch).width) + 1);
+    const advance = fixed ? (face === 3 && ch === ":" ? 2 : h >= 16 ? 8 : 6) : Math.max(2, Math.round(ctx.measureText(ch).width) + 1);
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.fillStyle = "#fff";

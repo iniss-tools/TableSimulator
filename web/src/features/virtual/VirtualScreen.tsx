@@ -1,20 +1,10 @@
 // Obrazovka virtualnej tabule podla rozlozenia - kiosk (#/virtual/<cislo>) aj nahlad v editore rozlozenia.
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useMemo, type CSSProperties } from "react";
 import type { VirtualLayoutDto as VirtualLayout, VirtualViewDto as VirtualView } from "@/api";
 import { cn } from "@/lib/utils";
 import { hasText, t } from "@/i18n";
 import { columnColor, columnText, columnWidth, labelKey, layoutColumns, layoutTitle } from "@/render/virtual";
 import styles from "./VirtualScreen.module.css";
-
-/** Aktualny cas, obnovovany po intervale (hodiny, striedanie a blikanie textov). */
-export function useNow(interval: number): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), interval);
-    return () => clearInterval(timer);
-  }, [interval]);
-  return now;
-}
 
 const pad = (n: number) => String(n).padStart(2, "0");
 

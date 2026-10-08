@@ -42,7 +42,9 @@ const column = columnsFor<FrameDto>();
 function useFrames(paused: boolean): [FrameDto[], () => void] {
   const [frames, setFrames] = useState<FrameDto[]>([]);
   const pausedRef = useRef(paused);
-  pausedRef.current = paused;
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
 
   useEffect(() => {
     let lastSeq = 0;
@@ -101,7 +103,7 @@ export function LogPage() {
       column.accessor("time", {
         header: t("log.col.time"),
         meta: { className: "w-28" },
-        cell: ({ getValue }) => <span className="font-mono text-xs tabular-nums">{new Date(getValue()).toLocaleTimeString(locale(), TIME)}</span>,
+        cell: ({ row }) => <span className="font-mono text-xs tabular-nums">{new Date(row.original.time).toLocaleTimeString(locale(), TIME)}</span>,
       }),
       column.accessor("line", { header: t("log.col.line"), meta: { className: "w-14" } }),
       column.accessor("direction", { header: t("log.col.dir"), meta: { className: "w-32" }, cell: ({ row }) => t(`log.dir.${row.original.direction}`) }),
@@ -130,7 +132,7 @@ export function LogPage() {
       column.accessor("hex", {
         header: t("log.col.bytes"),
         meta: { className: "w-[38%]" },
-        cell: ({ getValue }) => <code className="font-mono text-xs break-all whitespace-normal">{hex(getValue())}</code>,
+        cell: ({ row }) => <code className="font-mono text-xs break-all whitespace-normal">{hex(row.original.hex)}</code>,
       }),
     ],
     [],
@@ -171,7 +173,7 @@ export function LogPage() {
           <Button
             variant="outline"
             onClick={() => {
-              clearLog();
+              void clearLog();
               clearFrames();
             }}
           >

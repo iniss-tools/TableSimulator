@@ -25,7 +25,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { t, type TextKey } from "@/i18n";
 import { CELL_NAMES, defaultColumn, layoutColumns } from "@/render/virtual";
 import { layoutName } from "./layouts";
-import { useNow, VirtualScreen } from "./VirtualScreen";
+import { useNow } from "@/hooks/use-now";
+import { VirtualScreen } from "./VirtualScreen";
 
 const COLORS: (keyof VirtualColorsDto)[] = ["background", "text", "headBackground", "headText", "accent", "muted", "delay", "rowLine"];
 const CLOCKS: VirtualClock[] = ["none", "minutes", "seconds"];
@@ -134,7 +135,12 @@ export function VirtualLayoutDialog({ initial, isNew, boards, onClose }: Props) 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {COLORS.map((key) => (
                 <label key={key} className="flex items-center gap-2 text-sm">
-                  <input type="color" className="size-7 cursor-pointer rounded border bg-transparent" value={layout.colors[key]} onChange={(e) => setColor(key, e.target.value)} />
+                  <input
+                    type="color"
+                    className="size-7 cursor-pointer rounded border bg-transparent"
+                    value={layout.colors[key]}
+                    onChange={(e) => setColor(key, e.target.value)}
+                  />
                   {t(`layout.color.${key}` as TextKey)}
                 </label>
               ))}
@@ -161,7 +167,14 @@ export function VirtualLayoutDialog({ initial, isNew, boards, onClose }: Props) 
             <FieldLegend>{t("layout.timing")}</FieldLegend>
             <div className="grid gap-4 sm:grid-cols-3">
               <FormField label={t("layout.field.alternationMs")}>
-                <Input type="number" min={300} max={20000} step={100} value={layout.alternationMs} onChange={(e) => set({ alternationMs: number(e.target.value, 1500) })} />
+                <Input
+                  type="number"
+                  min={300}
+                  max={20000}
+                  step={100}
+                  value={layout.alternationMs}
+                  onChange={(e) => set({ alternationMs: number(e.target.value, 1500) })}
+                />
               </FormField>
               <FormField label={t("layout.field.blinkMs")}>
                 <Input type="number" min={100} max={5000} step={50} value={layout.blinkMs} onChange={(e) => set({ blinkMs: number(e.target.value, 600) })} />
@@ -243,10 +256,20 @@ export function VirtualLayoutDialog({ initial, isNew, boards, onClose }: Props) 
                         />
                       </TableCell>
                       <TableCell>
-                        <Input aria-label={t("layout.column.label")} className="min-w-28" value={c.label} onChange={(e) => setColumn(i, { label: e.target.value })} />
+                        <Input
+                          aria-label={t("layout.column.label")}
+                          className="min-w-28"
+                          value={c.label}
+                          onChange={(e) => setColumn(i, { label: e.target.value })}
+                        />
                       </TableCell>
                       <TableCell>
-                        <Input list="layout-widths" aria-label={t("layout.column.width")} value={c.width} onChange={(e) => setColumn(i, { width: e.target.value.trim() })} />
+                        <Input
+                          list="layout-widths"
+                          aria-label={t("layout.column.width")}
+                          value={c.width}
+                          onChange={(e) => setColumn(i, { width: e.target.value.trim() })}
+                        />
                       </TableCell>
                       <TableCell>
                         <OptionSelect<VirtualAlign>
@@ -258,7 +281,12 @@ export function VirtualLayoutDialog({ initial, isNew, boards, onClose }: Props) 
                         />
                       </TableCell>
                       <TableCell>
-                        <Input list="layout-colors" aria-label={t("layout.column.color")} value={c.color} onChange={(e) => setColumn(i, { color: e.target.value.trim() })} />
+                        <Input
+                          list="layout-colors"
+                          aria-label={t("layout.column.color")}
+                          value={c.color}
+                          onChange={(e) => setColumn(i, { color: e.target.value.trim() })}
+                        />
                       </TableCell>
                       <TableCell>
                         <Checkbox checked={c.bold} aria-label={t("layout.column.bold")} onCheckedChange={(bold) => setColumn(i, { bold: bold === true })} />
@@ -282,7 +310,14 @@ export function VirtualLayoutDialog({ initial, isNew, boards, onClose }: Props) 
                           <Button type="button" variant="ghost" size="icon-sm" title={t("common.up")} disabled={i === 0} onClick={() => move(i, -1)}>
                             <ArrowUp />
                           </Button>
-                          <Button type="button" variant="ghost" size="icon-sm" title={t("common.down")} disabled={i === layout.columns.length - 1} onClick={() => move(i, 1)}>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            title={t("common.down")}
+                            disabled={i === layout.columns.length - 1}
+                            onClick={() => move(i, 1)}
+                          >
                             <ArrowDown />
                           </Button>
                           <Button

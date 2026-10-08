@@ -53,7 +53,12 @@ const virtualKiosk = createRoute({
   },
 });
 
-const shell = createRoute({ getParentRoute: () => rootRoute, id: "shell", component: lazyRouteComponent(() => import("./AppShell"), "AppShell"), notFoundComponent: () => t("nav.notFound") });
+const shell = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "shell",
+  component: lazyRouteComponent(() => import("./AppShell"), "AppShell"),
+  notFoundComponent: () => t("nav.notFound"),
+});
 
 const pages = [
   createRoute({ getParentRoute: () => shell, path: "/", component: lazyRouteComponent(() => import("@/features/boards/BoardsPage"), "BoardsPage") }),
@@ -62,19 +67,32 @@ const pages = [
     getParentRoute: () => shell,
     path: "/boards",
     beforeLoad: () => {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- presmerovanie TanStack Router sa vyhadzuje ako objekt
       throw redirect({ to: "/" });
     },
   }),
   createRoute({ getParentRoute: () => shell, path: "/lines", component: lazyRouteComponent(() => import("@/features/lines/LinesPage"), "LinesPage") }),
   createRoute({ getParentRoute: () => shell, path: "/log", component: lazyRouteComponent(() => import("@/features/traffic/LogPage"), "LogPage") }),
-  createRoute({ getParentRoute: () => shell, path: "/recordings", component: lazyRouteComponent(() => import("@/features/recordings/RecordingsPage"), "RecordingsPage") }),
-  createRoute({ getParentRoute: () => shell, path: "/virtual", component: lazyRouteComponent(() => import("@/features/virtual/VirtualBoardsPage"), "VirtualBoardsPage") }),
+  createRoute({
+    getParentRoute: () => shell,
+    path: "/recordings",
+    component: lazyRouteComponent(() => import("@/features/recordings/RecordingsPage"), "RecordingsPage"),
+  }),
+  createRoute({
+    getParentRoute: () => shell,
+    path: "/virtual",
+    component: lazyRouteComponent(() => import("@/features/virtual/VirtualBoardsPage"), "VirtualBoardsPage"),
+  }),
   createRoute({ getParentRoute: () => shell, path: "/archive/tables", component: () => <ArchivePage key="tables" kind="tables" /> }),
   createRoute({ getParentRoute: () => shell, path: "/archive/reports", component: () => <ArchivePage key="reports" kind="reports" /> }),
   createRoute({ getParentRoute: () => shell, path: "/users", component: lazyRouteComponent(() => import("@/features/users/UsersPage"), "UsersPage") }),
   createRoute({ getParentRoute: () => shell, path: "/keys", component: lazyRouteComponent(() => import("@/features/keys/KeysPage"), "KeysPage") }),
   createRoute({ getParentRoute: () => shell, path: "/audit", component: lazyRouteComponent(() => import("@/features/audit/AuditPage"), "AuditPage") }),
-  createRoute({ getParentRoute: () => shell, path: "/settings", component: lazyRouteComponent(() => import("@/features/settings/SettingsPage"), "SettingsPage") }),
+  createRoute({
+    getParentRoute: () => shell,
+    path: "/settings",
+    component: lazyRouteComponent(() => import("@/features/settings/SettingsPage"), "SettingsPage"),
+  }),
 ] as const;
 
 const routeTree = rootRoute.addChildren([boardKiosk, wall, virtualKiosk, shell.addChildren(pages)]);

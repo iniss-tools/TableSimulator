@@ -38,12 +38,15 @@ export const features = tableFeatures({
   sortedRowModel: createSortedRowModel(),
   filterFns: { includesString: filterFn_includesString },
   sortFns: { alphanumeric: sortFn_alphanumeric, text: sortFn_text, basic: sortFn_basic, datetime: sortFn_datetime },
+  // typ meta stlpca sa odvodzuje z tejto hodnoty - bez pretypovania by bol {}
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
   columnMeta: {} as DataTableColumnMeta,
 });
 
 export type DataTableFeatures = typeof features;
 
 // stlpce maju rozne typy hodnot - pole stlpcov ich musi pripustit vsetky
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type DataTableColumn<TData extends RowData> = ColumnDef<DataTableFeatures, TData, any>;
 
 /** Pomocnik na stlpce s typom hodnoty z riadku. */

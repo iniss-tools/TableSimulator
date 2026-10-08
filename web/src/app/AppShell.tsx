@@ -27,7 +27,10 @@ export function AppShell() {
           <h1 className="truncate text-sm font-medium">{item ? t(item.label) : t("app.title")}</h1>
         </header>
         {!connected && loaded && (
-          <div role="status" className="flex items-center gap-2 border-b border-amber-500/30 bg-amber-500/15 px-4 py-2 text-sm text-amber-900 dark:text-amber-200">
+          <div
+            role="status"
+            className="flex items-center gap-2 border-b border-amber-500/30 bg-amber-500/15 px-4 py-2 text-sm text-amber-900 dark:text-amber-200"
+          >
             <CircleAlert className="size-4 shrink-0" />
             {t("server.offline")}
           </div>

@@ -8,7 +8,8 @@ import { t } from "@/i18n";
 export interface RowAction {
   label: string;
   icon?: LucideIcon;
-  onClick: () => void;
+  /** Moze vratit sluz (async) - chyby riesi sama. */
+  onClick: () => unknown;
   /** Akcia nieco zmaze - cervena a oddelena od ostatnych. */
   destructive?: boolean;
   disabled?: boolean;
@@ -21,7 +22,7 @@ export function RowActions({ actions }: { actions: RowAction[] }) {
   const normal = shown.filter((a) => !a.destructive);
   const destructive = shown.filter((a) => a.destructive);
   const item = (a: RowAction) => (
-    <DropdownMenuItem key={a.label} variant={a.destructive ? "destructive" : "default"} disabled={a.disabled} onClick={a.onClick}>
+    <DropdownMenuItem key={a.label} variant={a.destructive ? "destructive" : "default"} disabled={a.disabled} onClick={() => void a.onClick()}>
       {a.icon && <a.icon />}
       {a.label}
     </DropdownMenuItem>

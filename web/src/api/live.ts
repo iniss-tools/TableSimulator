@@ -96,28 +96,28 @@ function apply(message: LiveMessage) {
       break;
     case "structure":
       // aj zmena nastavenia - priecinky pisiem, vzhladov a Monitora
-      queryClient.invalidateQueries({ queryKey: stateKey });
-      queryClient.invalidateQueries({ queryKey: getFontsQueryKey() });
-      queryClient.invalidateQueries({ queryKey: getDesignsQueryKey() });
-      queryClient.invalidateQueries({ queryKey: getMonitorQueryKey() });
+      void queryClient.invalidateQueries({ queryKey: stateKey });
+      void queryClient.invalidateQueries({ queryKey: getFontsQueryKey() });
+      void queryClient.invalidateQueries({ queryKey: getDesignsQueryKey() });
+      void queryClient.invalidateQueries({ queryKey: getMonitorQueryKey() });
       break;
     case "design":
-      queryClient.invalidateQueries({ queryKey: getDesignsQueryKey() });
+      void queryClient.invalidateQueries({ queryKey: getDesignsQueryKey() });
       setConnection({ designVersion: connection.designVersion + 1 });
       designListeners.forEach((l) => l(message.id));
       break;
     case "recorder":
       updateRecordings((r) => ({ ...r, recorder: message.status }));
       // dokonceny zaznam pribudol do zoznamu
-      if (!message.status.recording) queryClient.invalidateQueries({ queryKey: recordingsKey });
+      if (!message.status.recording) void queryClient.invalidateQueries({ queryKey: recordingsKey });
       break;
     case "replay":
       updateRecordings((r) => ({ ...r, replay: message.status }));
       // po dohrani mohol pribudnut zaznam s novym casom
-      if (message.status.state !== "running") queryClient.invalidateQueries({ queryKey: recordingsKey });
+      if (message.status.state !== "running") void queryClient.invalidateQueries({ queryKey: recordingsKey });
       break;
     case "recordings":
-      queryClient.invalidateQueries({ queryKey: recordingsKey });
+      void queryClient.invalidateQueries({ queryKey: recordingsKey });
       break;
     case "virtual":
       invalidateVirtual(message.sources, message.definitions);
@@ -140,8 +140,8 @@ export function openSocket(onFrames?: (frames: FrameDto[]) => void, withLog = fa
       if (withLog) return;
       setConnection({ connected: true });
       // co sa zmenilo pocas vypadku
-      queryClient.invalidateQueries({ queryKey: stateKey });
-      queryClient.invalidateQueries({ queryKey: recordingsKey });
+      void queryClient.invalidateQueries({ queryKey: stateKey });
+      void queryClient.invalidateQueries({ queryKey: recordingsKey });
       invalidateVirtual([], true);
     };
     socket.onclose = () => {
@@ -149,7 +149,7 @@ export function openSocket(onFrames?: (frames: FrameDto[]) => void, withLog = fa
       if (!closed) retry = setTimeout(connect, 1500);
     };
     socket.onmessage = (event) => {
-      const message = JSON.parse(event.data) as LiveMessage;
+      const message = JSON.parse(event.data as string) as LiveMessage;
       if (message.type === "frames") onFrames?.(message.frames);
       else if (!withLog) apply(message);
     };
@@ -165,5 +165,5 @@ export function openSocket(onFrames?: (frames: FrameDto[]) => void, withLog = fa
 
 // prihlasenie vyprsalo alebo pouzivatela vypli - zisti sa znova, kto je prihlaseny
 onUnauthorized(() => {
-  queryClient.invalidateQueries({ queryKey: getMeQueryKey() });
+  void queryClient.invalidateQueries({ queryKey: getMeQueryKey() });
 });

@@ -4,7 +4,7 @@ import { BoardView } from "@/features/boards/BoardView";
 import { t } from "@/i18n";
 
 function fullscreen() {
-  if (document.fullscreenElement) document.exitFullscreen();
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined);
   else document.documentElement.requestFullscreen?.().catch(() => undefined);
 }
 

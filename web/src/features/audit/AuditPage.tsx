@@ -127,7 +127,11 @@ export function AuditPage() {
           );
         },
       }),
-      column.accessor((e) => e.address ?? "", { id: "address", header: t("audit.col.address"), cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue()}</span> }),
+      column.accessor((e) => e.address ?? "", {
+        id: "address",
+        header: t("audit.col.address"),
+        cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue()}</span>,
+      }),
       column.accessor("details", {
         header: t("audit.col.details"),
         enableSorting: false,
@@ -164,7 +168,13 @@ export function AuditPage() {
         rowClassName={(e) => (e.success ? undefined : "bg-destructive/5")}
         toolbar={
           <>
-            <Input className="max-w-56" placeholder={t("audit.filter.user")} aria-label={t("audit.filter.user")} value={user} onChange={(e) => setUser(e.target.value)} />
+            <Input
+              className="max-w-56"
+              placeholder={t("audit.filter.user")}
+              aria-label={t("audit.filter.user")}
+              value={user}
+              onChange={(e) => setUser(e.target.value)}
+            />
             <OptionSelect
               value={action}
               onValueChange={setAction}

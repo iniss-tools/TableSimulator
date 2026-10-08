@@ -38,8 +38,20 @@ export function HeaderEditor({ header, width, onChange }: { header: BoardHeaderD
       {clock && (
         <FormField label={t("header.clockPos")}>
           <div className="flex gap-2">
-            <Input type="number" aria-label="X" className="w-24" value={clock.x} onChange={(e) => onChange({ ...header, clock: { ...clock, x: num(e.target.value) } })} />
-            <Input type="number" aria-label="Y" className="w-24" value={clock.y} onChange={(e) => onChange({ ...header, clock: { ...clock, y: num(e.target.value) } })} />
+            <Input
+              type="number"
+              aria-label="X"
+              className="w-24"
+              value={clock.x}
+              onChange={(e) => onChange({ ...header, clock: { ...clock, x: num(e.target.value) } })}
+            />
+            <Input
+              type="number"
+              aria-label="Y"
+              className="w-24"
+              value={clock.y}
+              onChange={(e) => onChange({ ...header, clock: { ...clock, y: num(e.target.value) } })}
+            />
             <Input
               type="number"
               aria-label={t("header.textHeight")}
@@ -73,7 +85,13 @@ export function HeaderEditor({ header, width, onChange }: { header: BoardHeaderD
                     <Input type="number" aria-label="Y" value={text.y} onChange={(e) => setText(i, { y: num(e.target.value) })} />
                   </TableCell>
                   <TableCell>
-                    <Input type="number" aria-label={t("header.textHeight")} min={1} value={text.height} onChange={(e) => setText(i, { height: num(e.target.value) })} />
+                    <Input
+                      type="number"
+                      aria-label={t("header.textHeight")}
+                      min={1}
+                      value={text.height}
+                      onChange={(e) => setText(i, { height: num(e.target.value) })}
+                    />
                   </TableCell>
                   <TableCell>
                     <Input aria-label={t("header.text")} value={text.text} onChange={(e) => setText(i, { text: e.target.value })} />

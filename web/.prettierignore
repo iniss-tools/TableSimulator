@@ -1,0 +1,5 @@
+# generovany klient API a snimka OpenAPI
+src/api/generated
+openapi.json
+tools/*/node_modules
+bun.lock

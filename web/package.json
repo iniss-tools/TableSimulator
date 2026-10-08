@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
+    "lint": "cd tools/lint && bun install --frozen-lockfile && cd ../.. && tools/lint/node_modules/.bin/eslint --config tools/lint/eslint.config.js src",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "bun test",
     "api": "cd tools/api && bun install && bun run gen"
   },
@@ -31,6 +34,8 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
+    "prettier": "^3.9.9",
+    "prettier-plugin-tailwindcss": "^0.8.1",
     "shadcn": "^4.21.4",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",

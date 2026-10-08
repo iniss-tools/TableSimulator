@@ -1,5 +1,10 @@
 // Virtualna tabula: stlpce podla rozlozenia alebo podla XML INISSu, striedanie a blikanie textov ako v INISSView.
-import type { VirtualColorsDto as VirtualColors, VirtualColumnDto as VirtualColumn, VirtualLayoutDto as VirtualLayout, VirtualRowDto as VirtualRow } from "../api/generated/types.gen";
+import type {
+  VirtualColorsDto as VirtualColors,
+  VirtualColumnDto as VirtualColumn,
+  VirtualLayoutDto as VirtualLayout,
+  VirtualRowDto as VirtualRow,
+} from "../api/generated/types.gen";
 
 /** Casovanie textov - z rozlozenia (INISSView Jscript.iNextString, iBlinkPause, iMaxBlinkPhase). */
 export interface Timing {
@@ -46,8 +51,7 @@ export function cellOf(row: VirtualRow, name: string): string {
  */
 export function virtualColumns(rows: VirtualRow[]): AutoColumn[] {
   const names: string[] = [];
-  for (const row of rows)
-    for (const cell of row.cells) if (!names.includes(cell.name) && !HIDDEN.has(cell.name)) names.push(cell.name);
+  for (const row of rows) for (const cell of row.cells) if (!names.includes(cell.name) && !HIDDEN.has(cell.name)) names.push(cell.name);
   const used = names.filter((name) => rows.some((row) => cellOf(row, name) !== ""));
   const train = used.includes("type") && used.includes("number");
   const columns: AutoColumn[] = [];
@@ -121,5 +125,8 @@ export function columnWidth(width: string): string | undefined {
 
 /** Nadpis z rozlozenia s nazvom tabule a stanicou. */
 export function layoutTitle(title: string, name: string, station: string | null | undefined): string {
-  return title.replaceAll("{name}", name).replaceAll("{station}", station ?? "").trim();
+  return title
+    .replaceAll("{name}", name)
+    .replaceAll("{station}", station ?? "")
+    .trim();
 }

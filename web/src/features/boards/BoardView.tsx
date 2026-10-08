@@ -1,5 +1,5 @@
 // Ziva tabula: rasterizacia obsahu + LED renderer, prisposobena velkosti miesta.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useConnection, type BoardDto as Board } from "@/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -45,11 +45,10 @@ export function BoardView({ board, fit = "width", className }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [design, setDesign] = useState<LedDesign>(DEFAULT_DESIGN);
-  const [fontSet, setFontSet] = useState<ElenFontSet | null>(null);
   const [space, setSpace] = useState({ width: 0, height: 0 });
   // co uz je nacitane - prvy raz sa kresli az so spravnym vzhladom a pismom (bez mihnutia nahradnych)
   const [loadedDesign, setLoadedDesign] = useState<string | null>(null);
-  const [loadedFont, setLoadedFont] = useState<string | null>(null);
+  const [font, setFont] = useState<{ file: string; set: ElenFontSet | null } | null>(null);
   const [drawn, setDrawn] = useState(false);
   const firstDone = useRef(false);
 
@@ -57,7 +56,7 @@ export function BoardView({ board, fit = "width", className }: Props) {
   const designKey = `${designId}|${designVersion}`;
   useEffect(() => {
     let live = true;
-    loadDesign(designId, designVersion).then((d) => {
+    void loadDesign(designId, designVersion).then((d) => {
       if (!live) return;
       setDesign(d);
       setLoadedDesign(`${designId}|${designVersion}`);
@@ -68,14 +67,13 @@ export function BoardView({ board, fit = "width", className }: Props) {
   }, [designId, designVersion]);
 
   const fontFile = board.profile.fontFile;
+  // pismo patri k suboru z profilu - po zmene suboru sa do nacitania noveho kresli nahradnym
+  const fontSet = font?.file === fontFile ? font.set : null;
   useEffect(() => {
     let live = true;
-    if (!fontFile) setFontSet(null);
-    else
-      loadFontSet(fontFile).then((f) => {
-        if (!live) return;
-        setFontSet(f);
-        setLoadedFont(fontFile);
+    if (fontFile)
+      void loadFontSet(fontFile).then((set) => {
+        if (live) setFont({ file: fontFile, set });
       });
     return () => {
       live = false;
@@ -96,12 +94,21 @@ export function BoardView({ board, fit = "width", className }: Props) {
 
   const rowHeight = board.profile.rowHeight;
   const natural = ledSize({ width: board.profile.width, height: board.profile.rows * rowHeight }, design, rowHeight, board.profile.header);
-  const cssScale = space.width > 0 ? (fit === "contain" && space.height > 0 ? Math.min(space.width / natural.width, space.height / natural.height) : space.width / natural.width) : 0;
+  const cssScale =
+    space.width > 0
+      ? fit === "contain" && space.height > 0
+        ? Math.min(space.width / natural.width, space.height / natural.height)
+        : space.width / natural.width
+      : 0;
 
   const source = fontSet ? new ElenGlyphSource(fontSet, board.profile.fontMap) : null;
-  inputs.current = { board, design, source, scale: cssScale * (window.devicePixelRatio || 1) };
+  const scale = cssScale * (window.devicePixelRatio || 1);
+  // pred efektom kreslenia (layout efekt bezi skor)
+  useLayoutEffect(() => {
+    inputs.current = { board, design, source, scale };
+  });
 
-  const ready = loadedDesign === designKey && (!fontFile || loadedFont === fontFile);
+  const ready = loadedDesign === designKey && (!fontFile || font?.file === fontFile);
 
   useEffect(() => {
     if (!canvas.current || cssScale <= 0 || (!firstDone.current && !ready)) return;

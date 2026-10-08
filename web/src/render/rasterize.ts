@@ -13,7 +13,9 @@ export function isAnimated(board: Board): boolean {
   if (d.family === "chars") return isCharsAnimated(board);
   if (d.movingRow > 0 && d.movingCodes && d.movingCodes.length > 0) return true;
   return d.rows.some((r) =>
-    r.elements.some((e) => e.type === "alt" || (e.run !== null && (e.run.font & 0x04) !== 0) || (e.parts ?? []).some((p) => p.some((run) => (run.font & 0x04) !== 0))),
+    r.elements.some(
+      (e) => e.type === "alt" || (e.run !== null && (e.run.font & 0x04) !== 0) || (e.parts ?? []).some((p) => p.some((run) => (run.font & 0x04) !== 0)),
+    ),
   );
 }
 

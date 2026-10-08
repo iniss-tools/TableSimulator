@@ -34,7 +34,11 @@ export function KeysPage() {
       column.accessor("name", { header: t("keys.name"), cell: ({ getValue }) => <span className="font-medium">{getValue()}</span> }),
       column.accessor((k) => t(`keys.kind.${k.kind}` as TextKey), { id: "kind", header: t("keys.kind") }),
       column.accessor((k) => t(`role.${k.role}` as TextKey), { id: "role", header: t("users.role") }),
-      column.accessor("prefix", { header: t("keys.prefix"), enableSorting: false, cell: ({ getValue }) => <code className="font-mono text-xs">{getValue()}…</code> }),
+      column.accessor("prefix", {
+        header: t("keys.prefix"),
+        enableSorting: false,
+        cell: ({ getValue }) => <code className="font-mono text-xs">{getValue()}…</code>,
+      }),
       column.accessor("createdAt", {
         header: t("keys.created"),
         cell: ({ row }) => (
@@ -83,7 +87,7 @@ export function KeysPage() {
             setCreating(false);
             if (result) {
               setCreated(result);
-              refreshKeys();
+              void refreshKeys();
             }
           }}
         />

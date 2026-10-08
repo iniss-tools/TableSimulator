@@ -146,7 +146,8 @@ export const cs: Record<TextKey, string> = {
   "log.status.fault": "porucha",
   "log.status.noise": "šum",
   "log.status.eotInData": "04 v datech",
-  "log.status.eotInData.hint": "V obsahu zprávy je bajt 04 – v protokolu ELEN konec zprávy. Bývá to číslo písma bez bitu 0x40 (např. 4 v seznamu písem stanice); tabule ELEN zprávu ukončí už u něj, součet jí nesedí a zprávu odmítne. Číslo písma pro ELEN má bit 0x40, např. 82 tenké zelené, 98 tučné zelené.",
+  "log.status.eotInData.hint":
+    "V obsahu zprávy je bajt 04 – v protokolu ELEN konec zprávy. Bývá to číslo písma bez bitu 0x40 (např. 4 v seznamu písem stanice); tabule ELEN zprávu ukončí už u něj, součet jí nesedí a zprávu odmítne. Číslo písma pro ELEN má bit 0x40, např. 82 tenké zelené, 98 tučné zelené.",
   "log.broadcast": "hromadně",
 
   "kind.elen.row": "Řádek {row}: „{text}“",
@@ -181,7 +182,8 @@ export const cs: Record<TextKey, string> = {
   "settings.saved": "Uloženo.",
   "settings.restart": "Uloženo. Porty, přístup ze sítě, HTTPS a přihlašování se projeví po restartu simulátoru.",
   "nav.recordings": "Záznamy",
-  "rec.hint": "Záznam uloží vše, co INISS pošle na linky, i odpovědi tabulí. Přehrání posílá uložené zprávy do linek simulátoru, jako by je posílal INISS – hodí se pro zkoušky bez INISSu i pro přenos situace z jiné stanice. Linky a tabule ze záznamu, které zde chybí, se doplní.",
+  "rec.hint":
+    "Záznam uloží vše, co INISS pošle na linky, i odpovědi tabulí. Přehrání posílá uložené zprávy do linek simulátoru, jako by je posílal INISS – hodí se pro zkoušky bez INISSu i pro přenos situace z jiné stanice. Linky a tabule ze záznamu, které zde chybí, se doplní.",
   "rec.start": "Spustit záznam",
   "rec.stop": "Zastavit záznam",
   "rec.note": "Poznámka",
@@ -207,7 +209,8 @@ export const cs: Record<TextKey, string> = {
   "replay.stopped": "Přehrání {name} zastaveno",
   "replay.pass": "{pass}. přehrání",
   "replay.stop": "Zastavit",
-  "field.endpoint.hint": "TCP://0.0.0.0:47003 nebo UDP://… – simulátor naslouchá a INISS se připojuje. \\\\.\\PIPE\\jmeno – rouru vytváří INISS a simulátor se k ní připojuje (i na jiném počítači: \\\\pocitac\\PIPE\\jmeno).",
+  "field.endpoint.hint":
+    "TCP://0.0.0.0:47003 nebo UDP://… – simulátor naslouchá a INISS se připojuje. \\\\.\\PIPE\\jmeno – rouru vytváří INISS a simulátor se k ní připojuje (i na jiném počítači: \\\\pocitac\\PIPE\\jmeno).",
   "board.lineAddress2": "linka {line} · adresy {address} a {second}",
   "field.secondAddress": "Druhá adresa",
   "field.secondAddress.hint": "Panel se dvěma adresami – druhá ovládá horní polovinu řádků.",
@@ -429,7 +432,8 @@ export const cs: Record<TextKey, string> = {
   "error.archive.notFound": "Archiv za tento den neexistuje.",
   "error.archive.unreadable": "Soubor archivu nelze přečíst.",
   "error.archive.page": "Neplatná stránka archivu.",
-  "virtual.hint": "Tabule v INISSu s vyplněným exportem do XML (SAVE_XML) zapisuje svůj obsah do složky logů INISSu. Simulátor složku sleduje a tabuli zobrazí na celé obrazovce – stejně jako INISSView. Odkaz Zobrazit dejte prohlížeči na monitoru.",
+  "virtual.hint":
+    "Tabule v INISSu s vyplněným exportem do XML (SAVE_XML) zapisuje svůj obsah do složky logů INISSu. Simulátor složku sleduje a tabuli zobrazí na celé obrazovce – stejně jako INISSView. Odkaz Zobrazit dejte prohlížeči na monitoru.",
   "virtual.add": "Přidat tabuli",
   "virtual.import": "Načíst z INISSView…",
   "virtual.import.done": "Z Web.config: {added} nových, {replaced} přepsaných, {skipped} vynechaných.",
@@ -500,7 +504,8 @@ export const cs: Record<TextKey, string> = {
   "virtual.cell.company": "Dopravce",
   "virtual.cell.line": "Linka",
   "settings.virtualFolders": "Složky XML tabulí INISSu (virtuální tabule)",
-  "settings.virtualFolders.hint": "Složka logů INISSu (PathNames\\LogPath), kam INISS zapisuje XML tabulí s vyplněným SAVE_XML – jedna na řádek, nejvýše 4. Stejnojmenný soubor se bere novější.",
+  "settings.virtualFolders.hint":
+    "Složka logů INISSu (PathNames\\LogPath), kam INISS zapisuje XML tabulí s vyplněným SAVE_XML – jedna na řádek, nejvýše 4. Stejnojmenný soubor se bere novější.",
   "error.settings.virtualFolders": "Nejvýše 4 složky s XML tabulí.",
   "error.virtual.id": "Číslo tabule musí být 1 až 99999.",
   "error.virtual.name": "Zadejte název (nejvýše 100 znaků).",
@@ -520,7 +525,8 @@ export const cs: Record<TextKey, string> = {
   "virtual.layout.default": "výchozí ({name})",
   "virtual.col.layout": "Rozložení",
   "virtual.layouts.title": "Rozložení",
-  "virtual.layouts.hint": "Rozložení určuje vzhled virtuální tabule – nadpis, hodiny, sloupce, barvy, písmo a střídání textů. Vestavěná rozložení nelze měnit, ale lze je zkopírovat a kopii upravit.",
+  "virtual.layouts.hint":
+    "Rozložení určuje vzhled virtuální tabule – nadpis, hodiny, sloupce, barvy, písmo a střídání textů. Vestavěná rozložení nelze měnit, ale lze je zkopírovat a kopii upravit.",
   "virtual.layout.col.name": "Název",
   "virtual.layout.col.id": "Klíč",
   "virtual.layout.col.columns": "Sloupce",
@@ -567,7 +573,8 @@ export const cs: Record<TextKey, string> = {
   "layout.preview.sample": "ukázková data",
   "layout.columns": "Sloupce",
   "layout.columns.auto": "Sloupce podle XML (v pořadí sloupců tabule v INISSu)",
-  "layout.column.hint": "Prvky XML oddělené mezerou (type number = druh a číslo vlaku). Šířka: prázdná = podle obsahu, fill = zbytek řádku, 12% nebo 6em. Barva: accent, muted, delay z barev rozložení nebo #rrggbb. Prázdný popis = výchozí podle prvku.",
+  "layout.column.hint":
+    "Prvky XML oddělené mezerou (type number = druh a číslo vlaku). Šířka: prázdná = podle obsahu, fill = zbytek řádku, 12% nebo 6em. Barva: accent, muted, delay z barev rozložení nebo #rrggbb. Prázdný popis = výchozí podle prvku.",
   "layout.column.cells": "Prvky XML",
   "layout.column.label": "Popis",
   "layout.column.width": "Šířka",
@@ -598,8 +605,10 @@ export const cs: Record<TextKey, string> = {
   "error.virtual.layoutBuiltIn": "Vestavěné rozložení nelze změnit ani odstranit – zkopírujte ho.",
   "error.virtual.layoutInUse": "Rozložení používají virtuální tabule – nejdřív jim nastavte jiné.",
   "nav.users": "Uživatelé",
-  "users.hint": "Správce smí vše, operátor mění linky, tabule a záznamy, pozorovatel jen prohlíží. Změna role se přihlášenému projeví do minuty; vypnutí účtu, nové heslo a odstranění jej odhlásí.",
-  "users.loginOff": "Přihlašování je vypnuté – dokud ho nezapnete v Nastavení (nebo přístup ze sítě), uživatelé se nepřihlašují a každý na tomto počítači je správce.",
+  "users.hint":
+    "Správce smí vše, operátor mění linky, tabule a záznamy, pozorovatel jen prohlíží. Změna role se přihlášenému projeví do minuty; vypnutí účtu, nové heslo a odstranění jej odhlásí.",
+  "users.loginOff":
+    "Přihlašování je vypnuté – dokud ho nezapnete v Nastavení (nebo přístup ze sítě), uživatelé se nepřihlašují a každý na tomto počítači je správce.",
   "users.add": "Přidat uživatele",
   "users.role": "Role",
   "users.role.admin.hint": "Vše včetně nastavení serveru, uživatelů a auditu.",
@@ -680,7 +689,8 @@ export const cs: Record<TextKey, string> = {
   "audit.action.SetVirtualLayout": "Změna rozložení",
   "audit.action.DeleteVirtualLayout": "Odstranění rozložení",
   "auth.keyInvalid": "Klíč zařízení v odkazu server nepřijal (byl odstraněn nebo je neúplný). Požádejte správce o nový odkaz, nebo se přihlaste.",
-  "keys.hint": "Přístupový klíč nahrazuje přihlášení: zařízení (monitor, kiosk) jej má v odkazu a smí jen prohlížet, program (GVDEditor, skript) jej posílá v hlavičce Authorization: Bearer s rolí podle výběru. Odstraněný klíč přestane platit hned.",
+  "keys.hint":
+    "Přístupový klíč nahrazuje přihlášení: zařízení (monitor, kiosk) jej má v odkazu a smí jen prohlížet, program (GVDEditor, skript) jej posílá v hlavičce Authorization: Bearer s rolí podle výběru. Odstraněný klíč přestane platit hned.",
   "keys.add": "Nový klíč",
   "keys.create": "Vytvořit",
   "keys.empty": "Zatím žádný klíč.",
@@ -699,12 +709,13 @@ export const cs: Record<TextKey, string> = {
   "keys.secretOnce": "Klíč se zobrazí jen teď – server si jej nepamatuje. Zkopírujte jej; pokud jej ztratíte, vytvořte nový.",
   "keys.secret": "Klíč",
   "keys.page": "Stránka zařízení",
-  "keys.page.hint": "Odkaz otevřete v prohlížeči zařízení (např. msedge --kiosk \"odkaz\"); klíč se z adresy po otevření skryje.",
+  "keys.page.hint": 'Odkaz otevřete v prohlížeči zařízení (např. msedge --kiosk "odkaz"); klíč se z adresy po otevření skryje.',
   "keys.page.virtual": "virtuální tabule {id} – {name}",
   "keys.page.wall": "všechny tabule pod sebou",
   "keys.page.board": "tabule {name}",
   "keys.link": "Odkaz pro zařízení",
-  "keys.api.hint": "GVDEditor: Nastavení INISSu → Nástroje → Přesměrovat tabule na simulátor → pole API klíč. Jiný program pošle hlavičku Authorization: Bearer klíč.",
+  "keys.api.hint":
+    "GVDEditor: Nastavení INISSu → Nástroje → Přesměrovat tabule na simulátor → pole API klíč. Jiný program pošle hlavičku Authorization: Bearer klíč.",
   "keys.thisTab": "Tato karta přistupuje s klíčem zařízení.",
   "keys.forget": "Zapomenout klíč",
   "dialog.key.new": "Nový přístupový klíč",
@@ -749,7 +760,8 @@ export const cs: Record<TextKey, string> = {
   "settings.network": "Síť a přístup",
   "settings.network.hint": "Port webového rozhraní, kdo se k simulátoru dostane a jakou adresu dostane INISS při přesměrování linek.",
   "settings.database": "Databáze",
-  "settings.database.hint": "Nastavení, linky, tabule, virtuální tabule, uživatelé a audit jsou uloženy v databázi. Linky s tabulemi přenesete na jiný počítač exportem a importem na stránce Linky.",
+  "settings.database.hint":
+    "Nastavení, linky, tabule, virtuální tabule, uživatelé a audit jsou uloženy v databázi. Linky s tabulemi přenesete na jiný počítač exportem a importem na stránce Linky.",
   "settings.unsaved": "Neuložené změny",
   "settings.discard": "Zahodit změny",
   "settings.leave.title": "Odejít bez uložení?",

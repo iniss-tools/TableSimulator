@@ -82,7 +82,15 @@ describe("rasterize", () => {
   test("usek bez kurzora pokracuje za predchadzajucim", () => {
     const source = new ElenGlyphSource(fontSet(), null);
     const frame = rasterize(
-      board([{ row: 2, elements: [{ type: "run", run: run(0, "A", 0x51), parts: null }, { type: "run", run: run(null, "A", 0x40), parts: null }] }]),
+      board([
+        {
+          row: 2,
+          elements: [
+            { type: "run", run: run(0, "A", 0x51), parts: null },
+            { type: "run", run: run(null, "A", 0x40), parts: null },
+          ],
+        },
+      ]),
       source,
       0,
     );

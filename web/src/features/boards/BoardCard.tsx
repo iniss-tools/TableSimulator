@@ -10,6 +10,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { boardConfig } from "@/lib/boards";
 import { cn } from "@/lib/utils";
+import { useNow } from "@/hooks/use-now";
 import { hasText, locale, t } from "@/i18n";
 import { BoardView } from "./BoardView";
 
@@ -39,7 +40,9 @@ function MismatchWarning({ board, edit }: { board: BoardDto; edit: boolean }) {
                 size="sm"
                 variant="outline"
                 onClick={() =>
-                  setBoard({ path: { line: board.line, address: board.address }, body: { ...boardConfig(board), manufacturer: m }, throwOnError: true }).catch(failed)
+                  setBoard({ path: { line: board.line, address: board.address }, body: { ...boardConfig(board), manufacturer: m }, throwOnError: true }).catch(
+                    failed,
+                  )
                 }
               >
                 {t("mismatch.switch", { manufacturer: m })}
@@ -96,7 +99,7 @@ function FaultControl({ board, edit }: { board: BoardDto; edit: boolean }) {
           aria-label={t("fault.statusBits")}
           onBlur={(e) => {
             const status = Number.parseInt(e.target.value, 16);
-            if (!Number.isNaN(status)) fault({ kind: "status", delayMs: 0, status: status & 0xff });
+            if (!Number.isNaN(status)) void fault({ kind: "status", delayMs: 0, status: status & 0xff });
           }}
         />
       )}
@@ -104,12 +107,16 @@ function FaultControl({ board, edit }: { board: BoardDto; edit: boolean }) {
   );
 }
 
+/** Hodiny tabule - idu od nastavenia dalej. */
+function BoardClock({ clock, setAt }: { clock: string; setAt: string }) {
+  const now = useNow(1000);
+  return <> · {t("board.clock", { time: new Date(Date.parse(clock) + (now - Date.parse(setAt))).toLocaleString(locale()) })}</>;
+}
+
 export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: () => void; edit: boolean }) {
   const name = board.name || t("board.unnamed", { address: board.address });
   const last = board.stats.lastFrameAt ? new Date(board.stats.lastFrameAt).toLocaleTimeString(locale()) : null;
   const d = board.display;
-  // hodiny tabule idu od nastavenia dalej
-  const clock = d.clock && d.clockSetAt ? new Date(Date.parse(d.clock) + (Date.now() - Date.parse(d.clockSetAt))).toLocaleString(locale()) : null;
 
   const remove = async () => {
     if (await confirmAction({ title: t("board.delete.confirm", { name }), destructive: true }))
@@ -138,7 +145,12 @@ export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: ()
               <Button variant="ghost" size="icon-sm" title={t("common.edit")} onClick={onEdit}>
                 <Pencil />
               </Button>
-              <Button variant="ghost" size="icon-sm" title={t("board.clear")} onClick={() => clearBoard({ path: { id: board.id }, throwOnError: true }).catch(failed)}>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                title={t("board.clear")}
+                onClick={() => clearBoard({ path: { id: board.id }, throwOnError: true }).catch(failed)}
+              >
                 <Eraser />
               </Button>
               <Button variant="ghost" size="icon-sm" title={t("common.delete")} onClick={remove}>
@@ -156,9 +168,10 @@ export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: ()
       {/* stav tabule vzdy na spodku karty - karty v riadku mriezky maju rovnaku vysku */}
       <CardFooter className="mt-auto flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs text-muted-foreground">
-          {last ? t("board.lastFrame", { time: last }) : t("board.noFrames")} · {t("board.stats", { frames: board.stats.frames, acks: board.stats.acks, naks: board.stats.naks })} ·{" "}
+          {last ? t("board.lastFrame", { time: last }) : t("board.noFrames")} ·{" "}
+          {t("board.stats", { frames: board.stats.frames, acks: board.stats.acks, naks: board.stats.naks })} ·{" "}
           {d.brightness > 0 ? t("board.brightness", { value: d.brightness }) : t("board.dark")}
-          {clock && <> · {t("board.clock", { time: clock })}</>}
+          {d.clock && d.clockSetAt && <BoardClock clock={d.clock} setAt={d.clockSetAt} />}
         </span>
         <FaultControl board={board} edit={edit} />
       </CardFooter>
