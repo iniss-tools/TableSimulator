@@ -1135,4 +1135,11 @@ export const cs: Record<TextKey, string> = {
   "error.signage.messageInUse": "Zprávu používá playlist nebo skupina – nejdřív ji z nich odstraňte.",
   "error.signage.playlistInUse": "Playlist používá skupina – nejdřív ho z ní odstraňte.",
   "error.signage.groupInUse": "Do skupiny patří panely – nejdřív je přeřaďte.",
+  "signage.overlap.pair": "„{a}“ a „{b}“",
+  "signage.overlap.title": "Playlisty se překrývají",
+  "signage.overlap.save": "Uložit i tak",
+  "signage.overlap.text":
+    "Playlisty stejného druhu mohou platit současně: {pairs}. Dokud platí oba, hraje ten s později začatým oknem (při stejném začátku nižší číslo).",
+  "signage.overlap.confirm":
+    "Playlisty stejného druhu mohou platit současně: {pairs}. Dokud platí oba, hraje jen ten s později začatým oknem. Uložit skupinu i tak?",
 };

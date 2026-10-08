@@ -1134,6 +1134,12 @@ export const sk = {
   "error.signage.messageInUse": "Správu používa playlist alebo skupina – najprv ju z nich odstráňte.",
   "error.signage.playlistInUse": "Playlist používa skupina – najprv ho z nej odstráňte.",
   "error.signage.groupInUse": "Do skupiny patria panely – najprv ich preraďte.",
+  "signage.overlap.pair": "„{a}“ a „{b}“",
+  "signage.overlap.title": "Playlisty sa prekrývajú",
+  "signage.overlap.text":
+    "Playlisty rovnakého druhu môžu platiť naraz: {pairs}. Kým platia oba, hrá ten s neskôr začatým oknom (pri rovnakom začiatku nižšie číslo).",
+  "signage.overlap.save": "Uložiť aj tak",
+  "signage.overlap.confirm": "Playlisty rovnakého druhu môžu platiť naraz: {pairs}. Kým platia oba, hrá len ten s neskôr začatým oknom. Uložiť skupinu aj tak?",
 } as const;
 
 export type TextKey = keyof typeof sk;

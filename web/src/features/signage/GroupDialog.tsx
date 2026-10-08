@@ -1,6 +1,8 @@
-// Nova skupina panelov alebo uprava: playlisty skupiny a co hra mimo ich platnosti (predvoleny playlist alebo sprava).
+// Nova skupina panelov alebo uprava: playlisty skupiny a co hra mimo ich platnosti (predvoleny playlist alebo sprava);
+// prekryvajuce sa playlisty rovnakeho druhu ukaze a pred ulozenim sa na ne opyta (ako INISSView 2).
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { TriangleAlert } from "lucide-react";
 import {
   createSignageGroup,
   errorText,
@@ -10,12 +12,15 @@ import {
   type SetSignageGroupRequest,
   type SignageOverviewDto,
 } from "@/api";
+import { confirmAction } from "@/components/common/confirm";
 import { CheckField, FormField } from "@/components/common/form-field";
 import { FormDialog } from "@/components/common/form-dialog";
 import { OptionSelect } from "@/components/common/option-select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FieldGroup, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { t } from "@/i18n";
+import { playlistOverlaps } from "./overlaps";
 import { playlistSummary } from "./signage";
 
 interface GroupDialogProps {
@@ -46,6 +51,20 @@ export function GroupDialog({ id, initial, data, onClose }: GroupDialogProps) {
     },
   });
   const toggle = (playlist: number, on: boolean) => set({ playlists: on ? [...group.playlists, playlist] : group.playlists.filter((p) => p !== playlist) });
+  const overlaps = playlistOverlaps(data.playlists.filter((p) => group.playlists.includes(p.id)));
+  const overlapText = overlaps.map(([a, b]) => t("signage.overlap.pair", { a: a.definition.name, b: b.definition.name })).join(", ");
+  const submit = async () => {
+    if (
+      overlaps.length > 0 &&
+      !(await confirmAction({
+        title: t("signage.overlap.title"),
+        description: t("signage.overlap.confirm", { pairs: overlapText }),
+        confirmLabel: t("signage.overlap.save"),
+      }))
+    )
+      return;
+    save.mutate(group);
+  };
   const setFallback = (value: string) =>
     set({
       defaultPlaylist: value.startsWith("pl") ? Number(value.slice(2)) : null,
@@ -56,7 +75,7 @@ export function GroupDialog({ id, initial, data, onClose }: GroupDialogProps) {
     <FormDialog
       title={id === null ? t("signage.group.new") : t("signage.group.edit", { name: initial.name })}
       onClose={onClose}
-      onSubmit={() => save.mutate(group)}
+      onSubmit={() => void submit()}
       error={save.error && errorText(save.error)}
       busy={save.isPending}
       size="lg"
@@ -78,6 +97,12 @@ export function GroupDialog({ id, initial, data, onClose }: GroupDialogProps) {
             />
           ))}
         </FieldSet>
+        {overlaps.length > 0 && (
+          <Alert className="border-amber-500/40 text-amber-800 dark:text-amber-300">
+            <TriangleAlert />
+            <AlertDescription className="text-current">{t("signage.overlap.text", { pairs: overlapText })}</AlertDescription>
+          </Alert>
+        )}
         <FormField label={t("signage.field.fallback")} hint={t("signage.field.fallback.hint")}>
           <OptionSelect<string>
             value={fallbackValue(group)}
