@@ -13,7 +13,9 @@
     "skipLibCheck": true,
     "noEmit": true,
     "types": ["bun", "vite/client"],
-    "paths": { "@/*": ["./src/*"] }
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "e2e", "playwright.config.ts"]
 }

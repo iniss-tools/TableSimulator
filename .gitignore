@@ -337,6 +337,8 @@ healthchecksdb
 # web (bun + vite)
 node_modules/
 web/dist/
+# testy Playwright - data serverov, zostaveny server, vysledky
+web/e2e/.run/
 # vystup buildu webu - generuje sa pri dotnet build
 TableSimulator/wwwroot/
 *.tsbuildinfo

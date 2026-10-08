@@ -850,6 +850,7 @@ export const sk = {
     "Aby simulátor bežal aj bez prihláseného používateľa a štartoval so systémom, nainštalujte ho ako službu Windows – v príkazovom riadku spustenom ako správca v priečinku programu:",
   "error.server.restartUnavailable": "Reštartovať sa dá len simulátor bežiaci ako služba Windows.",
   "audit.action.RestartServer": "Reštart simulátora",
+  "nav.notFound.back": "Na úvodnú stránku",
 } as const;
 
 export type TextKey = keyof typeof sk;

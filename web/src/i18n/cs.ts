@@ -851,4 +851,5 @@ export const cs: Record<TextKey, string> = {
     "Aby simulátor běžel i bez přihlášeného uživatele a startoval se systémem, nainstalujte ho jako službu Windows – v příkazovém řádku spuštěném jako správce ve složce programu:",
   "error.server.restartUnavailable": "Restartovat lze jen simulátor běžící jako služba Windows.",
   "audit.action.RestartServer": "Restart simulátoru",
+  "nav.notFound.back": "Na úvodní stránku",
 };

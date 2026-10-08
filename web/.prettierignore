@@ -3,3 +3,5 @@ src/api/generated
 openapi.json
 tools/*/node_modules
 bun.lock
+# vysledky testov Playwright
+e2e/.run

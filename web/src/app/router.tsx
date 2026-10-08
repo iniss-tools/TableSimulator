@@ -4,6 +4,7 @@ import { lazy, useEffect } from "react";
 import { createHashHistory, createRootRoute, createRoute, createRouter, lazyRouteComponent, Outlet, redirect } from "@tanstack/react-router";
 import { openSocket, useMe } from "@/api";
 import { t, useLanguage } from "@/i18n";
+import { NotFound } from "./NotFound";
 
 // stranky sa nacitaju az pri prvom zobrazeni - kiosk (televizor, tablet) nestahuje ovladanie a naopak
 const AuthPage = lazy(() => import("@/features/auth/AuthPage").then((m) => ({ default: m.AuthPage })));
@@ -97,7 +98,7 @@ const pages = [
 
 const routeTree = rootRoute.addChildren([boardKiosk, wall, virtualKiosk, shell.addChildren(pages)]);
 
-export const router = createRouter({ routeTree, history: createHashHistory() });
+export const router = createRouter({ routeTree, history: createHashHistory(), defaultNotFoundComponent: NotFound });
 
 declare module "@tanstack/react-router" {
   interface Register {

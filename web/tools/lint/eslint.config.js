@@ -10,10 +10,10 @@ import tseslint from "typescript-eslint";
 const web = new URL("../..", import.meta.url).pathname.replace(/^\/(\w:)/, "$1");
 
 export default tseslint.config(
-  { basePath: web, ignores: ["src/api/generated/**", "tools/**", "node_modules/**"] },
+  { basePath: web, ignores: ["src/api/generated/**", "tools/**", "node_modules/**", "e2e/.run/**", "e2e/server.mjs"] },
   {
     basePath: web,
-    files: ["src/**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "playwright.config.ts"],
     extends: [js.configs.recommended, tseslint.configs.recommendedTypeChecked, reactHooks.configs.flat.recommended, reactRefresh.configs.vite, prettier],
     languageOptions: {
       ecmaVersion: 2022,
