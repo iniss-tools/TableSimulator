@@ -149,12 +149,31 @@ export type CreateUserRequest = {
     password: string;
 };
 
+export type DesignFrameDto = {
+    width: number;
+    color: string;
+    radius: number;
+};
+
+export type DesignHeaderDto = {
+    background: string;
+    color: string;
+    font: string;
+    bold: boolean;
+    clockColor: string;
+    clockBackground: string;
+    clockFont: string;
+};
+
 export type DesignInfoDto = {
     id: string;
     name: string;
     renderer: string;
     builtIn: boolean;
+    overrides: boolean;
 };
+
+export type DesignShape = 'circle' | 'square' | 'rounded';
 
 export type DisplayDto = {
     family: string;
@@ -489,6 +508,25 @@ export type SetBoardRequest = {
     design: null | string;
     fault: BoardFaultDto;
     secondAddress: null | number;
+};
+
+export type SetDesignRequest = {
+    name: string;
+    renderer: string;
+    pitch: number;
+    dot: number;
+    shape: DesignShape;
+    off: null | string;
+    colors: {
+        [key: string]: string;
+    };
+    glow: number;
+    background: string;
+    rowGap: number;
+    padding: number;
+    frame: DesignFrameDto;
+    gapColor: null | string;
+    header: DesignHeaderDto;
 };
 
 export type SetLineRequest = {
@@ -1845,6 +1883,60 @@ export type GetFontsResponses = {
 };
 
 export type GetFontsResponse = GetFontsResponses[keyof GetFontsResponses];
+
+export type DeleteDesignData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/designs/{id}';
+};
+
+export type DeleteDesignErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type DeleteDesignError = DeleteDesignErrors[keyof DeleteDesignErrors];
+
+export type DeleteDesignResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteDesignResponse = DeleteDesignResponses[keyof DeleteDesignResponses];
+
+export type SetDesignData = {
+    body: SetDesignRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/designs/{id}';
+};
+
+export type SetDesignErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type SetDesignError = SetDesignErrors[keyof SetDesignErrors];
+
+export type SetDesignResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type SetDesignResponse = SetDesignResponses[keyof SetDesignResponses];
 
 export type GetDesignsData = {
     body?: never;

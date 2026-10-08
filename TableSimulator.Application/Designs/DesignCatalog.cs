@@ -21,7 +21,7 @@ public sealed class DesignCatalog(AppPaths paths, ISettingsStore settings)
             foreach (var designDir in Directory.EnumerateDirectories(dir))
             {
                 if (Read(designDir, builtIn) is { } info)
-                    result[info.Id] = info;
+                    result[info.Id] = !builtIn && result.TryGetValue(info.Id, out var original) && original.BuiltIn ? info with { Overrides = true } : info;
             }
         }
 

@@ -54,6 +54,8 @@ const ACTIONS = [
   "ImportConfig",
   "ImportInissStation",
   "RestartServer",
+  "SetDesign",
+  "DeleteDesign",
 ];
 
 function actionText(action: string): string {

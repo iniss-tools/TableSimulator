@@ -1,4 +1,5 @@
 using Microsoft.Extensions.FileProviders;
+using TableSimulator.Application.Designs;
 using TableSimulator.Application.Settings;
 
 namespace TableSimulator.Infrastructure.Hosting;
@@ -11,8 +12,8 @@ public static class StaticFilesExtensions
     {
         ArgumentNullException.ThrowIfNull(app);
         var paths = app.Services.GetRequiredService<AppPaths>();
-        var folder = paths.DesignsFolder(app.Services.GetRequiredService<ISettingsStore>().Current);
-        if (Directory.Exists(folder))
+        // predvoleny priecinok sa zalozi - vzhlad ulozeny z weboveho rozhrania sa tak zobrazi bez restartu
+        if (DesignFolder.Prepare(paths, app.Services.GetRequiredService<ISettingsStore>().Current) is { } folder)
             app.UseStaticFiles(new StaticFileOptions { FileProvider = new PhysicalFileProvider(folder), RequestPath = "/designs" });
         return app;
     }

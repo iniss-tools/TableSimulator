@@ -1451,6 +1451,80 @@
         }
       }
     },
+    "/api/designs/{id}": {
+      "delete": {
+        "tags": [
+          "Designs"
+        ],
+        "operationId": "DeleteDesign",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Designs"
+        ],
+        "operationId": "SetDesign",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDesignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/designs": {
       "get": {
         "tags": [
@@ -2761,12 +2835,69 @@
           }
         }
       },
+      "DesignFrameDto": {
+        "required": [
+          "width",
+          "color",
+          "radius"
+        ],
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": "number",
+            "format": "double"
+          },
+          "color": {
+            "type": "string"
+          },
+          "radius": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "DesignHeaderDto": {
+        "required": [
+          "background",
+          "color",
+          "font",
+          "bold",
+          "clockColor",
+          "clockBackground",
+          "clockFont"
+        ],
+        "type": "object",
+        "properties": {
+          "background": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "font": {
+            "type": "string"
+          },
+          "bold": {
+            "type": "boolean"
+          },
+          "clockColor": {
+            "type": "string"
+          },
+          "clockBackground": {
+            "type": "string"
+          },
+          "clockFont": {
+            "type": "string"
+          }
+        }
+      },
       "DesignInfoDto": {
         "required": [
           "id",
           "name",
           "renderer",
-          "builtIn"
+          "builtIn",
+          "overrides"
         ],
         "type": "object",
         "properties": {
@@ -2781,8 +2912,18 @@
           },
           "builtIn": {
             "type": "boolean"
+          },
+          "overrides": {
+            "type": "boolean"
           }
         }
+      },
+      "DesignShape": {
+        "enum": [
+          "circle",
+          "square",
+          "rounded"
+        ]
       },
       "DisplayDto": {
         "required": [
@@ -4202,6 +4343,83 @@
               "integer"
             ],
             "format": "int32"
+          }
+        }
+      },
+      "SetDesignRequest": {
+        "required": [
+          "name",
+          "renderer",
+          "pitch",
+          "dot",
+          "shape",
+          "off",
+          "colors",
+          "glow",
+          "background",
+          "rowGap",
+          "padding",
+          "frame",
+          "gapColor",
+          "header"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "renderer": {
+            "type": "string"
+          },
+          "pitch": {
+            "type": "number",
+            "format": "double"
+          },
+          "dot": {
+            "type": "number",
+            "format": "double"
+          },
+          "shape": {
+            "$ref": "#/components/schemas/DesignShape"
+          },
+          "off": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "colors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "glow": {
+            "type": "number",
+            "format": "double"
+          },
+          "background": {
+            "type": "string"
+          },
+          "rowGap": {
+            "type": "number",
+            "format": "double"
+          },
+          "padding": {
+            "type": "number",
+            "format": "double"
+          },
+          "frame": {
+            "$ref": "#/components/schemas/DesignFrameDto"
+          },
+          "gapColor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "header": {
+            "$ref": "#/components/schemas/DesignHeaderDto"
           }
         }
       },

@@ -73,6 +73,7 @@ const pages = [
     },
   }),
   createRoute({ getParentRoute: () => shell, path: "/lines", component: lazyRouteComponent(() => import("@/features/lines/LinesPage"), "LinesPage") }),
+  createRoute({ getParentRoute: () => shell, path: "/designs", component: lazyRouteComponent(() => import("@/features/designs/DesignsPage"), "DesignsPage") }),
   createRoute({ getParentRoute: () => shell, path: "/log", component: lazyRouteComponent(() => import("@/features/traffic/LogPage"), "LogPage") }),
   createRoute({
     getParentRoute: () => shell,

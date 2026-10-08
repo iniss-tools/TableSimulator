@@ -14,6 +14,7 @@ namespace TableSimulator.Tests.Server;
 /// a restart z weboveho rozhrania (len sluzba).
 /// </summary>
 [TestClass]
+[DoNotParallelize]
 public sealed class WindowsServiceTests
 {
     [TestMethod]
@@ -31,12 +32,22 @@ public sealed class WindowsServiceTests
     [TestMethod]
     public void PrikazovyRiadok_SluzbaBezPrehliadacaSPriecinkomPreVsetkych()
     {
-        var line = CommandLine.Parse([], AppContext.BaseDirectory, service: true);
+        // serverove testy nastavuju priecinok premennou prostredia - tu sa sleduje predvoleny
+        var data = Environment.GetEnvironmentVariable("TABLESIMULATOR_DATA");
+        Environment.SetEnvironmentVariable("TABLESIMULATOR_DATA", null);
+        try
+        {
+            var line = CommandLine.Parse([], AppContext.BaseDirectory, service: true);
 
-        Assert.IsTrue(line.NoBrowser);
-        Assert.AreEqual(WindowsService.DefaultDataFolder, line.Paths.DataFolder);
-        // zadany priecinok ma prednost
-        Assert.AreEqual(@"D:\Sim", CommandLine.Parse(["--data", @"D:\Sim\"], AppContext.BaseDirectory, service: true).Paths.DataFolder.TrimEnd('\\'));
+            Assert.IsTrue(line.NoBrowser);
+            Assert.AreEqual(WindowsService.DefaultDataFolder, line.Paths.DataFolder);
+            // zadany priecinok ma prednost
+            Assert.AreEqual(@"D:\Sim", CommandLine.Parse(["--data", @"D:\Sim\"], AppContext.BaseDirectory, service: true).Paths.DataFolder.TrimEnd('\\'));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("TABLESIMULATOR_DATA", data);
+        }
     }
 
     [TestMethod]

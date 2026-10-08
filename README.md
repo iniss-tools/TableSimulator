@@ -328,6 +328,11 @@ pohyblivý text, jas, hodiny). Prehliadač rozhoduje, **ako** to vyzerá. Medzi 
 
 Chýbajúce kľúče doplní predvolený vzhľad.
 
+Vzhľady sa dajú upravovať aj na stránke **Vzhľady** (oprávnenie upravovať simulátor): náhľad na ukážkovej alebo
+skutočnej tabuli sa mení pri každej úprave, uloženie zapíše `design.json` do priečinka vlastných vzhľadov (vstavaný vzhľad
+sa uloží ako vlastný s rovnakým id a prekryje ho; „Vrátiť vstavaný“ ho zmaže). API: `PUT /api/designs/{id}`
+(`SetDesignRequest`), `DELETE /api/designs/{id}`. Predvolený priečinok vlastných vzhľadov server založí pri štarte.
+
 ### Písma ELEN
 
 Číslo písma vyberie z `.bin` písmo takto (overené v ELEN Monitore): rozšírené písmo `n` (bit `0x8000`, bity 8–11)

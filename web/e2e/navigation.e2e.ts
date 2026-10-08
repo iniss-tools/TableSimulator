@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { collectErrors, openPage } from "./helpers";
 
 const PAGES = [
+  "Vzhľady",
   "Linky",
   "Komunikácia",
   "Záznamy",

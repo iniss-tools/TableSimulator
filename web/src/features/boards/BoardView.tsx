@@ -38,13 +38,16 @@ interface Props {
   /** width = na sirku miesta, contain = cela tabula do miesta (kiosk). */
   fit?: "width" | "contain";
   className?: string;
+  /** Vzhlad namiesto vzhladu tabule (nahlad v editore vzhladov). */
+  design?: LedDesign;
 }
 
-export function BoardView({ board, fit = "width", className }: Props) {
+export function BoardView({ board, fit = "width", className, design: override }: Props) {
   const { designVersion } = useConnection();
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const [design, setDesign] = useState<LedDesign>(DEFAULT_DESIGN);
+  const [loaded, setDesign] = useState<LedDesign>(DEFAULT_DESIGN);
+  const design = override ?? loaded;
   const [space, setSpace] = useState({ width: 0, height: 0 });
   // co uz je nacitane - prvy raz sa kresli az so spravnym vzhladom a pismom (bez mihnutia nahradnych)
   const [loadedDesign, setLoadedDesign] = useState<string | null>(null);
@@ -108,7 +111,7 @@ export function BoardView({ board, fit = "width", className }: Props) {
     inputs.current = { board, design, source, scale };
   });
 
-  const ready = loadedDesign === designKey && (!fontFile || font?.file === fontFile);
+  const ready = (override !== undefined || loadedDesign === designKey) && (!fontFile || font?.file === fontFile);
 
   useEffect(() => {
     if (!canvas.current || cssScale <= 0 || (!firstDone.current && !ready)) return;

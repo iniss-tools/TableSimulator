@@ -1,11 +1,25 @@
 // Hlavne menu: skupiny a stranky s ikonou a opravnenim (ram podla neho stranku ukaze alebo odmietne).
-import { Activity, Archive, Cable, Disc3, History, KeyRound, LayoutGrid, Megaphone, MonitorPlay, Settings, Users, type LucideIcon } from "lucide-react";
+import {
+  Activity,
+  Archive,
+  Cable,
+  Disc3,
+  History,
+  KeyRound,
+  LayoutGrid,
+  Megaphone,
+  MonitorPlay,
+  Palette,
+  Settings,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { PERMISSIONS, type Permission } from "@/api";
 import type { TextKey } from "@/i18n";
 
 /** Stranky v rame (adresy za # - rovnake ako pred prestavbou, aby ulozene odkazy platili). */
 export type NavPath =
-  "/" | "/lines" | "/log" | "/recordings" | "/virtual" | "/archive/tables" | "/archive/reports" | "/users" | "/keys" | "/audit" | "/settings";
+  "/" | "/designs" | "/lines" | "/log" | "/recordings" | "/virtual" | "/archive/tables" | "/archive/reports" | "/users" | "/keys" | "/audit" | "/settings";
 
 export interface NavItem {
   to: NavPath;
@@ -24,6 +38,7 @@ export const NAV: NavGroup[] = [
     label: "nav.group.simulation",
     items: [
       { to: "/", label: "nav.boards", icon: LayoutGrid, permission: PERMISSIONS.view },
+      { to: "/designs", label: "nav.designs", icon: Palette, permission: PERMISSIONS.edit },
       { to: "/lines", label: "nav.lines", icon: Cable, permission: PERMISSIONS.view },
       { to: "/log", label: "nav.log", icon: Activity, permission: PERMISSIONS.log },
       { to: "/recordings", label: "nav.recordings", icon: Disc3, permission: PERMISSIONS.view },

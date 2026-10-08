@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using TableSimulator.Application.Designs;
 using TableSimulator.Application.Live;
 using TableSimulator.Application.Settings;
 using TableSimulator.Contracts.Live;
@@ -15,8 +16,7 @@ public sealed class DesignWatcherService(AppPaths paths, ISettingsStore settings
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        var folder = paths.DesignsFolder(settings.Current);
-        if (!Directory.Exists(folder))
+        if (DesignFolder.Prepare(paths, settings.Current) is not { } folder)
             return Task.CompletedTask;
 
         _watcher = new FileSystemWatcher(folder) { IncludeSubdirectories = true, EnableRaisingEvents = true };
