@@ -22,6 +22,9 @@ public sealed class SettingsRepository(AppDbContext db)
             ConnectHost = record.ConnectHost,
             MonitorFolder = record.MonitorFolder,
             VirtualFolders = record.VirtualFolders.ToArray(),
+            InissProgram = record.InissProgram,
+            InissRegistry = record.InissRegistry,
+            InissElevated = record.InissElevated,
             HttpsPort = record.HttpsPort,
             HttpsRedirect = record.HttpsRedirect,
             HttpsCertificate = record.HttpsCertificate,
@@ -49,6 +52,9 @@ public sealed class SettingsRepository(AppDbContext db)
         record.ConnectHost = settings.ConnectHost;
         record.MonitorFolder = settings.MonitorFolder;
         record.VirtualFolders = settings.VirtualFolders.ToList();
+        record.InissProgram = settings.InissProgram;
+        record.InissRegistry = settings.InissRegistry;
+        record.InissElevated = settings.InissElevated;
         record.HttpsPort = settings.HttpsPort;
         record.HttpsRedirect = settings.HttpsRedirect;
         record.HttpsCertificate = settings.HttpsCertificate;

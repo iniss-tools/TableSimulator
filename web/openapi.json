@@ -481,6 +481,64 @@
         }
       }
     },
+    "/api/station/iniss": {
+      "get": {
+        "tags": [
+          "Station"
+        ],
+        "operationId": "GetInissStation",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InissStationDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Station"
+        ],
+        "operationId": "ImportInissStation",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StationImportedDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/station": {
       "post": {
         "tags": [
@@ -3150,6 +3208,198 @@
           }
         }
       },
+      "InissLineDto": {
+        "required": [
+          "section",
+          "number",
+          "tableClass",
+          "port",
+          "simulatorPort",
+          "active",
+          "supported",
+          "tables",
+          "problems"
+        ],
+        "type": "object",
+        "properties": {
+          "section": {
+            "type": "string"
+          },
+          "number": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "tableClass": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "port": {
+            "type": "string"
+          },
+          "simulatorPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "supported": {
+            "type": "boolean"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InissTableDto"
+            }
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InissProblemDto"
+            }
+          }
+        }
+      },
+      "InissProblemCode": {
+        "enum": [
+          "lineOutOfRange",
+          "lineDuplicate",
+          "wrongFamily",
+          "noTables",
+          "noAutomaticLine",
+          "noDriver"
+        ]
+      },
+      "InissProblemDto": {
+        "required": [
+          "severity",
+          "code",
+          "args"
+        ],
+        "type": "object",
+        "properties": {
+          "severity": {
+            "$ref": "#/components/schemas/InissProblemSeverity"
+          },
+          "code": {
+            "$ref": "#/components/schemas/InissProblemCode"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "InissProblemSeverity": {
+        "enum": [
+          "info",
+          "warning",
+          "error"
+        ]
+      },
+      "InissStationDto": {
+        "required": [
+          "program",
+          "appName",
+          "registry",
+          "grafikons",
+          "lines",
+          "unserved",
+          "logFolder",
+          "logFolderExists",
+          "xmlTables"
+        ],
+        "type": "object",
+        "properties": {
+          "program": {
+            "type": "string"
+          },
+          "appName": {
+            "type": "string"
+          },
+          "registry": {
+            "type": "boolean"
+          },
+          "grafikons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InissLineDto"
+            }
+          },
+          "unserved": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InissTableDto"
+            }
+          },
+          "logFolder": {
+            "type": "string"
+          },
+          "logFolderExists": {
+            "type": "boolean"
+          },
+          "xmlTables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationXmlTableDto"
+            }
+          }
+        }
+      },
+      "InissTableDto": {
+        "required": [
+          "name",
+          "address",
+          "grafikon",
+          "manufacturer",
+          "automatic",
+          "shown",
+          "problem"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "grafikon": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "automatic": {
+            "type": "boolean"
+          },
+          "shown": {
+            "type": "boolean"
+          },
+          "problem": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/InissProblemDto"
+              }
+            ]
+          }
+        }
+      },
       "InissViewImportedDto": {
         "required": [
           "added",
@@ -3949,6 +4199,9 @@
           "monitorFolder",
           "requireLogin",
           "virtualFolders",
+          "inissProgram",
+          "inissRegistry",
+          "inissElevated",
           "httpsPort",
           "httpsRedirect",
           "httpsCertificate",
@@ -3987,6 +4240,15 @@
             "items": {
               "type": "string"
             }
+          },
+          "inissProgram": {
+            "type": "string"
+          },
+          "inissRegistry": {
+            "type": "string"
+          },
+          "inissElevated": {
+            "type": "boolean"
           },
           "httpsPort": {
             "type": "integer",
@@ -4434,6 +4696,9 @@
           "monitorFolder",
           "requireLogin",
           "virtualFolders",
+          "inissProgram",
+          "inissRegistry",
+          "inissElevated",
           "httpsPort",
           "httpsRedirect",
           "httpsCertificate",
@@ -4472,6 +4737,15 @@
             "items": {
               "type": "string"
             }
+          },
+          "inissProgram": {
+            "type": "string"
+          },
+          "inissRegistry": {
+            "type": "string"
+          },
+          "inissElevated": {
+            "type": "boolean"
           },
           "httpsPort": {
             "type": "integer",

@@ -52,6 +52,7 @@ const ACTIONS = [
   "DeleteVirtualLayout",
   "ResetAdmin",
   "ImportConfig",
+  "ImportInissStation",
 ];
 
 function actionText(action: string): string {

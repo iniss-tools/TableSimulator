@@ -1,7 +1,7 @@
 // Komunikacne linky - zodpovedaju sekciam Driver v INISSe; export a import liniek s tabulami.
 import { useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { ChevronDown, Download, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { ChevronDown, Download, MonitorDown, Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { deleteLine, errorText, importConfigMutation, PERMISSIONS, useCan, useSimulatorState, type LineDto, type LineStatus, type SetLineRequest } from "@/api";
 import { confirmAction } from "@/components/common/confirm";
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { defaultEndpoint, lineConfig } from "@/lib/boards";
 import { t, type TextKey } from "@/i18n";
+import { InissStationDialog } from "./InissStationDialog";
 import { LineDialog } from "./LineDialog";
 
 const STATUS_TONES: Record<LineStatus, Tone> = { connected: "ok", listening: "wait", error: "bad", stopped: "off" };
@@ -25,6 +26,7 @@ export function LinesPage() {
   const live = useSimulatorState();
   const edit = useCan()(PERMISSIONS.edit);
   const [editing, setEditing] = useState<{ config: SetLineRequest; isNew: boolean } | null>(null);
+  const [inissOpen, setInissOpen] = useState(false);
   const upload = useRef<HTMLInputElement>(null);
   const replace = useRef(false);
   const importing = useMutation({
@@ -150,6 +152,10 @@ export function LinesPage() {
         </Button>
         {edit && (
           <>
+            <Button variant="outline" onClick={() => setInissOpen(true)} title={t("iniss.button.hint")}>
+              <MonitorDown />
+              {t("iniss.button")}
+            </Button>
             <input ref={upload} type="file" accept=".json" hidden onChange={(e) => onImport(e.target.files)} />
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="outline" disabled={importing.isPending} title={t("lines.import.hint")} />}>
@@ -173,6 +179,7 @@ export function LinesPage() {
       </PageHeader>
       <DataTable columns={columns} data={live.lines} getRowId={(l) => String(l.number)} pageSize={null} empty={t("lines.empty")} storageKey="lines" />
       {editing && <LineDialog initial={editing.config} isNew={editing.isNew} onClose={() => setEditing(null)} />}
+      {inissOpen && <InissStationDialog onClose={() => setInissOpen(false)} />}
     </>
   );
 }

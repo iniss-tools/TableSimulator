@@ -11,6 +11,9 @@ public sealed record UpdateSettingsRequest
     public string MonitorFolder { get; init; } = "";
     public bool RequireLogin { get; init; }
     public IReadOnlyList<string>? VirtualFolders { get; init; }
+    public string InissProgram { get; init; } = "";
+    public string InissRegistry { get; init; } = "";
+    public bool InissElevated { get; init; }
 
     /// <summary>Port HTTPS; 0 = bez HTTPS.</summary>
     public int HttpsPort { get; init; }

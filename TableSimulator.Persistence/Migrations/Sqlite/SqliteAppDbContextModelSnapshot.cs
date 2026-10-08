@@ -439,6 +439,19 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                     b.Property<bool>("HttpsRedirect")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("InissElevated")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("InissProgram")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("InissRegistry")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("MonitorFolder")
                         .IsRequired()
                         .HasMaxLength(500)

@@ -25,6 +25,12 @@ public sealed class SettingsRecord
     /// <summary>Priecinky logov INISSu (v databaze pole JSON).</summary>
     public List<string> VirtualFolders { get; set; } = [];
 
+    public string InissProgram { get; set; } = "";
+
+    public string InissRegistry { get; set; } = "";
+
+    public bool InissElevated { get; set; }
+
     public int HttpsPort { get; set; }
 
     public bool HttpsRedirect { get; set; }

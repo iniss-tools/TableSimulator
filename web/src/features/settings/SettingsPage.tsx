@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useBlocker } from "@tanstack/react-router";
-import { CircleAlert, Database, FolderOpen, Network, Save, ShieldCheck, Undo2, type LucideIcon } from "lucide-react";
+import { CircleAlert, Database, FolderOpen, Network, Save, ShieldCheck, TrainFront, Undo2, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
   errorText,
@@ -33,10 +33,11 @@ import { DesignsFound, FontsFound } from "./found-lists";
 import { HttpsSection } from "./HttpsSection";
 import { RestartBadge } from "./restart-badge";
 
-type SectionId = "folders" | "network" | "https" | "database";
+type SectionId = "folders" | "iniss" | "network" | "https" | "database";
 
 const SECTIONS: { id: SectionId; label: TextKey; icon: LucideIcon }[] = [
   { id: "folders", label: "settings.folders", icon: FolderOpen },
+  { id: "iniss", label: "settings.iniss", icon: TrainFront },
   { id: "network", label: "settings.network", icon: Network },
   { id: "https", label: "settings.https", icon: ShieldCheck },
   { id: "database", label: "settings.database", icon: Database },
@@ -179,6 +180,21 @@ export function SettingsPage() {
                 onChange={(e) => change({ virtualFolders: e.target.value.split(/\r?\n/) })}
               />
             </FormField>
+          </Section>
+
+          <Section id="iniss" description={t("settings.iniss.hint")}>
+            <FormField label={t("settings.inissProgram")} hint={t("settings.inissProgram.hint")}>
+              <Input placeholder={"C:\\INISS\\INISS.exe"} value={form.inissProgram} onChange={(e) => change({ inissProgram: e.target.value })} />
+            </FormField>
+            <FormField label={t("settings.inissRegistry")} hint={t("settings.inissRegistry.hint")}>
+              <Input className="max-w-64" value={form.inissRegistry} onChange={(e) => change({ inissRegistry: e.target.value })} />
+            </FormField>
+            <CheckField
+              label={t("settings.inissElevated")}
+              hint={t("settings.inissElevated.hint")}
+              checked={form.inissElevated}
+              onCheckedChange={(value) => change({ inissElevated: value })}
+            />
           </Section>
 
           <Section id="network" description={t("settings.network.hint")}>

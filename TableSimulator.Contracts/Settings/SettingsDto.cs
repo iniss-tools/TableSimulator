@@ -13,6 +13,15 @@ public sealed record SettingsDto(int HttpPort, bool AllowNetwork, string FontsFo
     /// <summary>Priecinky logov INISSu s XML tabul pre virtualne tabule (prvy ma prednost pri rovnakom case).</summary>
     public IReadOnlyList<string> VirtualFolders { get; init; } = [];
 
+    /// <summary>Program INISSu (exe), odkial simulator nacita linky a tabule stanice.</summary>
+    public string InissProgram { get; init; } = "";
+
+    /// <summary>Vetva registra INISSu (hodnota /Reg:); prazdna = meno programu.</summary>
+    public string InissRegistry { get; init; } = "";
+
+    /// <summary>INISS sa spusta ako spravca.</summary>
+    public bool InissElevated { get; init; }
+
     /// <summary>Port HTTPS; 0 = bez HTTPS.</summary>
     public int HttpsPort { get; init; }
 

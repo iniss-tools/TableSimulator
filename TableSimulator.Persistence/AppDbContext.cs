@@ -53,6 +53,8 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
             settings.Property(s => s.DesignsFolder).HasMaxLength(500);
             settings.Property(s => s.ConnectHost).HasMaxLength(200);
             settings.Property(s => s.MonitorFolder).HasMaxLength(500);
+            settings.Property(s => s.InissProgram).HasMaxLength(500);
+            settings.Property(s => s.InissRegistry).HasMaxLength(100);
             settings.Property(s => s.HttpsCertificate).HasMaxLength(500);
             settings.Property(s => s.HttpsKey).HasMaxLength(500);
             settings.Property(s => s.HttpsPassword).HasMaxLength(2000);

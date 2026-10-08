@@ -41,6 +41,15 @@ public sealed record AppSettings
     /// </summary>
     public IReadOnlyList<string> VirtualFolders { get; init; } = [];
 
+    /// <summary>Program INISSu (exe) na tomto pocitaci - odkial simulator nacita linky a tabule stanice; prazdny = nenastaveny.</summary>
+    public string InissProgram { get; init; } = "";
+
+    /// <summary>Vetva registra INISSu (hodnota /Reg:); prazdna = meno programu bez pripony.</summary>
+    public string InissRegistry { get; init; } = "";
+
+    /// <summary>INISS sa spusta ako spravca - cita HKLM priamo, nie kopiu vo VirtualStore.</summary>
+    public bool InissElevated { get; init; }
+
     /// <summary>Port HTTPS; 0 = bez HTTPS. Zmena sa prejavi po restarte.</summary>
     public int HttpsPort { get; init; }
 

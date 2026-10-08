@@ -7,6 +7,7 @@ using TableSimulator.Application.Decorators;
 using TableSimulator.Application.Designs;
 using TableSimulator.Application.Fonts;
 using TableSimulator.Application.Recordings;
+using TableSimulator.Application.Station;
 
 namespace TableSimulator.Application;
 
@@ -50,6 +51,7 @@ public static class DependencyInjection
         services.AddSingleton<DesignCatalog>();
         services.AddScoped<AuditWriter>();
         services.AddSingleton<ArchiveCatalog>();
+        services.AddScoped<StationImporter>();
         return services;
     }
 }

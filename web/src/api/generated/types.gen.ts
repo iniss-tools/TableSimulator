@@ -264,6 +264,50 @@ export type ImportConfigRequest = {
     replace: boolean;
 };
 
+export type InissLineDto = {
+    section: string;
+    number: null | number;
+    tableClass: number;
+    port: string;
+    simulatorPort: number;
+    active: boolean;
+    supported: boolean;
+    tables: Array<InissTableDto>;
+    problems: Array<InissProblemDto>;
+};
+
+export type InissProblemCode = 'lineOutOfRange' | 'lineDuplicate' | 'wrongFamily' | 'noTables' | 'noAutomaticLine' | 'noDriver';
+
+export type InissProblemDto = {
+    severity: InissProblemSeverity;
+    code: InissProblemCode;
+    args: Array<string>;
+};
+
+export type InissProblemSeverity = 'info' | 'warning' | 'error';
+
+export type InissStationDto = {
+    program: string;
+    appName: string;
+    registry: boolean;
+    grafikons: Array<string>;
+    lines: Array<InissLineDto>;
+    unserved: Array<InissTableDto>;
+    logFolder: string;
+    logFolderExists: boolean;
+    xmlTables: Array<StationXmlTableDto>;
+};
+
+export type InissTableDto = {
+    name: string;
+    address: number;
+    grafikon: string;
+    manufacturer: string;
+    automatic: boolean;
+    shown: boolean;
+    problem: null | InissProblemDto;
+};
+
 export type InissViewImportedDto = {
     added: number;
     replaced: number;
@@ -466,6 +510,9 @@ export type SettingsDto = {
     monitorFolder: string;
     requireLogin: boolean;
     virtualFolders: Array<string>;
+    inissProgram: string;
+    inissRegistry: string;
+    inissElevated: boolean;
     httpsPort: number;
     httpsRedirect: boolean;
     httpsCertificate: string;
@@ -587,6 +634,9 @@ export type UpdateSettingsRequest = {
     monitorFolder: string;
     requireLogin: boolean;
     virtualFolders: null | Array<string>;
+    inissProgram: string;
+    inissRegistry: string;
+    inissElevated: boolean;
     httpsPort: number;
     httpsRedirect: boolean;
     httpsCertificate: string;
@@ -1052,6 +1102,56 @@ export type UnlockUserResponses = {
 };
 
 export type UnlockUserResponse = UnlockUserResponses[keyof UnlockUserResponses];
+
+export type GetInissStationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/station/iniss';
+};
+
+export type GetInissStationErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetInissStationError = GetInissStationErrors[keyof GetInissStationErrors];
+
+export type GetInissStationResponses = {
+    /**
+     * OK
+     */
+    200: InissStationDto;
+};
+
+export type GetInissStationResponse = GetInissStationResponses[keyof GetInissStationResponses];
+
+export type ImportInissStationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/station/iniss';
+};
+
+export type ImportInissStationErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type ImportInissStationError = ImportInissStationErrors[keyof ImportInissStationErrors];
+
+export type ImportInissStationResponses = {
+    /**
+     * OK
+     */
+    200: StationImportedDto;
+};
+
+export type ImportInissStationResponse = ImportInissStationResponses[keyof ImportInissStationResponses];
 
 export type ImportStationData = {
     body: StationImportRequest;
