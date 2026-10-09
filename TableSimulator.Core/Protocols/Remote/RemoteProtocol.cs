@@ -1,6 +1,7 @@
 using System.Globalization;
 using TableSimulator.Core.Boards;
 using TableSimulator.Core.Lines;
+using TableSimulator.Core.Protocols.Apel;
 using TableSimulator.Core.Protocols.Elektrocas;
 using TableSimulator.Core.Protocols.Elen;
 using TableSimulator.Core.Protocols.Ers;
@@ -19,7 +20,7 @@ namespace TableSimulator.Core.Protocols.Remote;
 internal sealed class RemoteProtocol : ILineProtocol
 {
     /// <summary>Vyrobcovia tabul, ktore simulator za vzdialenym INISSom zobrazi; prvy je predvoleny.</summary>
-    public static readonly string[] Manufacturers = ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16Kam", "ELEKON", "LCD1", "ERP", "LCD", "FERS", "ERS"];
+    public static readonly string[] Manufacturers = ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16Kam", "ELEKON", "LCD1", "ERP", "LCD", "FERS", "ERS", "APEL", "APEL_AN"];
 
     /// <summary>Stav tabule: zapis v poriadku.</summary>
     public const int TableOk = 0x00;
@@ -69,6 +70,7 @@ internal sealed class RemoteProtocol : ILineProtocol
     private readonly ElenProtocol _elen = new();
     private readonly ElektrocasProtocol _elektrocas = new();
     private readonly ErsProtocol _ers = new();
+    private readonly ApelProtocol _apel = new();
 
     // fronty, ktore riadiaci INISS vypol (podla nazvu, "" = jedina fronta bez QNAM); prezije nove spojenie
     private readonly HashSet<string> _switchedOff = new(StringComparer.Ordinal);
@@ -82,6 +84,7 @@ internal sealed class RemoteProtocol : ILineProtocol
         _elen.Reset();
         _elektrocas.Reset();
         _ers.Reset();
+        _apel.Reset();
     }
 
     public BoardDisplay CreateDisplay(string manufacturer) => Inner(manufacturer).CreateDisplay(manufacturer);
@@ -109,7 +112,12 @@ internal sealed class RemoteProtocol : ILineProtocol
     /// <summary>Vyrobca patri do rodiny Elektrocas (aj listove FERS).</summary>
     private static bool IsElektrocas(string? manufacturer) => manufacturer is "LCD" or "LCD1" or "ERP" or "FERS";
 
-    private ILineProtocol Inner(string? manufacturer) => manufacturer == "ERS" ? _ers : IsElektrocas(manufacturer) ? _elektrocas : _elen;
+    private ILineProtocol Inner(string? manufacturer) => manufacturer switch
+    {
+        "ERS" => _ers,
+        "APEL" or "APEL_AN" => _apel,
+        _ => IsElektrocas(manufacturer) ? _elektrocas : _elen
+    };
 
     private void Handle(RemoteMessage message, ILineContext context)
     {
@@ -243,7 +251,7 @@ internal sealed class RemoteProtocol : ILineProtocol
         }
 
         var inner = Inner(manufacturer);
-        var frame = inner == _ers ? command : Finish(inner == _elektrocas, command);
+        var frame = inner == _ers ? command : inner == _apel ? FinishApel(command) : Finish(inner == _elektrocas, command);
         context.Forward(frame);
         var innerContext = new InnerContext(context, inner, message.Raw, seq, manufacturer);
         inner.Reset();
@@ -255,7 +263,8 @@ internal sealed class RemoteProtocol : ILineProtocol
         }
 
         if (innerContext.Answer is { } answer)
-            return new TableResult(boardAddress, inner == _ers ? ErsAnswerCode(answer.Bytes) : AnswerCode(inner == _elektrocas, answer.Bytes), frame.Length,
+            return new TableResult(boardAddress,
+                inner == _ers ? ErsAnswerCode(answer.Bytes) : inner == _apel ? ApelAnswerCode(answer.Bytes) : AnswerCode(inner == _elektrocas, answer.Bytes), frame.Length,
                 answer.Delay, answer.Status);
         // hromadny prikaz a cas su bez odpovede; tabula, ktora neexistuje alebo mlci, neodpovie
         return innerContext.Faulted || innerContext.NoBoard
@@ -275,6 +284,36 @@ internal sealed class RemoteProtocol : ILineProtocol
         else if (!elektrocas && frame.Length >= 5 && frame[0] == ElenFrame.Soh)
             (frame[^2], frame[^1]) = ElenChecksum.Encode(ElenChecksum.Compute(frame.AsSpan(0, frame.Length - 2)));
         return frame;
+    }
+
+    /// <summary>
+    /// APEL: riadiaci INISS posiela obsah spravy bez ramca (<c>adresa [prikaz dlzka data]…</c>) - ramec <c>DLE</c>
+    /// a XOR sucet doplni vzdialeny INISS. Ak sucet uz v sprave je (zaznamy konci bajt pred koncom), ostane.
+    /// </summary>
+    private static byte[] FinishApel(byte[] command)
+    {
+        if (command.Length < 1)
+            return command;
+        var body = command.AsSpan(1);
+        var i = 0;
+        while (i + 2 <= body.Length && i + 2 + body[i + 1] <= body.Length)
+            i += 2 + body[i + 1];
+        var payload = i == body.Length - 1 ? command : [.. command, ApelFrame.Xor(body)];
+        return ApelFrame.Wrap(payload);
+    }
+
+    /// <summary>Stav zapisu APEL: odpoved <c>10 02 pocitac adresa stav sucet 10 03</c>, stav 06 = v poriadku.</summary>
+    private static int ApelAnswerCode(byte[] reply)
+    {
+        var payload = new List<byte>();
+        for (var i = 2; i < reply.Length - 2; i++)
+        {
+            payload.Add(reply[i]);
+            if (reply[i] == ApelFrame.Dle)
+                i++;
+        }
+
+        return payload.Count >= 3 ? payload[2] == ApelFrame.StateOk ? TableOk : TableRejected : TableBadAnswer;
     }
 
     /// <summary>Stav zapisu podla odpovede tabule (ako ho zisti ovladac vzdialeneho INISSu).</summary>

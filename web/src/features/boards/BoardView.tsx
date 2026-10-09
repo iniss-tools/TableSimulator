@@ -98,7 +98,7 @@ function LedBoardView({ board, fit = "width", className, design: override, ref }
   const [drawn, setDrawn] = useState(false);
   const firstDone = useRef(false);
 
-  const designId = board.design || defaultDesignId(board.display.family);
+  const designId = board.design || defaultDesignId(board.display.family, board.manufacturer);
   const designKey = `${designId}|${designVersion}`;
   useEffect(() => {
     let live = true;

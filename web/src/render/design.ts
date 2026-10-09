@@ -38,8 +38,12 @@ export interface HeaderStyle {
 
 export const DEFAULT_DESIGN_ID = "elen-led";
 
-/** Predvoleny vzhlad podla rodiny tabule (znakove tabule Elektrocas vyzeraju ako LCD). */
-export function defaultDesignId(family: string): string {
+/** Vyrobcovia s cervenymi LED tabulami APEL. */
+const APEL_MANUFACTURERS = ["APEL", "APEL_AN"];
+
+/** Predvoleny vzhlad podla vyrobcu a rodiny tabule (znakove tabule Elektrocas vyzeraju ako LCD, APEL cervene LED). */
+export function defaultDesignId(family: string, manufacturer = ""): string {
+  if (APEL_MANUFACTURERS.includes(manufacturer.toUpperCase())) return "apel-led";
   return family === "chars" ? "lcd-dark" : DEFAULT_DESIGN_ID;
 }
 

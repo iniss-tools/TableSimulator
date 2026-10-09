@@ -1293,6 +1293,16 @@ export const sk = {
   "flaps.lists.hint":
     "Texty listov sú z dát stanice (predloha tabule a TabTab). Farbu listu dáta nemajú – nastavte ju tu; nové načítanie stanice nastavené farby zachová.",
   "flaps.empty": "Tabuľa nemá zoznamy listov.",
+  "line.class.10": "10 – APEL",
+  "kind.apel.text": "Text do zásobníka/riadku {row}: „{text}“",
+  "kind.apel.clear": "Zmazanie {count} riadkov",
+  "kind.apel.time": "Nastavenie času {time}",
+  "kind.apel.light": "Jas {value}",
+  "kind.apel.check": "Kontrola stavu tabule",
+  "kind.apel.temperature": "Dotaz na teplotu",
+  "kind.apel.unknown": "Neznámy príkaz {cmd}",
+  "kind.apel.state": "Stav {state} – chyba",
+  "kind.apel.texts": "Text do {count} riadkov: „{text}“…",
 } as const;
 
 export type TextKey = keyof typeof sk;

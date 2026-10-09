@@ -89,6 +89,9 @@ public sealed class CharDisplay : BoardDisplay
         return r;
     }
 
+    /// <summary>Zmaze obsah riadku, ostatne riadky ostanu na mieste.</summary>
+    public void ClearRow(int row) => _rows.Remove(row);
+
     /// <summary>Vlozi prazdny riadok - nizsie riadky sa posunu dole, posledny (<paramref name="rowCount" />) vypadne.</summary>
     public void InsertRow(int row, int rowCount)
     {

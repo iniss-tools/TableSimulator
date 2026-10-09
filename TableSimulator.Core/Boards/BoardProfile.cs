@@ -71,6 +71,9 @@ public sealed record BoardProfile
         "LCD1" or "ERP" or "LCD" => new BoardProfile { Width = 320, Rows = 4, RowHeight = 16 },
         // listove tabule: pozicie po 8 bodoch, ERS predvolene 9 modulov v riadku (ERSLineLen)
         "FERS" or "ERS" => new BoardProfile { Width = 9 * 8, Rows = 4, RowHeight = 16 },
+        // APEL: jednoriadkova nastupistna, viacriadkova odchodova - znaky po 8 bodoch, rozmer doladi samoucenie
+        "APEL" => new BoardProfile { Width = 30 * 8, Rows = 1, RowHeight = 16 },
+        "APEL_AN" => new BoardProfile { Width = 40 * 8, Rows = 6, RowHeight = 16 },
         _ => new BoardProfile()
     };
 }

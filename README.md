@@ -13,8 +13,9 @@ Protokoly sú popísané v `iniss-tools-docs/docs/iniss/protokoly/`. Hotové sú
 | `1`          | Elektročas LCD (staršie)                                      |
 | `3`          | listové tabule FERS (rámec Elektročasu)                       |
 | `2`          | listové tabule ERS (stará generácia, vlastný protokol)        |
+| `10`         | APEL (jednoriadkové) a APEL_AN (viacriadkové LED)             |
 | `130`        | LCD1, ERP, LCD a FERS za sieťovým prevodníkom KTP (pakety ITP) |
-| `128`        | tabule ELEN, Elektročas a listové za vzdialeným INISSom (`/Remote`) |
+| `128`        | tabule ELEN, Elektročas, listové a APEL za vzdialeným INISSom (`/Remote`) |
 
 Adon/BUSE sa simulovať nedá – INISS ich ovláda cez knižnicu `infotabd.dll`, ktorej bajty na linke nepoznáme.
 
@@ -214,6 +215,21 @@ tabuľu tak, ako vyzerá naozaj: listy s textom, dlhší text menším písmom.
   `20` chyba otáčania; ERS kód `02`–`08`).
 - Porovnanie záznamov porovnáva texty listov (`BRATISLAVA | R | 6 | 1 | 5`).
 
+## Tabule APEL
+
+Linka triedy `10` (protokol `protokoly/apel.mdx`): rámec `DLE STX … DLE ETX` so zdvojeným `10`, v jednej správe
+viac záznamov (príkaz, dĺžka, údaje) a XOR súčet bez adresy. Tabuľa je znaková ako Elektročas, predvolený vzhľad
+*APEL – červené LED*.
+
+- **APEL** (jednoriadková, 30 znakov) ukazuje zásobník `00`, zápis do iného zásobníka len potvrdí. **APEL_AN**
+  (viacriadková, 6 × 40 znakov) zapisuje do riadku podľa čísla príkazu; prázdny text riadok zmaže. Rozmer doladí
+  samoučenie.
+- Každú správu na svoju adresu tabuľa potvrdí stavom `06` (odpoveď ide na adresu počítača `0x80`, predvolené
+  `ComputerAddr`); zlý súčet odmietne stavom `15`. Porucha *hlási poruchu v stave* pošle zvolený stav (`07` zaneprázdnená,
+  `08` stratila nastavenie). Hromadné správy na adresu `FF` (zmazanie, čas) dostanú všetky tabule linky bez odpovede.
+- Čas (`81`) nastaví hodiny tabule; jas (`83`), teplota (`82`) a kontrola spojenia (`8A`) sa len zapíšu
+  do komunikácie – jas nemení vzhľad tabule.
+
 ## Vzdialený INISS (trieda 128)
 
 Linka triedy `128` zastúpi **INISS spustený s `/Remote`**: riadiaci INISS sa na ňu pripojí svojou linkou triedy `128`
@@ -222,13 +238,13 @@ Riadiaci INISS má v `TPhysic` všetky tabule, aj vzdialené (`COMUNICATION_PORT
 *Načítať z INISSu* alebo presmerovanie z GVDEditora založí aj linku `128` so všetkými jej tabuľami. Protokol popisuje
 `protokoly/vzdialeny-iniss.mdx`.
 
-- Na jednej linke môžu byť tabule ELEN, Elektročas (`LCD`, `LCD1`, `ERP`) aj listové (`FERS`, `ERS`) – obsah tabule
+- Na jednej linke môžu byť tabule ELEN, Elektročas (`LCD`, `LCD1`, `ERP`), listové (`FERS`, `ERS`) aj APEL – obsah tabule
   sa riadi jej výrobcom.
   Riadiaci INISS posiela pri každom zápise presného výrobcu (`TCLS`): samoučenie založí tabuľu s ním a tabuľa
-  nastavená na iného výrobcu dostane upozornenie s ponukou prepnutia. Tabule APEL simulátor neukáže (odpovie kódom
-  `19` – vzdialený INISS nemá kam zápis poslať).
+  nastavená na iného výrobcu dostane upozornenie s ponukou prepnutia. Tabule Adon/BUSE simulátor neukáže (odpovie
+  kódom `19` – vzdialený INISS nemá kam zápis poslať).
 - Správu tabule (`TCMD`) riadiaci INISS posiela bez kontrolného súčtu – simulátor ho doplní, spracuje správu ako na
-  linke ELEN alebo Elektročas a hneď odpovie správou `0xAC` s tým istým číslom a stavom zápisu (`TSTA`). Porucha
+  linke ELEN, Elektročas alebo APEL (tam aj s rámcom `DLE`) a hneď odpovie správou `0xAC` s tým istým číslom a stavom zápisu (`TSTA`). Porucha
   tabule sa prejaví v stave: *neodpovedá* `0C`, NAK `10`, nezmysel `11`, stav Elektročasu podľa bitov (`10`, `14`–`17`);
   *oneskorenie* oneskorí celú odpoveď (riadiaci INISS čaká 300 ms).
 - **Hlásenia** pre vzdialený počítač sa len zapíšu do komunikácie (fronta, titulok, nahrávky) – simulátor ich

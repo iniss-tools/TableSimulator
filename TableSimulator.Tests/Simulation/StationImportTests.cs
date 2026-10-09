@@ -17,14 +17,14 @@ public class StationImportTests
         [
             new StationLine(3, 4, 47003) { Name = "Driver" },
             new StationLine(4, 5, 47004) { Name = "Driver0" },
-            new StationLine(5, 10, 47005) { Name = "Driver1" }
+            new StationLine(5, 0, 47005) { Name = "Driver1" }
         ],
         Boards =
         [
             new StationBoard(3, 5, "ELEN16") { Name = "ODCH1" },
             new StationBoard(4, 12, "LCD1") { Name = "NAST1" },
             new StationBoard(4, 13, "FERS") { Name = "PT" },
-            new StationBoard(5, 130, "APEL") { Name = "APEL" }
+            new StationBoard(5, 130, "Adon/BUSE") { Name = "BUSE" }
         ]
     };
 
@@ -37,7 +37,7 @@ public class StationImportTests
 
         Assert.AreEqual(2, result.LinesAdded);
         Assert.AreEqual(2, result.BoardsAdded);
-        CollectionAssert.AreEqual(new[] { 5 }, result.UnsupportedLines.ToArray(), "APEL simulator nepozna");
+        CollectionAssert.AreEqual(new[] { 5 }, result.UnsupportedLines.ToArray(), "ADON/BUSE simulator nepozna");
         CollectionAssert.AreEqual(new[] { "4-13" }, result.SkippedBoards.ToArray(), "FERS na linke LCD1");
         var line = sim.Read(s => s.FindLine(3))!;
         Assert.AreEqual("TCP://0.0.0.0:47003", line.Endpoint.ToString());

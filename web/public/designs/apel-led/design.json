@@ -1,0 +1,14 @@
+{
+  "name": "APEL – červené LED",
+  "renderer": "led-matrix",
+  "pitch": 5,
+  "dot": 0.8,
+  "shape": "circle",
+  "off": "#2a1210",
+  "colors": { "0": "#ff2a1a", "1": "#ff2a1a", "2": "#3dff4a", "3": "#ffc21a", "mono": "#ff2a1a" },
+  "glow": 0.65,
+  "background": "#0a0a0a",
+  "rowGap": 1,
+  "padding": 3,
+  "frame": { "width": 10, "color": "#1f2125", "radius": 6 }
+}

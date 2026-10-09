@@ -21,6 +21,7 @@ import { BoardView, type BoardViewHandle } from "./BoardView";
 const FAULTS: FaultKind[] = ["none", "noReply", "nak", "delay", "garbage", "status"];
 
 /** Poruchy, ktore tabula danej rodiny vie predstierat - stav hlasia len tabule so stavovou odpovedou. */
+// stav (kod odpovede) maju len tabule s odpovedou na kazdu spravu - Elektrocas, listove a APEL
 const faultsFor = (board: BoardDto) => FAULTS.filter((f) => f !== "status" || board.display.family === "chars" || board.display.family === "flaps");
 
 const failed = (e: unknown) => toast.error(errorText(e));

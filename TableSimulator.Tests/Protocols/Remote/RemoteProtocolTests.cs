@@ -168,7 +168,7 @@ public class RemoteProtocolTests
     {
         var sim = Create();
 
-        var reply = Send(sim, 1, TableCommand(10, 130, Hex("82 00 03 41 42 43"), 0));
+        var reply = Send(sim, 1, TableCommand(0, 130, Hex("82 00 03 41 42 43"), 0));
 
         Assert.AreEqual(RemoteProtocol.TableNoLine, Status(reply) & 0xFF);
         Assert.IsFalse(sim.Read(s => s.Boards.Any()));
@@ -207,7 +207,7 @@ public class RemoteProtocolTests
         var result = sim.ImportStation(new StationImport
         {
             Lines = [new StationLine(4, 128, 8090) { Name = "Driver1" }],
-            Boards = [new StationBoard(4, 12, "ELEN16"), new StationBoard(4, 20, "LCD1"), new StationBoard(4, 30, "APEL")]
+            Boards = [new StationBoard(4, 12, "ELEN16"), new StationBoard(4, 20, "LCD1"), new StationBoard(4, 30, "Adon/BUSE")]
         });
 
         Assert.AreEqual(2, result.BoardsAdded);

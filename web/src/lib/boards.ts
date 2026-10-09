@@ -13,6 +13,12 @@ export const FLAP_MANUFACTURERS = ["FERS", "ERS"];
 /** Vyrobcovia znakovych tabul Elektrocas (rodina chars). */
 export const CHAR_MANUFACTURERS = ["LCD", "LCD1", "ERP"];
 
+/** Velkost novej tabule APEL (zodpoveda BoardProfile.DefaultFor) - jednoriadkova a viacriadkova APEL_AN. */
+const APEL_SIZES: Record<string, { width: number; rows: number; rowHeight: number }> = {
+  APEL: { width: 30 * 8, rows: 1, rowHeight: 16 },
+  APEL_AN: { width: 40 * 8, rows: 6, rowHeight: 16 },
+};
+
 /** Nastavenie tabule z jej aktualneho stavu. */
 export function boardConfig(board: BoardDto): SetBoardRequest {
   return {
@@ -31,13 +37,14 @@ export function boardConfig(board: BoardDto): SetBoardRequest {
 export function defaultProfile(manufacturer: string): BoardProfileDto {
   const upper = manufacturer.toUpperCase();
   const size =
-    upper === "ELEN16" || upper === "ELEN16KAM" || upper === "ELEKON"
+    APEL_SIZES[upper] ??
+    (upper === "ELEN16" || upper === "ELEN16KAM" || upper === "ELEKON"
       ? { width: 384, rows: 4, rowHeight: 16 }
       : CHAR_MANUFACTURERS.includes(upper)
         ? { width: 320, rows: 4, rowHeight: 16 }
         : FLAP_MANUFACTURERS.includes(upper)
           ? { width: 9 * 8, rows: 4, rowHeight: 16 }
-          : { width: 192, rows: 2, rowHeight: 10 };
+          : { width: 192, rows: 2, rowHeight: 10 });
   return {
     ...size,
     fontFile: null,

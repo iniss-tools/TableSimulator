@@ -1294,4 +1294,14 @@ export const cs: Record<TextKey, string> = {
   "flaps.lists.hint":
     "Texty listů jsou z dat stanice (předloha tabule a TabTab). Barvu listu data nemají – nastavte ji zde; nové načtení stanice nastavené barvy zachová.",
   "flaps.empty": "Tabule nemá seznamy listů.",
+  "line.class.10": "10 – APEL",
+  "kind.apel.text": "Text do zásobníku/řádku {row}: „{text}“",
+  "kind.apel.clear": "Smazání {count} řádků",
+  "kind.apel.time": "Nastavení času {time}",
+  "kind.apel.light": "Jas {value}",
+  "kind.apel.check": "Kontrola stavu tabule",
+  "kind.apel.temperature": "Dotaz na teplotu",
+  "kind.apel.unknown": "Neznámý příkaz {cmd}",
+  "kind.apel.state": "Stav {state} – chyba",
+  "kind.apel.texts": "Text do {count} řádků: „{text}“…",
 };
