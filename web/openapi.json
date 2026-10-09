@@ -1420,6 +1420,54 @@
         }
       }
     },
+    "/api/recordings/compare": {
+      "get": {
+        "tags": [
+          "Recordings"
+        ],
+        "operationId": "CompareRecordings",
+        "parameters": [
+          {
+            "name": "a",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "b",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingComparisonDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/recordings/{name}": {
       "delete": {
         "tags": [
@@ -1472,6 +1520,63 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings/{name}/boards/{board}": {
+      "get": {
+        "tags": [
+          "Recordings"
+        ],
+        "operationId": "GetRecordingBoard",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "board",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "time",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardDto"
+                }
+              }
+            }
           },
           "default": {
             "description": "Error (ProblemDetails)",
@@ -3178,6 +3283,50 @@
           }
         }
       },
+      "BoardComparisonDto": {
+        "required": [
+          "id",
+          "name",
+          "result",
+          "statesA",
+          "statesB",
+          "steps"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "result": {
+            "$ref": "#/components/schemas/BoardDifference"
+          },
+          "statesA": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "statesB": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComparisonStepDto"
+            }
+          }
+        }
+      },
+      "BoardDifference": {
+        "enum": [
+          "same",
+          "different",
+          "onlyA",
+          "onlyB"
+        ]
+      },
       "BoardDto": {
         "required": [
           "id",
@@ -3399,6 +3548,30 @@
           }
         }
       },
+      "BoardStateDto": {
+        "required": [
+          "time",
+          "settled",
+          "rows"
+        ],
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "number",
+            "format": "double"
+          },
+          "settled": {
+            "type": "number",
+            "format": "double"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "BoardStatsDto": {
         "required": [
           "frames",
@@ -3452,6 +3625,47 @@
             "$ref": "#/components/schemas/BoardProfileDto"
           }
         }
+      },
+      "ComparisonStepDto": {
+        "required": [
+          "kind",
+          "a",
+          "b"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/ComparisonStepKind"
+          },
+          "a": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BoardStateDto"
+              }
+            ]
+          },
+          "b": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BoardStateDto"
+              }
+            ]
+          }
+        }
+      },
+      "ComparisonStepKind": {
+        "enum": [
+          "same",
+          "changed",
+          "removed",
+          "added"
+        ]
       },
       "ConfigImportedDto": {
         "required": [
@@ -4695,6 +4909,28 @@
           }
         }
       },
+      "RecordingComparisonDto": {
+        "required": [
+          "a",
+          "b",
+          "boards"
+        ],
+        "type": "object",
+        "properties": {
+          "a": {
+            "$ref": "#/components/schemas/RecordingSideDto"
+          },
+          "b": {
+            "$ref": "#/components/schemas/RecordingSideDto"
+          },
+          "boards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardComparisonDto"
+            }
+          }
+        }
+      },
       "RecordingInfoDto": {
         "required": [
           "name",
@@ -4766,6 +5002,34 @@
               {
                 "$ref": "#/components/schemas/ReplayStatusDto"
               }
+            ]
+          }
+        }
+      },
+      "RecordingSideDto": {
+        "required": [
+          "name",
+          "created",
+          "duration",
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "duration": {
+            "type": "number",
+            "format": "double"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }

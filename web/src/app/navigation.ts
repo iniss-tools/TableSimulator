@@ -4,6 +4,7 @@ import {
   Archive,
   Cable,
   Disc3,
+  GitCompareArrows,
   Group,
   History,
   KeyRound,
@@ -28,6 +29,7 @@ export type NavPath =
   | "/lines"
   | "/log"
   | "/recordings"
+  | "/recordings/compare"
   | "/virtual"
   | "/archive/tables"
   | "/archive/reports"
@@ -61,6 +63,7 @@ export const NAV: NavGroup[] = [
       { to: "/lines", label: "nav.lines", icon: Cable, permission: PERMISSIONS.view },
       { to: "/log", label: "nav.log", icon: Activity, permission: PERMISSIONS.log },
       { to: "/recordings", label: "nav.recordings", icon: Disc3, permission: PERMISSIONS.view },
+      { to: "/recordings/compare", label: "nav.compare", icon: GitCompareArrows, permission: PERMISSIONS.view },
     ],
   },
   {

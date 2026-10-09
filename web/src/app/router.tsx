@@ -100,6 +100,16 @@ const pages = [
   }),
   createRoute({
     getParentRoute: () => shell,
+    path: "/recordings/compare",
+    // porovnavane zaznamy v adrese - odkaz na porovnanie sa da poslat
+    validateSearch: (search: Record<string, unknown>): { a?: string; b?: string } => ({
+      a: typeof search.a === "string" ? search.a : undefined,
+      b: typeof search.b === "string" ? search.b : undefined,
+    }),
+    component: lazyRouteComponent(() => import("@/features/recordings/ComparePage"), "ComparePage"),
+  }),
+  createRoute({
+    getParentRoute: () => shell,
     path: "/virtual",
     component: lazyRouteComponent(() => import("@/features/virtual/VirtualBoardsPage"), "VirtualBoardsPage"),
   }),

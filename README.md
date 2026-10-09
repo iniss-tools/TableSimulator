@@ -182,6 +182,23 @@ kus prevádzky – `{"t":1.234,"line":1,"rx":"0185…"}` od INISSu alebo `{"t":�
 (`t` sú sekundy od začiatku, bajty v hex). Ukladajú sa bajty tak, ako prišli, nie celé správy, aby prehratie prešlo
 rovnakým skladaním správ.
 
+### Porovnanie záznamov
+
+**Porovnanie záznamov** (`#/recordings/compare?a=…&b=…`, z menu alebo akciou *Porovnať s…* pri zázname) ukáže, čo INISS
+ukazoval na tabuliach v dvoch záznamoch – typicky pred zmenou grafikonu v GVDEditore a po nej, ako regresný test
+proti skutočnému INISSu. Oba záznamy sa prehrajú bez čakania do samostatného simulátora (bežiaci simulátor a linky sa
+nemenia) s hodinami podľa času záznamu a každá zmena textu každej tabule sa zapíše ako stav: riadky zhora, striedanie
+`{a|b}`, pohyblivý text `» text` (písmo, farby a jas sa neporovnávajú). INISS posiela riadky po jednom – zmeny do
+1 s po sebe sú jeden stav s časom začiatku. Postupnosti stavov každej tabule sa porovnajú ako `diff` (Myers): na čase
+nezáleží, len na poradí, takže záznamy môžu začať inokedy; susedné chýbajúce a nové stavy sa spárujú ako zmenené.
+Tabuľa je *rovnaká*, *odlišná*, *len v A* alebo *len v B*; rovnaké stavy za sebou sú zbalené, pri zmenenom stave
+sú odlišné riadky zvýraznené a ikona oka ukáže tabuľu z oboch záznamov v danom okamihu (po poslednom riadku stavu).
+
+Aby porovnanie dávalo zmysel, oba záznamy treba nahrať za rovnakých podmienok – rovnaký čas INISSu (napr. rovnaký
+čas počítača pri oboch behoch) a rovnaký úsek prevádzky; INISS ukazuje vlaky podľa aktuálneho času. API:
+`GET /api/recordings/compare?a=&b=` a `GET /api/recordings/{meno}/boards/{linka-adresa}?time=` (tabuľa zo záznamu
+v čase v sekundách od začiatku).
+
 ## Virtuálne tabule
 
 Tabuľa, ktorá má v INISSe vyplnený export do XML (`SAVE_XML` v `TPhysic.TXT`, spravidla s adresou `-1`), zapisuje

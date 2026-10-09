@@ -68,6 +68,17 @@ export type AuditPageDto = {
     hasMore: boolean;
 };
 
+export type BoardComparisonDto = {
+    id: string;
+    name: string;
+    result: BoardDifference;
+    statesA: number;
+    statesB: number;
+    steps: Array<ComparisonStepDto>;
+};
+
+export type BoardDifference = 'same' | 'different' | 'onlyA' | 'onlyB';
+
 export type BoardDto = {
     id: string;
     line: number;
@@ -116,6 +127,12 @@ export type BoardProfileDto = {
     autoSize: boolean;
 };
 
+export type BoardStateDto = {
+    time: number;
+    settled: number;
+    rows: Array<string>;
+};
+
 export type BoardStatsDto = {
     frames: number;
     acks: number;
@@ -129,6 +146,14 @@ export type BoardTemplateDto = {
     name: string;
     profile: BoardProfileDto;
 };
+
+export type ComparisonStepDto = {
+    kind: ComparisonStepKind;
+    a: null | BoardStateDto;
+    b: null | BoardStateDto;
+};
+
+export type ComparisonStepKind = 'same' | 'changed' | 'removed' | 'added';
 
 export type ConfigImportedDto = {
     lines: number;
@@ -432,6 +457,12 @@ export type RecorderStatusDto = {
     bytes: number;
 };
 
+export type RecordingComparisonDto = {
+    a: RecordingSideDto;
+    b: RecordingSideDto;
+    boards: Array<BoardComparisonDto>;
+};
+
 export type RecordingInfoDto = {
     name: string;
     size: number;
@@ -446,6 +477,13 @@ export type RecordingsDto = {
     items: Array<RecordingInfoDto>;
     recorder: RecorderStatusDto;
     replay: null | ReplayStatusDto;
+};
+
+export type RecordingSideDto = {
+    name: string;
+    created: string;
+    duration: number;
+    note: null | string;
 };
 
 export type ReplayState = 'running' | 'finished' | 'stopped';
@@ -1974,6 +2012,34 @@ export type StopReplayResponses = {
 
 export type StopReplayResponse = StopReplayResponses[keyof StopReplayResponses];
 
+export type CompareRecordingsData = {
+    body?: never;
+    path?: never;
+    query: {
+        a: string;
+        b: string;
+    };
+    url: '/api/recordings/compare';
+};
+
+export type CompareRecordingsErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type CompareRecordingsError = CompareRecordingsErrors[keyof CompareRecordingsErrors];
+
+export type CompareRecordingsResponses = {
+    /**
+     * OK
+     */
+    200: RecordingComparisonDto;
+};
+
+export type CompareRecordingsResponse = CompareRecordingsResponses[keyof CompareRecordingsResponses];
+
 export type DeleteRecordingData = {
     body?: never;
     path: {
@@ -2025,6 +2091,36 @@ export type DownloadRecordingResponses = {
      */
     200: unknown;
 };
+
+export type GetRecordingBoardData = {
+    body?: never;
+    path: {
+        name: string;
+        board: string;
+    };
+    query: {
+        time: number;
+    };
+    url: '/api/recordings/{name}/boards/{board}';
+};
+
+export type GetRecordingBoardErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetRecordingBoardError = GetRecordingBoardErrors[keyof GetRecordingBoardErrors];
+
+export type GetRecordingBoardResponses = {
+    /**
+     * OK
+     */
+    200: BoardDto;
+};
+
+export type GetRecordingBoardResponse = GetRecordingBoardResponses[keyof GetRecordingBoardResponses];
 
 export type GetRecordingsData = {
     body?: never;

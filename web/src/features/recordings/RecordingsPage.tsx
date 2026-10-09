@@ -1,7 +1,8 @@
 // Zaznamy komunikacie: nahravanie prevadzky liniek a jej prehratie do simulatora.
 import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Download, Play, Square, Trash2, Upload } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { Download, GitCompareArrows, Play, Square, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import {
   deleteRecording,
@@ -130,6 +131,7 @@ function Replay({ replay, manage }: { replay: ReplayStatusDto; manage: boolean }
 const column = columnsFor<RecordingInfoDto>();
 
 export function RecordingsPage() {
+  const navigate = useNavigate();
   const recordings = useRecordings();
   const recorder = recordings?.recorder;
   const manage = useCan()(PERMISSIONS.recordings);
@@ -190,6 +192,11 @@ export function RecordingsPage() {
               <RowActions
                 actions={[
                   {
+                    label: t("rec.compare"),
+                    icon: GitCompareArrows,
+                    onClick: () => void navigate({ to: "/recordings/compare", search: { a: r.name } }),
+                  },
+                  {
                     label: t("rec.download"),
                     icon: Download,
                     onClick: () => window.open(`/api/recordings/${encodeURIComponent(r.name)}/file`, "_self"),
@@ -209,7 +216,7 @@ export function RecordingsPage() {
         },
       }),
     ],
-    [manage, speed, loop, recordingName],
+    [manage, speed, loop, recordingName, navigate],
   );
 
   return (
