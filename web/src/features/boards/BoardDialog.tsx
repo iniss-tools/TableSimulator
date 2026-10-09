@@ -18,7 +18,7 @@ import { OptionSelect } from "@/components/common/option-select";
 import { FieldDescription, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { defaultProfile, FLAP_MANUFACTURERS } from "@/lib/boards";
+import { AMPLIFIER_MANUFACTURERS, defaultProfile, FLAP_MANUFACTURERS } from "@/lib/boards";
 import { t } from "@/i18n";
 import { FlapListsEditor } from "./FlapListsEditor";
 import { HeaderEditor } from "./HeaderEditor";
@@ -46,6 +46,9 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
   const fontFiles = p.fontFile && !fonts.includes(p.fontFile) ? [p.fontFile, ...fonts] : fonts;
   // listova tabula: pozicie (moduly) namiesto bodov, cas otacania; pisma, hlavicka a casovanie textov nemaju zmysel
   const flaps = FLAP_MANUFACTURERS.includes(config.manufacturer.toUpperCase());
+  // spinacia jednotka zosilnovaca: len linka, adresa (aj 0), nazov a vyrobca
+  const amplifier = AMPLIFIER_MANUFACTURERS.includes(config.manufacturer.toUpperCase());
+  const board = !flaps && !amplifier;
 
   const applyTemplate = (file: string) => {
     setTemplate(file);
@@ -53,7 +56,11 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
     if (found) setConfig({ ...config, profile: { ...found.profile, autoSize: false }, name: config.name || found.name });
   };
 
-  const title = isNew ? t("dialog.board.new") : t("dialog.board.edit", { name: config.name || t("board.unnamed", { address: config.address }) });
+  const title = isNew
+    ? t("dialog.board.new")
+    : amplifier
+      ? t("dialog.amplifier.edit", { name: config.name || t("amplifier.unnamed", { address: config.address }) })
+      : t("dialog.board.edit", { name: config.name || t("board.unnamed", { address: config.address }) });
   return (
     <FormDialog
       title={title}
@@ -66,10 +73,10 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
       <Tabs defaultValue="board">
         <TabsList>
           <TabsTrigger value="board">{t("board.tab.board")}</TabsTrigger>
-          <TabsTrigger value="profile">{t("board.tab.profile")}</TabsTrigger>
+          {!amplifier && <TabsTrigger value="profile">{t("board.tab.profile")}</TabsTrigger>}
           {flaps && p.flaps && <TabsTrigger value="lists">{t("board.tab.lists")}</TabsTrigger>}
-          {!flaps && <TabsTrigger value="header">{t("section.header")}</TabsTrigger>}
-          {!flaps && <TabsTrigger value="timing">{t("section.timing")}</TabsTrigger>}
+          {board && <TabsTrigger value="header">{t("section.header")}</TabsTrigger>}
+          {board && <TabsTrigger value="timing">{t("section.timing")}</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="board" className="pt-2">
@@ -91,14 +98,14 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
               <FormField label={t("field.address")}>
                 <Input
                   type="number"
-                  min={1}
+                  min={amplifier ? 0 : 1}
                   max={255}
                   value={config.address}
                   disabled={!isNew}
                   onChange={(e) => setConfig({ ...config, address: num(e.target.value) })}
                 />
               </FormField>
-              {!flaps && (
+              {board && (
                 <FormField label={t("field.secondAddress")}>
                   <Input
                     type="number"
@@ -110,7 +117,8 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
                 </FormField>
               )}
             </div>
-            {!flaps && <FieldDescription className="-mt-4">{t("field.secondAddress.hint")}</FieldDescription>}
+            {board && <FieldDescription className="-mt-4">{t("field.secondAddress.hint")}</FieldDescription>}
+            {amplifier && <FieldDescription className="-mt-4">{t("field.address.amplifier.hint")}</FieldDescription>}
             <FormField label={t("field.name")}>
               <Input value={config.name} onChange={(e) => setConfig({ ...config, name: e.target.value })} />
             </FormField>
@@ -123,14 +131,16 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
                   className="w-full"
                 />
               </FormField>
-              <FormField label={t("field.design")}>
-                <OptionSelect
-                  value={config.design ?? NONE}
-                  onValueChange={(design) => setConfig({ ...config, design: design || null })}
-                  options={[{ value: NONE, label: t("common.default") }, ...designs.map((d) => ({ value: d.id, label: d.name }))]}
-                  className="w-full"
-                />
-              </FormField>
+              {!amplifier && (
+                <FormField label={t("field.design")}>
+                  <OptionSelect
+                    value={config.design ?? NONE}
+                    onValueChange={(design) => setConfig({ ...config, design: design || null })}
+                    options={[{ value: NONE, label: t("common.default") }, ...designs.map((d) => ({ value: d.id, label: d.name }))]}
+                    className="w-full"
+                  />
+                </FormField>
+              )}
             </div>
           </FieldGroup>
         </TabsContent>

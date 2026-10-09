@@ -63,6 +63,7 @@ function board(rows: Board["display"]["rows"], extra: Partial<Board["display"]> 
       charRows: null,
       flapRows: null,
       rotatingUntil: null,
+      amplifier: null,
       ...extra,
     },
   };

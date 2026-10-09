@@ -50,6 +50,7 @@ export const SAMPLE_BOARD: BoardDto = {
     charRows: null,
     flapRows: null,
     rotatingUntil: null,
+    amplifier: null,
   },
   version: 0,
   secondAddress: null,

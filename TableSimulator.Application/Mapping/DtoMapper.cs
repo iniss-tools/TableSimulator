@@ -227,6 +227,10 @@ public static partial class DtoMapper
             FlapRows = f.Rows.Where(r => r.Value.Trim().Length > 0).OrderBy(r => r.Key).Select(r => new FlapRowDto(r.Key, r.Value)).ToArray(),
             RotatingUntil = f.RotatingUntil
         },
+        AmplifierDisplay a => new DisplayDto("amplifier", a.Brightness, a.ClockValue, a.ClockSetAt, [], 0, null, null)
+        {
+            Amplifier = new AmplifierDto(a.Band, a.State, a.OnSince, a.Switches, a.LastCommand)
+        },
         _ => new DisplayDto("unknown", display.Brightness, display.ClockValue, display.ClockSetAt, [], 0, null, null)
     };
 

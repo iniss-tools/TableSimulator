@@ -46,6 +46,7 @@ function board(manufacturer: string, rows: { row: number; codes: string }[], pro
       charRows: null,
       flapRows: rows,
       rotatingUntil: null,
+      amplifier: null,
     },
   };
 }

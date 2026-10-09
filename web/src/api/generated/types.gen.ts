@@ -62,6 +62,14 @@ export type AlertTestResultDto = {
     email: AlertChannelResultDto;
 };
 
+export type AmplifierDto = {
+    band: number;
+    state: number;
+    onSince: null | string;
+    switches: number;
+    lastCommand: null | number;
+};
+
 export type ApiProblem = {
     type?: null | string;
     title?: null | string;
@@ -257,6 +265,7 @@ export type DisplayDto = {
     charRows: null | Array<CharRowDto>;
     flapRows: null | Array<FlapRowDto>;
     rotatingUntil: null | string;
+    amplifier: null | AmplifierDto;
 };
 
 export type ElementDto = {

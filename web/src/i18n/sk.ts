@@ -1303,6 +1303,22 @@ export const sk = {
   "kind.apel.unknown": "Neznámy príkaz {cmd}",
   "kind.apel.state": "Stav {state} – chyba",
   "kind.apel.texts": "Text do {count} riadkov: „{text}“…",
+  "line.class.129": "129 – ELSVO (spínanie zosilňovačov)",
+  "amplifier.on": "Zopnutý – {band}. pásmo",
+  "amplifier.off": "Vypnutý",
+  "amplifier.released": "Uvoľnený po hlásení",
+  "amplifier.detail": "stav {state} · zopnutí: {switches}",
+  "amplifier.since": "zopnutý od {time} ({seconds} s)",
+  "field.address.amplifier.hint": "Adresa jednotky zo stĺpca 9 okruhu (prázdna = 0); okruh má v stĺpci 8 E a číslo tejto linky.",
+  "kind.elsvo.on": "Zapnúť zosilňovač",
+  "kind.elsvo.onBand2": "Zapnúť zosilňovač – 2. pásmo",
+  "kind.elsvo.query": "Dotaz na stav",
+  "kind.elsvo.release": "Uvoľniť po hlásení",
+  "kind.elsvo.off": "Vypnúť",
+  "kind.elsvo.unknown": "Neznámy príkaz {cmd}",
+  "kind.elsvo.state": "Stav {state}: {bits}",
+  "amplifier.unnamed": "Zosilňovač {address}",
+  "dialog.amplifier.edit": "Spínacia jednotka ELSVO – {name}",
 } as const;
 
 export type TextKey = keyof typeof sk;

@@ -3,6 +3,7 @@ using TableSimulator.Core.Boards;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Protocols;
 using TableSimulator.Core.Protocols.Apel;
+using TableSimulator.Core.Protocols.Elsvo;
 using TableSimulator.Core.Protocols.Elektrocas;
 using TableSimulator.Core.Protocols.Elen;
 using TableSimulator.Core.Protocols.Ers;
@@ -585,6 +586,7 @@ public sealed class Simulator
         [4] = (() => new ElenProtocol(), ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16Kam", "ELEKON"]),
         [5] = (() => new ElektrocasProtocol(), ["LCD1", "ERP"]),
         [128] = (() => new RemoteProtocol(), [.. RemoteProtocol.Manufacturers]),
+        [129] = (() => new ElsvoProtocol(), ["ELSVO"]),
         [130] = (() => new ItpProtocol(), ["LCD1", "ERP", "LCD", "FERS"])
     };
 

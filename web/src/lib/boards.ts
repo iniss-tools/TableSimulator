@@ -10,6 +10,9 @@ export const REMOTE_INISS_CLASS = 128;
 /** Vyrobcovia listovych tabul (rodina flaps). */
 export const FLAP_MANUFACTURERS = ["FERS", "ERS"];
 
+/** Spinacie jednotky zosilnovacov (rodina amplifier) - nie tabule, nemaju rozmer, pismo ani vzhlad. */
+export const AMPLIFIER_MANUFACTURERS = ["ELSVO"];
+
 /** Vyrobcovia znakovych tabul Elektrocas (rodina chars). */
 export const CHAR_MANUFACTURERS = ["LCD", "LCD1", "ERP"];
 

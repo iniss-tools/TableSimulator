@@ -16,6 +16,7 @@ Protokoly sú popísané v `iniss-tools-docs/docs/iniss/protokoly/`. Hotové sú
 | `10`         | APEL (jednoriadkové) a APEL_AN (viacriadkové LED)             |
 | `130`        | LCD1, ERP, LCD a FERS za sieťovým prevodníkom KTP (pakety ITP) |
 | `128`        | tabule ELEN, Elektročas, listové a APEL za vzdialeným INISSom (`/Remote`) |
+| `129`        | spínacie jednotky zosilňovačov ELSVO (nie tabule)             |
 
 Adon/BUSE sa simulovať nedá – INISS ich ovláda cez knižnicu `infotabd.dll`, ktorej bajty na linke nepoznáme.
 
@@ -229,6 +230,21 @@ viac záznamov (príkaz, dĺžka, údaje) a XOR súčet bez adresy. Tabuľa je z
   `08` stratila nastavenie). Hromadné správy na adresu `FF` (zmazanie, čas) dostanú všetky tabule linky bez odpovede.
 - Čas (`81`) nastaví hodiny tabule; jas (`83`), teplota (`82`) a kontrola spojenia (`8A`) sa len zapíšu
   do komunikácie – jas nemení vzhľad tabule.
+
+## Spínanie zosilňovačov ELSVO
+
+Linka triedy `129` (protokol `protokoly/elsvo.mdx`) nemá tabule, ale **spínacie jednotky zosilňovačov rozhlasových
+okruhov**: INISS pred hlásením zosilňovač zopne a po ňom uvoľní. Karta jednotky ukazuje kontrolku zopnutia, pásmo,
+od kedy je zopnutý, počet zopnutí a bity stavu, ktorým jednotka odpovedá (mená ako v logu INISSu).
+
+- Jednotky nie sú v `TPhysic`, ale v `Audio.txt` (stĺpec 8 `E<linka>`, stĺpec 9 adresa, prázdna = `0`) – *Načítať
+  z INISSu* založí len linku, jednotky vzniknú samoučením pri prvom príkaze alebo ručne (výrobca `ELSVO`, adresa aj `0`).
+- Príkazy `1F` (1. pásmo) a `3F` (2. pásmo) zosilňovač zopnú, `C0` (uvoľniť) a `00` (vypnúť) vypnú; na každý príkaz
+  aj dotaz `80` jednotka odpovie stavom `80` (*Ready*), pri zopnutí `90` (*Ready + Hlaseni*).
+- Zlý súčet jednotka nevykoná a odpovie bitom `20` (*TransferErr*) – predpoklad, dokumentácia odpoveď na chybnú správu
+  nepozná. Porucha *hlási poruchu v stave* pošle zvolený stav (predvolene `80` – pripravená, ale nezopnutá, INISS
+  hlásenie neprehrá; `84` chyba hardvéru), *NAK* stav s bitom `20`.
+- Porovnanie záznamov porovnáva `ON 1`, `ON 2` alebo `OFF`.
 
 ## Vzdialený INISS (trieda 128)
 

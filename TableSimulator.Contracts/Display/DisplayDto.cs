@@ -1,8 +1,8 @@
 namespace TableSimulator.Contracts.Display;
 
 /// <summary>
-/// Obsah tabule: rodina <c>elen</c> (riadky <see cref="Rows" />), <c>chars</c> (<see cref="CharRows" />) alebo <c>flaps</c>
-/// (<see cref="FlapRows" />).
+/// Obsah tabule: rodina <c>elen</c> (riadky <see cref="Rows" />), <c>chars</c> (<see cref="CharRows" />), <c>flaps</c>
+/// (<see cref="FlapRows" />) alebo <c>amplifier</c> - spinacia jednotka zosilnovaca ELSVO (<see cref="Amplifier" />).
 /// </summary>
 public sealed record DisplayDto(
     string Family,
@@ -31,4 +31,7 @@ public sealed record DisplayDto(
 
     /// <summary>Listova tabula: do kedy sa listy otacaju; null = stoja.</summary>
     public DateTimeOffset? RotatingUntil { get; init; }
+
+    /// <summary>Zosilnovac ELSVO; null pri inej rodine.</summary>
+    public AmplifierDto? Amplifier { get; init; }
 }

@@ -10,6 +10,7 @@ import { fallbackGlyphSource } from "@/render/pixel-fonts";
 import { CHAR_WIDTH } from "@/render/chars";
 import { blinkPhase, boardClock, hasClock, isAnimated, rasterize } from "@/render/rasterize";
 import { LedRenderer, ledSize } from "@/render/led";
+import { AmplifierView } from "./AmplifierView";
 import { FlapView } from "./FlapView";
 
 // Prve kreslenie tabule trva desiatky ms - stranka s mnohymi tabulami ich kresli po jednej v samostatnych ulohach,
@@ -82,7 +83,9 @@ interface Props {
 }
 
 export function BoardView(props: Props) {
-  return props.board.display.family === "flaps" ? <FlapView {...props} /> : <LedBoardView {...props} />;
+  const family = props.board.display.family;
+  if (family === "amplifier") return <AmplifierView {...props} />;
+  return family === "flaps" ? <FlapView {...props} /> : <LedBoardView {...props} />;
 }
 
 function LedBoardView({ board, fit = "width", className, design: override, ref }: Props) {

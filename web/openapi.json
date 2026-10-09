@@ -3354,6 +3354,44 @@
           }
         }
       },
+      "AmplifierDto": {
+        "required": [
+          "band",
+          "state",
+          "onSince",
+          "switches",
+          "lastCommand"
+        ],
+        "type": "object",
+        "properties": {
+          "band": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "state": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "onSince": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "switches": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastCommand": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "ApiProblem": {
         "type": "object",
         "properties": {
@@ -4113,7 +4151,8 @@
           "flashOffMs",
           "charRows",
           "flapRows",
-          "rotatingUntil"
+          "rotatingUntil",
+          "amplifier"
         ],
         "type": "object",
         "properties": {
@@ -4206,6 +4245,16 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "amplifier": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AmplifierDto"
+              }
+            ]
           }
         }
       },

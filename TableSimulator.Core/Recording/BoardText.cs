@@ -6,7 +6,7 @@ namespace TableSimulator.Core.Recording;
 /// <summary>
 /// Co tabula ukazuje ako riadky textu zhora (na porovnanie zaznamov): kazdy riadok profilu, prazdny riadok = "",
 /// striedanie ako <c>{a|b}</c>; pohyblivy text ELEN ako posledny riadok <c>» text</c>. Pismo, farby a jas sa
-/// neporovnavaju.
+/// neporovnavaju. Zosilnovac ELSVO je jeden riadok <c>ON 1</c>, <c>ON 2</c> alebo <c>OFF</c>.
 /// </summary>
 public static class BoardText
 {
@@ -21,6 +21,8 @@ public static class BoardText
             ElenDisplay elen => Elen(elen, board.Profile.Rows),
             CharDisplay chars => Chars(chars, board.Profile.Rows, board.ManufacturerKey),
             FlapDisplay flaps => Flaps(flaps, board.Profile, board.ManufacturerKey),
+            // zosilnovac ELSVO: zopnuty v pasme alebo vypnuty
+            AmplifierDisplay amplifier => [amplifier.Band > 0 ? "ON " + amplifier.Band.ToString(System.Globalization.CultureInfo.InvariantCulture) : "OFF"],
             _ => []
         };
     }

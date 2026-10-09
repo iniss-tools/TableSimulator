@@ -21,8 +21,9 @@ import { BoardView, type BoardViewHandle } from "./BoardView";
 const FAULTS: FaultKind[] = ["none", "noReply", "nak", "delay", "garbage", "status"];
 
 /** Poruchy, ktore tabula danej rodiny vie predstierat - stav hlasia len tabule so stavovou odpovedou. */
-// stav (kod odpovede) maju len tabule s odpovedou na kazdu spravu - Elektrocas, listove a APEL
-const faultsFor = (board: BoardDto) => FAULTS.filter((f) => f !== "status" || board.display.family === "chars" || board.display.family === "flaps");
+// stav (kod odpovede) maju len tabule s odpovedou na kazdu spravu - Elektrocas, listove, APEL a jednotky ELSVO
+const STATUS_FAMILIES = ["chars", "flaps", "amplifier"];
+const faultsFor = (board: BoardDto) => FAULTS.filter((f) => f !== "status" || STATUS_FAMILIES.includes(board.display.family));
 
 const failed = (e: unknown) => toast.error(errorText(e));
 
@@ -67,8 +68,8 @@ function FaultControl({ board, edit }: { board: BoardDto; edit: boolean }) {
     fault({
       kind,
       delayMs: kind === "delay" ? Math.max(board.fault.delayMs, 500) : 0,
-      // predvolene "chybna sprava"
-      status: kind === "status" ? board.fault.status || 0x01 : 0,
+      // predvolene "chybna sprava", pri zosilnovaci "pripravena, ale nezopnuta"
+      status: kind === "status" ? board.fault.status || (board.display.family === "amplifier" ? 0x80 : 0x01) : 0,
     });
 
   return (
@@ -161,6 +162,18 @@ function Rotating({ until }: { until: string }) {
   return now < Date.parse(until) ? <span className="font-medium text-amber-700 dark:text-amber-300"> · {t("board.rotating")}</span> : null;
 }
 
+/** Zosilnovac: od kedy je zopnuty a ako dlho. */
+function AmplifierOn({ since }: { since: string }) {
+  const now = useNow(1000);
+  const seconds = Math.max(0, Math.floor((now - Date.parse(since)) / 1000));
+  return (
+    <span className="font-medium text-green-700 dark:text-green-400">
+      {" "}
+      · {t("amplifier.since", { time: new Date(since).toLocaleTimeString(locale()), seconds })}
+    </span>
+  );
+}
+
 /** Hodiny tabule - idu od nastavenia dalej. */
 function BoardClock({ clock, setAt }: { clock: string; setAt: string }) {
   const now = useNow(1000);
@@ -168,7 +181,7 @@ function BoardClock({ clock, setAt }: { clock: string; setAt: string }) {
 }
 
 export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: () => void; edit: boolean }) {
-  const name = board.name || t("board.unnamed", { address: board.address });
+  const name = board.name || t(board.display.family === "amplifier" ? "amplifier.unnamed" : "board.unnamed", { address: board.address });
   const last = board.stats.lastFrameAt ? new Date(board.stats.lastFrameAt).toLocaleTimeString(locale()) : null;
   const d = board.display;
   const view = useRef<BoardViewHandle>(null);
@@ -219,7 +232,9 @@ export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: ()
       <CardContent className="flex flex-col gap-3">
         {board.mismatch && <MismatchWarning board={board} edit={edit} />}
         <BoardView ref={view} board={board} />
-        {!board.profile.fontFile && d.family !== "flaps" && <p className="text-xs text-muted-foreground">{t("board.approxFont")}</p>}
+        {!board.profile.fontFile && d.family !== "flaps" && d.family !== "amplifier" && (
+          <p className="text-xs text-muted-foreground">{t("board.approxFont")}</p>
+        )}
         {d.family === "flaps" && !board.profile.flaps && <p className="text-xs text-muted-foreground">{t("board.flaps.codes")}</p>}
       </CardContent>
       {/* stav tabule vzdy na spodku karty - karty v riadku mriezky maju rovnaku vysku */}
@@ -227,8 +242,9 @@ export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: ()
         <span className="text-xs text-muted-foreground">
           {last ? t("board.lastFrame", { time: last }) : t("board.noFrames")} ·{" "}
           {t("board.stats", { frames: board.stats.frames, acks: board.stats.acks, naks: board.stats.naks })}
-          {d.family !== "flaps" && <> · {d.brightness > 0 ? t("board.brightness", { value: d.brightness }) : t("board.dark")}</>}
+          {d.family !== "flaps" && d.family !== "amplifier" && <> · {d.brightness > 0 ? t("board.brightness", { value: d.brightness }) : t("board.dark")}</>}
           {d.rotatingUntil && <Rotating until={d.rotatingUntil} />}
+          {d.amplifier?.onSince && <AmplifierOn since={d.amplifier.onSince} />}
           {d.clock && d.clockSetAt && <BoardClock clock={d.clock} setAt={d.clockSetAt} />}
         </span>
         <FaultControl board={board} edit={edit} />
