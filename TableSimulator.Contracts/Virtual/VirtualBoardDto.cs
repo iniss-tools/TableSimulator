@@ -10,8 +10,8 @@ namespace TableSimulator.Contracts.Virtual;
 /// <param name="RowCount">pocet zaznamov; null = vsetky</param>
 /// <param name="RowStart">poradie prveho zaznamu (od 1) - jedna tabula INISSu na viac obrazovkach</param>
 /// <param name="Separator">text namiesto <c>#</c> v stanici a smere; prazdny = casti sa striedaju</param>
-/// <param name="Template">sablona XSL z INISSView (na neskorsiu kompatibilitu, zatial sa nepouziva)</param>
-/// <param name="Parameter">atribut <c>x</c> pre sablonu XSL (zatial sa nepouziva)</param>
+/// <param name="Template">sablona XSL z INISSView (meno bez pripony); s priecinkom INISSView v nastaveni sa tabula ukaze nou, prazdna = podla rozlozenia</param>
+/// <param name="Parameter">atribut <c>x</c> pre sablonu XSL</param>
 /// <param name="Layout">rozlozenie; prazdne = predvolene</param>
 public sealed record VirtualBoardDto(
     int Id,

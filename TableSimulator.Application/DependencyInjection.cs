@@ -9,6 +9,8 @@ using TableSimulator.Application.Fonts;
 using TableSimulator.Application.Recordings;
 using TableSimulator.Application.Signage;
 using TableSimulator.Application.Station;
+using TableSimulator.Application.Virtual;
+using TableSimulator.Core.Virtual;
 
 namespace TableSimulator.Application;
 
@@ -55,6 +57,8 @@ public static class DependencyInjection
         services.AddScoped<StationImporter>();
         services.AddSingleton<SignagePanelTracker>();
         services.AddSingleton<SignageMediaStore>();
+        services.AddSingleton<XslTablePages>();
+        services.AddSingleton<InissViewSite>();
         return services;
     }
 }

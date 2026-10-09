@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { errorText, getVirtualViewOptions, useSimulatorState, type SetSignageMessageRequest, type SignageAlign, type SignageTextSize } from "@/api";
 import { BoardView } from "@/features/boards/BoardView";
-import { VirtualScreen } from "@/features/virtual/VirtualScreen";
+import { VirtualDisplay } from "@/features/virtual/VirtualDisplay";
 import { useNow } from "@/hooks/use-now";
 import { t } from "@/i18n";
 import { cn } from "@/lib/utils";
@@ -16,12 +16,12 @@ function Problem({ text }: { text: string }) {
   return <div className="flex size-full items-center justify-center p-[2cqw] text-center text-[2cqw] text-neutral-400">{text}</div>;
 }
 
-function VirtualSlide({ id }: { id: number }) {
+function VirtualSlide({ id, preview }: { id: number; preview?: boolean }) {
   // obsah sa obnovuje so zmenou XML (live.ts)
   const query = useQuery(getVirtualViewOptions({ path: { id } }));
   const now = useNow(250);
   if (!query.data) return query.error ? <Problem text={errorText(query.error)} /> : null;
-  return <VirtualScreen view={query.data} layout={query.data.layout} now={now} />;
+  return <VirtualDisplay view={query.data} now={now} preview={preview} />;
 }
 
 function BoardSlide({ id }: { id: string }) {
@@ -30,11 +30,12 @@ function BoardSlide({ id }: { id: string }) {
   return <BoardView board={board} fit="contain" className="h-full p-[2cqw]" />;
 }
 
-export function SignageSlide({ message }: { message: SetSignageMessageRequest }) {
+/** preview = nahlad v okne (stranka sablony INISSView zmensena do miesta). */
+export function SignageSlide({ message, preview }: { message: SetSignageMessageRequest; preview?: boolean }) {
   const content = () => {
     switch (message.kind) {
       case "virtual":
-        return message.virtualBoard !== null ? <VirtualSlide id={message.virtualBoard} /> : null;
+        return message.virtualBoard !== null ? <VirtualSlide id={message.virtualBoard} preview={preview} /> : null;
       case "board":
         return message.board ? <BoardSlide id={message.board} /> : null;
       case "image":

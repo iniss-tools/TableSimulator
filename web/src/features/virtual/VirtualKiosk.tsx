@@ -1,4 +1,5 @@
-// Virtualna tabula na celu obrazovku (#/virtual/<cislo>) - obsah XML tabule INISSu podla rozlozenia tabule.
+// Virtualna tabula na celu obrazovku (#/virtual/<cislo>) - obsah XML tabule INISSu podla rozlozenia tabule alebo
+// stranka zo sablony XSL INISSView.
 import { useQuery } from "@tanstack/react-query";
 import { errorText, getVirtualViewOptions, useConnection } from "@/api";
 import { t, useLanguage } from "@/i18n";
@@ -6,7 +7,7 @@ import { useNow } from "@/hooks/use-now";
 import { KioskControls } from "@/app/KioskControls";
 import { toggleFullscreen, useKiosk } from "@/app/kiosk";
 import { cn } from "@/lib/utils";
-import { VirtualScreen } from "./VirtualScreen";
+import { VirtualDisplay } from "./VirtualDisplay";
 
 export function VirtualKiosk({ id }: { id: number }) {
   useLanguage();
@@ -20,11 +21,7 @@ export function VirtualKiosk({ id }: { id: number }) {
 
   return (
     <div className={cn("h-dvh bg-black", !active && "cursor-none")} onDoubleClick={toggleFullscreen}>
-      {view ? (
-        <VirtualScreen view={view} layout={view.layout} now={now} error={error} />
-      ) : (
-        error && <div className="bg-[#5a1a1a] px-3 py-1 text-sm text-[#ffd0d0]">{error}</div>
-      )}
+      {view ? <VirtualDisplay view={view} now={now} error={error} /> : error && <div className="bg-[#5a1a1a] px-3 py-1 text-sm text-[#ffd0d0]">{error}</div>}
       {!connected && <div className="fixed bottom-3 left-3 text-[13px] text-[#ffb000]">{t("server.offline")}</div>}
       <KioskControls visible={active} />
     </div>

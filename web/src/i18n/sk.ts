@@ -482,9 +482,9 @@ export const sk = {
   "virtual.field.separator": "Oddeľovač",
   "virtual.field.separator.hint": "Časti cieľovej stanice a smeru oddelené # sa ukážu naraz s týmto oddeľovačom (napr. „, “). Prázdny = časti sa striedajú.",
   "virtual.field.template": "Šablóna INISSView",
-  "virtual.field.template.hint": "Zatiaľ sa nepoužíva – uloží sa pre budúcu podporu šablón XSL.",
+  "virtual.field.template.hint": "Šablóna XSL z priečinka INISSView (meno bez prípony) – tabuľa sa ukáže ako v INISSView. Prázdna = podľa rozloženia.",
   "virtual.field.parameter": "Parameter x",
-  "virtual.field.parameter.hint": "Zatiaľ sa nepoužíva.",
+  "virtual.field.parameter.hint": "Atribút x, ktorý šablóna dostane v XML tabule (napr. pre odkaz na inú tabuľu).",
   "virtual.view.empty": "Na tabuli nie je žiadny záznam.",
   "virtual.view.missing": "Súbor {name}.xml sa v sledovaných priečinkoch nenašiel.",
   "virtual.view.stale": "Údaje nie sú aktuálne – platili do {time}.",
@@ -1140,6 +1140,15 @@ export const sk = {
     "Playlisty rovnakého druhu môžu platiť naraz: {pairs}. Kým platia oba, hrá ten s neskôr začatým oknom (pri rovnakom začiatku nižšie číslo).",
   "signage.overlap.save": "Uložiť aj tak",
   "signage.overlap.confirm": "Playlisty rovnakého druhu môžu platiť naraz: {pairs}. Kým platia oba, hrá len ten s neskôr začatým oknom. Uložiť skupinu aj tak?",
+  "settings.inissViewFolder": "Priečinok INISSView (šablóny XSL)",
+  "settings.inissViewFolder.hint":
+    "Priečinok aplikácie INISSView (Web.config, tabs\\ so šablónami a CSS, img\\, JScript.js). Virtuálne tabule so šablónou sa potom ukážu ako v INISSView; prázdny = len rozloženia simulátora.",
+  "virtual.field.template.off": "Šablóna sa použije, keď je v Nastaveniach priečinok INISSView; dovtedy ide tabuľa podľa rozloženia.",
+  "virtual.template": "šablóna {name}",
+  "virtual.page.noSource": "Súbor XML tabule {detail} sa v sledovaných priečinkoch nenašiel.",
+  "virtual.page.notFound": "Šablóna {detail} neexistuje.",
+  "virtual.page.template": "Šablóna je chybná: {detail}",
+  "virtual.page.failed": "Stránku tabule sa nepodarilo zostaviť: {detail}",
 } as const;
 
 export type TextKey = keyof typeof sk;

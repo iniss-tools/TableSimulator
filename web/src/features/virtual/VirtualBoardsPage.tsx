@@ -178,6 +178,8 @@ export function VirtualBoardsPage() {
 
   const boardColumns = useMemo(() => {
     const layoutOf = (b: VirtualBoardDto) => data?.layouts.find((l) => l.id === (b.layout || data.defaultLayout));
+    // sablona INISSView sa pouzije, ked je v nastaveni priecinok INISSView (server vtedy pozna sablony)
+    const usesTemplate = (b: VirtualBoardDto) => b.template.length > 0 && (data?.templates.length ?? 0) > 0;
     const sourceOf = (b: VirtualBoardDto) => data?.sources.find((s) => s.name.toLowerCase() === b.source.toLowerCase());
     return [
       boardColumn.accessor("id", { header: t("virtual.col.id"), meta: { className: "w-16" } }),
@@ -212,10 +214,21 @@ export function VirtualBoardsPage() {
             <span className="text-xs text-muted-foreground">{t("virtual.separator.none")}</span>
           ),
       }),
-      boardColumn.accessor((b) => (layoutOf(b) ? layoutName(layoutOf(b)!) : b.layout), {
+      boardColumn.accessor((b) => (usesTemplate(b) ? t("virtual.template", { name: b.template }) : layoutOf(b) ? layoutName(layoutOf(b)!) : b.layout), {
         id: "layout",
         header: t("virtual.col.layout"),
-        cell: ({ row, getValue }) => (layoutOf(row.original) ? getValue() : <Badge variant="destructive">{row.original.layout}</Badge>),
+        cell: ({ row, getValue }) =>
+          usesTemplate(row.original) ? (
+            data?.templates.some((n) => n.toLowerCase() === row.original.template.toLowerCase()) ? (
+              getValue()
+            ) : (
+              <Badge variant="destructive">{getValue()}</Badge>
+            )
+          ) : layoutOf(row.original) ? (
+            getValue()
+          ) : (
+            <Badge variant="destructive">{row.original.layout}</Badge>
+          ),
       }),
       boardColumn.display({
         id: "actions",
@@ -402,6 +415,7 @@ export function VirtualBoardsPage() {
           sources={data.sources}
           layouts={data.layouts}
           defaultLayout={data.defaultLayout}
+          templates={data.templates}
           onClose={() => setEditing(null)}
         />
       )}

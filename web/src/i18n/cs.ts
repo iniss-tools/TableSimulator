@@ -483,9 +483,9 @@ export const cs: Record<TextKey, string> = {
   "virtual.field.separator": "Oddělovač",
   "virtual.field.separator.hint": "Části cílové stanice a směru oddělené # se zobrazí najednou s tímto oddělovačem (např. „, “). Prázdný = části se střídají.",
   "virtual.field.template": "Šablona INISSView",
-  "virtual.field.template.hint": "Zatím se nepoužívá – uloží se pro budoucí podporu šablon XSL.",
+  "virtual.field.template.hint": "Šablona XSL ze složky INISSView (jméno bez přípony) – tabule se zobrazí jako v INISSView. Prázdná = podle rozložení.",
   "virtual.field.parameter": "Parametr x",
-  "virtual.field.parameter.hint": "Zatím se nepoužívá.",
+  "virtual.field.parameter.hint": "Atribut x, který šablona dostane v XML tabule (např. pro odkaz na jinou tabuli).",
   "virtual.view.empty": "Na tabuli není žádný záznam.",
   "virtual.view.missing": "Soubor {name}.xml se ve sledovaných složkách nenašel.",
   "virtual.view.stale": "Údaje nejsou aktuální – platily do {time}.",
@@ -1142,4 +1142,13 @@ export const cs: Record<TextKey, string> = {
     "Playlisty stejného druhu mohou platit současně: {pairs}. Dokud platí oba, hraje ten s později začatým oknem (při stejném začátku nižší číslo).",
   "signage.overlap.confirm":
     "Playlisty stejného druhu mohou platit současně: {pairs}. Dokud platí oba, hraje jen ten s později začatým oknem. Uložit skupinu i tak?",
+  "settings.inissViewFolder": "Složka INISSView (šablony XSL)",
+  "settings.inissViewFolder.hint":
+    "Složka aplikace INISSView (Web.config, tabs\\ se šablonami a CSS, img\\, JScript.js). Virtuální tabule se šablonou se pak zobrazí jako v INISSView; prázdná = jen rozložení simulátoru.",
+  "virtual.field.template.off": "Šablona se použije, až bude v Nastavení složka INISSView; do té doby jde tabule podle rozložení.",
+  "virtual.template": "šablona {name}",
+  "virtual.page.noSource": "Soubor XML tabule {detail} se ve sledovaných složkách nenašel.",
+  "virtual.page.notFound": "Šablona {detail} neexistuje.",
+  "virtual.page.template": "Šablona je chybná: {detail}",
+  "virtual.page.failed": "Stránku tabule se nepodařilo sestavit: {detail}",
 };

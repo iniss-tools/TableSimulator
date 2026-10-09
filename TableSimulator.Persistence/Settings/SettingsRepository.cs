@@ -23,6 +23,7 @@ public sealed class SettingsRepository(AppDbContext db)
             MonitorFolder = record.MonitorFolder,
             VirtualFolders = record.VirtualFolders.ToArray(),
             InissProgram = record.InissProgram,
+            InissViewFolder = record.InissViewFolder,
             InissRegistry = record.InissRegistry,
             InissElevated = record.InissElevated,
             HttpsPort = record.HttpsPort,
@@ -53,6 +54,7 @@ public sealed class SettingsRepository(AppDbContext db)
         record.MonitorFolder = settings.MonitorFolder;
         record.VirtualFolders = settings.VirtualFolders.ToList();
         record.InissProgram = settings.InissProgram;
+        record.InissViewFolder = settings.InissViewFolder;
         record.InissRegistry = settings.InissRegistry;
         record.InissElevated = settings.InissElevated;
         record.HttpsPort = settings.HttpsPort;

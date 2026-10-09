@@ -56,6 +56,7 @@ function sample(layout: VirtualLayoutDto): VirtualViewDto {
       row("12:35", "Os", "7815", "Horné Mesto", "2"),
     ],
     layout,
+    page: null,
   };
 }
 

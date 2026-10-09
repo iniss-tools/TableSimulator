@@ -41,6 +41,12 @@ public sealed record AppSettings
     /// </summary>
     public IReadOnlyList<string> VirtualFolders { get; init; } = [];
 
+    /// <summary>
+    /// Priecinok aplikacie INISSView (Web.config, <c>tabs\</c> so sablonami XSL a CSS, obrazky, JScript.js) - virtualne
+    /// tabule so sablonou sa ukazu ako v INISSView; prazdny = len rozlozenia simulatora.
+    /// </summary>
+    public string InissViewFolder { get; init; } = "";
+
     /// <summary>Program INISSu (exe) na tomto pocitaci - odkial simulator nacita linky a tabule stanice; prazdny = nenastaveny.</summary>
     public string InissProgram { get; init; } = "";
 

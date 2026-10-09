@@ -252,7 +252,7 @@ export function MessageDialog({ id, initial, initialMediaName, onClose }: Messag
         <div className="flex flex-col gap-2 self-start lg:sticky lg:top-0">
           <span className="text-sm font-medium">{t("signage.preview")}</span>
           <div className="aspect-video w-full overflow-hidden rounded-md border bg-black">
-            <SignageSlide message={message} />
+            <SignageSlide message={message} preview />
           </div>
         </div>
       </div>

@@ -5371,6 +5371,7 @@
           "monitorFolder",
           "requireLogin",
           "virtualFolders",
+          "inissViewFolder",
           "inissProgram",
           "inissRegistry",
           "inissElevated",
@@ -5412,6 +5413,9 @@
             "items": {
               "type": "string"
             }
+          },
+          "inissViewFolder": {
+            "type": "string"
           },
           "inissProgram": {
             "type": "string"
@@ -6214,6 +6218,7 @@
           "monitorFolder",
           "requireLogin",
           "virtualFolders",
+          "inissViewFolder",
           "inissProgram",
           "inissRegistry",
           "inissElevated",
@@ -6255,6 +6260,9 @@
             "items": {
               "type": "string"
             }
+          },
+          "inissViewFolder": {
+            "type": "string"
           },
           "inissProgram": {
             "type": "string"
@@ -6612,7 +6620,8 @@
           "sources",
           "folders",
           "layouts",
-          "defaultLayout"
+          "defaultLayout",
+          "templates"
         ],
         "type": "object",
         "properties": {
@@ -6642,6 +6651,40 @@
           },
           "defaultLayout": {
             "type": "string"
+          },
+          "templates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "VirtualPageDto": {
+        "required": [
+          "html",
+          "error",
+          "detail"
+        ],
+        "type": "object",
+        "properties": {
+          "html": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -6730,7 +6773,8 @@
           "board",
           "source",
           "rows",
-          "layout"
+          "layout",
+          "page"
         ],
         "type": "object",
         "properties": {
@@ -6755,6 +6799,16 @@
           },
           "layout": {
             "$ref": "#/components/schemas/VirtualLayoutDto"
+          },
+          "page": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/VirtualPageDto"
+              }
+            ]
           }
         }
       },

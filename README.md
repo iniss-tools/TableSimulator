@@ -186,7 +186,8 @@ rovnakým skladaním správ.
 
 Tabuľa, ktorá má v INISSe vyplnený export do XML (`SAVE_XML` v `TPhysic.TXT`, spravidla s adresou `-1`), zapisuje
 svoj obsah do súboru `<SAVE_XML>.xml` v priečinku logov INISSu (`PathNames\LogPath`). Simulátor tieto súbory číta
-a ukazuje na celej obrazovke ako INISSView – bez IIS a šablón XSL. Nastavenie INISSu popisuje návod *Virtuálne
+a ukazuje na celej obrazovke ako INISSView – bez IIS, podľa rozloženia simulátora alebo pôvodnej šablóny XSL
+INISSView (pozri [Šablóny XSL z INISSView](#šablóny-xsl-z-inissview)). Nastavenie INISSu popisuje návod *Virtuálne
 tabule cez INISSView* v dokumentácii INISSTools.
 
 1. V **Nastaveniach** zadajte priečinok logov INISSu (najviac 4, jeden na riadok; aj sieťový). Simulátor ho
@@ -206,7 +207,27 @@ podľa názvu (odchody, príchody).
 oddeľovač; parametre oddeľuje `TabInfoSeparator`, apostrofy sa vynechajú). Tabuľu s číslom, ktoré už je, prepíše
 len so zaškrtnutým *prepísať*. Priečinky z `TabXmlDir` ponúkne na sledovanie. Rozloženie odhadne podľa mena
 šablóny XSL (`Pokladny_*` → pokladne, `*cerna*` → čierna, `Odj*` → odchody, `Prij*`/`Prj*` → príchody). Šablóna XSL
-a parameter `x` sa uložia pre budúcu podporu šablón, zatiaľ sa nepoužívajú.
+a parameter `x` sa uložia – s priečinkom INISSView v nastavení sa tabuľa ukáže šablónou.
+
+### Šablóny XSL z INISSView
+
+S **priečinkom INISSView** v Nastaveniach (aplikácia INISSView – `Web.config`, `tabs\` so šablónami a CSS, `img\`,
+`JScript.js`) sa virtuálna tabuľa s vyplnenou šablónou ukáže presne ako `Tabule.aspx?t=N` v INISSView. Server XML
+tabule upraví ako INISSView – v stanici a smere nahradí `#` oddeľovačom (okrem textu končiaceho `#`, ten bliká),
+koreňu `station` pridá atribút `x` z parametra, nechá vybrané záznamy – a prevedie ho šablónou (XSLT 1.0; šablóna
+z `TabXslDir` vo `Web.config`, ak na tomto počítači existuje, inak z `tabs\`, prípona `.xsl` sa doplní). Za stránku
+pridá skript s kľúčmi `Jscript.*`/`JS.*` z `Web.config` (časy striedania a blikania). Značku `meta refresh` vynechá –
+po zmene XML stránku obnoví simulátor (WebSocket) bez bliknutia: nová stránka sa načíta do druhého rámu a ukáže sa až
+načítaná. Prázdna šablóna alebo priečinok INISSView nenastavený = tabuľa podľa rozloženia.
+
+Stránka beží v ráme so skriptom `JScript.js` z inštalácie INISSView (striedanie textov s `#`, blikanie, hodiny
+a dátum). Relatívne adresy stránky (`<base href="/inissview/app/">`) vedú na `GET /inissview/{cesta}` – CSS,
+obrázky a skripty z priečinka INISSView bez prihlásenia (len prípony vzhľadu a skriptu, nie `Web.config`, šablóny ani
+program; nevyjde sa z priečinka). Kontrolu `XMLStatus.aspx` nahrádza server: vráti čas servera (hodiny stránky
+sa podľa neho zosynchronizujú) a nemenný obsah, aby sa stránka sama neobnovovala. Kiosk ukazuje stránku v skutočnej
+veľkosti ako prehliadač pri INISSView (šablóny sú robené na konkrétne rozlíšenie); náhľad správy panelu ju zmenší
+z 1920 × 1080. Šablóny pre starší formát XML (`T/t/c`, napr. `Pokladny_*`) nad XML z INISSu 3.39 nič nevypíšu –
+rovnako ako INISSView.
 
 ### Rozloženia
 

@@ -11,8 +11,8 @@ namespace TableSimulator.Application.Virtual;
 /// <param name="RowCount">pocet zaznamov; null = vsetky</param>
 /// <param name="RowStart">poradie prveho zaznamu (od 1)</param>
 /// <param name="Separator">text namiesto <c>#</c>; prazdny = casti sa striedaju</param>
-/// <param name="Template">sablona XSL z INISSView (zatial sa nepouziva)</param>
-/// <param name="Parameter">atribut <c>x</c> pre sablonu (zatial sa nepouziva)</param>
+/// <param name="Template">sablona XSL z INISSView (meno bez pripony); prazdna = podla rozlozenia</param>
+/// <param name="Parameter">atribut <c>x</c> pre sablonu</param>
 /// <param name="Layout">rozlozenie; prazdne = predvolene</param>
 public sealed record VirtualBoard(
     int Id,

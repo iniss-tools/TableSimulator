@@ -12,6 +12,7 @@ public sealed class GetVirtualOverviewQueryHandler(
     IVirtualLayoutRepository layouts,
     XmlTableFolders folders,
     ISettingsStore settings,
+    InissViewSite inissView,
     TimeProvider time)
     : IQueryHandler<GetVirtualOverviewQuery, VirtualOverviewDto>
 {
@@ -25,6 +26,6 @@ public sealed class GetVirtualOverviewQueryHandler(
             folders.Sources.Select(s => DtoMapper.ToDto(s, now)).ToArray(),
             settings.Current.VirtualFolders.Select(f => new VirtualFolderDto(f, Directory.Exists(f))).ToArray(),
             [.. VirtualLayouts.BuiltIn, .. custom.Select(VirtualLayouts.Deserialize)],
-            VirtualLayouts.DefaultId));
+            VirtualLayouts.DefaultId) { Templates = inissView.Templates() });
     }
 }

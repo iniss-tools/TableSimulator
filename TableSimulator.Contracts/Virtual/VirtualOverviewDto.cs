@@ -7,4 +7,8 @@ public sealed record VirtualOverviewDto(
     IReadOnlyList<VirtualSourceDto> Sources,
     IReadOnlyList<VirtualFolderDto> Folders,
     IReadOnlyList<VirtualLayoutDto> Layouts,
-    string DefaultLayout);
+    string DefaultLayout)
+{
+    /// <summary>Sablony XSL v priecinku INISSView (mena bez pripony); prazdne bez priecinka.</summary>
+    public IReadOnlyList<string> Templates { get; init; } = [];
+}

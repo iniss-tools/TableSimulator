@@ -28,6 +28,15 @@ public sealed record InissViewConfig(IReadOnlyList<InissViewTable> Tables, IRead
 {
     private const int ParameterCount = 7;
 
+    /// <summary>Priecinok sablon XSL (<c>TabXslDir</c>); prazdny = nenastaveny.</summary>
+    public string XslFolder { get; init; } = "";
+
+    /// <summary>
+    /// Nastavenie skriptu stranok tabul - kluce <c>Jscript.*</c> a <c>JS.*</c> ako meno premennej (za bodkou) a hodnota,
+    /// v poradi suboru; INISSView ich vypise za stranku ako <c>meno=hodnota;</c>.
+    /// </summary>
+    public IReadOnlyList<KeyValuePair<string, string>> Script { get; init; } = [];
+
     /// <summary>Nastavenie z obsahu suboru <c>Web.config</c>.</summary>
     /// <exception cref="XmlException">subor nie je platne XML</exception>
     public static InissViewConfig Parse(string webConfig)
@@ -63,16 +72,20 @@ public sealed record InissViewConfig(IReadOnlyList<InissViewTable> Tables, IRead
         }
 
         var folders = (settings.GetValueOrDefault("TabXmlDir") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return new InissViewConfig(tables, folders, duplicates);
+        var script = order.Where(IsScriptKey).Select(k => new KeyValuePair<string, string>(k[(k.IndexOf('.', StringComparison.Ordinal) + 1)..], settings[k])).ToList();
+        return new InissViewConfig(tables, folders, duplicates) { XslFolder = (settings.GetValueOrDefault("TabXslDir") ?? "").Trim(), Script = script };
     }
 
     private static bool IsNamed(XElement element, string name) => string.Equals(element.Name.LocalName, name, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsScriptKey(string key) =>
+        key.StartsWith("JSCRIPT.", StringComparison.OrdinalIgnoreCase) || key.StartsWith("JS.", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Cislo tabule z kluca: cele cislo alebo <c>TAB…</c> s cislicami; ine kluce (aj <c>Jscript.*</c>) null.</summary>
     private static int? Number(string key)
     {
         var upper = key.ToUpperInvariant();
-        if (upper.StartsWith("JSCRIPT.", StringComparison.Ordinal) || upper.StartsWith("JS.", StringComparison.Ordinal))
+        if (IsScriptKey(key))
             return null;
         if (!upper.StartsWith("TAB", StringComparison.Ordinal) && !int.TryParse(key, NumberStyles.Integer, CultureInfo.InvariantCulture, out _))
             return null;

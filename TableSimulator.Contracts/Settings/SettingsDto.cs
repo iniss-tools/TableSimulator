@@ -13,6 +13,9 @@ public sealed record SettingsDto(int HttpPort, bool AllowNetwork, string FontsFo
     /// <summary>Priecinky logov INISSu s XML tabul pre virtualne tabule (prvy ma prednost pri rovnakom case).</summary>
     public IReadOnlyList<string> VirtualFolders { get; init; } = [];
 
+    /// <summary>Priecinok aplikacie INISSView so sablonami XSL; prazdny = bez sablon.</summary>
+    public string InissViewFolder { get; init; } = "";
+
     /// <summary>Program INISSu (exe), odkial simulator nacita linky a tabule stanice.</summary>
     public string InissProgram { get; init; } = "";
 

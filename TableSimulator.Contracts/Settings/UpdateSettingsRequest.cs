@@ -11,6 +11,9 @@ public sealed record UpdateSettingsRequest
     public string MonitorFolder { get; init; } = "";
     public bool RequireLogin { get; init; }
     public IReadOnlyList<string>? VirtualFolders { get; init; }
+
+    /// <summary>Priecinok aplikacie INISSView so sablonami XSL; prazdny = bez sablon.</summary>
+    public string InissViewFolder { get; init; } = "";
     public string InissProgram { get; init; } = "";
     public string InissRegistry { get; init; } = "";
     public bool InissElevated { get; init; }

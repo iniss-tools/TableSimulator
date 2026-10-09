@@ -24,6 +24,7 @@ public sealed class UpdateSettingsCommandHandler(ISettingsStore settings, ILiveN
             MonitorFolder = (request.MonitorFolder ?? "").Trim(),
             RequireLogin = request.RequireLogin,
             VirtualFolders = VirtualFolders(request.VirtualFolders),
+            InissViewFolder = (request.InissViewFolder ?? "").Trim().Trim('"'),
             InissProgram = (request.InissProgram ?? "").Trim().Trim('"'),
             InissRegistry = (request.InissRegistry ?? "").Trim(),
             InissElevated = request.InissElevated,

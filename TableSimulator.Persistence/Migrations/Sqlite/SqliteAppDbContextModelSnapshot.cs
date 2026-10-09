@@ -568,6 +568,13 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("InissViewFolder")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("");
+
                     b.Property<string>("MonitorFolder")
                         .IsRequired()
                         .HasMaxLength(500)

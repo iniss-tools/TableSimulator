@@ -163,6 +163,7 @@ public static partial class DtoMapper
             MonitorFolder = settings.MonitorFolder,
             RequireLogin = settings.RequireLogin,
             VirtualFolders = settings.VirtualFolders,
+            InissViewFolder = settings.InissViewFolder,
             InissProgram = settings.InissProgram,
             InissRegistry = settings.InissRegistry,
             InissElevated = settings.InissElevated,

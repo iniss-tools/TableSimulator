@@ -595,6 +595,7 @@ export type SettingsDto = {
     monitorFolder: string;
     requireLogin: boolean;
     virtualFolders: Array<string>;
+    inissViewFolder: string;
     inissProgram: string;
     inissRegistry: string;
     inissElevated: boolean;
@@ -804,6 +805,7 @@ export type UpdateSettingsRequest = {
     monitorFolder: string;
     requireLogin: boolean;
     virtualFolders: null | Array<string>;
+    inissViewFolder: string;
     inissProgram: string;
     inissRegistry: string;
     inissElevated: boolean;
@@ -904,6 +906,13 @@ export type VirtualOverviewDto = {
     folders: Array<VirtualFolderDto>;
     layouts: Array<VirtualLayoutDto>;
     defaultLayout: string;
+    templates: Array<string>;
+};
+
+export type VirtualPageDto = {
+    html: null | string;
+    error: null | string;
+    detail: null | string;
 };
 
 export type VirtualRowDto = {
@@ -928,6 +937,7 @@ export type VirtualViewDto = {
     source: null | VirtualSourceDto;
     rows: Array<VirtualRowDto>;
     layout: VirtualLayoutDto;
+    page: null | VirtualPageDto;
 };
 
 export type WebManifestDto = {

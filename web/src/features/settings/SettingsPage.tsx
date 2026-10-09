@@ -189,6 +189,9 @@ export function SettingsPage() {
                 onChange={(e) => change({ virtualFolders: e.target.value.split(/\r?\n/) })}
               />
             </FormField>
+            <FormField label={t("settings.inissViewFolder")} hint={t("settings.inissViewFolder.hint")}>
+              <Input placeholder={"C:\\INISS\\INISSview"} value={form.inissViewFolder} onChange={(e) => change({ inissViewFolder: e.target.value })} />
+            </FormField>
           </Section>
 
           <Section id="iniss" description={t("settings.iniss.hint")}>

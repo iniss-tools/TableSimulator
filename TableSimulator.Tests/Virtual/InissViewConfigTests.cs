@@ -44,6 +44,20 @@ public sealed class InissViewConfigTests
     }
 
     [TestMethod]
+    public void Parse_PriecinokSablonANastavenieSkriptu()
+    {
+        var config = InissViewConfig.Parse(WebConfig("""
+            <add key="TabXslDir" value=" C:\INISS\INISSview\tabs " />
+            <add key="JS.bSeconds" value="false" />
+            <add key="1" value="Odchody web" />
+            """));
+
+        Assert.AreEqual(@"C:\INISS\INISSview\tabs", config.XslFolder);
+        CollectionAssert.AreEqual(new[] { "iNextString=1500", "bSeconds=false" }, config.Script.Select(s => $"{s.Key}={s.Value}").ToArray());
+        Assert.HasCount(1, config.Tables);
+    }
+
+    [TestMethod]
     public void Parse_DuplicitneCislo_PlatiPrva()
     {
         var config = InissViewConfig.Parse(WebConfig("""

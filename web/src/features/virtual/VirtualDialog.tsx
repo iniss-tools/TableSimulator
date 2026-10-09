@@ -16,10 +16,12 @@ interface VirtualDialogProps {
   sources: VirtualSourceDto[];
   layouts: VirtualLayoutDto[];
   defaultLayout: string;
+  /** Sablony XSL v priecinku INISSView; prazdne = priecinok nie je nastaveny. */
+  templates: string[];
   onClose: () => void;
 }
 
-export function VirtualDialog({ initial, isNew, sources, layouts, defaultLayout, onClose }: VirtualDialogProps) {
+export function VirtualDialog({ initial, isNew, sources, layouts, defaultLayout, templates, onClose }: VirtualDialogProps) {
   const fallback = layouts.find((l) => l.id === defaultLayout);
   const [board, setBoard] = useState(initial);
   const number = (value: string) => Number.parseInt(value, 10);
@@ -50,6 +52,11 @@ export function VirtualDialog({ initial, isNew, sources, layouts, defaultLayout,
             <Input list="virtual-sources" className="font-mono" value={board.source} onChange={(e) => setBoard({ ...board, source: e.target.value })} />
           </FormField>
         </div>
+        <datalist id="virtual-templates">
+          {templates.map((name) => (
+            <option key={name} value={name} />
+          ))}
+        </datalist>
         <datalist id="virtual-sources">
           {sources.map((s) => (
             <option key={s.name} value={s.name}>
@@ -92,8 +99,8 @@ export function VirtualDialog({ initial, isNew, sources, layouts, defaultLayout,
           <Input value={board.separator} placeholder=", " onChange={(e) => setBoard({ ...board, separator: e.target.value })} />
         </FormField>
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label={t("virtual.field.template")} hint={t("virtual.field.template.hint")}>
-            <Input value={board.template} onChange={(e) => setBoard({ ...board, template: e.target.value })} />
+          <FormField label={t("virtual.field.template")} hint={t(templates.length > 0 ? "virtual.field.template.hint" : "virtual.field.template.off")}>
+            <Input list="virtual-templates" value={board.template} onChange={(e) => setBoard({ ...board, template: e.target.value })} />
           </FormField>
           <FormField label={t("virtual.field.parameter")} hint={t("virtual.field.parameter.hint")}>
             <Input value={board.parameter} onChange={(e) => setBoard({ ...board, parameter: e.target.value })} />

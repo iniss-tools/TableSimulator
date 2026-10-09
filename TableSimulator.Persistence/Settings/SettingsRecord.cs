@@ -27,6 +27,8 @@ public sealed class SettingsRecord
 
     public string InissProgram { get; set; } = "";
 
+    public string InissViewFolder { get; set; } = "";
+
     public string InissRegistry { get; set; } = "";
 
     public bool InissElevated { get; set; }

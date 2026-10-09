@@ -67,6 +67,7 @@ try
     app.MapLiveSocket("/ws");
     app.MapApiDocument();
     app.MapEndpoints(app.MapGroup("/api"));
+    app.MapInissViewFiles();
 
     app.Lifetime.ApplicationStarted.Register(() =>
     {
