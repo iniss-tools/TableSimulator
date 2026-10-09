@@ -5,9 +5,9 @@ import { errorText, manufacturersFor, setLineMutation, useSimulatorState, type L
 import { CheckField, FormField } from "@/components/common/form-field";
 import { FormDialog } from "@/components/common/form-dialog";
 import { OptionSelect } from "@/components/common/option-select";
-import { FieldGroup } from "@/components/ui/field";
+import { FieldDescription, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { defaultEndpoint } from "@/lib/boards";
+import { defaultEndpoint, REMOTE_INISS_CLASS } from "@/lib/boards";
 import { t, type TextKey } from "@/i18n";
 
 export function LineDialog({ initial, isNew, onClose }: { initial: SetLineRequest; isNew: boolean; onClose: () => void }) {
@@ -15,6 +15,7 @@ export function LineDialog({ initial, isNew, onClose }: { initial: SetLineReques
   const [config, setConfig] = useState(initial);
   const save = useMutation({ ...setLineMutation(), onSuccess: onClose });
   const manufacturers = manufacturersFor(live, config.tableClass);
+  const remote = config.tableClass === REMOTE_INISS_CLASS;
 
   return (
     <FormDialog
@@ -51,6 +52,7 @@ export function LineDialog({ initial, isNew, onClose }: { initial: SetLineReques
             />
           </FormField>
         </div>
+        {remote && <FieldDescription>{t("line.class.128.hint")}</FieldDescription>}
         <FormField label={t("field.name")}>
           <Input value={config.name} onChange={(e) => setConfig({ ...config, name: e.target.value })} />
         </FormField>
@@ -69,14 +71,16 @@ export function LineDialog({ initial, isNew, onClose }: { initial: SetLineReques
           />
         </FormField>
         <CheckField label={t("field.autoLearn")} checked={config.autoLearn} onCheckedChange={(autoLearn) => setConfig({ ...config, autoLearn })} />
-        <FormField label={t("field.lineManufacturer")}>
-          <OptionSelect
-            value={config.manufacturer}
-            onValueChange={(manufacturer) => setConfig({ ...config, manufacturer })}
-            options={manufacturers.map((m) => ({ value: m, label: m }))}
-            className="w-full"
-          />
-        </FormField>
+        {!remote && (
+          <FormField label={t("field.lineManufacturer")}>
+            <OptionSelect
+              value={config.manufacturer}
+              onValueChange={(manufacturer) => setConfig({ ...config, manufacturer })}
+              options={manufacturers.map((m) => ({ value: m, label: m }))}
+              className="w-full"
+            />
+          </FormField>
+        )}
         <FormField label={t("field.mirror")} hint={t("field.mirror.hint")}>
           <Input
             value={config.mirror ?? ""}

@@ -1223,6 +1223,27 @@ export const sk = {
   "error.settings.alertEmail": "Príjemcovia aj odosielateľ musia byť e-mailové adresy.",
   "error.settings.alertSmtp": "Zadajte server SMTP a port 1–65535.",
   "error.settings.alertLanguage": "Jazyk oznámení musí byť slovenčina alebo čeština.",
+  "line.class.128": "128 – vzdialený INISS",
+  "line.class.128.hint":
+    "Simulátor zastúpi INISS spustený s /Remote: riadiaci INISS sa sem pripojí linkou triedy 128 (TablePort napr. 4=TCP://127.0.0.1:8090). Na linke môžu byť tabule ELEN aj Elektročas – výrobcu oznámi riadiaci INISS s každou správou, aj pri samoučení. Hlásenia pre vzdialený počítač sa len zapíšu do komunikácie.",
+  "kind.remote.report": "Hlásenie pre frontu {queue}: {title} – nahrávky {recordings} · správa {seq}",
+  "kind.remote.reportUntitled": "Hlásenie pre frontu {queue}: nahrávky {recordings} · správa {seq}",
+  "kind.remote.queueOn": "Zapnutie fronty {queue} · správa {seq}",
+  "kind.remote.queueOff": "Vypnutie fronty {queue} · správa {seq}",
+  "kind.remote.reply": "Vzdialený INISS: tabuľa {result} (kód {code}) · správa {seq}",
+  "kind.remote.replyQueues": "Vzdialený INISS: stav front · správa {seq}",
+  "kind.remote.bad": "Chybná správa riadiaceho INISSu č. {seq} (kontrolný súčet) – bez odpovede",
+  "kind.remote.unsupported": "Tabuľa výrobcu {manufacturer} – simulátor ju za vzdialeným INISSom nezobrazí · správa {seq}",
+  "kind.remote.empty": "Správa pre tabuľu {manufacturer} bez rozpoznaného obsahu · správa {seq}",
+  "log.remoteSeq": "vzdialený INISS, {manufacturer}, správa {seq}",
+  "log.remoteQueueDefault": "(jediná)",
+  "remote.result.ok": "zapísaná",
+  "remote.result.noAnswer": "neodpovedala",
+  "remote.result.rejected": "správu odmietla",
+  "remote.result.badAnswer": "odpovedala nezmyslom",
+  "remote.result.noLine": "nemá kam ísť",
+  "remote.result.error": "chyba",
+  "mismatch.remote.manufacturer": "Riadiaci INISS posiela správy pre tabuľu {suggested}.",
 } as const;
 
 export type TextKey = keyof typeof sk;

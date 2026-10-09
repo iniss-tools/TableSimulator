@@ -24,7 +24,7 @@ internal sealed class ElektrocasProtocol : ILineProtocol
     private const int CmdTimeQuery = 0xA1;
     private const int CmdTime = 0xA8;
 
-    private const int ReplyStatus = 0x70;
+    internal const int ReplyStatus = 0x70;
     private const int ReplyType = 0x78;
 
     /// <summary>Stav: chybna sprava (zly sucet).</summary>
@@ -56,7 +56,7 @@ internal sealed class ElektrocasProtocol : ILineProtocol
 
     public void Reset() => _framer.Reset();
 
-    public BoardDisplay CreateDisplay() => new CharDisplay();
+    public BoardDisplay CreateDisplay(string manufacturer) => new CharDisplay();
 
     /// <summary>Pri poruche tabula hlasi chybnu spravu (NAK), zvolene stavove bity alebo odpovie nezmyslom.</summary>
     public (byte[] Bytes, FrameInfo Info) FaultReply(BoardFault fault, byte[] normal)

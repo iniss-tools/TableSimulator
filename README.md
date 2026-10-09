@@ -12,6 +12,7 @@ Protokoly sú popísané v `iniss-tools-docs/docs/iniss/protokoly/`. Hotové sú
 | `5`          | Elektročas LCD1 a slepecké hlásiče ERP                        |
 | `1`          | Elektročas LCD (staršie)                                      |
 | `130`        | LCD1, ERP a LCD za sieťovým prevodníkom KTP (pakety ITP)      |
+| `128`        | tabule ELEN a Elektročas za vzdialeným INISSom (`/Remote`)    |
 
 Adon/BUSE sa simulovať nedá – INISS ich ovláda cez knižnicu `infotabd.dll`, ktorej bajty na linke nepoznáme.
 
@@ -185,6 +186,28 @@ INISS ju len zafarbí, `10` súradnice, `40` napájanie, `80` hardvér).
 Na linke `130` simulátor hrá aj prevodník KTP: paket ITP rozbalí, odpoveď tabule zabalí s tým istým číslom a
 hlavičkou s kódom chyby `0`. INISS tu čaká na odpoveď pri každom pakete, aj pri hromadnom – keď tabuľa neodpovie
 (hromadná správa, porucha *neodpovedá*, adresa bez tabule), prevodník hlási chybu `1` *zariadenie neodpovedalo*.
+
+## Vzdialený INISS (trieda 128)
+
+Linka triedy `128` zastúpi **INISS spustený s `/Remote`**: riadiaci INISS sa na ňu pripojí svojou linkou triedy `128`
+(`TablePort=4=TCP://127.0.0.1:8090`) a simulátor priamo ukáže tabule vzdialenej stanice – druhý INISS netreba.
+Riadiaci INISS má v `TPhysic` všetky tabule, aj vzdialené (`COMUNICATION_PORT` = číslo linky `128`), takže
+*Načítať z INISSu* alebo presmerovanie z GVDEditora založí aj linku `128` so všetkými jej tabuľami. Protokol popisuje
+`protokoly/vzdialeny-iniss.mdx`.
+
+- Na jednej linke môžu byť tabule ELEN aj Elektročas (`LCD`, `LCD1`, `ERP`) – obsah tabule sa riadi jej výrobcom.
+  Riadiaci INISS posiela pri každom zápise presného výrobcu (`TCLS`): samoučenie založí tabuľu s ním a tabuľa
+  nastavená na iného výrobcu dostane upozornenie s ponukou prepnutia. Tabule ERS, FERS a APEL simulátor neukáže
+  (odpovie kódom `19` – vzdialený INISS nemá kam zápis poslať).
+- Správu tabule (`TCMD`) riadiaci INISS posiela bez kontrolného súčtu – simulátor ho doplní, spracuje správu ako na
+  linke ELEN alebo Elektročas a hneď odpovie správou `0xAC` s tým istým číslom a stavom zápisu (`TSTA`). Porucha
+  tabule sa prejaví v stave: *neodpovedá* `0C`, NAK `10`, nezmysel `11`, stav Elektročasu podľa bitov (`10`, `14`–`17`);
+  *oneskorenie* oneskorí celú odpoveď (riadiaci INISS čaká 300 ms).
+- **Hlásenia** pre vzdialený počítač sa len zapíšu do komunikácie (fronta, titulok, nahrávky) – simulátor ich
+  prevezme a pri ďalšej správe ohlási ako dohraté. Vypnutie fronty z riadiaceho INISSu si pamätá a hlási späť.
+  Pravidelné dotazy na stav front (asi raz za sekundu, ak má linka okruhy z `Audio.txt`) do komunikácie nejdú.
+- V komunikácii sa ukazuje celá správa vzdialeného INISSu, význam podľa správy tabule. Do **zrkadla** (COM) idú
+  vybalené správy tabúľ so súčtom, nie obal – ELEN Monitor ich teda prečíta.
 
 ## Hlavičky tabúľ
 

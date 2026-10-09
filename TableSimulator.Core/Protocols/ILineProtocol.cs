@@ -15,8 +15,14 @@ internal interface ILineProtocol
     /// <summary>Spracuje bajty prijate od INISSu.</summary>
     void Receive(ReadOnlySpan<byte> data, ILineContext context);
 
-    /// <summary>Novy obsah tabule tejto rodiny.</summary>
-    BoardDisplay CreateDisplay();
+    /// <summary>Novy obsah tabule vyrobcu <paramref name="manufacturer" /> (linka jednej rodiny ho neberie do uvahy).</summary>
+    BoardDisplay CreateDisplay(string manufacturer);
+
+    /// <summary>
+    /// Do zrkadla linky idu spravy tabul, ktore protokol posle cez <see cref="ILineContext.Forward" />, nie prijate bajty
+    /// (protokol bajty tabul obaluje).
+    /// </summary>
+    bool MirrorsInnerFrames => false;
 
     /// <summary>
     /// Odpoved tabule pri predstieranej poruche <see cref="FaultKind.Nak" />, <see cref="FaultKind.Garbage" /> alebo
@@ -37,7 +43,9 @@ internal interface ILineContext
     DateTimeOffset Now { get; }
 
     /// <summary>Tabula na adrese; pri samouceni ju vytvori. null = na adrese nikto nie je.</summary>
-    SimBoard? FindBoard(int address);
+    /// <param name="address">adresa</param>
+    /// <param name="manufacturer">vyrobca novej tabule zo samoucenia; null = podla linky</param>
+    SimBoard? FindBoard(int address, string? manufacturer = null);
 
     /// <summary>Vsetky tabule na linke (hromadne spravy).</summary>
     IReadOnlyList<SimBoard> Boards { get; }
@@ -59,7 +67,16 @@ internal interface ILineContext
     void Reply(SimBoard board, byte[] bytes, FrameInfo info, bool positive = true);
 
     /// <summary>Odpoved zariadenia linky (napr. sietovy prevodnik) - bez poruch tabule, len podla rezimu linky.</summary>
-    void ReplyRaw(int? address, byte[] bytes, TimeSpan delay, FrameStatus status, FrameInfo info);
+    /// <param name="address">adresa tabule, ktorej odpoved patri</param>
+    /// <param name="bytes">odpoved</param>
+    /// <param name="delay">oneskorenie</param>
+    /// <param name="status">vysledok</param>
+    /// <param name="info">vyznam odpovede</param>
+    /// <param name="log">zapisat do zaznamu komunikacie (napr. odpoved na pravidelny dotaz nie)</param>
+    void ReplyRaw(int? address, byte[] bytes, TimeSpan delay, FrameStatus status, FrameInfo info, bool log = true);
+
+    /// <summary>Sprava tabule vybalena z obalu linky - pre zrkadlo (<see cref="ILineProtocol.MirrorsInnerFrames" />).</summary>
+    void Forward(byte[] frame);
 }
 
 /// <summary>

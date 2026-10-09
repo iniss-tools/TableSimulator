@@ -29,7 +29,7 @@ internal sealed class ItpProtocol : ILineProtocol
         _inner.Reset();
     }
 
-    public BoardDisplay CreateDisplay() => _inner.CreateDisplay();
+    public BoardDisplay CreateDisplay(string manufacturer) => _inner.CreateDisplay(manufacturer);
 
     public (byte[] Bytes, FrameInfo Info) FaultReply(BoardFault fault, byte[] normal) => _inner.FaultReply(fault, normal);
 
@@ -120,7 +120,7 @@ internal sealed class ItpProtocol : ILineProtocol
 
         public IReadOnlyList<SimBoard> Boards => outer.Boards;
 
-        public SimBoard? FindBoard(int address) => outer.FindBoard(address);
+        public SimBoard? FindBoard(int address, string? manufacturer = null) => outer.FindBoard(address, manufacturer);
 
         public void Changed(SimBoard board) => outer.Changed(board);
 
@@ -141,7 +141,9 @@ internal sealed class ItpProtocol : ILineProtocol
                 Answer = (board.Address, reply.Bytes, reply.Delay, reply.Status, reply.Info);
         }
 
-        public void ReplyRaw(int? address, byte[] bytes, TimeSpan delay, FrameStatus status, FrameInfo info) =>
+        public void ReplyRaw(int? address, byte[] bytes, TimeSpan delay, FrameStatus status, FrameInfo info, bool log = true) =>
             Answer = (address, bytes, delay, status, info);
+
+        public void Forward(byte[] frame) => outer.Forward(frame);
     }
 }

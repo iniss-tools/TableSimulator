@@ -31,7 +31,7 @@ internal sealed class ElenProtocol : ILineProtocol
 
     public void Reset() => _framer.Reset();
 
-    public BoardDisplay CreateDisplay() => new ElenDisplay();
+    public BoardDisplay CreateDisplay(string manufacturer) => new ElenDisplay();
 
     /// <summary>Panel ELEN pri poruche odmietne (NAK) alebo odpovie nezmyslom; stav nehlasi - odmietne.</summary>
     public (byte[] Bytes, FrameInfo Info) FaultReply(BoardFault fault, byte[] normal) => fault.Kind == FaultKind.Garbage

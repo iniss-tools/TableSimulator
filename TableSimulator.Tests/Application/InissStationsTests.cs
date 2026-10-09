@@ -96,6 +96,38 @@ public sealed class InissStationsTests
     }
 
     [TestMethod]
+    public void RiadiaciInissSoVzdialenym_LinkaTriedy128SoVsetkymiTabulami()
+    {
+        File.WriteAllText(Path.ChangeExtension(_program, ".INI"),
+            "[Driver]\r\nTableClass=4\r\nTablePort=1=TCP://127.0.0.1:47201\r\n[Driver1]\r\nTableClass=128\r\nTablePort=4=tcp://192.168.10.20:8090\r\n",
+            Encodings.Win1250);
+        var grafikon = Path.Combine(_dir.FullName, GvdFileConsts.DirData, "Stanica");
+        var elen = new TableCatalog
+        {
+            Key = "Odch", Name = "Odchodova", Comment = "", Manufacturer = TableManufacturer.Elen16, MaxRecCount = 1, Items = [],
+            Segments = [new TableSegment { Height = 10, Width = 128, Size = 15 }], ViewTypeTabs = []
+        };
+        var lcd = new TableCatalog
+        {
+            Key = "Nast", Name = "Nastupistna", Comment = "", Manufacturer = TableManufacturer.Lcd1, MaxRecCount = 1, Items = [],
+            Segments = [new TableSegment { Height = 10, Width = 128, Size = 15 }], ViewTypeTabs = []
+        };
+        TablesFile.Write(grafikon, [], [elen, lcd],
+            [Physical("Miestna", 3, 1, elen), Physical("Hala vzdialena", 12, 4, elen), Physical("Nastupiste vzdialene", 20, 4, lcd)], []);
+
+        var station = InissStations.Read(new AppSettings { InissProgram = _program }).Value;
+        var remote = station.Lines.Single(l => l.Number == 4);
+        Assert.AreEqual(128, remote.TableClass);
+        Assert.IsTrue(remote.Supported);
+        Assert.IsTrue(remote.Tables.All(t => t.Shown));
+
+        var request = InissStations.ToRequest(station);
+        Assert.AreEqual(8090, request.Lines.Single(l => l.Number == 4).Port);
+        CollectionAssert.AreEquivalent(new[] { (4, 12, "ELEN16"), (4, 20, "LCD1") },
+            request.Boards.Where(b => b.Line == 4).Select(b => (b.Line, b.Address, b.Manufacturer)).ToArray());
+    }
+
+    [TestMethod]
     [DataRow("", "iniss.notConfigured")]
     [DataRow("chyba.exe", "iniss.programNotFound")]
     public void Chyby_NenastavenyAleboChybajuciProgram(string program, string code)

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { hasText, locale, t } from "@/i18n";
+import { hasText, locale, t, type TextKey } from "@/i18n";
 
 /** Najviac drzanych sprav. */
 const MAX = 3000;
@@ -20,15 +20,35 @@ const MAX = 3000;
 const FLUSH_MS = 250;
 const TIME: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3, hour12: false };
 
+/** Texty sprav vzdialeneho INISSu: fronta bez nazvu, nahravky len menami (RWAV = trojice meno,cislo,cislo), vysledok zapisu. */
+function remoteArgs(frame: FrameDto, args: Record<string, string>): Record<string, string> {
+  const result: Record<string, string> = { ...args, queue: args.queue || t("log.remoteQueueDefault") };
+  if (args.recordings)
+    result.recordings = args.recordings
+      .split(",")
+      .filter((_, i) => i % 3 === 0)
+      .join(" ");
+  if (frame.kind === "remote.reply" && args.result) result.result = t(`remote.result.${args.result}` as TextKey);
+  return result;
+}
+
 function meaning(frame: FrameDto): string {
-  const args = frame.args ?? {};
+  let args = frame.args ?? {};
   let key = `kind.${frame.kind}`;
   if (frame.kind === "elen.moving" && args.last === "1") key = "kind.elen.movingLast";
   if (frame.kind === "elen.row" && !args.text) key = "kind.elen.rowEmpty";
+  const remote = frame.kind.startsWith("remote.");
+  if (remote) {
+    if (frame.kind === "remote.report" && !args.title) key = "kind.remote.reportUntitled";
+    if (frame.kind === "remote.queue") key = args.off === "1" ? "kind.remote.queueOff" : "kind.remote.queueOn";
+    if (frame.kind === "remote.reply" && !args.result) key = "kind.remote.replyQueues";
+    args = remoteArgs(frame, args);
+  }
   let text = hasText(key) ? t(key, args) : frame.kind;
   if (args.broadcast === "1") text += ` (${t("log.broadcast")})`;
-  // sprava tabule zabalena v pakete ITP
-  if (args.seq && !frame.kind.startsWith("itp.")) text += ` · ${t("log.itpSeq", { seq: args.seq })}`;
+  // sprava tabule zabalena v pakete ITP alebo v sprave vzdialeneho INISSu
+  if (args.seq && !remote && !frame.kind.startsWith("itp."))
+    text += ` · ${args.manufacturer ? t("log.remoteSeq", { seq: args.seq, manufacturer: args.manufacturer }) : t("log.itpSeq", { seq: args.seq })}`;
   return text;
 }
 

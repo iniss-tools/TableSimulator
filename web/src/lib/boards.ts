@@ -4,6 +4,9 @@ import type { BoardDto, BoardProfileDto, LineDto, SetBoardRequest, SetLineReques
 /** Predvolene spojenie linky - port 47000 + cislo. */
 export const defaultEndpoint = (number: number) => `TCP://0.0.0.0:${47000 + number}`;
 
+/** Trieda linky vzdialeneho INISSu - tabule roznych rodin, vyrobcu posiela riadiaci INISS. */
+export const REMOTE_INISS_CLASS = 128;
+
 /** Vyrobcovia znakovych tabul Elektrocas (rodina chars). */
 export const CHAR_MANUFACTURERS = ["LCD", "LCD1", "ERP"];
 

@@ -25,6 +25,33 @@ export function elenRow(address: number, row: number, text: string): number[] {
   return elenFrame(address, 1, [0x80 | row, ...content]);
 }
 
+/** Kontrolny sucet sprav vzdialeneho INISSu: zvysok delenia polynomom 0x1021 bez nasobenia x^16. */
+function remoteCrc(data: number[]): number {
+  let c = 0;
+  for (const b of data) {
+    const high = c >> 8;
+    let t = high << 8;
+    for (let i = 0; i < 8; i++) t = t & 0x8000 ? ((t << 1) ^ 0x1021) & 0xffff : (t << 1) & 0xffff;
+    c = (((c << 8) | b) & 0xffff) ^ t;
+  }
+  return c;
+}
+
+const int32 = (value: number) => [value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff, (value >>> 24) & 0xff];
+
+/**
+ * Sprava riadiaceho INISSu na linke vzdialeneho INISSu (trieda 128) so zapisom na tabulu: kod vyrobcu, adresa a sprava
+ * tabule - jej kontrolny sucet riadiaci INISS nevyplni (posledne dva bajty ELEN, posledny Elektrocas).
+ */
+export function remoteTableMessage(seq: number, manufacturer: number, address: number, frame: number[], checksumBytes: number): number[] {
+  const command = [...frame.slice(0, frame.length - checksumBytes), ...new Array<number>(checksumBytes).fill(0)];
+  const chunk = (tag: string, data: number[]) => [...Array.from(tag, (ch) => ch.charCodeAt(0)).reverse(), ...int32(data.length), ...data];
+  const body = [...chunk("TCLS", int32(manufacturer)), ...chunk("TADR", int32(address)), ...chunk("TCMD", command)];
+  const message = [0x53, ...int32(body.length + 11), ...int32(seq), ...body];
+  const sum = remoteCrc(message);
+  return [...message, sum & 0xff, sum >> 8];
+}
+
 /** Posle spravy na linku simulatora ako INISS a vrati odpovede tabule (bajt po kazdej sprave). */
 export async function sendToLine(port: number, frames: number[][]): Promise<number[]> {
   const socket = connect(port, "127.0.0.1");

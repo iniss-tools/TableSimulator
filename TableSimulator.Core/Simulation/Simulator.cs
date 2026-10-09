@@ -4,6 +4,7 @@ using TableSimulator.Core.Lines;
 using TableSimulator.Core.Protocols;
 using TableSimulator.Core.Protocols.Elektrocas;
 using TableSimulator.Core.Protocols.Elen;
+using TableSimulator.Core.Protocols.Remote;
 using TableSimulator.Core.Recording;
 
 namespace TableSimulator.Core.Simulation;
@@ -375,7 +376,16 @@ public sealed class Simulator
 
         context.Events.Add(new LineChanged(lineNumber));
         Raise(context.Events);
-        Traffic?.Invoke(lineNumber, data.ToArray());
+        if (context.Forwarded is { } forwarded)
+        {
+            foreach (var frame in forwarded)
+                Traffic?.Invoke(lineNumber, frame);
+        }
+        else
+        {
+            Traffic?.Invoke(lineNumber, data.ToArray());
+        }
+
         return context.Replies;
     }
 
@@ -504,10 +514,12 @@ public sealed class Simulator
         _lines[config.Number] = line;
 
         // ina rodina protokolu (napr. ELEN → LCD1) - tabule linky dostanu obsah novej rodiny
-        var family = protocol.CreateDisplay().GetType();
-        foreach (var board in _boards.Values.Where(b => b.Line == line.Number && b.Display.GetType() != family).ToList())
+        foreach (var board in _boards.Values.Where(b => b.Line == line.Number).ToList())
         {
-            _boards[board.Id] = new SimBoard(board.Line, board.Address, board.Name, board.ManufacturerKey, board.Profile, protocol.CreateDisplay())
+            var display = protocol.CreateDisplay(board.ManufacturerKey);
+            if (board.Display.GetType() == display.GetType())
+                continue;
+            _boards[board.Id] = new SimBoard(board.Line, board.Address, board.Name, board.ManufacturerKey, board.Profile, display)
             {
                 SecondAddress = board.SecondAddress,
                 Design = board.Design,
@@ -527,7 +539,10 @@ public sealed class Simulator
             throw new ArgumentException(string.Create(CultureInfo.InvariantCulture, $"Line {config.Line} does not exist."), nameof(config));
 
         var id = SimBoard.MakeId(config.Line, config.Address);
-        var display = _boards.TryGetValue(id, out var old) ? old.Display : line.Protocol.CreateDisplay();
+        // obsah ostane, ak vyrobca patri do tej istej rodiny (na linke vzdialeneho INISSu mozu byt rozne)
+        var display = line.Protocol.CreateDisplay(config.Manufacturer);
+        if (_boards.TryGetValue(id, out var old) && old.Display.GetType() == display.GetType())
+            display = old.Display;
         var board = new SimBoard(config.Line, config.Address, config.Name, config.Manufacturer, config.Profile, display)
         {
             SecondAddress = config.SecondAddress is > 0 and < 128 && config.SecondAddress != config.Address ? config.SecondAddress : null,
@@ -549,6 +564,7 @@ public sealed class Simulator
         [1] = (() => new ElektrocasProtocol(), ["LCD"]),
         [4] = (() => new ElenProtocol(), ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16Kam", "ELEKON"]),
         [5] = (() => new ElektrocasProtocol(), ["LCD1", "ERP"]),
+        [128] = (() => new RemoteProtocol(), [.. RemoteProtocol.Manufacturers]),
         [130] = (() => new ItpProtocol(), ["LCD1", "ERP", "LCD"])
     };
 
@@ -581,13 +597,16 @@ public sealed class Simulator
 
         public List<LineReply> Replies { get; } = [];
 
+        /// <summary>Spravy tabul pre zrkadlo; null = zrkadli sa, co prislo (<see cref="ILineProtocol.MirrorsInnerFrames" />).</summary>
+        public List<byte[]>? Forwarded { get; } = line.Protocol.MirrorsInnerFrames ? [] : null;
+
         public SimLine Line => line;
 
         public DateTimeOffset Now => sim.Now;
 
         public IReadOnlyList<SimBoard> Boards => sim._boards.Values.Where(b => b.Line == line.Number).ToList();
 
-        public SimBoard? FindBoard(int address)
+        public SimBoard? FindBoard(int address, string? manufacturer = null)
         {
             var id = SimBoard.MakeId(line.Number, address);
             if (sim._boards.TryGetValue(id, out var board))
@@ -597,8 +616,9 @@ public sealed class Simulator
             if (!line.AutoLearn)
                 return null;
 
-            board = new SimBoard(line.Number, address, "", line.Manufacturer,
-                BoardProfile.DefaultFor(line.Manufacturer) with { AutoSize = true }, line.Protocol.CreateDisplay())
+            manufacturer ??= line.Manufacturer;
+            board = new SimBoard(line.Number, address, "", manufacturer,
+                BoardProfile.DefaultFor(manufacturer) with { AutoSize = true }, line.Protocol.CreateDisplay(manufacturer))
             {
                 AutoCreated = true
             };
@@ -628,13 +648,16 @@ public sealed class Simulator
                 ReplyRaw(board.Address, reply.Bytes, reply.Delay, reply.Status, reply.Info);
         }
 
-        public void ReplyRaw(int? address, byte[] bytes, TimeSpan delay, FrameStatus status, FrameInfo info)
+        public void ReplyRaw(int? address, byte[] bytes, TimeSpan delay, FrameStatus status, FrameInfo info, bool log = true)
         {
             if (line.Mode == LineMode.Monitor)
                 return;
 
             Replies.Add(new LineReply(bytes, delay));
-            Events.Add(new FrameLogged(sim.AddLog(line.Number, FrameDirection.Sent, address, bytes, status, info)));
+            if (log)
+                Events.Add(new FrameLogged(sim.AddLog(line.Number, FrameDirection.Sent, address, bytes, status, info)));
         }
+
+        public void Forward(byte[] frame) => Forwarded?.Add(frame);
     }
 }
