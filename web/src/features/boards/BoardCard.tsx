@@ -21,7 +21,7 @@ import { BoardView, type BoardViewHandle } from "./BoardView";
 const FAULTS: FaultKind[] = ["none", "noReply", "nak", "delay", "garbage", "status"];
 
 /** Poruchy, ktore tabula danej rodiny vie predstierat - stav hlasia len tabule so stavovou odpovedou. */
-const faultsFor = (board: BoardDto) => FAULTS.filter((f) => f !== "status" || board.display.family === "chars");
+const faultsFor = (board: BoardDto) => FAULTS.filter((f) => f !== "status" || board.display.family === "chars" || board.display.family === "flaps");
 
 const failed = (e: unknown) => toast.error(errorText(e));
 
@@ -154,6 +154,12 @@ function SnapshotMenu({ board, view }: { board: BoardDto; view: RefObject<BoardV
   );
 }
 
+/** Listova tabula: listy sa po zapise otacaju. */
+function Rotating({ until }: { until: string }) {
+  const now = useNow(500);
+  return now < Date.parse(until) ? <span className="font-medium text-amber-700 dark:text-amber-300"> · {t("board.rotating")}</span> : null;
+}
+
 /** Hodiny tabule - idu od nastavenia dalej. */
 function BoardClock({ clock, setAt }: { clock: string; setAt: string }) {
   const now = useNow(1000);
@@ -212,14 +218,16 @@ export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: ()
       <CardContent className="flex flex-col gap-3">
         {board.mismatch && <MismatchWarning board={board} edit={edit} />}
         <BoardView ref={view} board={board} />
-        {!board.profile.fontFile && <p className="text-xs text-muted-foreground">{t("board.approxFont")}</p>}
+        {!board.profile.fontFile && d.family !== "flaps" && <p className="text-xs text-muted-foreground">{t("board.approxFont")}</p>}
+        {d.family === "flaps" && !board.profile.flaps && <p className="text-xs text-muted-foreground">{t("board.flaps.codes")}</p>}
       </CardContent>
       {/* stav tabule vzdy na spodku karty - karty v riadku mriezky maju rovnaku vysku */}
       <CardFooter className="mt-auto flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs text-muted-foreground">
           {last ? t("board.lastFrame", { time: last }) : t("board.noFrames")} ·{" "}
-          {t("board.stats", { frames: board.stats.frames, acks: board.stats.acks, naks: board.stats.naks })} ·{" "}
-          {d.brightness > 0 ? t("board.brightness", { value: d.brightness }) : t("board.dark")}
+          {t("board.stats", { frames: board.stats.frames, acks: board.stats.acks, naks: board.stats.naks })}
+          {d.family !== "flaps" && <> · {d.brightness > 0 ? t("board.brightness", { value: d.brightness }) : t("board.dark")}</>}
+          {d.rotatingUntil && <Rotating until={d.rotatingUntil} />}
           {d.clock && d.clockSetAt && <BoardClock clock={d.clock} setAt={d.clockSetAt} />}
         </span>
         <FaultControl board={board} edit={edit} />

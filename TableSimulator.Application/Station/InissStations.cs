@@ -1,6 +1,7 @@
 using System.Buffers;
 using TableSimulator.Application.Abstractions.Results;
 using TableSimulator.Application.Settings;
+using TableSimulator.Contracts.Boards;
 using TableSimulator.Contracts.Station;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Simulation;
@@ -92,7 +93,7 @@ public static class InissStations
                 continue;
             lines.Add(new StationLineDto(number, line.TableClass, line.SimulatorPort, line.Section));
             boards.AddRange(line.Tables.Where(t => t.Manufacturer.Length > 0 && t.Address is >= 0 and <= 255)
-                .Select(t => new StationBoardDto(number, t.Address, t.Manufacturer, t.Name)));
+                .Select(t => new StationBoardDto(number, t.Address, t.Manufacturer, t.Name) { Flaps = t.Flaps, FlapRecords = t.FlapRecords }));
         }
 
         var xml = station.XmlTables.Where(t => t.Source.Length <= 100 && t.Source.AsSpan().IndexOfAny(InvalidXmlName) < 0).ToList();
@@ -113,10 +114,24 @@ public static class InissStations
 
     private static InissTableDto Table(InissTable table, bool automatic, IReadOnlyList<string> manufacturers, InissProblemDto? problem)
     {
-        var manufacturer = table.Table.TableCatalog?.Manufacturer?.Name ?? "";
-        return new InissTableDto(table.Table.Key, table.Table.ID, table.Grafikon, manufacturer, automatic,
+        var catalog = table.Table.TableCatalog;
+        var manufacturer = catalog?.Manufacturer?.Name ?? "";
+        var dto = new InissTableDto(table.Table.Key, table.Table.ID, table.Grafikon, manufacturer, automatic,
             manufacturers.Contains(manufacturer, StringComparer.OrdinalIgnoreCase), problem);
+        if (catalog is null || !FlapLayouts.IsFlapBoard(catalog.Manufacturer))
+            return dto;
+
+        // listova tabula: co je na listoch, vie len predloha a jej prekodovacie tabulky
+        var layout = FlapLayouts.Build(catalog);
+        return dto with { Flaps = Flaps(layout), FlapRecords = layout.Records };
     }
+
+    private static FlapProfileDto Flaps(FlapLayout layout) => new()
+    {
+        LinesPerRecord = layout.LinesPerRecord,
+        Modules = layout.Modules.Select(m => new FlapModuleDto(m.Line, m.Position, m.Span, m.List)).ToArray(),
+        Lists = layout.Lists
+    };
 
     private static InissProblemDto Problem(DriverLineProblem problem) => new(
         problem.Severity switch

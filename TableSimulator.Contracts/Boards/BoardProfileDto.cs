@@ -44,4 +44,10 @@ public sealed record BoardProfileDto
 
     /// <summary>Profil sa zvacsuje podla obsahu (samoucenie).</summary>
     public bool AutoSize { get; init; }
+
+    /// <summary>Listova tabula: ako dlho sa listy po zapise otacaju [ms].</summary>
+    public int RotationMs { get; init; } = 3000;
+
+    /// <summary>Listova tabula: moduly a zoznamy listov; null = kazda pozicia ukaze kod.</summary>
+    public FlapProfileDto? Flaps { get; init; }
 }

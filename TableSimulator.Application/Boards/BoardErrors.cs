@@ -16,6 +16,8 @@ public static class BoardErrors
     public const string Blink = "board.blink";
     public const string ScrollSpeed = "board.scrollSpeed";
     public const string HeaderHeight = "board.headerHeight";
+    public const string Rotation = "board.rotation";
+    public const string Flaps = "board.flaps";
     public const string FaultKind = "fault.kind";
     public const string FaultDelay = "fault.delay";
     public const string FaultStatus = "fault.status";

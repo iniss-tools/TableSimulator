@@ -165,6 +165,8 @@ export type BoardProfileDto = {
     header: null | BoardHeaderDto;
     movingFont: number;
     autoSize: boolean;
+    rotationMs: number;
+    flaps: null | FlapProfileDto;
 };
 
 export type BoardStateDto = {
@@ -253,6 +255,8 @@ export type DisplayDto = {
     flashOnMs: null | number;
     flashOffMs: null | number;
     charRows: null | Array<CharRowDto>;
+    flapRows: null | Array<FlapRowDto>;
+    rotatingUntil: null | string;
 };
 
 export type ElementDto = {
@@ -262,6 +266,33 @@ export type ElementDto = {
 };
 
 export type FaultKind = 'none' | 'noReply' | 'nak' | 'delay' | 'garbage' | 'status';
+
+export type FlapModuleDto = {
+    line: number;
+    position: number;
+    span: number;
+    list: null | string;
+};
+
+export type FlapProfileDto = {
+    linesPerRecord: number;
+    modules: Array<FlapModuleDto>;
+    lists: {
+        [key: string]: {
+            [key: string]: string;
+        };
+    };
+    colors: {
+        [key: string]: {
+            [key: string]: string;
+        };
+    };
+};
+
+export type FlapRowDto = {
+    row: number;
+    codes: string;
+};
 
 export type FontDto = {
     name: string;
@@ -390,6 +421,8 @@ export type InissTableDto = {
     automatic: boolean;
     shown: boolean;
     problem: null | InissProblemDto;
+    flaps: null | FlapProfileDto;
+    flapRecords: number;
 };
 
 export type InissViewImportedDto = {
@@ -820,6 +853,8 @@ export type StationBoardDto = {
     address: number;
     manufacturer: string;
     name: string;
+    flaps: null | FlapProfileDto;
+    flapRecords: number;
 };
 
 export type StationImportedDto = {

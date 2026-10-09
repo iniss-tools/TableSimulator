@@ -16,5 +16,8 @@ public sealed class BoardProfileValidator : AbstractValidator<BoardProfileDto>
         RuleFor(p => p.BlinkOffMs).GreaterThanOrEqualTo(50).WithErrorCode(BoardErrors.Blink);
         RuleFor(p => p.ScrollSpeed).InclusiveBetween(1, 500).WithErrorCode(BoardErrors.ScrollSpeed);
         RuleFor(p => p.Header!.Height).InclusiveBetween(1, 200).WithErrorCode(BoardErrors.HeaderHeight).When(p => p.Header is not null);
+        RuleFor(p => p.RotationMs).InclusiveBetween(0, 60000).WithErrorCode(BoardErrors.Rotation);
+        RuleFor(p => p.Flaps).Must(FlapProfileRules.IsValid).WithErrorCode(BoardErrors.Flaps)
+            .WithMessage("Flap modules or lists are out of range.");
     }
 }

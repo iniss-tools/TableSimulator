@@ -145,7 +145,7 @@ public class ApplicationPipelineTests
     [TestMethod]
     public void AuditDetails_BezHesielAVelkychObsahov()
     {
-        var login = AuditDetails.Of(new TableSimulator.Application.Auth.LoginCommand("novak", "tajne-heslo", true));
+        var login = AuditDetails.Of(new LoginCommand("novak", "tajne-heslo", true));
         var upload = AuditDetails.Of(new TableSimulator.Application.Recordings.UploadRecordingCommand("a.tsrec", new byte[1000]));
         var long_ = AuditDetails.Of(new TableSimulator.Application.Recordings.DeleteRecordingCommand(new string('x', 500)));
 
@@ -153,7 +153,16 @@ public class ApplicationPipelineTests
         Assert.AreEqual("""{"fileName":"a.tsrec"}""", upload);
         Assert.AreEqual("{\"name\":\"" + new string('x', AuditDetails.MaxText) + "…\"}", long_);
         StringAssert.Contains(AuditDetails.Of(new TableSimulator.Application.Virtual.DeleteVirtualLayoutCommand("príchody")), "príchody");
-        Assert.AreEqual("", AuditDetails.Of(new TableSimulator.Application.Auth.LogoutCommand()));
+        Assert.AreEqual("", AuditDetails.Of(new LogoutCommand()));
+
+        // kody listov rozlisuju velke a male pismena
+        var flaps = new FlapProfileDto
+        {
+            Lists = new Dictionary<string, IReadOnlyDictionary<string, string>> { ["Ciel"] = new Dictionary<string, string> { ["C"] = "BUDAPEST", ["c"] = "*BUDAPEST" } }
+        };
+        var station = AuditDetails.Of(new TableSimulator.Application.Station.ImportStationCommand(
+            new Contracts.Station.StationImportRequest([], [new Contracts.Station.StationBoardDto(6, 20, "FERS") { Flaps = flaps }])));
+        StringAssert.Contains(station, "\"c\":\"*BUDAPEST\"");
     }
 
     [TestMethod]

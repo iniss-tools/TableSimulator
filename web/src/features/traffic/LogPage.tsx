@@ -37,6 +37,11 @@ function meaning(frame: FrameDto): string {
   let key = `kind.${frame.kind}`;
   if (frame.kind === "elen.moving" && args.last === "1") key = "kind.elen.movingLast";
   if (frame.kind === "elen.row" && !args.text) key = "kind.elen.rowEmpty";
+  if (frame.kind === "fers.query" && args.rotating === "1") key = "kind.fers.queryRotating";
+  if (frame.kind === "ers.status") {
+    const state = `ers.state.${args.status}`;
+    args = { ...args, meaning: hasText(state) ? t(state) : t("ers.state.other") };
+  }
   const remote = frame.kind.startsWith("remote.");
   if (remote) {
     if (frame.kind === "remote.report" && !args.title) key = "kind.remote.reportUntitled";

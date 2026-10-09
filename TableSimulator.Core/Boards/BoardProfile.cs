@@ -53,6 +53,15 @@ public sealed record BoardProfile
     /// <summary>Profil sa zvacsuje podla toho, co INISS posiela (tabula vytvorena samoucenim).</summary>
     public bool AutoSize { get; init; }
 
+    /// <summary>
+    /// Listova tabula: ako dlho sa listy po zapise otacaju [ms] - dovtedy tabula FERS neodpoveda a ERS hlasi, ze este
+    /// pracuje.
+    /// </summary>
+    public int RotationMs { get; init; } = 3000;
+
+    /// <summary>Listova tabula: moduly a zoznamy listov; null = kazda pozicia je samostatny modul a ukaze kod.</summary>
+    public FlapProfile? Flaps { get; init; }
+
     /// <summary>Profil pre novu tabulu daneho vyrobcu.</summary>
     public static BoardProfile DefaultFor(string manufacturerKey) => manufacturerKey.ToUpperInvariant() switch
     {
@@ -60,9 +69,78 @@ public sealed record BoardProfile
         "ELEKON" => new BoardProfile { Width = 384, Rows = 4, RowHeight = 16 },
         // znakove tabule Elektrocas: 8 bodov na znak, 40 znakov
         "LCD1" or "ERP" or "LCD" => new BoardProfile { Width = 320, Rows = 4, RowHeight = 16 },
+        // listove tabule: pozicie po 8 bodoch, ERS predvolene 9 modulov v riadku (ERSLineLen)
+        "FERS" or "ERS" => new BoardProfile { Width = 9 * 8, Rows = 4, RowHeight = 16 },
         _ => new BoardProfile()
     };
 }
+
+/// <summary>
+/// Moduly listovej tabule a zoznamy listov - INISS posiela kody listov, co na liste je, vie len tabula. Zostavuje sa
+/// z katalogu tabule a prekodovacich tabuliek stanice (<c>ToolsCore.Iniss.Tables.FlapLayouts</c>).
+/// </summary>
+public sealed record FlapProfile
+{
+    /// <summary>Riadkov tabule na jeden zaznam - riadok modulu = riadok tabule modulo tento pocet.</summary>
+    public int LinesPerRecord { get; init; } = 1;
+
+    /// <summary>Moduly; pozicie, ktore ziadny modul nezabera, su samostatne moduly bez zoznamu.</summary>
+    public IReadOnlyList<FlapModule> Modules { get; init; } = [];
+
+    /// <summary>Zoznamy listov podla mena: kod listu → text (text zacinajuci <c>*</c> je na cervenom liste).</summary>
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Lists { get; init; } =
+        new Dictionary<string, IReadOnlyDictionary<string, string>>();
+
+    /// <summary>
+    /// Farby listov nastavene v simulatore (zoznam → kod → <see cref="FlapColors" />) - fyzicka vlastnost listu, ktoru
+    /// data stanice nemaju; list bez farby je cierny, text zacinajuci <c>*</c> cerveny.
+    /// </summary>
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Colors { get; init; } =
+        new Dictionary<string, IReadOnlyDictionary<string, string>>();
+}
+
+/// <summary>Farby listov listovej tabule (kluce v JSON a na webe).</summary>
+public static class FlapColors
+{
+    public const string Black = "black";
+    public const string Red = "red";
+    public const string Yellow = "yellow";
+    public const string White = "white";
+
+    /// <summary>Vsetky farby.</summary>
+    public static IReadOnlyList<string> All { get; } = [Black, Red, Yellow, White];
+
+    /// <summary>
+    /// Farby z <paramref name="previous" />, ktorych zoznam a kod su aj v novych zoznamoch - novy import zoznamov
+    /// z dat stanice farby nastavene v simulatore zachova.
+    /// </summary>
+    public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Keep(FlapProfile? previous, FlapProfile next)
+    {
+        ArgumentNullException.ThrowIfNull(next);
+        var kept = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.Ordinal);
+        foreach (var (list, colors) in previous?.Colors ?? new Dictionary<string, IReadOnlyDictionary<string, string>>())
+        {
+            if (!next.Lists.TryGetValue(list, out var codes))
+                continue;
+            var still = colors.Where(c => codes.ContainsKey(c.Key)).ToDictionary(c => c.Key, c => c.Value, StringComparer.Ordinal);
+            if (still.Count > 0)
+                kept[list] = still;
+        }
+
+        foreach (var (list, colors) in next.Colors)
+            kept[list] = colors;
+        return kept;
+    }
+}
+
+/// <summary>
+/// Modul listovej tabule.
+/// </summary>
+/// <param name="Line">riadok v ramci zaznamu (od 0)</param>
+/// <param name="Position">prva pozicia v riadku (znak spravy INISSu)</param>
+/// <param name="Span">pocet pozicii - ich kody spolu urcuju list</param>
+/// <param name="List">meno zoznamu listov; null = ukaze sa kod</param>
+public sealed record FlapModule(int Line, int Position, int Span, string? List);
 
 /// <summary>
 /// Hlavicka tabule: pevny stitok nad maticou (napr. "ODCHODY / DEPARTURES" a popisy stlpcov) a hodiny panelu.

@@ -48,6 +48,8 @@ export const SAMPLE_BOARD: BoardDto = {
     flashOnMs: null,
     flashOffMs: null,
     charRows: null,
+    flapRows: null,
+    rotatingUntil: null,
   },
   version: 0,
   secondAddress: null,

@@ -62,9 +62,27 @@ public static partial class RequestMapper
                 }
                 : null,
             MovingFont = profile.MovingFont,
-            AutoSize = profile.AutoSize
+            AutoSize = profile.AutoSize,
+            RotationMs = profile.RotationMs,
+            Flaps = profile.Flaps is { } f ? ToFlaps(f) : null
         };
     }
+
+    public static FlapProfile ToFlaps(FlapProfileDto flaps)
+    {
+        ArgumentNullException.ThrowIfNull(flaps);
+        return new FlapProfile
+        {
+            LinesPerRecord = flaps.LinesPerRecord,
+            Modules = flaps.Modules.Select(m => new FlapModule(m.Line, m.Position, m.Span, m.List)).ToArray(),
+            Lists = Copy(flaps.Lists),
+            Colors = Copy(flaps.Colors)
+        };
+    }
+
+    private static Dictionary<string, IReadOnlyDictionary<string, string>> Copy(IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> lists) =>
+        lists.ToDictionary(l => l.Key, IReadOnlyDictionary<string, string> (l) => l.Value.ToDictionary(e => e.Key, e => e.Value, StringComparer.Ordinal),
+            StringComparer.Ordinal);
 
     public static BoardFault ToFault(BoardFaultDto fault)
     {
@@ -87,7 +105,10 @@ public static partial class RequestMapper
         return new StationImport
         {
             Lines = request.Lines.Select(l => new StationLine(l.Number, l.TableClass, l.Port) { Name = l.Name }).ToList(),
-            Boards = request.Boards.Select(b => new StationBoard(b.Line, b.Address, b.Manufacturer) { Name = b.Name }).ToList()
+            Boards = request.Boards.Select(b => new StationBoard(b.Line, b.Address, b.Manufacturer)
+            {
+                Name = b.Name, Flaps = b.Flaps is { } f ? ToFlaps(f) : null, FlapRecords = b.FlapRecords
+            }).ToList()
         };
     }
 }

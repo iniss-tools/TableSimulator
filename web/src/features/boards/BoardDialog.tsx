@@ -18,8 +18,9 @@ import { OptionSelect } from "@/components/common/option-select";
 import { FieldDescription, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { defaultProfile } from "@/lib/boards";
+import { defaultProfile, FLAP_MANUFACTURERS } from "@/lib/boards";
 import { t } from "@/i18n";
+import { FlapListsEditor } from "./FlapListsEditor";
 import { HeaderEditor } from "./HeaderEditor";
 
 const num = (value: string) => Number.parseInt(value, 10) || 0;
@@ -43,6 +44,8 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
   // vyrobca, ktory linka nepozna (zo starsich dat), ostava vo vybere
   const shownManufacturers = config.manufacturer && !manufacturers.includes(config.manufacturer) ? [config.manufacturer, ...manufacturers] : manufacturers;
   const fontFiles = p.fontFile && !fonts.includes(p.fontFile) ? [p.fontFile, ...fonts] : fonts;
+  // listova tabula: pozicie (moduly) namiesto bodov, cas otacania; pisma, hlavicka a casovanie textov nemaju zmysel
+  const flaps = FLAP_MANUFACTURERS.includes(config.manufacturer.toUpperCase());
 
   const applyTemplate = (file: string) => {
     setTemplate(file);
@@ -64,8 +67,9 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
         <TabsList>
           <TabsTrigger value="board">{t("board.tab.board")}</TabsTrigger>
           <TabsTrigger value="profile">{t("board.tab.profile")}</TabsTrigger>
-          <TabsTrigger value="header">{t("section.header")}</TabsTrigger>
-          <TabsTrigger value="timing">{t("section.timing")}</TabsTrigger>
+          {flaps && p.flaps && <TabsTrigger value="lists">{t("board.tab.lists")}</TabsTrigger>}
+          {!flaps && <TabsTrigger value="header">{t("section.header")}</TabsTrigger>}
+          {!flaps && <TabsTrigger value="timing">{t("section.timing")}</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="board" className="pt-2">
@@ -94,17 +98,19 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
                   onChange={(e) => setConfig({ ...config, address: num(e.target.value) })}
                 />
               </FormField>
-              <FormField label={t("field.secondAddress")}>
-                <Input
-                  type="number"
-                  min={1}
-                  max={127}
-                  value={config.secondAddress ?? ""}
-                  onChange={(e) => setConfig({ ...config, secondAddress: e.target.value ? num(e.target.value) : null })}
-                />
-              </FormField>
+              {!flaps && (
+                <FormField label={t("field.secondAddress")}>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={127}
+                    value={config.secondAddress ?? ""}
+                    onChange={(e) => setConfig({ ...config, secondAddress: e.target.value ? num(e.target.value) : null })}
+                  />
+                </FormField>
+              )}
             </div>
-            <FieldDescription className="-mt-4">{t("field.secondAddress.hint")}</FieldDescription>
+            {!flaps && <FieldDescription className="-mt-4">{t("field.secondAddress.hint")}</FieldDescription>}
             <FormField label={t("field.name")}>
               <Input value={config.name} onChange={(e) => setConfig({ ...config, name: e.target.value })} />
             </FormField>
@@ -131,8 +137,34 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
 
         <TabsContent value="profile" className="pt-2">
           <FieldGroup>
-            <FieldDescription>{t("section.profile.hint")}</FieldDescription>
-            {templates.length > 0 && (
+            <FieldDescription>{t(flaps ? "section.profile.flaps.hint" : "section.profile.hint")}</FieldDescription>
+            {flaps && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <FormField label={t("field.positions")}>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={512}
+                      value={Math.max(1, Math.round(p.width / 8))}
+                      onChange={(e) => profile({ width: Math.max(1, num(e.target.value)) * 8 })}
+                    />
+                  </FormField>
+                  <FormField label={t("field.rows")}>
+                    <Input type="number" min={1} max={256} value={p.rows} onChange={(e) => profile({ rows: num(e.target.value) })} />
+                  </FormField>
+                  <FormField label={t("field.rotationMs")}>
+                    <Input type="number" min={0} max={60000} step={100} value={p.rotationMs} onChange={(e) => profile({ rotationMs: num(e.target.value) })} />
+                  </FormField>
+                </div>
+                <FieldDescription className="-mt-2">{t("field.rotationMs.hint")}</FieldDescription>
+                <FieldDescription>
+                  {p.flaps ? t("board.flaps.lists", { modules: p.flaps.modules.length, lists: Object.keys(p.flaps.lists).length }) : t("board.flaps.none")}
+                </FieldDescription>
+                <CheckField label={t("field.autoSize")} checked={p.autoSize} onCheckedChange={(autoSize) => profile({ autoSize })} />
+              </>
+            )}
+            {!flaps && templates.length > 0 && (
               <FormField label={t("field.template")} hint={t("field.template.hint")}>
                 <OptionSelect
                   value={template}
@@ -145,32 +177,42 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
                 />
               </FormField>
             )}
-            <div className="grid gap-4 sm:grid-cols-3">
-              <FormField label={t("field.width")}>
-                <Input type="number" min={8} max={2048} value={p.width} onChange={(e) => profile({ width: num(e.target.value) })} />
-              </FormField>
-              <FormField label={t("field.rows")}>
-                <Input type="number" min={1} max={64} value={p.rows} onChange={(e) => profile({ rows: num(e.target.value) })} />
-              </FormField>
-              <FormField label={t("field.rowHeight")}>
-                <Input type="number" min={5} max={64} value={p.rowHeight} onChange={(e) => profile({ rowHeight: num(e.target.value) })} />
-              </FormField>
-            </div>
-            <FormField label={t("field.fontFile")}>
-              <OptionSelect
-                value={p.fontFile ?? NONE}
-                onValueChange={(fontFile) => profile({ fontFile: fontFile || null })}
-                options={[{ value: NONE, label: t("common.none") }, ...fontFiles.map((f) => ({ value: f, label: f }))]}
-                className="w-full"
-              />
-            </FormField>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <CheckField label={t("field.monochrome")} checked={p.monochrome} onCheckedChange={(monochrome) => profile({ monochrome })} />
-              <CheckField label={t("field.swapRedGreen")} checked={p.swapRedGreen} onCheckedChange={(swapRedGreen) => profile({ swapRedGreen })} />
-              <CheckField label={t("field.autoSize")} checked={p.autoSize} onCheckedChange={(autoSize) => profile({ autoSize })} />
-            </div>
+            {!flaps && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <FormField label={t("field.width")}>
+                    <Input type="number" min={8} max={2048} value={p.width} onChange={(e) => profile({ width: num(e.target.value) })} />
+                  </FormField>
+                  <FormField label={t("field.rows")}>
+                    <Input type="number" min={1} max={64} value={p.rows} onChange={(e) => profile({ rows: num(e.target.value) })} />
+                  </FormField>
+                  <FormField label={t("field.rowHeight")}>
+                    <Input type="number" min={5} max={64} value={p.rowHeight} onChange={(e) => profile({ rowHeight: num(e.target.value) })} />
+                  </FormField>
+                </div>
+                <FormField label={t("field.fontFile")}>
+                  <OptionSelect
+                    value={p.fontFile ?? NONE}
+                    onValueChange={(fontFile) => profile({ fontFile: fontFile || null })}
+                    options={[{ value: NONE, label: t("common.none") }, ...fontFiles.map((f) => ({ value: f, label: f }))]}
+                    className="w-full"
+                  />
+                </FormField>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <CheckField label={t("field.monochrome")} checked={p.monochrome} onCheckedChange={(monochrome) => profile({ monochrome })} />
+                  <CheckField label={t("field.swapRedGreen")} checked={p.swapRedGreen} onCheckedChange={(swapRedGreen) => profile({ swapRedGreen })} />
+                  <CheckField label={t("field.autoSize")} checked={p.autoSize} onCheckedChange={(autoSize) => profile({ autoSize })} />
+                </div>
+              </>
+            )}
           </FieldGroup>
         </TabsContent>
+
+        {flaps && p.flaps && (
+          <TabsContent value="lists" className="pt-2">
+            <FlapListsEditor flaps={p.flaps} onChange={(lists) => profile({ flaps: lists })} />
+          </TabsContent>
+        )}
 
         <TabsContent value="header" className="flex flex-col gap-4 pt-2">
           <FieldDescription>{t("section.header.hint")}</FieldDescription>

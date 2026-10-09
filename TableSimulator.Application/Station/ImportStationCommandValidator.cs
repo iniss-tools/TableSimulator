@@ -24,6 +24,8 @@ public sealed class ImportStationCommandValidator : AbstractValidator<ImportStat
             {
                 board.RuleFor(b => b.Address).InclusiveBetween(0, 255).WithErrorCode("station.address");
                 board.RuleFor(b => b.Manufacturer).NotEmpty().WithErrorCode("station.manufacturer");
+                board.RuleFor(b => b.Flaps).Must(Boards.FlapProfileRules.IsValid).WithErrorCode("station.flaps");
+                board.RuleFor(b => b.FlapRecords).InclusiveBetween(1, 64).WithErrorCode("station.flaps");
             });
         });
     }

@@ -18,8 +18,12 @@ public static class AuditDetails
 
     private const string Hidden = "***";
 
-    // diakritika citatelne - podrobnosti zobrazuje webove rozhranie ako text, nie ako HTML
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+    // diakritika citatelne - podrobnosti zobrazuje webove rozhranie ako text, nie ako HTML; kluce slovnikov (napr. kody
+    // listov C a c) rozlisuju velke a male pismena - uzol JSON by ich inak povazoval za ten isty kluc
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, PropertyNameCaseInsensitive = false
+    };
 
     /// <summary>Podrobnosti prikazu; prazdne, ak prikaz nema ziadne udaje.</summary>
     public static string Of(object command)

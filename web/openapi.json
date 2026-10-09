@@ -3737,7 +3737,9 @@
           "swapRedGreen",
           "header",
           "movingFont",
-          "autoSize"
+          "autoSize",
+          "rotationMs",
+          "flaps"
         ],
         "type": "object",
         "properties": {
@@ -3807,6 +3809,20 @@
           },
           "autoSize": {
             "type": "boolean"
+          },
+          "rotationMs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "flaps": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/FlapProfileDto"
+              }
+            ]
           }
         }
       },
@@ -4095,7 +4111,9 @@
           "brightnessGreen",
           "flashOnMs",
           "flashOffMs",
-          "charRows"
+          "charRows",
+          "flapRows",
+          "rotatingUntil"
         ],
         "type": "object",
         "properties": {
@@ -4172,6 +4190,22 @@
             "items": {
               "$ref": "#/components/schemas/CharRowDto"
             }
+          },
+          "flapRows": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/FlapRowDto"
+            }
+          },
+          "rotatingUntil": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -4219,6 +4253,90 @@
           "garbage",
           "status"
         ]
+      },
+      "FlapModuleDto": {
+        "required": [
+          "line",
+          "position",
+          "span",
+          "list"
+        ],
+        "type": "object",
+        "properties": {
+          "line": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "span": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "list": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "FlapProfileDto": {
+        "required": [
+          "linesPerRecord",
+          "modules",
+          "lists",
+          "colors"
+        ],
+        "type": "object",
+        "properties": {
+          "linesPerRecord": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlapModuleDto"
+            }
+          },
+          "lists": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "colors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "FlapRowDto": {
+        "required": [
+          "row",
+          "codes"
+        ],
+        "type": "object",
+        "properties": {
+          "row": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "codes": {
+            "type": "string"
+          }
+        }
       },
       "FontDto": {
         "required": [
@@ -4716,7 +4834,9 @@
           "manufacturer",
           "automatic",
           "shown",
-          "problem"
+          "problem",
+          "flaps",
+          "flapRecords"
         ],
         "type": "object",
         "properties": {
@@ -4748,6 +4868,20 @@
                 "$ref": "#/components/schemas/InissProblemDto"
               }
             ]
+          },
+          "flaps": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/FlapProfileDto"
+              }
+            ]
+          },
+          "flapRecords": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -6496,7 +6630,9 @@
           "line",
           "address",
           "manufacturer",
-          "name"
+          "name",
+          "flaps",
+          "flapRecords"
         ],
         "type": "object",
         "properties": {
@@ -6514,6 +6650,20 @@
           "name": {
             "type": "string",
             "default": ""
+          },
+          "flaps": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/FlapProfileDto"
+              }
+            ]
+          },
+          "flapRecords": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

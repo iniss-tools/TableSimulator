@@ -28,6 +28,12 @@ public sealed record StationBoard(int Line, int Address, string Manufacturer)
 {
     /// <summary>Nazov tabule (KEY z TPhysic).</summary>
     public string Name { get; init; } = "";
+
+    /// <summary>Listova tabula: moduly a zoznamy listov z katalogu a TabTab; null = nie je listova alebo bez katalogu.</summary>
+    public Boards.FlapProfile? Flaps { get; init; }
+
+    /// <summary>Listova tabula: pocet zaznamov (MAX_REC_COUNT) - riadkov je zaznamy × riadky zaznamu.</summary>
+    public int FlapRecords { get; init; } = 1;
 }
 
 /// <summary>Co import stanice v simulatore zmenil.</summary>

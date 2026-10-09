@@ -4,6 +4,7 @@ using TableSimulator.Core.Lines;
 using TableSimulator.Core.Protocols;
 using TableSimulator.Core.Protocols.Elektrocas;
 using TableSimulator.Core.Protocols.Elen;
+using TableSimulator.Core.Protocols.Ers;
 using TableSimulator.Core.Protocols.Remote;
 using TableSimulator.Core.Recording;
 
@@ -227,16 +228,31 @@ public sealed class Simulator
                     continue;
                 }
 
-                if (_boards.ContainsKey(SimBoard.MakeId(board.Line, board.Address)))
+                if (_boards.TryGetValue(SimBoard.MakeId(board.Line, board.Address), out var existing))
                 {
+                    // zoznamy listov su data stanice, nie nastavenie obsluhy - prevezmu sa aj pre tabulu, ktora uz je
+                    if (board.Flaps is { } flaps && existing.Display is FlapDisplay)
+                    {
+                        // farby listov nastavene v simulatore ostanu
+                        existing.Profile = existing.Profile with { Flaps = flaps with { Colors = FlapColors.Keep(existing.Profile.Flaps, flaps) } };
+                        existing.Version++;
+                    }
+
                     boardsKept++;
                     continue;
                 }
 
-                AddBoardCore(new BoardConfig(board.Line, board.Address, key)
+                var profile = BoardProfile.DefaultFor(key) with { AutoSize = true };
+                if (board.Flaps is { } layout)
                 {
-                    Name = board.Name, Profile = BoardProfile.DefaultFor(key) with { AutoSize = true }
-                });
+                    var positions = layout.Modules.Count == 0 ? profile.Width / 8 : layout.Modules.Max(m => m.Position + m.Span);
+                    profile = profile with
+                    {
+                        Flaps = layout, Rows = Math.Max(1, board.FlapRecords * Math.Max(1, layout.LinesPerRecord)), Width = Math.Max(1, positions) * 8
+                    };
+                }
+
+                AddBoardCore(new BoardConfig(board.Line, board.Address, key) { Name = board.Name, Profile = profile });
                 boardsAdded++;
             }
         }
@@ -562,10 +578,12 @@ public sealed class Simulator
     private static readonly Dictionary<int, (Func<ILineProtocol> Create, string[] Manufacturers)> Protocols = new()
     {
         [1] = (() => new ElektrocasProtocol(), ["LCD"]),
+        [2] = (() => new ErsProtocol(), ["ERS"]),
+        [3] = (() => new ElektrocasProtocol(), ["FERS"]),
         [4] = (() => new ElenProtocol(), ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16Kam", "ELEKON"]),
         [5] = (() => new ElektrocasProtocol(), ["LCD1", "ERP"]),
         [128] = (() => new RemoteProtocol(), [.. RemoteProtocol.Manufacturers]),
-        [130] = (() => new ItpProtocol(), ["LCD1", "ERP", "LCD"])
+        [130] = (() => new ItpProtocol(), ["LCD1", "ERP", "LCD", "FERS"])
     };
 
     private static ILineProtocol? CreateProtocol(int tableClass) => Protocols.TryGetValue(tableClass, out var p) ? p.Create() : null;

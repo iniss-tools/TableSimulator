@@ -3,6 +3,7 @@ using TableSimulator.Core.Boards;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Protocols.Elektrocas;
 using TableSimulator.Core.Protocols.Elen;
+using TableSimulator.Core.Protocols.Ers;
 
 namespace TableSimulator.Core.Protocols.Remote;
 
@@ -18,7 +19,7 @@ namespace TableSimulator.Core.Protocols.Remote;
 internal sealed class RemoteProtocol : ILineProtocol
 {
     /// <summary>Vyrobcovia tabul, ktore simulator za vzdialenym INISSom zobrazi; prvy je predvoleny.</summary>
-    public static readonly string[] Manufacturers = ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16Kam", "ELEKON", "LCD1", "ERP", "LCD"];
+    public static readonly string[] Manufacturers = ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16Kam", "ELEKON", "LCD1", "ERP", "LCD", "FERS", "ERS"];
 
     /// <summary>Stav tabule: zapis v poriadku.</summary>
     public const int TableOk = 0x00;
@@ -67,6 +68,7 @@ internal sealed class RemoteProtocol : ILineProtocol
     private readonly RemoteFramer _framer = new();
     private readonly ElenProtocol _elen = new();
     private readonly ElektrocasProtocol _elektrocas = new();
+    private readonly ErsProtocol _ers = new();
 
     // fronty, ktore riadiaci INISS vypol (podla nazvu, "" = jedina fronta bez QNAM); prezije nove spojenie
     private readonly HashSet<string> _switchedOff = new(StringComparer.Ordinal);
@@ -79,6 +81,7 @@ internal sealed class RemoteProtocol : ILineProtocol
         _framer.Reset();
         _elen.Reset();
         _elektrocas.Reset();
+        _ers.Reset();
     }
 
     public BoardDisplay CreateDisplay(string manufacturer) => Inner(manufacturer).CreateDisplay(manufacturer);
@@ -103,10 +106,10 @@ internal sealed class RemoteProtocol : ILineProtocol
         }
     }
 
-    /// <summary>Vyrobca patri do rodiny Elektrocas (inak ELEN).</summary>
-    private static bool IsElektrocas(string? manufacturer) => manufacturer is "LCD" or "LCD1" or "ERP";
+    /// <summary>Vyrobca patri do rodiny Elektrocas (aj listove FERS).</summary>
+    private static bool IsElektrocas(string? manufacturer) => manufacturer is "LCD" or "LCD1" or "ERP" or "FERS";
 
-    private ILineProtocol Inner(string? manufacturer) => IsElektrocas(manufacturer) ? _elektrocas : _elen;
+    private ILineProtocol Inner(string? manufacturer) => manufacturer == "ERS" ? _ers : IsElektrocas(manufacturer) ? _elektrocas : _elen;
 
     private void Handle(RemoteMessage message, ILineContext context)
     {
@@ -240,7 +243,7 @@ internal sealed class RemoteProtocol : ILineProtocol
         }
 
         var inner = Inner(manufacturer);
-        var frame = Finish(inner == _elektrocas, command);
+        var frame = inner == _ers ? command : Finish(inner == _elektrocas, command);
         context.Forward(frame);
         var innerContext = new InnerContext(context, inner, message.Raw, seq, manufacturer);
         inner.Reset();
@@ -252,7 +255,8 @@ internal sealed class RemoteProtocol : ILineProtocol
         }
 
         if (innerContext.Answer is { } answer)
-            return new TableResult(boardAddress, AnswerCode(inner == _elektrocas, answer.Bytes), frame.Length, answer.Delay, answer.Status);
+            return new TableResult(boardAddress, inner == _ers ? ErsAnswerCode(answer.Bytes) : AnswerCode(inner == _elektrocas, answer.Bytes), frame.Length,
+                answer.Delay, answer.Status);
         // hromadny prikaz a cas su bez odpovede; tabula, ktora neexistuje alebo mlci, neodpovie
         return innerContext.Faulted || innerContext.NoBoard
             ? new TableResult(boardAddress, TableNoAnswer, frame.Length, TimeSpan.Zero, innerContext.Faulted ? FrameStatus.Fault : FrameStatus.NoBoard)
@@ -302,6 +306,19 @@ internal sealed class RemoteProtocol : ILineProtocol
 
         return code;
     }
+
+    /// <summary>
+    /// Stav zapisu ERS: ACK a CAN (listy sa este tocia - vzdialeny INISS by cakal) su v poriadku, NAK a chybovy stav
+    /// tabula zapis odmietla (presne kody vzdialeneho INISSu pre ERS nie su zistene).
+    /// </summary>
+    private static int ErsAnswerCode(byte[] reply) => reply switch
+    {
+        [ErsFrame.Syn, ErsFrame.Syn, _, _, ErsFrame.Ack or ErsFrame.Can] => TableOk,
+        [ErsFrame.Syn, ErsFrame.Syn, _, _, ErsFrame.Nak] => TableRejected,
+        [ErsFrame.Syn, ErsFrame.Syn, _, _, ErsFrame.Stx, _, _, _, (byte)'0', (byte)'1', ..] => TableOk,
+        [ErsFrame.Syn, ErsFrame.Syn, _, _, ErsFrame.Stx, ..] => TableRejected,
+        _ => TableBadAnswer
+    };
 
     private static readonly (int Bit, int Code)[] ElektrocasStatusCodes =
     [

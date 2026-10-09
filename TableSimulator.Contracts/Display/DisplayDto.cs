@@ -1,6 +1,9 @@
 namespace TableSimulator.Contracts.Display;
 
-/// <summary>Obsah tabule: rodina <c>elen</c> (riadky <see cref="Rows" />) alebo <c>chars</c> (<see cref="CharRows" />).</summary>
+/// <summary>
+/// Obsah tabule: rodina <c>elen</c> (riadky <see cref="Rows" />), <c>chars</c> (<see cref="CharRows" />) alebo <c>flaps</c>
+/// (<see cref="FlapRows" />).
+/// </summary>
 public sealed record DisplayDto(
     string Family,
     int Brightness,
@@ -22,4 +25,10 @@ public sealed record DisplayDto(
 
     /// <summary>Riadky znakovej tabule; null pri inej rodine.</summary>
     public CharRowDto[]? CharRows { get; init; }
+
+    /// <summary>Riadky listovej tabule; null pri inej rodine.</summary>
+    public FlapRowDto[]? FlapRows { get; init; }
+
+    /// <summary>Listova tabula: do kedy sa listy otacaju; null = stoja.</summary>
+    public DateTimeOffset? RotatingUntil { get; init; }
 }

@@ -1,12 +1,14 @@
 using System.Globalization;
 using TableSimulator.Core.Boards;
+using ToolsCore.Iniss.Tools;
 
 namespace TableSimulator.Core.Protocols.Elektrocas;
 
 /// <summary>
 /// Protokol tabul Elektrocas z pohladu tabule: LCD1 a slepecke hlasice ERP (TableClass 5), starsie LCD (TableClass 1).
 /// Kazdu spravu tabula potvrdi stavovou spravou <c>70</c>; znaky su v kodovani Windows-1250, kazdy s vlastnym pismom.
-/// Viz docs/iniss/protokoly/lcd1.mdx.
+/// Tym istym ramcom hovoria listove tabule FERS (TableClass 3) - kody listov, otacanie (<see cref="FlapDisplay" />).
+/// Viz docs/iniss/protokoly/lcd1.mdx a ers-fers.mdx.
 /// </summary>
 internal sealed class ElektrocasProtocol : ILineProtocol
 {
@@ -56,7 +58,8 @@ internal sealed class ElektrocasProtocol : ILineProtocol
 
     public void Reset() => _framer.Reset();
 
-    public BoardDisplay CreateDisplay(string manufacturer) => new CharDisplay();
+    public BoardDisplay CreateDisplay(string manufacturer) =>
+        string.Equals(manufacturer, "FERS", StringComparison.OrdinalIgnoreCase) ? new FlapDisplay() : new CharDisplay();
 
     /// <summary>Pri poruche tabula hlasi chybnu spravu (NAK), zvolene stavove bity alebo odpovie nezmyslom.</summary>
     public (byte[] Bytes, FrameInfo Info) FaultReply(BoardFault fault, byte[] normal)
@@ -98,7 +101,7 @@ internal sealed class ElektrocasProtocol : ILineProtocol
             var clock = ParseTime(frame.Parameters);
             if (frame.ChecksumOk && clock != null)
             {
-                foreach (var board in context.Boards.Where(b => b.Display is CharDisplay))
+                foreach (var board in context.Boards.Where(b => b.Display is CharDisplay or FlapDisplay))
                 {
                     board.Display.ClockValue = clock;
                     board.Display.ClockSetAt = context.Now;
@@ -147,6 +150,12 @@ internal sealed class ElektrocasProtocol : ILineProtocol
             return;
         }
 
+        if (target.Display is FlapDisplay flaps)
+        {
+            HandleFlaps(target, flaps, frame, context);
+            return;
+        }
+
         if (Mismatch(target.ManufacturerKey, frame.Command) is { } mismatch)
             target.Mismatch = mismatch;
         var status = Apply(target, frame, out var data);
@@ -167,6 +176,82 @@ internal sealed class ElektrocasProtocol : ILineProtocol
                 context.Reply(target, Status(frame, status), StatusInfo(status), status == 0);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Listova tabula FERS: zapis stlpca a zmazanie hned potvrdi stavom a listy otaca - kym sa otacaju, na dotaz
+    /// <c>01</c> neodpoveda (INISS sa pyta znova, kym tabula neodpovie).
+    /// </summary>
+    private static void HandleFlaps(SimBoard board, FlapDisplay display, ElektrocasFrame frame, ILineContext context)
+    {
+        var p = frame.Parameters;
+        var now = context.Now;
+        var status = 0;
+        byte[]? time = null;
+        switch (frame.Command)
+        {
+            case CmdCheck:
+            {
+                var rotating = display.IsRotating(now);
+                context.LogReceived(frame.Raw, frame.Address, FrameStatus.Ok, new FrameInfo("fers.query", Args(("rotating", rotating ? "1" : "0"))));
+                if (!rotating)
+                    context.Reply(board, Status(frame, 0), StatusInfo(0));
+                return;
+            }
+
+            case CmdRowText when p.Length >= 2:
+                status = WriteFlaps(board, display, p[0], p[1], Encodings.Win1250.GetString(p.AsSpan(2)), now);
+                break;
+
+            case CmdClear or CmdClear2:
+                if (display.ClearAll())
+                    display.RotatingUntil = now.AddMilliseconds(board.Profile.RotationMs);
+                break;
+
+            case CmdTimeQuery:
+                time = TimeBytes(display.ClockValue is { } c && display.ClockSetAt is { } at ? c + (DateTimeOffset.UtcNow - at) : DateTime.Now);
+                break;
+        }
+
+        context.Changed(board);
+        context.LogReceived(frame.Raw, frame.Address, FrameStatus.Ok, DescribeFlaps(frame));
+        if (time != null)
+            context.Reply(board, ElektrocasFrame.Build(RtcBroadcastAddress, frame.Address, CmdTime, time), new FrameInfo("lcd.timeReply"));
+        else
+            context.Reply(board, Status(frame, status), StatusInfo(status), status == 0);
+    }
+
+    /// <summary>Zapise kody listov stlpca; zmenene listy sa zacnu otacat. Riadok mimo tabule je chybna suradnica.</summary>
+    private static int WriteFlaps(SimBoard board, FlapDisplay display, int row, int column, string codes, DateTimeOffset now)
+    {
+        var profile = board.Profile;
+        if (profile.AutoSize)
+        {
+            var width = Math.Max(profile.Width, (column + codes.Length) * 8);
+            if (row + 1 > profile.Rows || width > profile.Width)
+                board.Profile = profile with { Rows = Math.Max(profile.Rows, row + 1), Width = width };
+        }
+        else if (row >= profile.Rows || column + codes.Length > Math.Max(1, profile.Width / 8))
+        {
+            return StatusBadCoordinates;
+        }
+
+        if (display.Write(row, column, codes))
+            display.RotatingUntil = now.AddMilliseconds(board.Profile.RotationMs);
+        return 0;
+    }
+
+    private static FrameInfo DescribeFlaps(ElektrocasFrame frame)
+    {
+        var p = frame.Parameters;
+        return frame.Command switch
+        {
+            CmdRowText when p.Length >= 2 => new FrameInfo("fers.write",
+                Args(("row", Num(p[0])), ("col", Num(p[1])), ("codes", Encodings.Win1250.GetString(p.AsSpan(2))))),
+            CmdClear or CmdClear2 => new FrameInfo("fers.clear"),
+            CmdTimeQuery => new FrameInfo("lcd.timeQuery"),
+            _ => new FrameInfo("lcd.unknown", Args(("cmd", frame.Command.ToString("X2", CultureInfo.InvariantCulture))))
+        };
     }
 
     /// <summary>Vykona prikaz na tabuli; vrati stav pre odpoved a pri dotaze na cas obsah casovej spravy.</summary>

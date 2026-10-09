@@ -84,7 +84,21 @@ public static partial class DtoMapper
                 }
                 : null,
             MovingFont = profile.MovingFont,
-            AutoSize = profile.AutoSize
+            AutoSize = profile.AutoSize,
+            RotationMs = profile.RotationMs,
+            Flaps = profile.Flaps is { } f ? ToDto(f) : null
+        };
+    }
+
+    public static FlapProfileDto ToDto(FlapProfile flaps)
+    {
+        ArgumentNullException.ThrowIfNull(flaps);
+        return new FlapProfileDto
+        {
+            LinesPerRecord = flaps.LinesPerRecord,
+            Modules = flaps.Modules.Select(m => new FlapModuleDto(m.Line, m.Position, m.Span, m.List)).ToArray(),
+            Lists = flaps.Lists,
+            Colors = flaps.Colors
         };
     }
 
@@ -207,6 +221,11 @@ public static partial class DtoMapper
             BrightnessGreen = e.BrightnessGreen,
             FlashOnMs = e.FlashOn * 100,
             FlashOffMs = e.FlashOff * 100
+        },
+        FlapDisplay f => new DisplayDto("flaps", f.Brightness, f.ClockValue, f.ClockSetAt, [], 0, null, null)
+        {
+            FlapRows = f.Rows.Where(r => r.Value.Trim().Length > 0).OrderBy(r => r.Key).Select(r => new FlapRowDto(r.Key, r.Value)).ToArray(),
+            RotatingUntil = f.RotatingUntil
         },
         _ => new DisplayDto("unknown", display.Brightness, display.ClockValue, display.ClockSetAt, [], 0, null, null)
     };

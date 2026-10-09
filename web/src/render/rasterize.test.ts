@@ -43,6 +43,8 @@ function board(rows: Board["display"]["rows"], extra: Partial<Board["display"]> 
       monochrome: false,
       swapRedGreen: false,
       header: null,
+      rotationMs: 3000,
+      flaps: null,
     },
     secondAddress: null,
     mismatch: null,
@@ -59,6 +61,8 @@ function board(rows: Board["display"]["rows"], extra: Partial<Board["display"]> 
       movingCodes: null,
       movingText: null,
       charRows: null,
+      flapRows: null,
+      rotatingUntil: null,
       ...extra,
     },
   };

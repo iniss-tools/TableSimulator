@@ -20,6 +20,7 @@ public static class BoardText
         {
             ElenDisplay elen => Elen(elen, board.Profile.Rows),
             CharDisplay chars => Chars(chars, board.Profile.Rows, board.ManufacturerKey),
+            FlapDisplay flaps => Flaps(flaps, board.Profile, board.ManufacturerKey),
             _ => []
         };
     }
@@ -42,6 +43,24 @@ public static class BoardText
         var text = new List<string>();
         for (var row = 0; row < count; row++)
             text.Add(display.Rows.TryGetValue(row, out var content) ? Row(content, manufacturer) : "");
+        return text;
+    }
+
+    /// <summary>Listova tabula: texty listov modulov riadku oddelene <c> | </c>.</summary>
+    private static List<string> Flaps(FlapDisplay display, BoardProfile profile, string manufacturer)
+    {
+        var count = Math.Max(profile.Rows, display.Rows.Count == 0 ? 0 : display.Rows.Keys.Max() + 1);
+        var blank = FlapLabels.BlankCode(manufacturer);
+        var text = new List<string>();
+        for (var row = 0; row < count; row++)
+        {
+            var codes = display.Rows.GetValueOrDefault(row, "");
+            var labels = FlapLabels.Modules(profile, row, codes.Length).Select(m => FlapLabels.Label(profile, m, codes, blank)).ToList();
+            while (labels.Count > 0 && labels[^1].Length == 0)
+                labels.RemoveAt(labels.Count - 1);
+            text.Add(string.Join(" | ", labels));
+        }
+
         return text;
     }
 

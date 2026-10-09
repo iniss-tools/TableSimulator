@@ -7,6 +7,9 @@ export const defaultEndpoint = (number: number) => `TCP://0.0.0.0:${47000 + numb
 /** Trieda linky vzdialeneho INISSu - tabule roznych rodin, vyrobcu posiela riadiaci INISS. */
 export const REMOTE_INISS_CLASS = 128;
 
+/** Vyrobcovia listovych tabul (rodina flaps). */
+export const FLAP_MANUFACTURERS = ["FERS", "ERS"];
+
 /** Vyrobcovia znakovych tabul Elektrocas (rodina chars). */
 export const CHAR_MANUFACTURERS = ["LCD", "LCD1", "ERP"];
 
@@ -32,7 +35,9 @@ export function defaultProfile(manufacturer: string): BoardProfileDto {
       ? { width: 384, rows: 4, rowHeight: 16 }
       : CHAR_MANUFACTURERS.includes(upper)
         ? { width: 320, rows: 4, rowHeight: 16 }
-        : { width: 192, rows: 2, rowHeight: 10 };
+        : FLAP_MANUFACTURERS.includes(upper)
+          ? { width: 9 * 8, rows: 4, rowHeight: 16 }
+          : { width: 192, rows: 2, rowHeight: 10 };
   return {
     ...size,
     fontFile: null,
@@ -46,6 +51,8 @@ export function defaultProfile(manufacturer: string): BoardProfileDto {
     monochrome: false,
     swapRedGreen: false,
     header: null,
+    rotationMs: 3000,
+    flaps: null,
   };
 }
 

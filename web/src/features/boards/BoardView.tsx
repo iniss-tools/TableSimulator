@@ -1,4 +1,5 @@
 // Ziva tabula: rasterizacia obsahu + LED renderer, prisposobena velkosti miesta; snimka do PNG v pevnej mierke.
+// Listove tabule (ERS, FERS) kresli FlapView.
 import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from "react";
 import { useConnection, type BoardDto as Board } from "@/api";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,6 +10,7 @@ import { fallbackGlyphSource } from "@/render/pixel-fonts";
 import { CHAR_WIDTH } from "@/render/chars";
 import { blinkPhase, boardClock, hasClock, isAnimated, rasterize } from "@/render/rasterize";
 import { LedRenderer, ledSize } from "@/render/led";
+import { FlapView } from "./FlapView";
 
 // Prve kreslenie tabule trva desiatky ms - stranka s mnohymi tabulami ich kresli po jednej v samostatnych ulohach,
 // aby sa medzitym vykreslila (kostry na miestach tabul) a nezamrzla.
@@ -79,7 +81,11 @@ interface Props {
   ref?: Ref<BoardViewHandle>;
 }
 
-export function BoardView({ board, fit = "width", className, design: override, ref }: Props) {
+export function BoardView(props: Props) {
+  return props.board.display.family === "flaps" ? <FlapView {...props} /> : <LedBoardView {...props} />;
+}
+
+function LedBoardView({ board, fit = "width", className, design: override, ref }: Props) {
   const { designVersion } = useConnection();
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
