@@ -237,8 +237,12 @@ Linka triedy `129` (protokol `protokoly/elsvo.mdx`) nemá tabule, ale **spínaci
 okruhov**: INISS pred hlásením zosilňovač zopne a po ňom uvoľní. Karta jednotky ukazuje kontrolku zopnutia, pásmo,
 od kedy je zopnutý, počet zopnutí a bity stavu, ktorým jednotka odpovedá (mená ako v logu INISSu).
 
-- Jednotky nie sú v `TPhysic`, ale v `Audio.txt` (stĺpec 8 `E<linka>`, stĺpec 9 adresa, prázdna = `0`) – *Načítať
-  z INISSu* založí len linku, jednotky vzniknú samoučením pri prvom príkaze alebo ručne (výrobca `ELSVO`, adresa aj `0`).
+- Jednotky nie sú v `TPhysic`, ale v zvukových okruhoch `Audio.txt`: okruh so stĺpcom 8 `E<linka>` (alebo `EE<linka>`)
+  spína jednotku s adresou zo stĺpca 9 (prázdna = `0`). *Načítať z INISSu* aj presmerovanie z GVDEditora ich založia
+  na linke s týmto číslom a pomenujú podľa okruhov (okruhy s rovnakou linkou a adresou = jedna jednotka). Jednotka
+  s číslom linky, ktorú INISS nemá, je v náhľade medzi tými, ktorým INISS nič nepošle. Inak jednotky vzniknú
+  samoučením pri prvom príkaze alebo ručne (výrobca `ELSVO`, adresa aj `0`); samoučená jednotka bez názvu dostane
+  pri ďalšom načítaní názov okruhov.
 - Príkazy `1F` (1. pásmo) a `3F` (2. pásmo) zosilňovač zopnú, `C0` (uvoľniť) a `00` (vypnúť) vypnú; na každý príkaz
   aj dotaz `80` jednotka odpovie stavom `80` (*Ready*), pri zopnutí `90` (*Ready + Hlaseni*).
 - Zlý súčet jednotka nevykoná a odpovie bitom `20` (*TransferErr*) – predpoklad, dokumentácia odpoveď na chybnú správu

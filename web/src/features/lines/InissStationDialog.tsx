@@ -8,6 +8,7 @@ import {
   errorText,
   getInissStationOptions,
   importInissStationMutation,
+  type InissAmplifierDto,
   type InissLineDto,
   type InissProblemDto,
   type InissTableDto,
@@ -40,8 +41,8 @@ function className(tableClass: number): string {
   return hasText(key) ? t(key) : t("iniss.class", { value: tableClass });
 }
 
-function Tables({ tables }: { tables: InissTableDto[] }) {
-  if (tables.length === 0) return <span className="text-muted-foreground">–</span>;
+function Tables({ tables, amplifiers }: { tables: InissTableDto[]; amplifiers: InissAmplifierDto[] }) {
+  if (tables.length === 0 && amplifiers.length === 0) return <span className="text-muted-foreground">–</span>;
   return (
     <div className="flex flex-col gap-0.5 whitespace-normal">
       {tables.map((table) => (
@@ -49,6 +50,12 @@ function Tables({ tables }: { tables: InissTableDto[] }) {
           {t("iniss.table", { name: table.name, address: table.address, manufacturer: table.manufacturer || "?" })}
           {table.automatic && <span className="text-xs text-muted-foreground"> · {t("iniss.automatic")}</span>}
           {!table.shown && <span className="text-xs"> · {t("iniss.notShown")}</span>}
+        </span>
+      ))}
+      {amplifiers.map((amplifier) => (
+        <span key={`elsvo/${amplifier.address}`} className={amplifier.shown ? undefined : "text-muted-foreground"}>
+          {t("iniss.amplifier", { name: amplifier.name, address: amplifier.address })}
+          {!amplifier.shown && <span className="text-xs"> · {t("iniss.notShown")}</span>}
         </span>
       ))}
     </div>
@@ -95,7 +102,11 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
           </div>
         ),
       }),
-      column.display({ id: "tables", header: t("iniss.col.tables"), cell: ({ row }) => <Tables tables={row.original.tables} /> }),
+      column.display({
+        id: "tables",
+        header: t("iniss.col.tables"),
+        cell: ({ row }) => <Tables tables={row.original.tables} amplifiers={row.original.amplifiers} />,
+      }),
       column.display({
         id: "state",
         header: t("iniss.col.state"),
@@ -177,7 +188,7 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
                 alignTop
                 empty={t("iniss.noLines")}
               />
-              {station.unserved.length > 0 && (
+              {(station.unserved.length > 0 || station.unservedAmplifiers.length > 0) && (
                 <Alert className="border-amber-500/40 text-amber-800 dark:text-amber-300">
                   <TriangleAlert />
                   <AlertDescription className="text-current">
@@ -187,6 +198,11 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
                         <li key={`${u.grafikon}/${u.name}`}>
                           {t("iniss.table", { name: u.name, address: u.address, manufacturer: u.manufacturer || "?" })}
                           {u.problem && ` – ${problemText(u.problem)}`}
+                        </li>
+                      ))}
+                      {station.unservedAmplifiers.map((a) => (
+                        <li key={`elsvo/${a.line}/${a.address}`}>
+                          {t("iniss.amplifier", { name: a.name, address: a.address })} – {t("iniss.amplifier.noLine", { line: a.line })}
                         </li>
                       ))}
                     </ul>

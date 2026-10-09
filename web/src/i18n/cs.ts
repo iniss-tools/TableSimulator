@@ -811,7 +811,7 @@ export const cs: Record<TextKey, string> = {
   "iniss.unsupported": "třída, kterou simulátor nezná",
   "iniss.loaded": "načte se",
   "iniss.noLines": "Nastavení INISSu nemá žádnou linku k tabulím (sekci Driver).",
-  "iniss.unserved": "Tabule, kterým INISS nic nepošle:",
+  "iniss.unserved": "Tabule a zesilovače, kterým INISS nic nepošle:",
   "iniss.keep":
     "Chybějící linky a tabule se doplní, existujícím linkám se upraví třída a port. Tabule, které v simulátoru už jsou, zůstanou tak, jak jste je nastavili. Pro tabule s exportem do XML se založí virtuální tabule.",
   "iniss.load": "Načíst do simulátoru",
@@ -1320,4 +1320,6 @@ export const cs: Record<TextKey, string> = {
   "kind.elsvo.state": "Stav {state}: {bits}",
   "amplifier.unnamed": "Zesilovač {address}",
   "dialog.amplifier.edit": "Spínací jednotka ELSVO – {name}",
+  "iniss.amplifier": "Zesilovač {name} (adresa {address}, ELSVO)",
+  "iniss.amplifier.noLine": "linka {line} v nastavení INISSu není",
 };

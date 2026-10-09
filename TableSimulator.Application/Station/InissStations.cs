@@ -19,6 +19,9 @@ namespace TableSimulator.Application.Station;
 public static class InissStations
 {
     // znaky, ktore meno suboru XML nesmie mat (rovnako ako overenie importu stanice)
+    /// <summary>Vyrobca spinacej jednotky zosilnovaca v simulatore.</summary>
+    private const string AmplifierManufacturer = "ELSVO";
+
     private static readonly SearchValues<char> InvalidXmlName = SearchValues.Create("\\/:*?\"<>|");
 
     /// <summary>Nacita instalaciu INISSu podla nastavenia.</summary>
@@ -60,12 +63,31 @@ public static class InissStations
         var map = DriverLines.Build(resolved, tables);
         var logFolder = InissPaths.LogDirectory(resolved, installationDir);
 
+        // spinacie jednotky zosilnovacov nie su v TPhysic, ale v zvukovych okruhoch - linka podla cisla (E<n>)
+        IReadOnlyList<ElsvoUnit> units;
+        try
+        {
+            units = ElsvoUnits.Read(dataDir);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return Result.Failure<InissStationDto>(InissStationErrors.Unreadable(e.Message));
+        }
+
         var lines = map.Lines.Select(line =>
         {
             var manufacturers = Simulator.ManufacturersFor(line.Class);
+            var amplifiers = units.Where(u => u.Line == line.Line)
+                .Select(u => new InissAmplifierDto(u.Line, u.Address, u.Name, manufacturers.Contains(AmplifierManufacturer, StringComparer.OrdinalIgnoreCase)))
+                .ToList();
             return new InissLineDto(line.Section, line.Line, line.Class, line.Port, SimulatorPort(line), line.Active, manufacturers.Count > 0,
-                line.Tables.Select(t => Table(t.Table, t.Automatic, manufacturers, null)).ToList(), line.Problems.Select(Problem).ToList());
+                line.Tables.Select(t => Table(t.Table, t.Automatic, manufacturers, null)).ToList(), line.Problems.Select(Problem).ToList())
+            {
+                Amplifiers = amplifiers
+            };
         }).ToList();
+        var unservedAmplifiers = units.Where(u => !map.Lines.Any(l => l.Line == u.Line))
+            .Select(u => new InissAmplifierDto(u.Line, u.Address, u.Name, false)).ToList();
         var unserved = map.Unserved.Select(u => Table(u.Table, u.Table.Table.CommunicationPort == 0, [], Problem(u.Problem))).ToList();
 
         // INISS zapisuje XML vsetkych grafikonov z DirList - rovnake SAVE_XML zapisuje do jedneho suboru
@@ -75,7 +97,10 @@ public static class InissStations
             .ToList();
         var grafikons = tables.Select(t => t.Grafikon).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         var registry = OperatingSystem.IsWindows() && (source.Machine.Exists || source.User.Exists || source.VirtualStore.Exists);
-        return Result.Success(new InissStationDto(program, appName, registry, grafikons, lines, unserved, logFolder, Directory.Exists(logFolder), xml));
+        return Result.Success(new InissStationDto(program, appName, registry, grafikons, lines, unserved, logFolder, Directory.Exists(logFolder), xml)
+        {
+            UnservedAmplifiers = unservedAmplifiers
+        });
     }
 
     /// <summary>
@@ -94,6 +119,7 @@ public static class InissStations
             lines.Add(new StationLineDto(number, line.TableClass, line.SimulatorPort, line.Section));
             boards.AddRange(line.Tables.Where(t => t.Manufacturer.Length > 0 && t.Address is >= 0 and <= 255)
                 .Select(t => new StationBoardDto(number, t.Address, t.Manufacturer, t.Name) { Flaps = t.Flaps, FlapRecords = t.FlapRecords }));
+            boards.AddRange(line.Amplifiers.Select(a => new StationBoardDto(number, a.Address, AmplifierManufacturer, a.Name)));
         }
 
         var xml = station.XmlTables.Where(t => t.Source.Length <= 100 && t.Source.AsSpan().IndexOfAny(InvalidXmlName) < 0).ToList();

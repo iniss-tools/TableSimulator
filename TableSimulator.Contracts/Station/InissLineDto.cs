@@ -19,4 +19,8 @@ public sealed record InissLineDto(
     bool Active,
     bool Supported,
     IReadOnlyList<InissTableDto> Tables,
-    IReadOnlyList<InissProblemDto> Problems);
+    IReadOnlyList<InissProblemDto> Problems)
+{
+    /// <summary>Spinacie jednotky ELSVO na linke (okruhy Audio.txt so stlpcom 8 E a cislom linky).</summary>
+    public IReadOnlyList<InissAmplifierDto> Amplifiers { get; init; } = [];
+}

@@ -93,4 +93,23 @@ public class StationImportTests
         CollectionAssert.AreEqual(new[] { 0 }, result.UnsupportedLines.ToArray());
         Assert.AreEqual(0, sim.Read(s => s.Lines.Count()));
     }
+
+    [TestMethod]
+    public void Import_SamoucenaJednotkaBezNazvuDostaneNazovOkruhu()
+    {
+        var sim = new Simulator();
+        sim.SetLine(new LineConfig(3, 129, "TCP://127.0.0.1:47003") { AutoLearn = true, Manufacturer = "ELSVO" });
+        sim.Receive(3, Hex("02 05 1F 03 D7"));
+        sim.SetBoard(new BoardConfig(3, 6, "ELSVO") { Name = "Od obsluhy" });
+
+        var result = sim.ImportStation(new StationImport
+        {
+            Lines = [new StationLine(3, 129, 47003)],
+            Boards = [new StationBoard(3, 5, "ELSVO") { Name = "Nastupiste 1" }, new StationBoard(3, 6, "ELSVO") { Name = "Hala" }]
+        });
+
+        Assert.AreEqual(2, result.BoardsKept);
+        Assert.AreEqual("Nastupiste 1", sim.Read(s => s.FindBoard("3-5"))!.Name);
+        Assert.AreEqual("Od obsluhy", sim.Read(s => s.FindBoard("3-6"))!.Name);
+    }
 }

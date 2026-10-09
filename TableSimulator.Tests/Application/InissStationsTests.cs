@@ -142,4 +142,29 @@ public sealed class InissStationsTests
         Directory.Delete(Path.Combine(_dir.FullName, GvdFileConsts.DirData), true);
         Assert.AreEqual("iniss.dataNotFound", InissStations.Read(new AppSettings { InissProgram = _program }).Error.Code);
     }
+
+    [TestMethod]
+    public void ZosilnovaceElsvo_ZoZvukovychOkruhovPodlaCislaLinky()
+    {
+        File.WriteAllLines(Path.ChangeExtension(_program, ".INI"),
+            ["[Driver]", "TableClass=4", "TablePort=1=TCP://127.0.0.1:47201", "[Driver0]", "TableClass=129", "TablePort=COM3"], Encodings.Win1250);
+        File.WriteAllLines(Path.Combine(_dir.FullName, GvdFileConsts.DirData, GvdFileConsts.FileAudio),
+        [
+            "1234,Nástupište 1,N1,F1,,,,E3,5", "1234,Hala,H,F2,,,,E3,", "1234,Ústredňa,U,F3,,,,12,1", "1234,Iná linka,I,F4,,,,E1,2",
+            "1234,Bez linky,B,F5,,,,E9,1"
+        ], Encodings.Win1250);
+
+        var station = InissStations.Read(new AppSettings { InissProgram = _program }).Value;
+
+        var elsvo = station.Lines.Single(l => l.Number == 3);
+        Assert.IsTrue(elsvo.Supported);
+        CollectionAssert.AreEqual(new[] { (5, "Nástupište 1", true), (0, "Hala", true) }, elsvo.Amplifiers.Select(a => (a.Address, a.Name, a.Shown)).ToArray());
+        // jednotka na linke ELEN sa nezobrazi, jednotka bez linky je medzi neobsluzenymi
+        Assert.IsFalse(station.Lines.Single(l => l.Number == 1).Amplifiers.Single().Shown);
+        Assert.AreEqual((9, "Bez linky"), (station.UnservedAmplifiers.Single().Line, station.UnservedAmplifiers.Single().Name));
+
+        var request = InissStations.ToRequest(station);
+        CollectionAssert.AreEquivalent(new[] { (3, 5, "ELSVO"), (3, 0, "ELSVO"), (1, 2, "ELSVO"), (1, 3, "ELEN"), (1, 4, "ELEN") },
+            request.Boards.Select(b => (b.Line, b.Address, b.Manufacturer)).ToArray());
+    }
 }

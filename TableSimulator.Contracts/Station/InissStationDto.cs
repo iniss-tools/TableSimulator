@@ -19,4 +19,8 @@ public sealed record InissStationDto(
     IReadOnlyList<InissTableDto> Unserved,
     string LogFolder,
     bool LogFolderExists,
-    IReadOnlyList<StationXmlTableDto> XmlTables);
+    IReadOnlyList<StationXmlTableDto> XmlTables)
+{
+    /// <summary>Spinacie jednotky ELSVO s cislom linky, ktoru konfiguracia INISSu nema.</summary>
+    public IReadOnlyList<InissAmplifierDto> UnservedAmplifiers { get; init; } = [];
+}

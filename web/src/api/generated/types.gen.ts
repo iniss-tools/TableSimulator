@@ -388,6 +388,13 @@ export type ImportConfigRequest = {
     replace: boolean;
 };
 
+export type InissAmplifierDto = {
+    line: number;
+    address: number;
+    name: string;
+    shown: boolean;
+};
+
 export type InissLineDto = {
     section: string;
     number: null | number;
@@ -398,6 +405,7 @@ export type InissLineDto = {
     supported: boolean;
     tables: Array<InissTableDto>;
     problems: Array<InissProblemDto>;
+    amplifiers: Array<InissAmplifierDto>;
 };
 
 export type InissProblemCode = 'lineOutOfRange' | 'lineDuplicate' | 'wrongFamily' | 'noTables' | 'noAutomaticLine' | 'noDriver';
@@ -420,6 +428,7 @@ export type InissStationDto = {
     logFolder: string;
     logFolderExists: boolean;
     xmlTables: Array<StationXmlTableDto>;
+    unservedAmplifiers: Array<InissAmplifierDto>;
 };
 
 export type InissTableDto = {

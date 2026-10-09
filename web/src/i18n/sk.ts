@@ -810,7 +810,7 @@ export const sk = {
   "iniss.unsupported": "trieda, ktorú simulátor nepozná",
   "iniss.loaded": "načíta sa",
   "iniss.noLines": "Nastavenie INISSu nemá žiadnu linku k tabuliam (sekciu Driver).",
-  "iniss.unserved": "Tabule, ktorým INISS nič nepošle:",
+  "iniss.unserved": "Tabule a zosilňovače, ktorým INISS nič nepošle:",
   "iniss.keep":
     "Chýbajúce linky a tabule sa doplnia, existujúcim linkám sa upraví trieda a port. Tabule, ktoré v simulátore už sú, ostanú tak, ako ste ich nastavili. Pre tabule s exportom do XML sa založia virtuálne tabule.",
   "iniss.load": "Načítať do simulátora",
@@ -1319,6 +1319,8 @@ export const sk = {
   "kind.elsvo.state": "Stav {state}: {bits}",
   "amplifier.unnamed": "Zosilňovač {address}",
   "dialog.amplifier.edit": "Spínacia jednotka ELSVO – {name}",
+  "iniss.amplifier": "Zosilňovač {name} (adresa {address}, ELSVO)",
+  "iniss.amplifier.noLine": "linka {line} v nastavení INISSu nie je",
 } as const;
 
 export type TextKey = keyof typeof sk;

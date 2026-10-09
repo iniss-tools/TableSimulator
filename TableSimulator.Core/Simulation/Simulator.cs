@@ -240,6 +240,13 @@ public sealed class Simulator
                         existing.Version++;
                     }
 
+                    // tabula zo samoucenia nema nazov - dostane ho zo stanice, nazov od obsluhy ostane
+                    if (existing.Name.Length == 0 && !string.IsNullOrWhiteSpace(board.Name))
+                    {
+                        existing.Name = board.Name;
+                        existing.Version++;
+                    }
+
                     boardsKept++;
                     continue;
                 }
