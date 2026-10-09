@@ -32,6 +32,7 @@ import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useNow } from "@/hooks/use-now";
 import { t } from "@/i18n";
+import { SignageBackup } from "./SignageBackup";
 import { formatAgo } from "@/lib/format";
 import { messageName } from "./signage";
 
@@ -157,6 +158,7 @@ export function PanelsPage() {
   return (
     <>
       <PageHeader description={t("signage.panels.hint")}>
+        <SignageBackup edit={edit} />
         {edit && (
           <Button onClick={() => setEditing({ id: null, panel: { name: "", note: "", group: data?.groups[0]?.id ?? null } })}>
             <Plus />

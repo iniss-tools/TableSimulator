@@ -38,6 +38,34 @@ public sealed class SignageRepository(AppDbContext db) : ISignageRepository
         return deleted > 0;
     }
 
+    public async Task ImportAsync(SignageRecords records, bool replace, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(records);
+        var transaction = await db.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using (transaction.ConfigureAwait(false))
+        {
+            if (replace)
+            {
+                await db.SignagePanels.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+                await db.SignageGroups.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+                await db.SignagePlaylists.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+                await db.SignageMessages.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+                await db.SignageMedia.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            // cisla su zadane - databaza ich zapise tak, ako su
+            db.SignageMedia.AddRange(records.Media);
+            db.SignageMessages.AddRange(records.Messages);
+            db.SignagePlaylists.AddRange(records.Playlists);
+            db.SignageGroups.AddRange(records.Groups);
+            db.SignagePanels.AddRange(records.Panels);
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        db.ChangeTracker.Clear();
+    }
+
     public async Task AddMediaAsync(SignageMediaRecord media, CancellationToken cancellationToken)
     {
         db.SignageMedia.Add(media);

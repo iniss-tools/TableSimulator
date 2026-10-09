@@ -1081,6 +1081,29 @@
         }
       }
     },
+    "/api/signage/export": {
+      "get": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "ExportSignage",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/signage/media/{id}": {
       "get": {
         "tags": [
@@ -1170,6 +1193,55 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SignageProgramDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signage/import": {
+      "post": {
+        "tags": [
+          "Signage"
+        ],
+        "operationId": "ImportSignage",
+        "parameters": [
+          {
+            "name": "replace",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "$ref": "#/components/schemas/Stream"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignageImportedDto"
                 }
               }
             }
@@ -5818,6 +5890,42 @@
           },
           "definition": {
             "$ref": "#/components/schemas/SetSignageGroupRequest"
+          }
+        }
+      },
+      "SignageImportedDto": {
+        "required": [
+          "messages",
+          "playlists",
+          "groups",
+          "panels",
+          "media",
+          "replaced"
+        ],
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "playlists": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "groups": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "panels": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "media": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "replaced": {
+            "type": "boolean"
           }
         }
       },

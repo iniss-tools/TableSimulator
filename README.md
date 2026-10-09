@@ -302,6 +302,16 @@ pri zmene výberu playlistu a aspoň raz za minútu – tým sa zároveň ohlás
 (ozval sa za posledné 2,5 minúty, od štartu servera), jeho adresu a čo práve hrá. Bez spojenia so serverom panel
 hrá posledný program ďalej podľa vlastných hodín (posun voči serveru si zapamätá).
 
+**Záloha:** *Zálohovať* (na stránkach informačných panelov, `GET /api/signage/export`) stiahne ZIP so `signage.json`
+(správy, playlisty, skupiny a panely s číslami zo simulátora, formát `TableSimulator.Signage` verzia 1) a nahratými
+súbormi v `media/`. *Obnoviť…* (`POST /api/signage/import?replace=`, telo = ZIP) buď **nahradí všetko** zálohou
+s pôvodnými číslami – monitory s `#/panel/N` idú ďalej –, alebo **pridá** jej obsah s novými číslami (za najvyššie
+existujúce; odkazy medzi správami, playlistami, skupinami a panelmi sa prečíslujú, súbor s rovnakým číslom, aký už
+v simulátore je, sa nezapíše znova). Pred zápisom sa každá definícia overí rovnakými pravidlami ako v API a skontrolujú
+sa odkazy aj súbory v ZIP (rozbalí sa len `media/<32 hex>.<prípona>`); chybná záloha nič nezmení
+(`signage.importFormat`, `signage.importInvalid`). Databáza sa zmení v jednej transakcii, pri nahradení sa potom
+odstránia súbory, ktoré záloha nemá. Záloha môže mať najviac 4 GB.
+
 Správu, playlist alebo skupinu, ktorú niečo používa, server neodstráni (`signage.messageInUse`, `playlistInUse`,
 `groupInUse`). API: `GET /api/signage` (všetko a čo panely hrajú), `POST`/`PUT`/`DELETE`
 `/api/signage/{messages,playlists,groups,panels}[/{id}]`, `POST /api/signage/media?name=` (telo = súbor ako

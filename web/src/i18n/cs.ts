@@ -1180,4 +1180,18 @@ export const cs: Record<TextKey, string> = {
   "compare.snapshot": "Tabule {board} v záznamu",
   "error.recording.time": "Čas v záznamu nesmí být záporný.",
   "error.recording.boardNotFound": "Tabule v záznamu není.",
+  "signage.backup.export": "Zálohovat",
+  "signage.backup.export.hint": "Stáhne zprávy, playlisty, skupiny, panely a nahrané obrázky a videa jako jeden soubor ZIP.",
+  "signage.backup.restore": "Obnovit…",
+  "signage.backup.add": "Přidat obsah zálohy…",
+  "signage.backup.replaceAll": "Nahradit vše zálohou…",
+  "signage.backup.replaceTitle": "Nahradit informační panely zálohou?",
+  "signage.backup.replaceConfirm":
+    "Všechny zprávy, playlisty, skupiny a panely se odstraní a nahradí obsahem zálohy s původními čísly – monitory se stránkou panelu pojedou dál.",
+  "signage.backup.replaced": "Záloha obnovena: zprávy {messages}, playlisty {playlists}, skupiny {groups}, panely {panels}, soubory {media}.",
+  "signage.backup.added":
+    "Přidáno ze zálohy (s novými čísly): zprávy {messages}, playlisty {playlists}, skupiny {groups}, panely {panels}, nové soubory {media}.",
+  "error.signage.importFormat": "Soubor není záloha informačních panelů.",
+  "error.signage.importInvalid": "Záloha není v pořádku (chybějící nebo neplatné záznamy) – nic se nezměnilo.",
+  "error.signage.importTooLarge": "Záloha je větší než 4 GB.",
 };

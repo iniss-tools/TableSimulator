@@ -1178,6 +1178,20 @@ export const sk = {
   "compare.snapshot": "Tabuľa {board} v zázname",
   "error.recording.time": "Čas v zázname nesmie byť záporný.",
   "error.recording.boardNotFound": "Tabuľa v zázname nie je.",
+  "signage.backup.export": "Zálohovať",
+  "signage.backup.export.hint": "Stiahne správy, playlisty, skupiny, panely a nahraté obrázky a videá ako jeden súbor ZIP.",
+  "signage.backup.restore": "Obnoviť…",
+  "signage.backup.add": "Pridať obsah zálohy…",
+  "signage.backup.replaceAll": "Nahradiť všetko zálohou…",
+  "signage.backup.replaceTitle": "Nahradiť informačné panely zálohou?",
+  "signage.backup.replaceConfirm":
+    "Všetky správy, playlisty, skupiny a panely sa odstránia a nahradia obsahom zálohy s pôvodnými číslami – monitory so stránkou panelu pôjdu ďalej.",
+  "signage.backup.replaced": "Záloha obnovená: správy {messages}, playlisty {playlists}, skupiny {groups}, panely {panels}, súbory {media}.",
+  "signage.backup.added":
+    "Pridané zo zálohy (s novými číslami): správy {messages}, playlisty {playlists}, skupiny {groups}, panely {panels}, nové súbory {media}.",
+  "error.signage.importFormat": "Súbor nie je záloha informačných panelov.",
+  "error.signage.importInvalid": "Záloha nie je v poriadku (chýbajúce alebo neplatné záznamy) – nič sa nezmenilo.",
+  "error.signage.importTooLarge": "Záloha je väčšia ako 4 GB.",
 } as const;
 
 export type TextKey = keyof typeof sk;

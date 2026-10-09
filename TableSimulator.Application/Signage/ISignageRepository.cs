@@ -27,6 +27,11 @@ public interface ISignageRepository
     /// <summary>Nahraty subor; null, ak neexistuje.</summary>
     Task<SignageMediaRecord?> FindMediaAsync(Guid id, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Zapise zaznamy so zadanymi cislami v jednej transakcii; pri <paramref name="replace" /> najprv vsetko odstrani.
+    /// </summary>
+    Task ImportAsync(SignageRecords records, bool replace, CancellationToken cancellationToken);
+
     /// <summary>Odstrani zaznamy nahratych suborov (subory maze <see cref="SignageMediaStore" />).</summary>
     Task DeleteMediaAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
 }

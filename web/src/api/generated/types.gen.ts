@@ -677,6 +677,15 @@ export type SignageGroupDto = {
     definition: SetSignageGroupRequest;
 };
 
+export type SignageImportedDto = {
+    messages: number;
+    playlists: number;
+    groups: number;
+    panels: number;
+    media: number;
+    replaced: boolean;
+};
+
 export type SignageMediaDto = {
     id: string;
     name: string;
@@ -1758,6 +1767,29 @@ export type UpdateSignagePlaylistResponses = {
 
 export type UpdateSignagePlaylistResponse = UpdateSignagePlaylistResponses[keyof UpdateSignagePlaylistResponses];
 
+export type ExportSignageData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/signage/export';
+};
+
+export type ExportSignageErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type ExportSignageError = ExportSignageErrors[keyof ExportSignageErrors];
+
+export type ExportSignageResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetSignageMediaData = {
     body?: never;
     path: {
@@ -1834,6 +1866,33 @@ export type GetSignageProgramResponses = {
 };
 
 export type GetSignageProgramResponse = GetSignageProgramResponses[keyof GetSignageProgramResponses];
+
+export type ImportSignageData = {
+    body: Stream;
+    path?: never;
+    query?: {
+        replace?: boolean;
+    };
+    url: '/api/signage/import';
+};
+
+export type ImportSignageErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type ImportSignageError = ImportSignageErrors[keyof ImportSignageErrors];
+
+export type ImportSignageResponses = {
+    /**
+     * OK
+     */
+    200: SignageImportedDto;
+};
+
+export type ImportSignageResponse = ImportSignageResponses[keyof ImportSignageResponses];
 
 export type UploadSignageMediaData = {
     body: Stream;

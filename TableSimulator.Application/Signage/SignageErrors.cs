@@ -60,6 +60,12 @@ public static class SignageErrors
 
     public static Error MediaNotFound() => Error.NotFound("signage.mediaNotFound", "The file does not exist.");
 
+    public static Error ImportFormat() => Error.Problem("signage.importFormat", "The file is not a backup of information panels.");
+
+    public static Error ImportInvalid(string detail) => Error.Problem("signage.importInvalid", $"The backup is not consistent: {detail}");
+
+    public static Error ImportTooLarge() => Error.Problem("signage.importTooLarge", "The backup is too large.");
+
     public static Error MediaTooLarge() =>
         Error.Problem("signage.mediaTooLarge", string.Create(CultureInfo.InvariantCulture, $"The file is larger than {SignageMediaStore.MaxBytes / 1024 / 1024} MB."));
 

@@ -12,6 +12,7 @@ import { columnsFor } from "@/components/data-table/features";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { t } from "@/i18n";
+import { SignageBackup } from "./SignageBackup";
 import { MessageDialog } from "./MessageDialog";
 import { durationText, KIND_ICONS, KINDS, messageUsers, newMessage } from "./signage";
 
@@ -87,6 +88,7 @@ export function MessagesPage() {
   return (
     <>
       <PageHeader description={t("signage.messages.hint")}>
+        <SignageBackup edit={edit} />
         {edit && (
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button />}>

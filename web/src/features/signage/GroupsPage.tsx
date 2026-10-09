@@ -11,6 +11,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { columnsFor } from "@/components/data-table/features";
 import { Button } from "@/components/ui/button";
 import { t } from "@/i18n";
+import { SignageBackup } from "./SignageBackup";
 import { GroupDialog } from "./GroupDialog";
 import { messageName } from "./signage";
 
@@ -70,6 +71,7 @@ export function GroupsPage() {
   return (
     <>
       <PageHeader description={t("signage.groups.hint")}>
+        <SignageBackup edit={edit} />
         {edit && (
           <Button onClick={() => setEditing({ id: null, group: EMPTY })}>
             <Plus />

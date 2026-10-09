@@ -19,6 +19,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { columnsFor } from "@/components/data-table/features";
 import { Button } from "@/components/ui/button";
 import { t } from "@/i18n";
+import { SignageBackup } from "./SignageBackup";
 import { PlaylistDialog } from "./PlaylistDialog";
 import { durationText, itemDuration, newPlaylist, playlistSummary, todayIso } from "./signage";
 
@@ -85,6 +86,7 @@ export function PlaylistsPage() {
   return (
     <>
       <PageHeader description={t("signage.playlists.hint")}>
+        <SignageBackup edit={edit} />
         {edit && (
           <Button onClick={() => setEditing({ id: null, playlist: newPlaylist(todayIso()) })}>
             <Plus />
