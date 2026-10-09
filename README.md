@@ -193,7 +193,12 @@ hlavičkou s kódom chyby `0`. INISS tu čaká na odpoveď pri každom pakete, a
 
 Listová tabuľa má v každej pozícii riadku **modul s listami** a INISS jej posiela len **kódy listov** – text grafikonu na
 ne prekladajú prekódovacie tabuľky stĺpcov (`TabTab.txt`, stĺpce s `DIVTYPE` 1–4). Simulátor preklad obráti a ukáže
-tabuľu tak, ako vyzerá naozaj: tmavé listy s textom, text začínajúci `*` na červenom liste.
+tabuľu tak, ako vyzerá naozaj: listy s textom, dlhší text menším písmom.
+
+- **Farba listu** je vlastnosť fyzického listu, dáta stanice ju nemajú: predvolene je list čierny a text začínajúci
+  `*` červený. Inú farbu (čierna, červená, žltá s tmavým textom, biela – napr. `BUS`, `ODKLON`, koľaje) treba nastaviť
+  v dialógu tabule na záložke **Listy** – každému listu zvlášť alebo celému zoznamu naraz. Nové načítanie stanice
+  nastavené farby zachová.
 
 - **Zoznamy listov** (kód → text) a moduly (ktoré pozície tvoria stĺpec cieľa, času…) vzniknú z predlohy tabule
   (`TKatalog`) a jej tabuliek `TabTab` – pri *Načítať z INISSu* aj pri presmerovaní z GVDEditora. Stĺpec s `DIVTYPE`
