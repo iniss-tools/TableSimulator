@@ -122,6 +122,37 @@ odchod INISSu nepozná – ukazuje len čas poslednej správy. Výpadok ukáže 
 ako varovanie. *Systémové oznámenia* v ponuke používateľa (len cez HTTPS alebo na tomto počítači) ohlásia výpadok
 aj vtedy, keď okno simulátora nie je vidieť.
 
+### Oznámenia mimo prehliadača
+
+Keď simulátor beží ako služba a web nemá nikto otvorený, výpadky liniek môže oznamovať sám server – **Nastavenia →
+Upozornenia** (oprávnenie spravovať nastavenie). Výpadok sa oznámi, až keď trvá aspoň zadaný čas (predvolene 30 s,
+krátky reštart INISSu teda nie), každý len raz; výpadky viacerých liniek naraz idú v jednom oznámení. Voliteľne
+príde aj oznámenie o návrate – len pre oznámený výpadok a až keď sa INISS znova pripojí (linka, ktorá po zmene
+nastavenia len čaká na INISS, ešte nie je späť). Texty sú po slovensky alebo česky podľa nastavenia.
+
+- **Webhook** – `POST` s JSON. Pole `text` (predmet a riadky oznámenia) prijímajú priamo aj prichádzajúce webhooky
+  Teams a Slack, ostatné polia sú pre vlastné spracovanie:
+
+  ```json
+  {
+    "text": "TableSimulator: Výpadok: Linka 1 – Hala\nLinka 1 – Hala: INISS sa odpojil (od 9. 10. 2026 18:24:57)\n\n…",
+    "subject": "TableSimulator: Výpadok: Linka 1 – Hala",
+    "event": "outage",
+    "server": "POCITAC",
+    "time": "2026-10-09T16:25:04.12+00:00",
+    "lines": [{ "number": 1, "name": "Hala", "status": "lost", "detail": null, "since": "2026-10-09T16:24:57.3+00:00" }]
+  }
+  ```
+
+  `event` je `outage`, `recovery` alebo `test`, `status` linky `lost` (INISS sa odpojil), `error` (linka nebeží –
+  dôvod v `detail`) alebo pri návrate `connected`.
+- **E-mail** – príjemcovia oddelení čiarkou alebo bodkočiarkou, server SMTP s portom, šifrovanie STARTTLS (spravidla
+  port 587; priame SSL na porte 465 nie je podporované), prihlásenie voliteľné. Heslo SMTP sa ukladá zašifrované
+  ochranou dát servera a API ho nikdy nevracia (len príznak, že je zadané).
+
+Tlačidlo **Odoslať skúšobné oznámenie** pošle skúšku podľa vyplneného formulára ešte pred uložením a ukáže výsledok
+každého kanála. Odoslané oznámenia aj chyby doručenia zapisuje log servera.
+
 ## ELEN Monitor
 
 V **Nastaveniach** sa dá zadať priečinok programu ELEN Monitor (napr. `D:\INISSroot\Tools\Monitor`). Simulátor

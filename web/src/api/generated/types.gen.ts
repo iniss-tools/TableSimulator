@@ -22,6 +22,46 @@ export type AccessKeyDto = {
 
 export type AccessKeyKind = 'device' | 'api';
 
+export type AlertChannelResultDto = {
+    configured: boolean;
+    error: null | string;
+};
+
+export type AlertSettingsDto = {
+    enabled: boolean;
+    delaySeconds: number;
+    recovery: boolean;
+    language: string;
+    webhookUrl: string;
+    emailTo: string;
+    emailFrom: string;
+    smtpHost: string;
+    smtpPort: number;
+    smtpSsl: boolean;
+    smtpUser: string;
+    smtpPasswordSet: boolean;
+};
+
+export type AlertSettingsRequest = {
+    enabled: boolean;
+    delaySeconds: number;
+    recovery: boolean;
+    language: string;
+    webhookUrl: string;
+    emailTo: string;
+    emailFrom: string;
+    smtpHost: string;
+    smtpPort: number;
+    smtpSsl: boolean;
+    smtpUser: string;
+    smtpPassword: null | string;
+};
+
+export type AlertTestResultDto = {
+    webhook: AlertChannelResultDto;
+    email: AlertChannelResultDto;
+};
+
 export type ApiProblem = {
     type?: null | string;
     title?: null | string;
@@ -634,6 +674,7 @@ export type SettingsDto = {
     requireLogin: boolean;
     virtualFolders: Array<string>;
     inissViewFolder: string;
+    alerts: AlertSettingsDto;
     inissProgram: string;
     inissRegistry: string;
     inissElevated: boolean;
@@ -853,6 +894,7 @@ export type UpdateSettingsRequest = {
     requireLogin: boolean;
     virtualFolders: null | Array<string>;
     inissViewFolder: string;
+    alerts: null | AlertSettingsRequest;
     inissProgram: string;
     inissRegistry: string;
     inissElevated: boolean;
@@ -1970,6 +2012,31 @@ export type UpdateSettingsResponses = {
 };
 
 export type UpdateSettingsResponse = UpdateSettingsResponses[keyof UpdateSettingsResponses];
+
+export type TestAlertsData = {
+    body: AlertSettingsRequest;
+    path?: never;
+    query?: never;
+    url: '/api/settings/alerts/test';
+};
+
+export type TestAlertsErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type TestAlertsError = TestAlertsErrors[keyof TestAlertsErrors];
+
+export type TestAlertsResponses = {
+    /**
+     * OK
+     */
+    200: AlertTestResultDto;
+};
+
+export type TestAlertsResponse = TestAlertsResponses[keyof TestAlertsResponses];
 
 export type GetServerInfoData = {
     body?: never;

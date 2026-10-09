@@ -41,6 +41,9 @@ public sealed class SettingsRecord
 
     public string HttpsKey { get; set; } = "";
 
+    /// <summary>Oznamenia o vypadkoch liniek ako JSON (heslo SMTP v nom zasifrovane); prazdne = predvolene.</summary>
+    public string Alerts { get; set; } = "";
+
     /// <summary>Heslo certifikatu zasifrovane ochranou dat servera.</summary>
     public string HttpsPassword { get; set; } = "";
 }

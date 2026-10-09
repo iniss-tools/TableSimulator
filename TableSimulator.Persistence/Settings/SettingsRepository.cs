@@ -1,3 +1,5 @@
+using System.Text.Json;
+using TableSimulator.Application.Alerts;
 using TableSimulator.Application.Settings;
 
 namespace TableSimulator.Persistence.Settings;
@@ -5,6 +7,8 @@ namespace TableSimulator.Persistence.Settings;
 /// <summary>Nastavenie servera v databaze (jeden riadok). Synchronne - cita sa pri starte pred zostavenim servera.</summary>
 public sealed class SettingsRepository(AppDbContext db)
 {
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+
     /// <summary>Ulozene nastavenie; null, ak databaza este ziadne nema (prvy start).</summary>
     public AppSettings? Load()
     {
@@ -30,7 +34,8 @@ public sealed class SettingsRepository(AppDbContext db)
             HttpsRedirect = record.HttpsRedirect,
             HttpsCertificate = record.HttpsCertificate,
             HttpsKey = record.HttpsKey,
-            HttpsPassword = record.HttpsPassword
+            HttpsPassword = record.HttpsPassword,
+            Alerts = record.Alerts.Length == 0 ? new AlertSettings() : JsonSerializer.Deserialize<AlertSettings>(record.Alerts, Json) ?? new AlertSettings()
         };
     }
 
@@ -62,6 +67,7 @@ public sealed class SettingsRepository(AppDbContext db)
         record.HttpsCertificate = settings.HttpsCertificate;
         record.HttpsKey = settings.HttpsKey;
         record.HttpsPassword = settings.HttpsPassword;
+        record.Alerts = JsonSerializer.Serialize(settings.Alerts, Json);
         db.SaveChanges();
         db.ChangeTracker.Clear();
     }

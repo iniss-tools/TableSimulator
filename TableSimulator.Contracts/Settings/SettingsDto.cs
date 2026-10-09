@@ -16,6 +16,9 @@ public sealed record SettingsDto(int HttpPort, bool AllowNetwork, string FontsFo
     /// <summary>Priecinok aplikacie INISSView so sablonami XSL; prazdny = bez sablon.</summary>
     public string InissViewFolder { get; init; } = "";
 
+    /// <summary>Oznamenia o vypadkoch liniek mimo prehliadaca.</summary>
+    public AlertSettingsDto Alerts { get; init; } = new(false, 30, true, "sk", "", "", "", "", 587, true, "", false);
+
     /// <summary>Program INISSu (exe), odkial simulator nacita linky a tabule stanice.</summary>
     public string InissProgram { get; init; } = "";
 

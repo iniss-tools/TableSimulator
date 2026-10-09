@@ -164,6 +164,7 @@ public static partial class DtoMapper
             RequireLogin = settings.RequireLogin,
             VirtualFolders = settings.VirtualFolders,
             InissViewFolder = settings.InissViewFolder,
+            Alerts = Alerts.AlertSettingsMapper.ToDto(settings.Alerts),
             InissProgram = settings.InissProgram,
             InissRegistry = settings.InissRegistry,
             InissElevated = settings.InissElevated,

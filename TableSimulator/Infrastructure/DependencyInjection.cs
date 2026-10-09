@@ -1,3 +1,5 @@
+using TableSimulator.Application.Alerts;
+using TableSimulator.Infrastructure.Alerts;
 using TableSimulator.Application.Https;
 using TableSimulator.Application.Live;
 using TableSimulator.Application.Server;
@@ -35,6 +37,9 @@ public static class DependencyInjection
         services.AddHostedService<DesignWatcherService>();
         services.AddHostedService<XmlTableWatcherService>();
         services.AddHostedService<AuditRetentionService>();
+        services.AddSingleton<IAlertChannel, WebhookAlertChannel>();
+        services.AddSingleton<IAlertChannel, EmailAlertChannel>();
+        services.AddHostedService<LineAlertService>();
         return services;
     }
 }

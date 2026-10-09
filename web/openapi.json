@@ -1376,6 +1376,46 @@
         }
       }
     },
+    "/api/settings/alerts/test": {
+      "post": {
+        "tags": [
+          "Settings"
+        ],
+        "operationId": "TestAlerts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertTestResultDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/server": {
       "get": {
         "tags": [
@@ -3163,6 +3203,156 @@
           "device",
           "api"
         ]
+      },
+      "AlertChannelResultDto": {
+        "required": [
+          "configured",
+          "error"
+        ],
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AlertSettingsDto": {
+        "required": [
+          "enabled",
+          "delaySeconds",
+          "recovery",
+          "language",
+          "webhookUrl",
+          "emailTo",
+          "emailFrom",
+          "smtpHost",
+          "smtpPort",
+          "smtpSsl",
+          "smtpUser",
+          "smtpPasswordSet"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "delaySeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recovery": {
+            "type": "boolean"
+          },
+          "language": {
+            "type": "string"
+          },
+          "webhookUrl": {
+            "type": "string"
+          },
+          "emailTo": {
+            "type": "string"
+          },
+          "emailFrom": {
+            "type": "string"
+          },
+          "smtpHost": {
+            "type": "string"
+          },
+          "smtpPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "smtpSsl": {
+            "type": "boolean"
+          },
+          "smtpUser": {
+            "type": "string"
+          },
+          "smtpPasswordSet": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AlertSettingsRequest": {
+        "required": [
+          "enabled",
+          "delaySeconds",
+          "recovery",
+          "language",
+          "webhookUrl",
+          "emailTo",
+          "emailFrom",
+          "smtpHost",
+          "smtpPort",
+          "smtpSsl",
+          "smtpUser",
+          "smtpPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "delaySeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recovery": {
+            "type": "boolean"
+          },
+          "language": {
+            "type": "string"
+          },
+          "webhookUrl": {
+            "type": "string"
+          },
+          "emailTo": {
+            "type": "string"
+          },
+          "emailFrom": {
+            "type": "string"
+          },
+          "smtpHost": {
+            "type": "string"
+          },
+          "smtpPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "smtpSsl": {
+            "type": "boolean"
+          },
+          "smtpUser": {
+            "type": "string"
+          },
+          "smtpPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AlertTestResultDto": {
+        "required": [
+          "webhook",
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "webhook": {
+            "$ref": "#/components/schemas/AlertChannelResultDto"
+          },
+          "email": {
+            "$ref": "#/components/schemas/AlertChannelResultDto"
+          }
+        }
       },
       "ApiProblem": {
         "type": "object",
@@ -5708,6 +5898,7 @@
           "requireLogin",
           "virtualFolders",
           "inissViewFolder",
+          "alerts",
           "inissProgram",
           "inissRegistry",
           "inissElevated",
@@ -5752,6 +5943,9 @@
           },
           "inissViewFolder": {
             "type": "string"
+          },
+          "alerts": {
+            "$ref": "#/components/schemas/AlertSettingsDto"
           },
           "inissProgram": {
             "type": "string"
@@ -6591,6 +6785,7 @@
           "requireLogin",
           "virtualFolders",
           "inissViewFolder",
+          "alerts",
           "inissProgram",
           "inissRegistry",
           "inissElevated",
@@ -6635,6 +6830,16 @@
           },
           "inissViewFolder": {
             "type": "string"
+          },
+          "alerts": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AlertSettingsRequest"
+              }
+            ]
           },
           "inissProgram": {
             "type": "string"

@@ -513,6 +513,13 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                     b.Property<int>("Id")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Alerts")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(8000)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("");
+
                     b.Property<bool>("AllowNetwork")
                         .HasColumnType("INTEGER");
 

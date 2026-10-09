@@ -75,6 +75,7 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
             settings.Property(s => s.HttpsCertificate).HasMaxLength(500);
             settings.Property(s => s.HttpsKey).HasMaxLength(500);
             settings.Property(s => s.HttpsPassword).HasMaxLength(2000);
+            settings.Property(s => s.Alerts).HasMaxLength(8000).HasDefaultValue("");
         });
         // enumy jadra ako kluce z JSON (display, noReply…), nie mena C#
         builder.Entity<LineRecord>(line =>

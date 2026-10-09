@@ -56,6 +56,9 @@ public sealed record AppSettings
     /// <summary>INISS sa spusta ako spravca - cita HKLM priamo, nie kopiu vo VirtualStore.</summary>
     public bool InissElevated { get; init; }
 
+    /// <summary>Oznamenia o vypadkoch liniek mimo prehliadaca (webhook, e-mail).</summary>
+    public Alerts.AlertSettings Alerts { get; init; } = new();
+
     /// <summary>Port HTTPS; 0 = bez HTTPS. Zmena sa prejavi po restarte.</summary>
     public int HttpsPort { get; init; }
 

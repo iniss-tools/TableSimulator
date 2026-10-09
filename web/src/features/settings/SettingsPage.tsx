@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useBlocker } from "@tanstack/react-router";
-import { CircleAlert, FolderOpen, Network, Save, Server, ShieldCheck, TrainFront, Undo2, type LucideIcon } from "lucide-react";
+import { BellRing, CircleAlert, FolderOpen, Network, Save, Server, ShieldCheck, TrainFront, Undo2, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
   errorText,
@@ -29,19 +29,22 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { clearFontCache } from "@/render/fonts";
 import { t, type TextKey } from "@/i18n";
+import { alertsRequest } from "./alerts";
+import { AlertsSection } from "./AlertsSection";
 import { DesignsFound, FontsFound } from "./found-lists";
 import { HttpsSection } from "./HttpsSection";
 import { ServerSection } from "./server-section";
 import { useRestartServer } from "./use-restart-server";
 import { RestartBadge } from "./restart-badge";
 
-type SectionId = "folders" | "iniss" | "network" | "https" | "server";
+type SectionId = "folders" | "iniss" | "network" | "https" | "alerts" | "server";
 
 const SECTIONS: { id: SectionId; label: TextKey; icon: LucideIcon }[] = [
   { id: "folders", label: "settings.folders", icon: FolderOpen },
   { id: "iniss", label: "settings.iniss", icon: TrainFront },
   { id: "network", label: "settings.network", icon: Network },
   { id: "https", label: "settings.https", icon: ShieldCheck },
+  { id: "alerts", label: "settings.alerts", icon: BellRing },
   { id: "server", label: "settings.server", icon: Server },
 ];
 
@@ -96,6 +99,8 @@ export function SettingsPage() {
   const [draft, setDraft] = useState<SettingsDto | null>(null);
   // nove heslo certifikatu; null = nechat ulozene
   const [password, setPassword] = useState<string | null>(null);
+  // nove heslo SMTP oznameni; null = nechat ulozene
+  const [smtpPassword, setSmtpPassword] = useState<string | null>(null);
   // sluzbu Windows sa da po ulozeni hned restartovat
   const service = useQuery(getServerInfoOptions()).data?.service === true;
   const restart = useRestartServer();
@@ -111,6 +116,7 @@ export function SettingsPage() {
       ]);
       setDraft(null);
       setPassword(null);
+      setSmtpPassword(null);
       if (result.restart)
         toast.info(t(service ? "settings.restart.service" : "settings.restart"), {
           duration: 10_000,
@@ -122,7 +128,7 @@ export function SettingsPage() {
 
   const saved = live.settings;
   const form = draft ?? saved;
-  const dirty = form !== null && saved !== null && (password !== null || normalized(form) !== normalized(saved));
+  const dirty = form !== null && saved !== null && (password !== null || smtpPassword !== null || normalized(form) !== normalized(saved));
 
   useBlocker({
     shouldBlockFn: async () =>
@@ -136,6 +142,7 @@ export function SettingsPage() {
   const discard = () => {
     setDraft(null);
     setPassword(null);
+    setSmtpPassword(null);
     update.reset();
   };
   const scrollTo = (id: SectionId) => document.getElementById(`settings-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -160,7 +167,7 @@ export function SettingsPage() {
           className="flex min-w-0 flex-col gap-6"
           onSubmit={(e) => {
             e.preventDefault();
-            update.mutate({ body: { ...form, httpsPassword: password } });
+            update.mutate({ body: { ...form, httpsPassword: password, alerts: alertsRequest(form.alerts, smtpPassword) } });
           }}
         >
           <Section id="folders" description={t("settings.folders.hint")}>
@@ -239,6 +246,15 @@ export function SettingsPage() {
 
           <Section id="https" description={t("settings.https.hint")}>
             <HttpsSection form={form} change={change} password={password} setPassword={setPassword} />
+          </Section>
+
+          <Section id="alerts" description={t("settings.alerts.hint")}>
+            <AlertsSection
+              alerts={form.alerts}
+              change={(patch) => change({ alerts: { ...form.alerts, ...patch } })}
+              smtpPassword={smtpPassword}
+              setSmtpPassword={setSmtpPassword}
+            />
           </Section>
 
           <Section id="server" description={t("settings.server.hint")}>

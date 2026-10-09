@@ -1,5 +1,6 @@
 using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Abstractions.Results;
+using TableSimulator.Application.Alerts;
 using TableSimulator.Application.Https;
 using TableSimulator.Application.Live;
 using TableSimulator.Contracts.Live;
@@ -25,6 +26,7 @@ public sealed class UpdateSettingsCommandHandler(ISettingsStore settings, ILiveN
             RequireLogin = request.RequireLogin,
             VirtualFolders = VirtualFolders(request.VirtualFolders),
             InissViewFolder = (request.InissViewFolder ?? "").Trim().Trim('"'),
+            Alerts = request.Alerts is null ? current.Alerts : AlertSettingsMapper.Apply(current.Alerts, request.Alerts, secrets),
             InissProgram = (request.InissProgram ?? "").Trim().Trim('"'),
             InissRegistry = (request.InissRegistry ?? "").Trim(),
             InissElevated = request.InissElevated,

@@ -46,8 +46,8 @@ function ImportResult({ result, folders, onClose }: { result: InissViewImportedD
   const missing = result.folders.filter((f) => !folders.some((g) => g.toLowerCase() === f.toLowerCase()));
   const watchFolders = async () => {
     if (!live.settings) return;
-    // heslo certifikatu ostava ulozene (null)
-    await updateSettings({ body: { ...live.settings, virtualFolders: [...folders, ...missing], httpsPassword: null }, throwOnError: true });
+    // heslo certifikatu a oznamenia ostavaju ulozene (null)
+    await updateSettings({ body: { ...live.settings, virtualFolders: [...folders, ...missing], httpsPassword: null, alerts: null }, throwOnError: true });
     await queryClient.invalidateQueries({ queryKey: getStateQueryKey() });
     onClose();
   };

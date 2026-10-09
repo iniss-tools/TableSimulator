@@ -14,6 +14,9 @@ public sealed record UpdateSettingsRequest
 
     /// <summary>Priecinok aplikacie INISSView so sablonami XSL; prazdny = bez sablon.</summary>
     public string InissViewFolder { get; init; } = "";
+
+    /// <summary>Oznamenia o vypadkoch liniek; null = nechat ulozene.</summary>
+    public AlertSettingsRequest? Alerts { get; init; }
     public string InissProgram { get; init; } = "";
     public string InissRegistry { get; init; } = "";
     public bool InissElevated { get; init; }
