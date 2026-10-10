@@ -15,6 +15,7 @@ import {
 import { FormDialog } from "@/components/common/form-dialog";
 import { CheckField, FormField } from "@/components/common/form-field";
 import { OptionSelect } from "@/components/common/option-select";
+import { Button } from "@/components/ui/button";
 import { FieldDescription, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +23,7 @@ import { AMPLIFIER_MANUFACTURERS, defaultProfile, FLAP_MANUFACTURERS } from "@/l
 import { t } from "@/i18n";
 import { FlapListsEditor } from "./FlapListsEditor";
 import { HeaderEditor } from "./HeaderEditor";
+import { baseFontHeight, useFontHeight } from "./font-height";
 
 const num = (value: string) => Number.parseInt(value, 10) || 0;
 
@@ -39,6 +41,17 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
 
   const p = config.profile;
   const profile = (patch: Partial<BoardProfileDto>) => setConfig({ ...config, profile: { ...p, ...patch } });
+  const fontHeight = useFontHeight(p.fontFile);
+
+  // pismo vyssie ako riadok by sa zdola orezalo - vyska riadku sa zvysi na vysku pisma (po nacitani suboru)
+  const chooseFont = (fontFile: string | null) => {
+    setConfig((c) => ({ ...c, profile: { ...c.profile, fontFile } }));
+    if (!fontFile) return;
+    void baseFontHeight(fontFile).then((height) => {
+      if (!height) return;
+      setConfig((c) => (c.profile.fontFile === fontFile && c.profile.rowHeight < height ? { ...c, profile: { ...c.profile, rowHeight: height } } : c));
+    });
+  };
   const lineManufacturers = (line: number) => manufacturersFor(live, live.lines.find((l) => l.number === line)?.tableClass);
   const manufacturers = lineManufacturers(config.line);
   // vyrobca, ktory linka nepozna (zo starsich dat), ostava vo vybere
@@ -203,11 +216,21 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
                 <FormField label={t("field.fontFile")}>
                   <OptionSelect
                     value={p.fontFile ?? NONE}
-                    onValueChange={(fontFile) => profile({ fontFile: fontFile || null })}
+                    onValueChange={(fontFile) => chooseFont(fontFile || null)}
                     options={[{ value: NONE, label: t("common.none") }, ...fontFiles.map((f) => ({ value: f, label: f }))]}
                     className="w-full"
                   />
                 </FormField>
+                {fontHeight !== null && p.rowHeight < fontHeight && (
+                  <div className="-mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <FieldDescription className="text-amber-700 dark:text-amber-300">
+                      {t("board.fontTaller", { font: fontHeight, row: p.rowHeight })}
+                    </FieldDescription>
+                    <Button type="button" variant="outline" size="sm" onClick={() => profile({ rowHeight: fontHeight })}>
+                      {t("board.fontTaller.fix", { font: fontHeight })}
+                    </Button>
+                  </div>
+                )}
                 <div className="grid gap-3 sm:grid-cols-2">
                   <CheckField label={t("field.monochrome")} checked={p.monochrome} onCheckedChange={(monochrome) => profile({ monochrome })} />
                   <CheckField label={t("field.swapRedGreen")} checked={p.swapRedGreen} onCheckedChange={(swapRedGreen) => profile({ swapRedGreen })} />

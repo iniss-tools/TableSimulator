@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useNow } from "@/hooks/use-now";
 import { hasText, locale, t } from "@/i18n";
 import { BoardView, type BoardViewHandle } from "./BoardView";
+import { useFontHeight } from "./font-height";
 
 const FAULTS: FaultKind[] = ["none", "noReply", "nak", "delay", "garbage", "status"];
 
@@ -187,6 +188,7 @@ export function BoardCard({ board, onEdit, edit, control }: { board: BoardDto; o
   const last = board.stats.lastFrameAt ? new Date(board.stats.lastFrameAt).toLocaleTimeString(locale()) : null;
   const d = board.display;
   const view = useRef<BoardViewHandle>(null);
+  const fontHeight = useFontHeight(d.family === "elen" ? board.profile.fontFile : null);
 
   const remove = async () => {
     if (await confirmAction({ title: t("board.delete.confirm", { name }), destructive: true }))
@@ -242,6 +244,9 @@ export function BoardCard({ board, onEdit, edit, control }: { board: BoardDto; o
         {board.mismatch && <MismatchWarning board={board} edit={edit} />}
         <BoardView ref={view} board={board} className={cn(board.poweredOff && "opacity-40")} />
         {!board.profile.fontFile && d.family === "elen" && <p className="text-xs text-muted-foreground">{t("board.approxFont")}</p>}
+        {fontHeight !== null && board.profile.rowHeight < fontHeight && (
+          <p className="text-xs text-amber-700 dark:text-amber-300">{t("board.fontTaller", { font: fontHeight, row: board.profile.rowHeight })}</p>
+        )}
         {d.family === "flaps" && !board.profile.flaps && <p className="text-xs text-muted-foreground">{t("board.flaps.codes")}</p>}
       </CardContent>
       {/* stav tabule vzdy na spodku karty - karty v riadku mriezky maju rovnaku vysku */}

@@ -57,6 +57,8 @@ export const cs: Record<TextKey, string> = {
   "board.clock": "hodiny {time}",
   "board.delete.confirm": "Odstranit tabuli {name}?",
   "board.approxFont": "Chybí písmo ELEN, proto se zobrazuje vestavěné bodové písmo. Tvary znaků se mohou od tabule lišit.",
+  "board.fontTaller": "Písmo má výšku {font} bodů, řádek jen {row}. Spodek znaků se ořízne.",
+  "board.fontTaller.fix": "Nastavit výšku řádku {font}",
 
   "fault.label": "Porucha",
   "fault.none": "Bez poruchy",

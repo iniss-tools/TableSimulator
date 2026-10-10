@@ -55,6 +55,8 @@ export const sk = {
   "board.clock": "hodiny {time}",
   "board.delete.confirm": "Odstrániť tabuľu {name}?",
   "board.approxFont": "Chýba písmo ELEN, preto sa zobrazuje vstavané bodové písmo. Tvary znakov sa môžu od tabule líšiť.",
+  "board.fontTaller": "Písmo má výšku {font} bodov, riadok len {row}. Spodok znakov sa oreže.",
+  "board.fontTaller.fix": "Nastaviť výšku riadku {font}",
 
   "fault.label": "Porucha",
   "fault.none": "Bez poruchy",
