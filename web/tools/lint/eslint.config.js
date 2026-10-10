@@ -13,7 +13,7 @@ export default tseslint.config(
   { basePath: web, ignores: ["src/api/generated/**", "tools/**", "node_modules/**", "e2e/.run/**", "e2e/server.mjs"] },
   {
     basePath: web,
-    files: ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "playwright.config.ts"],
+    files: ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "docshots/**/*.ts", "playwright.config.ts"],
     extends: [js.configs.recommended, tseslint.configs.recommendedTypeChecked, reactHooks.configs.flat.recommended, reactRefresh.configs.vite, prettier],
     languageOptions: {
       ecmaVersion: 2022,

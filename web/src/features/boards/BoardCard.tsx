@@ -241,9 +241,7 @@ export function BoardCard({ board, onEdit, edit, control }: { board: BoardDto; o
       <CardContent className="flex flex-col gap-3">
         {board.mismatch && <MismatchWarning board={board} edit={edit} />}
         <BoardView ref={view} board={board} className={cn(board.poweredOff && "opacity-40")} />
-        {!board.profile.fontFile && d.family !== "flaps" && d.family !== "amplifier" && (
-          <p className="text-xs text-muted-foreground">{t("board.approxFont")}</p>
-        )}
+        {!board.profile.fontFile && d.family === "elen" && <p className="text-xs text-muted-foreground">{t("board.approxFont")}</p>}
         {d.family === "flaps" && !board.profile.flaps && <p className="text-xs text-muted-foreground">{t("board.flaps.codes")}</p>}
       </CardContent>
       {/* stav tabule vzdy na spodku karty - karty v riadku mriezky maju rovnaku vysku */}
