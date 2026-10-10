@@ -18,6 +18,7 @@ import type {
 } from "../src/api/generated/types.gen";
 import { apelFrame, cp1250, elsvoFrame, fersRow, lcd1Row } from "./frames";
 import { writeInissLog } from "./iniss-log";
+import { seedSignage } from "./signage";
 import { DOCSHOTS_SERVER } from "./server";
 
 /** Linky ukazkovej stanice: dve ELEN, Elektrocas LCD1, listova FERS, APEL a spinanie zosilnovacov ELSVO. */
@@ -255,6 +256,7 @@ export default async function demo() {
     const response = await api.put(`/api/virtual/${id}`, { data: board });
     if (!response.ok()) throw new Error(`Virtualna tabula ${id}: ${await response.text()}`);
   }
+  await seedSignage(api);
   await api.dispose();
 
   const recorder = await request.newContext({ baseURL: DOCSHOTS_SERVER.url, extraHTTPHeaders: API_HEADERS });
