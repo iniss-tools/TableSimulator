@@ -16,6 +16,7 @@ import {
   Monitor,
   MonitorPlay,
   Palette,
+  RadioTower,
   Settings,
   Siren,
   Users,
@@ -37,6 +38,7 @@ export type NavPath =
   | "/virtual"
   | "/archive/tables"
   | "/archive/reports"
+  | "/archive/reports/live"
   | "/signage/panels"
   | "/signage/groups"
   | "/signage/playlists"
@@ -78,6 +80,7 @@ export const NAV: NavGroup[] = [
       { to: "/virtual", label: "nav.virtual", icon: MonitorPlay, permission: PERMISSIONS.view },
       { to: "/archive/tables", label: "nav.archiveTables", icon: Archive, permission: PERMISSIONS.view },
       { to: "/archive/reports", label: "nav.archiveReports", icon: Megaphone, permission: PERMISSIONS.view },
+      { to: "/archive/reports/live", label: "nav.reportMonitor", icon: RadioTower, permission: PERMISSIONS.view },
     ],
   },
   {

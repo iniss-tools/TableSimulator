@@ -1426,4 +1426,15 @@ export const cs: Record<TextKey, string> = {
   "replay.timeline": "Časová osa záznamu – posun na místo",
   "error.replay.none": "Zatím se nic nepřehrávalo.",
   "error.recording.buckets": "Počet úseků časové osy musí být 1 – 2000.",
+  "nav.reportMonitor": "Monitor hlášení",
+  "monitor.hint":
+    "Hlášení a události INISSu živě – z nejnovějšího denního archivu hlášení (REP) ve složkách logů z Nastavení. Nové přibývají nahoru do 2 sekund od zápisu INISSem; starší dny jsou v archivu hlášení.",
+  "monitor.noFile": "Ve složkách logů INISSu zatím není žádný archiv hlášení (REP).",
+  "monitor.file": "{day} · {file}",
+  "monitor.count": "zobrazeno {shown} z {total} hlášení dne",
+  "monitor.empty": "Zatím žádné hlášení.",
+  "monitor.pause": "Pozastavit",
+  "monitor.resume": "Pokračovat (nových {count})",
+  "monitor.live": "živě",
+  "monitor.paused": "pozastaveno",
 };

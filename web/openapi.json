@@ -3420,6 +3420,46 @@
         }
       }
     },
+    "/api/archive/reports/live": {
+      "get": {
+        "tags": [
+          "Archive"
+        ],
+        "operationId": "GetReportMonitor",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportMonitorDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/archive/tables/{date}": {
       "get": {
         "tags": [
@@ -6283,6 +6323,45 @@
           "date": {
             "type": "string",
             "format": "date"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportArchiveEntryDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ReportMonitorDto": {
+        "required": [
+          "date",
+          "file",
+          "entries",
+          "total",
+          "skipped"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "file": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "entries": {
             "type": "array",

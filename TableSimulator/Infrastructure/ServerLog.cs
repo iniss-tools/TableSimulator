@@ -29,6 +29,9 @@ internal static partial class ServerLog
     [LoggerMessage(Level = LogLevel.Error, Message = "Cistenie auditu zlyhalo")]
     public static partial void AuditCleanupFailed(ILogger logger, Exception exception);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Monitor hlaseni nemoze precitat archiv hlaseni: {Error}")]
+    public static partial void ReportMonitorFailed(ILogger logger, string error);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Statistika: odstranenych {Count} zaznamov starsich nez {Days} dni")]
     public static partial void StatisticsCleaned(ILogger logger, int count, int days);
 

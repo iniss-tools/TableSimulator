@@ -671,6 +671,14 @@ export type ReportArchivePageDto = {
     skipped: number;
 };
 
+export type ReportMonitorDto = {
+    date: null | string;
+    file: null | string;
+    entries: Array<ReportArchiveEntryDto>;
+    total: number;
+    skipped: number;
+};
+
 export type RowDto = {
     row: number;
     elements: Array<ElementDto>;
@@ -3575,6 +3583,33 @@ export type GetReportArchiveResponses = {
 };
 
 export type GetReportArchiveResponse = GetReportArchiveResponses[keyof GetReportArchiveResponses];
+
+export type GetReportMonitorData = {
+    body?: never;
+    path?: never;
+    query?: {
+        limit?: number;
+    };
+    url: '/api/archive/reports/live';
+};
+
+export type GetReportMonitorErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetReportMonitorError = GetReportMonitorErrors[keyof GetReportMonitorErrors];
+
+export type GetReportMonitorResponses = {
+    /**
+     * OK
+     */
+    200: ReportMonitorDto;
+};
+
+export type GetReportMonitorResponse = GetReportMonitorResponses[keyof GetReportMonitorResponses];
 
 export type GetTableArchiveData = {
     body?: never;

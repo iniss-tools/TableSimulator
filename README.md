@@ -506,6 +506,16 @@ API (oprávnenie na zobrazenie): `GET /api/archive` (dni oboch archívov), `GET 
 a `GET /api/archive/reports/{rrrr-mm-dd}` s parametrami `train`, `text`, `newest`, `offset`, `limit` (1–1000,
 predvolene 200); odpoveď má vybrané záznamy, počet vyhovujúcich (`total`) a preskočených riadkov (`skipped`).
 
+### Monitor hlásení
+
+Stránka **Monitor hlásení** (skupina INISSView) je archív hlásení naživo: sleduje najnovší denný archív `REP` vo
+sledovaných priečinkoch logov a hlásenia, ktoré doň INISS pripíše, ukáže do 2 sekúnd navrch zoznamu (krátko
+zvýraznené). Server číta len pribudnuté celé riadky (rozpísaný posledný riadok počká), legendu výluk drží od začiatku
+súboru a po polnoci prejde na nový deň; prepísaný alebo skrátený súbor číta znova od začiatku. Vyhľadávanie podľa
+čísla vlaku a textu funguje ako v archíve, **Pozastaviť** zastaví zoznam pri čítaní (nové hlásenia sa len počítajú).
+Monitor ukazuje najnovších 500 hlásení dňa (naživo pribúda do 1000), staršie sú v archíve hlásení. API:
+`GET /api/archive/reports/live?limit=` (najviac 1000), nové hlásenia prinesie WebSocket správou `reports`.
+
 ## Architektúra
 
 | Projekt                       | Obsah                                                                                    |

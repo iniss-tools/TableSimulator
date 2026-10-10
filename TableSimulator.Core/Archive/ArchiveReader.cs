@@ -47,26 +47,35 @@ public static partial class ArchiveReader
         var skipped = 0;
         foreach (var line in Lines(stream))
         {
-            if (line.StartsWith(';'))
-            {
-                if (LegendLine().Match(line) is { Success: true } match)
-                    legend[match.Groups[1].Value] = match.Groups[2].Value.Trim();
-                continue;
-            }
-
-            if (line.StartsWith("<?", StringComparison.Ordinal))
-                continue;
-            if (Parse(line) is not { } element || !string.Equals(element.Name.LocalName, "H", StringComparison.Ordinal))
-            {
+            if (ReportLine(line, legend) is { } entry)
+                entries.Add(entry);
+            else if (!IsNote(line))
                 skipped++;
-                continue;
-            }
-
-            entries.Add(Report(element, legend));
         }
 
         return new ArchiveContent([], entries, skipped);
     }
+
+    /// <summary>
+    /// Jeden riadok archivu hlaseni (orezany): zaznam hlasenia, alebo null - riadok legendy (doplni ju), deklaracia
+    /// alebo riadok, ktory sa neda precitat (<see cref="IsNote" /> ich rozlisi).
+    /// </summary>
+    internal static ReportArchiveEntry? ReportLine(string line, Dictionary<string, string> legend)
+    {
+        if (line.StartsWith(';'))
+        {
+            if (LegendLine().Match(line) is { Success: true } match)
+                legend[match.Groups[1].Value] = match.Groups[2].Value.Trim();
+            return null;
+        }
+
+        if (line.StartsWith("<?", StringComparison.Ordinal))
+            return null;
+        return Parse(line) is { } element && string.Equals(element.Name.LocalName, "H", StringComparison.Ordinal) ? Report(element, legend) : null;
+    }
+
+    /// <summary>Riadok, ktory nie je zaznam, ale ani chyba - komentar (legenda) alebo deklaracia XML.</summary>
+    internal static bool IsNote(string line) => line.StartsWith(';') || line.StartsWith("<?", StringComparison.Ordinal);
 
     // atributy, ktore ma zaznam hlasenia ako vlastne polia
     private static readonly HashSet<string> ReportFields = ["d", "c", "u", "n", "a", "s", "t", "v", "jm", "dt", "kp", "ko", "zp", "zo", "x", "e"];

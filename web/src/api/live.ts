@@ -10,13 +10,14 @@ import {
   getMeQueryKey,
   getMonitorQueryKey,
   getRecordingsQueryKey,
+  getReportMonitorQueryKey,
   getSignageOverviewQueryKey,
   getSignageProgramQueryKey,
   getStateQueryKey,
   getVirtualOverviewQueryKey,
   getVirtualViewQueryKey,
 } from "./generated/@tanstack/react-query.gen";
-import type { FrameDto, RecordingsDto, StateDto, VirtualViewDto } from "./generated/types.gen";
+import type { FrameDto, RecordingsDto, ReportMonitorDto, StateDto, VirtualViewDto } from "./generated/types.gen";
 import { onUnauthorized } from "./client";
 import type { LiveMessage } from "./messages";
 import { queryClient } from "./query";
@@ -67,6 +68,7 @@ const stateKey: QueryKey = getStateQueryKey();
 const recordingsKey: QueryKey = getRecordingsQueryKey();
 const virtualViewId = getVirtualViewQueryKey({ path: { id: 0 } })[0]._id;
 const programId = getSignageProgramQueryKey({ path: { id: 0 } })[0]._id;
+const reportMonitorId = getReportMonitorQueryKey()[0]._id;
 
 function updateState(update: (state: StateDto) => StateDto) {
   queryClient.setQueryData<StateDto>(stateKey, (state) => state && update(state));
@@ -94,6 +96,21 @@ function invalidateVirtual(sources: string[], definitions: boolean) {
 function invalidateSignage() {
   void queryClient.invalidateQueries({ queryKey: getSignageOverviewQueryKey() });
   void queryClient.invalidateQueries({ predicate: (query) => (query.queryKey[0] as { _id?: string } | undefined)?._id === programId });
+}
+
+/** Monitor hlaseni: nove zaznamy navrch (najviac tolko, kolko sa nacitalo), iny subor = nacitat znova. */
+function updateReportMonitor(message: Extract<LiveMessage, { type: "reports" }>) {
+  const isMonitor = (query: { queryKey: QueryKey }) => (query.queryKey[0] as { _id?: string } | undefined)?._id === reportMonitorId;
+  if (message.reset) {
+    void queryClient.invalidateQueries({ predicate: isMonitor });
+    return;
+  }
+  queryClient.setQueriesData<ReportMonitorDto>({ predicate: isMonitor }, (monitor) => {
+    if (!monitor) return monitor;
+    // najviac tolko, kolko server da v prvom nacitani (ReportMonitor.MaxEntries) - starsie su v archive
+    const entries = [...[...message.added].reverse(), ...monitor.entries].slice(0, 1000);
+    return { ...monitor, date: message.date, total: message.total, skipped: message.skipped, entries };
+  });
 }
 
 function apply(message: LiveMessage) {
@@ -138,6 +155,9 @@ function apply(message: LiveMessage) {
       break;
     case "signage":
       invalidateSignage();
+      break;
+    case "reports":
+      updateReportMonitor(message);
       break;
     case "scenarios":
       void queryClient.invalidateQueries({ queryKey: getFaultScenariosQueryKey() });

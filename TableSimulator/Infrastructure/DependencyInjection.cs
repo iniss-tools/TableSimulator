@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddHostedService<ScenarioHostedService>();
         services.AddHostedService<DesignWatcherService>();
         services.AddHostedService<XmlTableWatcherService>();
+        services.AddHostedService<ReportMonitorService>();
         services.AddHostedService<AuditRetentionService>();
         services.AddHostedService<StatisticsService>();
         services.AddSingleton<IAlertChannel, WebhookAlertChannel>();

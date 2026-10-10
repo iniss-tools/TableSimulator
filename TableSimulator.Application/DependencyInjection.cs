@@ -55,6 +55,7 @@ public static class DependencyInjection
         services.AddSingleton<DesignCatalog>();
         services.AddScoped<AuditWriter>();
         services.AddSingleton<ArchiveCatalog>();
+        services.AddSingleton<ReportMonitor>();
         services.AddScoped<StationImporter>();
         services.AddSingleton<SignagePanelTracker>();
         services.AddSingleton<ScenarioRunner>();

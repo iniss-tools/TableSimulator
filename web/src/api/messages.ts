@@ -1,5 +1,5 @@
 // Spravy WebSocketu /ws (TableSimulator.Contracts.Live.LiveMessage) - druh vo vlastnosti "type", obsah su DTO API.
-import type { BoardDto, FrameDto, LineDto, RecorderStatusDto, ReplayStatusDto } from "./generated/types.gen";
+import type { BoardDto, FrameDto, LineDto, RecorderStatusDto, ReplayStatusDto, ReportArchiveEntryDto } from "./generated/types.gen";
 
 export type LiveMessage =
   /** Pribudli alebo ubudli linky ci tabule, zmenilo sa nastavenie - cely stav znova. */
@@ -19,4 +19,6 @@ export type LiveMessage =
   /** Zmenili sa spravy, playlisty, skupiny alebo panely informacnych panelov. */
   | { type: "signage" }
   /** Zmenili sa scenare porucha alebo ich beh. */
-  | { type: "scenarios" };
+  | { type: "scenarios" }
+  /** Pribudli hlasenia v sledovanom archive hlaseni (monitor); reset = sleduje sa iny subor, nacitat znova. */
+  | { type: "reports"; date: string | null; added: ReportArchiveEntryDto[]; reset: boolean; total: number; skipped: number };

@@ -1425,6 +1425,17 @@ export const sk = {
   "replay.timeline": "Časová os záznamu – posun na miesto",
   "error.replay.none": "Zatiaľ sa nič neprehrávalo.",
   "error.recording.buckets": "Počet úsekov časovej osi musí byť 1 – 2000.",
+  "nav.reportMonitor": "Monitor hlásení",
+  "monitor.hint":
+    "Hlásenia a udalosti INISSu naživo – z najnovšieho denného archívu hlásení (REP) v priečinkoch logov z Nastavení. Nové pribúdajú navrch do 2 sekúnd od zápisu INISSom; staršie dni sú v archíve hlásení.",
+  "monitor.noFile": "V priečinkoch logov INISSu zatiaľ nie je žiadny archív hlásení (REP).",
+  "monitor.file": "{day} · {file}",
+  "monitor.count": "zobrazených {shown} z {total} hlásení dňa",
+  "monitor.empty": "Zatiaľ žiadne hlásenie.",
+  "monitor.pause": "Pozastaviť",
+  "monitor.resume": "Pokračovať (nových {count})",
+  "monitor.live": "naživo",
+  "monitor.paused": "pozastavené",
 } as const;
 
 export type TextKey = keyof typeof sk;

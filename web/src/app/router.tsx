@@ -145,6 +145,11 @@ const pages = [
   }),
   createRoute({ getParentRoute: () => shell, path: "/archive/tables", component: () => <ArchivePage key="tables" kind="tables" /> }),
   createRoute({ getParentRoute: () => shell, path: "/archive/reports", component: () => <ArchivePage key="reports" kind="reports" /> }),
+  createRoute({
+    getParentRoute: () => shell,
+    path: "/archive/reports/live",
+    component: lazyRouteComponent(() => import("@/features/archive/ReportMonitorPage"), "ReportMonitorPage"),
+  }),
   createRoute({ getParentRoute: () => shell, path: "/users", component: lazyRouteComponent(() => import("@/features/users/UsersPage"), "UsersPage") }),
   createRoute({ getParentRoute: () => shell, path: "/keys", component: lazyRouteComponent(() => import("@/features/keys/KeysPage"), "KeysPage") }),
   createRoute({ getParentRoute: () => shell, path: "/audit", component: lazyRouteComponent(() => import("@/features/audit/AuditPage"), "AuditPage") }),
