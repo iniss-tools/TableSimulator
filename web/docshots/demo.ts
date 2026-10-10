@@ -1,9 +1,12 @@
 // Ukazkova stanica pre snimky dokumentacie (fiktivne Dolne Mesto ako v dokumentacii GVDEditora): linky a tabule cez
 // API ako pri presmerovani z GVDEditora a obsah tabul ako od INISSu. Spojenia ostanu otvorene az do konca behu - linky
-// tak ukazuju pripojeny INISS, nie vypadok.
+// tak ukazuju pripojeny INISS, nie vypadok. Navyse dva zaznamy (pred a po zmene grafikonu), chybne spravy v logu
+// a hodina statistiky.
+import { spawnSync } from "node:child_process";
 import { connect, createServer, type Socket } from "node:net";
+import { join } from "node:path";
 import { request } from "@playwright/test";
-import { elenRow, API_HEADERS } from "../e2e/helpers";
+import { elenFrame, elenRow, API_HEADERS } from "../e2e/helpers";
 import type { FaultScenarioRequest, FlapProfileDto, SetBoardRequest, StateDto, StationBoardDto } from "../src/api/generated/types.gen";
 import { apelFrame, cp1250, elsvoFrame, fersRow, lcd1Row } from "./frames";
 import { DOCSHOTS_SERVER } from "./server";
@@ -134,18 +137,48 @@ const SCENARIO: FaultScenarioRequest = {
   ],
 };
 
-/** Posle spravy na linku ako INISS (dalsia az po odpovedi tabule) a spojenie necha otvorene. */
-async function feed(port: number, frames: number[][]): Promise<Socket> {
+/** Spojenie linky ako INISS: spravy posiela po jednej (dalsiu az po odpovedi tabule), spojenie ostava otvorene. */
+interface InissLink {
+  socket: Socket;
+  send(frames: number[][]): Promise<void>;
+}
+
+async function connectLine(port: number): Promise<InissLink> {
   const socket = connect(port, "127.0.0.1");
   await new Promise<void>((resolve, reject) => socket.once("connect", resolve).once("error", reject));
   let replies = 0;
   socket.on("data", (data: Buffer) => (replies += data.length));
-  for (const frame of frames) {
-    const before = replies;
-    socket.write(Buffer.from(frame));
-    for (let i = 0; i < 50 && replies === before; i++) await new Promise((r) => setTimeout(r, 20));
-  }
-  return socket;
+  return {
+    socket,
+    async send(frames) {
+      for (const frame of frames) {
+        const before = replies;
+        socket.write(Buffer.from(frame));
+        for (let i = 0; i < 50 && replies === before; i++) await new Promise((r) => setTimeout(r, 20));
+      }
+    },
+  };
+}
+
+/** Zmena grafikonu medzi zaznamami A a B: vlak R 612 ide z inej kolaje (tabula v hale a v podchode). */
+const CHANGED: { line: number; frames: number[][] }[] = [
+  { line: 1, frames: [elenRow(1, 3, "R  612   Bratislava   10:32  3")] },
+  { line: 3, frames: [lcd1Row(10, 1, "R  612   Bratislava hl.st. 10:32   3")] },
+];
+
+/** Chybne spravy pre log komunikacie: sum, zly sucet a 04 v datach (pismo 04 namiesto 44); tabula ich odmietne. */
+function faultyFrames(): number[][] {
+  const bad = elenRow(2, 1, "Os 4202  Trnava       10:08  1");
+  bad[bad.length - 1] ^= 0x01;
+  const eot = elenFrame(2, 1, [0x80 | 2, 0x10, 0x80, 0x1b, 0x04, ...Array.from("R  613", (ch) => ch.charCodeAt(0))]);
+  return [[0x55, 0xaa, 0x55], bad, eot];
+}
+
+/** Ukazkova hodina statistiky v databaze servera (docshots/statistics.ts cez bun). */
+function seedStatistics() {
+  const db = join(import.meta.dirname, "..", "e2e", ".run", DOCSHOTS_SERVER.name, "tablesimulator.db");
+  const result = spawnSync("bun", [join(import.meta.dirname, "statistics.ts"), db], { stdio: "inherit", shell: process.platform === "win32" });
+  if (result.status !== 0) throw new Error(`Statistika: bun skoncil s kodom ${result.status}`);
 }
 
 export default async function demo() {
@@ -194,15 +227,42 @@ export default async function demo() {
   if (!scenario.ok()) throw new Error(`Scenar: ${await scenario.text()}`);
   await api.dispose();
 
-  const sockets: Socket[] = [];
-  for (const line of lines)
-    sockets.push(
-      await feed(
-        line.port,
-        BOARDS.filter((b) => b.line === line.number).flatMap((b) => b.frames),
-      ),
-    );
+  const recorder = await request.newContext({ baseURL: DOCSHOTS_SERVER.url, extraHTTPHeaders: API_HEADERS });
+  const record = async (note: string, run: () => Promise<void>) => {
+    const started = await recorder.post("/api/recordings/start", { data: { note } });
+    if (!started.ok()) throw new Error(`Zaznam: ${await started.text()}`);
+    await run();
+    await new Promise((r) => setTimeout(r, 1500));
+    await recorder.post("/api/recordings/stop");
+  };
+  const framesOf = (line: number) => BOARDS.filter((b) => b.line === line).flatMap((b) => b.frames);
+
+  // zaznam A = stanica, ako ju INISS poslal; zaznam B = to iste po zmene grafikonu (porovnanie zaznamov)
+  const links = new Map<number, InissLink>();
+  // linky po chvilkach, aby casova os zaznamu mala co ukazat
+  const pause = () => new Promise((r) => setTimeout(r, 1500));
+  await record("Pred zmenou grafikonu", async () => {
+    for (const line of lines) {
+      const iniss = await connectLine(line.port);
+      links.set(line.number, iniss);
+      await iniss.send(framesOf(line.number));
+      await pause();
+    }
+  });
+  await record("Po zmene grafikonu", async () => {
+    // zmena hned za obsahom linky - do 1 s je to jeden stav tabule, porovnanie ho ukaze ako zmeneny
+    for (const line of lines) {
+      await links.get(line.number)!.send([...framesOf(line.number), ...CHANGED.filter((c) => c.line === line.number).flatMap((c) => c.frames)]);
+      await pause();
+    }
+  });
+  // tabule spat ako v zazname A, potom chybne spravy (navrchu logu komunikacie)
+  for (const change of CHANGED) await links.get(change.line)!.send(BOARDS.filter((b) => b.line === change.line).flatMap((b) => b.frames));
+  await links.get(1)!.send(faultyFrames());
+  await recorder.dispose();
+
+  seedStatistics();
   // linky chvilu potrebuju na stav "pripojeny", listy na dotocenie a tabule na prekreslenie
   await new Promise((r) => setTimeout(r, 4000));
-  return () => sockets.forEach((s) => s.destroy());
+  return () => links.forEach((i) => i.socket.destroy());
 }
