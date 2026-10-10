@@ -1,7 +1,7 @@
 // Snimky kapitoly INISSView a archiv: virtualne tabule, ich okno a obrazovka, rozlozenie, archiv tabul a hlaseni,
 // monitor hlaseni. XML a archivy su v ukazkovom priecinku logov (docshots/iniss-log.ts).
 import { expect, test, type Page } from "@playwright/test";
-import { open, shot, THEMES } from "./shoot";
+import { mask, open, shot, THEMES } from "./shoot";
 
 /** Ponuka akcii riadku tabulky podla textu v riadku. */
 async function rowAction(page: Page, row: string | RegExp, action: string) {
@@ -9,24 +9,15 @@ async function rowAction(page: Page, row: string | RegExp, action: string) {
   await page.getByRole("menuitem", { name: action }).click();
 }
 
-/** Sledovany priecinok ako na stanici - harness ho ma v priecinku dat testovacieho servera. */
-async function examplePath(page: Page) {
-  await page.evaluate(() => {
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    for (let node = walker.nextNode(); node; node = walker.nextNode())
-      if (node.textContent?.includes("iniss-log")) node.textContent = node.textContent.replace(/^.*iniss-log/, String.raw`C:\INISS\LOG`);
-  });
-}
-
 for (const theme of THEMES) {
   test(`virtualne tabule (${theme})`, async ({ page }) => {
     await open(page, "/virtual", theme);
     await expect(page.getByRole("cell", { name: "Odchody – hala" })).toBeVisible();
-    await examplePath(page);
+    await mask(page);
     await shot(page, "virtualne-tabule/zoznam", theme, { ready: page.getByText("aktuálne", { exact: true }).first() });
     await page.getByRole("tab", { name: /Súbory XML/ }).click();
     await expect(page.getByRole("cell", { name: "Odchody web" })).toBeVisible();
-    await examplePath(page);
+    await mask(page);
     await shot(page, "virtualne-tabule/subory", theme);
     await page.getByRole("tab", { name: /Tabule/ }).click();
 
@@ -52,7 +43,7 @@ for (const theme of THEMES) {
   test(`rozlozenia (${theme})`, async ({ page }) => {
     await open(page, "/virtual", theme);
     await page.getByRole("tab", { name: /Rozloženia/ }).click();
-    await examplePath(page);
+    await mask(page);
     await shot(page, "rozlozenia-a-sablony/rozlozenia", theme, { ready: page.getByRole("cell", { name: /Odchody – modrá/ }) });
     await rowAction(page, /Odchody – modrá/, "Kopírovať");
     const dialog = page.getByRole("dialog");

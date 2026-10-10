@@ -1,4 +1,5 @@
-// Spravy INISSu pre ukazkovu stanicu mimo ELEN (ten ma e2e/helpers): Elektrocas (LCD1, FERS), APEL a ELSVO.
+// Spravy INISSu pre ukazkovu stanicu: poloha kurzora ELEN (spravu sklada e2e/helpers), Elektrocas (LCD1, FERS), APEL
+// a ELSVO.
 // Text vo Windows-1250 ako ho posiela INISS.
 
 const CP1250: Record<string, number> = {
@@ -40,6 +41,11 @@ const CP1250: Record<string, number> = {
 /** Text vo Windows-1250 (slovenske znaky, inak ASCII). */
 export function cp1250(text: string): number[] {
   return Array.from(text, (ch) => CP1250[ch] ?? (ch.charCodeAt(0) < 0x80 ? ch.charCodeAt(0) : 0x3f));
+}
+
+/** Poloha kurzora ELEN na bod x riadku: kod 10-13 (vyssie bity) a nizsich 7 bitov s hornym bitom. */
+export function elenAt(x: number): number[] {
+  return [0x10 + (x >> 7), 0x80 | (x & 0x7f)];
 }
 
 /** Sprava Elektrocasu: adresa, dlzka, odosielatel (ComputerAddr 0), prikaz, parametre, sucet. */

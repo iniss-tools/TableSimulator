@@ -33,6 +33,8 @@ for (const theme of THEMES) {
       await expect(page.getByRole("slider", { name: "Časová os záznamu" })).toBeVisible();
       await shot(page, "zaznamy/prehravanie", theme, { target: page.locator("main") });
     } finally {
+      // posun na koniec prehra zvysok zaznamu naprazdno - tabule ostanu ako po celom zazname, nie z jeho polovice
+      await page.request.put("/api/replay", { headers: API_HEADERS, data: { position: a.duration, paused: null, speed: null, loop: null } });
       await page.request.post("/api/replay/stop", { headers: API_HEADERS });
     }
   });

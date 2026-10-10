@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 import { connect, createServer, type Socket } from "node:net";
 import { join } from "node:path";
 import { request } from "@playwright/test";
-import { elenFrame, elenRow, API_HEADERS } from "../e2e/helpers";
+import { elenFrame, API_HEADERS } from "../e2e/helpers";
 import type {
   FaultScenarioRequest,
   FlapProfileDto,
@@ -16,7 +16,7 @@ import type {
   StateDto,
   StationBoardDto,
 } from "../src/api/generated/types.gen";
-import { apelFrame, cp1250, elsvoFrame, fersRow, lcd1Row } from "./frames";
+import { apelFrame, cp1250, elenAt, elsvoFrame, fersRow, lcd1Row } from "./frames";
 import { writeInissLog } from "./iniss-log";
 import { seedSignage } from "./signage";
 import { DOCSHOTS_SERVER } from "./server";
@@ -75,7 +75,17 @@ interface DemoBoard {
   frames: number[][];
 }
 
-const elenRows = (address: number, rows: string[]) => rows.map((text, i) => elenRow(address, rows.length - i, text)); // ELEN odspodu
+/** Stlpce v bodoch tabule: vlak, ciel, cas, kolaj (tabule v hale) a vlak, ciel, cas (nastupistne). */
+const HALL = [0, 40, 110, 146];
+const PLATFORM = [0, 40, 110];
+
+/** Riadok ELEN ako ho posiela INISS: kazdy stlpec na svojej polohe (kod polohy kurzora), nie zarovnany medzerami. */
+function elenColumns(address: number, row: number, x: number[], texts: string[]): number[] {
+  return elenFrame(address, 1, [0x80 | row, ...texts.flatMap((text, i) => [...elenAt(x[i]), 0x1b, 0x52, ...Array.from(text, (ch) => ch.charCodeAt(0))])]);
+}
+
+/** Riadky tabule ELEN zhora (ELEN ich cisluje odspodu). */
+const elenRows = (address: number, x: number[], rows: string[][]) => rows.map((texts, i) => elenColumns(address, rows.length - i, x, texts));
 
 const BOARDS: DemoBoard[] = [
   {
@@ -83,11 +93,11 @@ const BOARDS: DemoBoard[] = [
     address: 1,
     manufacturer: "ELEN",
     name: "Odchody – hala",
-    frames: elenRows(1, [
-      "Os 4201  Trnava       10:15  1",
-      "R  612   Bratislava   10:32  2",
-      "Ex 521   Lipovan      10:47  1",
-      "Os 4205  Senica       11:05  3",
+    frames: elenRows(1, HALL, [
+      ["Os 4201", "Trnava", "10:15", "1"],
+      ["R 612", "Bratislava", "10:32", "2"],
+      ["Ex 521", "Lipovan", "10:47", "1"],
+      ["Os 4205", "Senica", "11:05", "3"],
     ]),
   },
   {
@@ -95,10 +105,26 @@ const BOARDS: DemoBoard[] = [
     address: 2,
     manufacturer: "ELEN",
     name: "Príchody – hala",
-    frames: elenRows(2, ["Os 4202  Trnava       10:08  1", "R  613   Bratislava   10:29  2", "Os 4206  Senica       10:55  3"]),
+    frames: elenRows(2, HALL, [
+      ["Os 4202", "Trnava", "10:08", "1"],
+      ["R 613", "Bratislava", "10:29", "2"],
+      ["Os 4206", "Senica", "10:55", "3"],
+    ]),
   },
-  { line: 2, address: 3, manufacturer: "ELEN", name: "Nástupište 1", frames: elenRows(3, ["Os 4201  Trnava  10:15", "Galanta, Sered, Trnava"]) },
-  { line: 2, address: 4, manufacturer: "ELEN", name: "Nástupište 2", frames: elenRows(4, ["R  612   Bratislava  10:32", "Nitra, Leopoldov, Trnava"]) },
+  {
+    line: 2,
+    address: 3,
+    manufacturer: "ELEN",
+    name: "Nástupište 1",
+    frames: elenRows(3, PLATFORM, [["Os 4201", "Trnava", "10:15"], ["Galanta, Sered, Trnava"]]),
+  },
+  {
+    line: 2,
+    address: 4,
+    manufacturer: "ELEN",
+    name: "Nástupište 2",
+    frames: elenRows(4, PLATFORM, [["R 612", "Bratislava", "10:32"], ["Nitra, Leopoldov, Trnava"]]),
+  },
   {
     line: 3,
     address: 10,
@@ -172,13 +198,13 @@ async function connectLine(port: number): Promise<InissLink> {
 
 /** Zmena grafikonu medzi zaznamami A a B: vlak R 612 ide z inej kolaje (tabula v hale a v podchode). */
 const CHANGED: { line: number; frames: number[][] }[] = [
-  { line: 1, frames: [elenRow(1, 3, "R  612   Bratislava   10:32  3")] },
+  { line: 1, frames: [elenColumns(1, 3, HALL, ["R 612", "Bratislava", "10:32", "3"])] },
   { line: 3, frames: [lcd1Row(10, 1, "R  612   Bratislava hl.st. 10:32   3")] },
 ];
 
 /** Chybne spravy pre log komunikacie: sum, zly sucet a 04 v datach (pismo 04 namiesto 44); tabula ich odmietne. */
 function faultyFrames(): number[][] {
-  const bad = elenRow(2, 1, "Os 4202  Trnava       10:08  1");
+  const bad = elenColumns(2, 1, HALL, ["Os 4206", "Senica", "10:55", "3"]);
   bad[bad.length - 1] ^= 0x01;
   const eot = elenFrame(2, 1, [0x80 | 2, 0x10, 0x80, 0x1b, 0x04, ...Array.from("R  613", (ch) => ch.charCodeAt(0))]);
   return [[0x55, 0xaa, 0x55], bad, eot];
@@ -251,13 +277,42 @@ export default async function demo() {
   const folder = writeInissLog(join(DATA, "iniss-log"));
   const settings = (await (await api.get("/api/settings")).json()) as SettingsDto;
   // pristup zo siete (zariadenia s klucom) - plati az po restarte, okno kluca uz neupozornuje, ze je vypnuty
-  const saved = await api.put("/api/settings", { data: { ...settings, virtualFolders: [folder], allowNetwork: true } });
+  // upozornenia na vypadky (len vyplnene - server ziadne neposle, kym linky bezia)
+  const alerts = {
+    ...settings.alerts,
+    enabled: true,
+    delaySeconds: 60,
+    recovery: true,
+    webhookUrl: "https://hooks.example.com/stanica/simulator",
+    emailTo: "dispecing@example.com; udrzba@example.com",
+    emailFrom: "simulator@example.com",
+    smtpHost: "smtp.example.com",
+    smtpPort: 587,
+    smtpSsl: true,
+    smtpUser: "simulator",
+    smtpPassword: null,
+  };
+  const saved = await api.put("/api/settings", { data: { ...settings, virtualFolders: [folder], allowNetwork: true, alerts } });
   if (!saved.ok()) throw new Error(`Nastavenie: ${await saved.text()}`);
   for (const { id, ...board } of VIRTUAL) {
     const response = await api.put(`/api/virtual/${id}`, { data: board });
     if (!response.ok()) throw new Error(`Virtualna tabula ${id}: ${await response.text()}`);
   }
   await seedSignage(api);
+  // pouzivatelia s vlastnou rolou pre informacne panely (prihlasovanie je vypnute - len pripravene ucty)
+  const role = await api.post("/api/roles", {
+    data: { displayName: "Informačné panely", permissions: ["simulator.view", "signage.manage", "virtual.manage"] },
+  });
+  if (!role.ok()) throw new Error(`Rola: ${await role.text()}`);
+  const roleKey = ((await role.json()) as { name: string }).name;
+  for (const user of [
+    { userName: "dispecer", displayName: "Dispečer", role: "operator" },
+    { userName: "novak", displayName: "Ján Novák", role: roleKey },
+    { userName: "udrzba", displayName: "Údržba tabúľ", role: "viewer" },
+  ]) {
+    const response = await api.post("/api/users", { data: { ...user, password: "Heslo-1234" } });
+    if (!response.ok()) throw new Error(`Pouzivatel ${user.userName}: ${await response.text()}`);
+  }
   for (const key of [
     { name: "Monitor v hale", kind: "device", role: "viewer" },
     { name: "GVDEditor", kind: "api", role: "operator" },

@@ -18,7 +18,10 @@ import { CreatedKeyDialog, NewKeyDialog } from "./KeyDialogs";
 
 const refreshKeys = () => queryClient.invalidateQueries({ queryKey: getAccessKeysQueryKey() });
 
-const column = columnsFor<AccessKeyDto>();
+/** Riadok tabulky s nazvom roly - stlpec si hodnotu pamata, kym sa nezmenia data, preto je nazov priamo v nich. */
+type KeyRow = AccessKeyDto & { roleName: string };
+
+const column = columnsFor<KeyRow>();
 
 export function KeysPage() {
   const query = useQuery(getAccessKeysOptions());
@@ -31,11 +34,14 @@ export function KeysPage() {
     deleteAccessKey({ path: { id: k.id }, throwOnError: true }).then(refreshKeys, (e) => toast.error(errorText(e)));
   };
 
+  // nazov roly v datach riadkov - po nacitani roli vzniknu nove riadky (aj pri vlastnej role)
+  const rows = useMemo<KeyRow[]>(() => (query.data ?? []).map((k) => ({ ...k, roleName: roles.label(k.role) })), [query.data, roles]);
+
   const columns = useMemo(
     () => [
       column.accessor("name", { header: t("keys.name"), cell: ({ getValue }) => <span className="font-medium">{getValue()}</span> }),
       column.accessor((k) => t(`keys.kind.${k.kind}` as TextKey), { id: "kind", header: t("keys.kind") }),
-      column.accessor((k) => roles.label(k.role), { id: "role", header: t("users.role") }),
+      column.accessor("roleName", { header: t("users.role") }),
       column.accessor("prefix", {
         header: t("keys.prefix"),
         enableSorting: false,
@@ -66,7 +72,7 @@ export function KeysPage() {
         cell: ({ row }) => <RowActions actions={[{ label: t("common.delete"), icon: Trash2, destructive: true, onClick: () => remove(row.original) }]} />,
       }),
     ],
-    [roles],
+    [],
   );
 
   return (
@@ -82,7 +88,7 @@ export function KeysPage() {
           <AlertDescription>{errorText(query.error)}</AlertDescription>
         </Alert>
       )}
-      <DataTable columns={columns} data={query.data ?? []} getRowId={(k) => k.id} pageSize={null} empty={t("keys.empty")} />
+      <DataTable columns={columns} data={rows} getRowId={(k) => k.id} pageSize={null} empty={t("keys.empty")} />
       {creating && (
         <NewKeyDialog
           onClose={(result) => {

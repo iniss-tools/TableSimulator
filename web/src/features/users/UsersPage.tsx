@@ -19,7 +19,10 @@ import { PasswordDialog } from "./PasswordDialog";
 import { UserDialog } from "./UserDialog";
 import { refreshUsers } from "./users";
 
-const column = columnsFor<UserDto>();
+/** Riadok tabulky s nazvom roly - stlpec si hodnotu pamata, kym sa nezmenia data, preto je nazov priamo v nich. */
+type UserRow = UserDto & { roleName: string };
+
+const column = columnsFor<UserRow>();
 const NEW_USER: UserDto = { userName: "", displayName: "", role: "viewer", disabled: false, lockedUntil: null, createdAt: "", lastLoginAt: null };
 
 const act = (action: Promise<unknown>) => action.then(refreshUsers, (e) => toast.error(errorText(e)));
@@ -37,6 +40,9 @@ export function UsersPage() {
       void act(deleteUser({ path: { userName: u.userName }, throwOnError: true }));
   };
 
+  // nazov roly v datach riadkov - po nacitani roli vzniknu nove riadky (aj pri vlastnej role)
+  const rows = useMemo<UserRow[]>(() => (query.data ?? []).map((u) => ({ ...u, roleName: roles.label(u.role) })), [query.data, roles]);
+
   const columns = useMemo(
     () => [
       column.accessor("userName", {
@@ -52,7 +58,7 @@ export function UsersPage() {
           );
         },
       }),
-      column.accessor((u) => roles.label(u.role), { id: "role", header: t("users.role") }),
+      column.accessor("roleName", { header: t("users.role") }),
       column.accessor((u) => (u.disabled ? t("users.disabled") : u.lockedUntil ? t("users.locked", { time: "" }) : t("users.active")), {
         id: "state",
         header: t("users.state"),
@@ -104,8 +110,8 @@ export function UsersPage() {
         },
       }),
     ],
-    // stlpce zavisia od prihlaseneho (self) a nazvov roli
-    [self, roles],
+    // stlpce zavisia od prihlaseneho (self); nazov roly je v datach riadkov
+    [self],
   );
 
   return (
@@ -127,7 +133,7 @@ export function UsersPage() {
           <AlertDescription>{errorText(query.error)}</AlertDescription>
         </Alert>
       )}
-      <DataTable columns={columns} data={query.data ?? []} getRowId={(u) => u.userName} pageSize={null} />
+      <DataTable columns={columns} data={rows} getRowId={(u) => u.userName} pageSize={null} />
       {editing && <UserDialog initial={editing.user} isNew={editing.isNew} onClose={() => setEditing(null)} />}
       {password && (
         <PasswordDialog

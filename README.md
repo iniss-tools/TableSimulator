@@ -223,7 +223,7 @@ každého kanála. Odoslané oznámenia aj chyby doručenia zapisuje log servera
 
 ## ELEN Monitor
 
-V **Nastaveniach** sa dá zadať priečinok programu ELEN Monitor (napr. `D:\INISSroot\Tools\Monitor`). Simulátor
+V **Nastaveniach** sa dá zadať priečinok programu ELEN Monitor (napr. `C:\ELEN\Monitor`). Simulátor
 z neho potom berie:
 
 - **predlohy tabúľ** – každý typ panelu (`Sim\*.cfg` a jeho konfigurácia `Sim\CONFIG\rwp_*.bin`) dá rozmer, písmo,
@@ -589,6 +589,18 @@ Monitor ukazuje najnovších 500 hlásení dňa (naživo pribúda do 1000), star
 | `TableSimulator`              | server ASP.NET Core: endpointy v `Api/` (každý v samostatnom súbore), WebSocket `/ws`, Serilog, prihlasovanie a obnova správcu (`Infrastructure/Auth/`), HTTPS a certifikáty (`Infrastructure/Https/`), súbory nastavení a konfigurácie v `Infrastructure/` |
 | `TableSimulator.Tests`        | MSTest – rámce a súčty podľa príkladov z docs (ELEN, LCD1, ITP), rozklad riadku, simulátor, linka TCP aj rúra, záznam a prehratie, aplikačná vrstva, tvar JSON kontraktov, XML tabúľ a `Web.config` INISSView, archívy TAB/REP, server cez `WebApplicationFactory` (prihlasovanie, oprávnenia, virtuálne tabule, archív) |
 | `web/`                        | React + TypeScript (bun, Vite): ovládanie a renderer tabúľ; testy `bun test`              |
+
+### Snímky do dokumentácie
+
+`bun run docshots` vo `web/` zostaví web a server, spustí ukážkovú stanicu (`docshots/demo.ts`) a uloží snímky
+oboch tém do `iniss-tools-docs/static/img/tablesimulator`. Písma ELEN berie z priečinka v premennej `DOCSHOTS_FONTS`
+(napr. `Sim\FONT` programu ELEN Monitor); bez nej tabule ELEN ukážu náhradné bodové písmo. Cesty, meno a adresy
+počítača nahradí na snímkach ukážkovými. Simulátor spustený na tom istom počítači treba zastaviť – inak sú porty
+liniek 4700x obsadené a snímky ukážu iné porty.
+
+```powershell
+$env:DOCSHOTS_FONTS = "C:\ELEN\Monitor\Sim\FONT"; bun run docshots
+```
 
 ### API
 
