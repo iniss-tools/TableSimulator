@@ -17,6 +17,7 @@ import type {
   StationBoardDto,
 } from "../src/api/generated/types.gen";
 import { apelFrame, cp1250, elenAt, elsvoFrame, fersRow, lcd1Row } from "./frames";
+import { writeInissInstall } from "./iniss-install";
 import { writeInissLog } from "./iniss-log";
 import { seedSignage } from "./signage";
 import { DOCSHOTS_SERVER } from "./server";
@@ -292,7 +293,11 @@ export default async function demo() {
     smtpUser: "simulator",
     smtpPassword: null,
   };
-  const saved = await api.put("/api/settings", { data: { ...settings, virtualFolders: [folder], allowNetwork: true, alerts } });
+  // ukazkova instalacia INISSu pre okno Nacitat z INISSu (vetva registra, ktora na pocitaci nie je - cita sa len .INI)
+  const inissProgram = writeInissInstall(join(DATA, "iniss"), folder);
+  const saved = await api.put("/api/settings", {
+    data: { ...settings, virtualFolders: [folder], allowNetwork: true, alerts, inissProgram, inissRegistry: "DolneMesto" },
+  });
   if (!saved.ok()) throw new Error(`Nastavenie: ${await saved.text()}`);
   for (const { id, ...board } of VIRTUAL) {
     const response = await api.put(`/api/virtual/${id}`, { data: board });

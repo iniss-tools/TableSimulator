@@ -60,6 +60,7 @@ const DATA = resolve(here, "..", "e2e", ".run", "docshots");
  */
 const MASKS: [string, string][] = [
   [join(DATA, "iniss-log"), String.raw`C:\INISS\LOG`],
+  [join(DATA, "iniss"), String.raw`C:\INISS`],
   [DATA, String.raw`C:\ProgramData\TableSimulator`],
   ...(process.env.DOCSHOTS_FONTS ? [[process.env.DOCSHOTS_FONTS, String.raw`C:\ELEN\Monitor\Sim\FONT`] as [string, string]] : []),
   [hostname(), "STANICA-PC"],
