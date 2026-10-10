@@ -12,14 +12,14 @@ export const THEMES = ["light", "dark"] as const;
 
 export type Theme = (typeof THEMES)[number];
 
-/** Nastavi temu a jazyk (pred nacitanim stranky) a otvori adresu za #. */
-export async function open(page: Page, hash: string, theme: Theme) {
+/** Nastavi temu a jazyk (pred nacitanim stranky) a otvori adresu za #; kiosk (bez ramu) caka na `ready` namiesto main. */
+export async function open(page: Page, hash: string, theme: Theme, ready = "main") {
   await page.addInitScript((value) => {
     localStorage.setItem("theme", value);
     localStorage.setItem("lang", "sk");
   }, theme);
   await page.goto(`/#${hash}`);
-  await page.locator("main").waitFor();
+  await page.locator(ready).first().waitFor();
 }
 
 interface ShotOptions {

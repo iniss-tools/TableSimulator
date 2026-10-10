@@ -1,5 +1,5 @@
 // Obrazovka virtualnej tabule podla rozlozenia - kiosk (#/virtual/<cislo>) aj nahlad v editore rozlozenia.
-import { useMemo, type CSSProperties } from "react";
+import { useLayoutEffect, useMemo, useRef, type CSSProperties } from "react";
 import type { VirtualLayoutDto as VirtualLayout, VirtualViewDto as VirtualView } from "@/api";
 import { cn } from "@/lib/utils";
 import { hasText, t } from "@/i18n";
@@ -44,6 +44,35 @@ interface Props {
   preview?: boolean;
 }
 
+/**
+ * Zmensi pismo tabule (premenna --fit), ked sa stlpce nezmestia na sirku - napr. vela stlpcov pri malom pocte riadkov.
+ * Meria sa pri zmene udajov, rozlozenia a velkosti, nie pri striedani textu (dlhsi text skrati stlpec).
+ */
+function useFitWidth(deps: unknown[]) {
+  const board = useRef<HTMLDivElement>(null);
+  const table = useRef<HTMLTableElement>(null);
+  useLayoutEffect(() => {
+    const element = board.current;
+    if (!element) return;
+    const fit = () => {
+      element.style.setProperty("--fit", "1");
+      // dva kroky - nie vsetko sa zmensuje s pismom (stropy stlpcov v cqw)
+      for (let i = 0; i < 2; i++) {
+        const width = table.current?.scrollWidth ?? 0;
+        if (width <= element.clientWidth + 1) return;
+        const current = Number(element.style.getPropertyValue("--fit"));
+        element.style.setProperty("--fit", String(current * (element.clientWidth / width)));
+      }
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(element);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- merat len pri zmene udajov a rozlozenia
+  }, deps);
+  return [board, table] as const;
+}
+
 export function VirtualScreen({ view, layout, now, error, preview }: Props) {
   const rows = view.rows;
   const columns = useMemo(() => layoutColumns(layout, rows), [layout, rows]);
@@ -51,6 +80,7 @@ export function VirtualScreen({ view, layout, now, error, preview }: Props) {
   const timing = layout;
   // pevny pocet zaznamov tabule urci velkost pisma; inak pocet riadkov rozlozenia
   const lines = view.board.rowCount ?? layout.rows;
+  const [boardRef, tableRef] = useFitWidth([rows, layout, lines]);
   const style = {
     "--rows": lines,
     "--vb-bg": colors.background,
@@ -66,7 +96,7 @@ export function VirtualScreen({ view, layout, now, error, preview }: Props) {
 
   return (
     <div className={cn(styles.screen, preview && styles.preview)}>
-      <div className={cn(styles.board, view.source?.stale && styles.stale)} style={style}>
+      <div ref={boardRef} className={cn(styles.board, view.source?.stale && styles.stale)} style={style}>
         <header className={styles.head}>
           <span className={styles.title}>{layoutTitle(layout.title, view.board.name, view.source?.station)}</span>
           {layout.showStation && <span className={styles.muted}>{view.source?.station}</span>}
@@ -80,7 +110,7 @@ export function VirtualScreen({ view, layout, now, error, preview }: Props) {
         {view.source?.error && <div className={styles.note}>{t("virtual.view.error", { error: view.source.error })}</div>}
         {view.source && rows.length === 0 && <div className={styles.empty}>{t("virtual.view.empty")}</div>}
         {rows.length > 0 && (
-          <table className={styles.table}>
+          <table ref={tableRef} className={styles.table}>
             <colgroup>
               {columns.map((c) => (
                 <col key={c.key} style={{ width: columnWidth(c.width) }} />

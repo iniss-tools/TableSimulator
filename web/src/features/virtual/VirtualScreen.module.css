@@ -23,7 +23,8 @@
   background: var(--vb-bg);
   color: var(--vb-text);
   font-family: "Segoe UI", Arial, sans-serif;
-  font-size: min(calc(84cqh / (var(--rows) + 1) * 0.55), 3cqw);
+  /* --fit zmensi pismo, ked sa stlpce nezmestia na sirku (VirtualScreen.tsx) */
+  font-size: calc(min(calc(84cqh / (var(--rows) + 1) * 0.55), 3cqw) * var(--fit, 1));
   line-height: 1.45;
 }
 

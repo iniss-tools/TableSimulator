@@ -7,8 +7,17 @@ import { connect, createServer, type Socket } from "node:net";
 import { join } from "node:path";
 import { request } from "@playwright/test";
 import { elenFrame, elenRow, API_HEADERS } from "../e2e/helpers";
-import type { FaultScenarioRequest, FlapProfileDto, SetBoardRequest, StateDto, StationBoardDto } from "../src/api/generated/types.gen";
+import type {
+  FaultScenarioRequest,
+  FlapProfileDto,
+  SetBoardRequest,
+  SettingsDto,
+  SetVirtualBoardRequest,
+  StateDto,
+  StationBoardDto,
+} from "../src/api/generated/types.gen";
 import { apelFrame, cp1250, elsvoFrame, fersRow, lcd1Row } from "./frames";
+import { writeInissLog } from "./iniss-log";
 import { DOCSHOTS_SERVER } from "./server";
 
 /** Linky ukazkovej stanice: dve ELEN, Elektrocas LCD1, listova FERS, APEL a spinanie zosilnovacov ELSVO. */
@@ -174,9 +183,20 @@ function faultyFrames(): number[][] {
   return [[0x55, 0xaa, 0x55], bad, eot];
 }
 
+/** Priecinok dat servera (e2e/server.mjs). */
+const DATA = join(import.meta.dirname, "..", "e2e", ".run", DOCSHOTS_SERVER.name);
+
+/** Virtualne tabule z XML ukazkoveho priecinka logov INISSu: hala cela, podchod na dvoch obrazovkach po 4 zaznamoch. */
+const VIRTUAL: (SetVirtualBoardRequest & { id: number })[] = [
+  { id: 1, name: "Odchody – hala", description: "Monitor nad pokladňami", source: "Odchody", rowCount: null, rowStart: 1, layout: "odchody" },
+  { id: 2, name: "Príchody – hala", description: "Monitor pri vchode", source: "Prichody", rowCount: null, rowStart: 1, layout: "prichody" },
+  { id: 3, name: "Podchod – ľavý monitor", description: "", source: "Odchody", rowCount: 4, rowStart: 1, layout: "cierna", separator: ", " },
+  { id: 4, name: "Podchod – pravý monitor", description: "", source: "Odchody", rowCount: 4, rowStart: 5, layout: "cierna", separator: ", " },
+].map((v) => ({ separator: "", template: "", parameter: "", ...v }));
+
 /** Ukazkova hodina statistiky v databaze servera (docshots/statistics.ts cez bun). */
 function seedStatistics() {
-  const db = join(import.meta.dirname, "..", "e2e", ".run", DOCSHOTS_SERVER.name, "tablesimulator.db");
+  const db = join(DATA, "tablesimulator.db");
   const result = spawnSync("bun", [join(import.meta.dirname, "statistics.ts"), db], { stdio: "inherit", shell: process.platform === "win32" });
   if (result.status !== 0) throw new Error(`Statistika: bun skoncil s kodom ${result.status}`);
 }
@@ -225,6 +245,16 @@ export default async function demo() {
 
   const scenario = await api.post("/api/scenarios", { data: SCENARIO });
   if (!scenario.ok()) throw new Error(`Scenar: ${await scenario.text()}`);
+
+  // priecinok logov INISSu s XML tabul a dennymi archivmi, virtualne tabule
+  const folder = writeInissLog(join(DATA, "iniss-log"));
+  const settings = (await (await api.get("/api/settings")).json()) as SettingsDto;
+  const saved = await api.put("/api/settings", { data: { ...settings, virtualFolders: [folder] } });
+  if (!saved.ok()) throw new Error(`Nastavenie: ${await saved.text()}`);
+  for (const { id, ...board } of VIRTUAL) {
+    const response = await api.put(`/api/virtual/${id}`, { data: board });
+    if (!response.ok()) throw new Error(`Virtualna tabula ${id}: ${await response.text()}`);
+  }
   await api.dispose();
 
   const recorder = await request.newContext({ baseURL: DOCSHOTS_SERVER.url, extraHTTPHeaders: API_HEADERS });
