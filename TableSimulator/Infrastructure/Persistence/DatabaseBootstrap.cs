@@ -21,15 +21,42 @@ public static partial class DatabaseBootstrap
     public const string ImportedSuffix = ".imported";
 
     /// <summary>Uvedie databazu do poriadku a vrati nastavenie servera.</summary>
-    public static async Task<AppSettings> PrepareAsync(AppPaths paths, ILogger logger, CancellationToken cancellationToken = default)
+    /// <param name="paths">priecinky servera</param>
+    /// <param name="database">databaza (SQLite alebo PostgreSQL podla <c>database.json</c>)</param>
+    /// <param name="logger">zaznam</param>
+    /// <param name="cancellationToken">zrusenie</param>
+    public static async Task<AppSettings> PrepareAsync(AppPaths paths, DatabaseConnection database, ILogger logger, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(paths);
+        ArgumentNullException.ThrowIfNull(database);
         ArgumentNullException.ThrowIfNull(logger);
-        await using var db = ServerDatabase.Open(paths.DatabaseFile);
+        DatabaseLog.Using(logger, database.Description);
+        await using var db = ServerDatabase.Open(database);
         await ServerDatabase.MigrateAsync(db, cancellationToken).ConfigureAwait(false);
         var settings = new SettingsRepository(db);
         if (settings.Load() is { } stored)
             return stored;
+
+        // nova databaza PostgreSQL zacina prazdna (bez liniek), len nastavenie servera (porty, pristup, priecinky) sa prevezme zo
+        // SQLite - inak by server po prepnuti nabehol na inom porte; linky, tabule a ostatne udaje prenesie obnova zalohy
+        if (database.Provider == DatabaseProvider.Postgres && File.Exists(paths.DatabaseFile))
+        {
+            AppSettings? previous;
+            await using (var sqlite = ServerDatabase.Open(paths.DatabaseFile))
+                previous = new SettingsRepository(sqlite).Load();
+            if (previous is not null)
+            {
+                await using (var transaction = await db.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    await new SimulatorConfigRepository(db).SaveAsync(new SimulatorConfig(), cancellationToken).ConfigureAwait(false);
+                    settings.Save(previous);
+                    await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                }
+
+                DatabaseLog.SettingsFromSqlite(logger, paths.DatabaseFile);
+                return previous;
+            }
+        }
 
         var imported = new List<string>();
         var legacySettings = ReadLegacy(paths.LegacySettingsFile, json => JsonSerializer.Deserialize<AppSettings>(json, JsonDefaults.Files), imported, logger);

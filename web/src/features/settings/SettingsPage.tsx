@@ -3,7 +3,20 @@
 import { useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useBlocker } from "@tanstack/react-router";
-import { BellRing, CircleAlert, DatabaseBackup, FolderOpen, Network, Save, Server, ShieldCheck, TrainFront, Undo2, type LucideIcon } from "lucide-react";
+import {
+  BellRing,
+  CircleAlert,
+  Database,
+  DatabaseBackup,
+  FolderOpen,
+  Network,
+  Save,
+  Server,
+  ShieldCheck,
+  TrainFront,
+  Undo2,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   errorText,
@@ -32,13 +45,14 @@ import { t, type TextKey } from "@/i18n";
 import { alertsRequest } from "./alerts";
 import { AlertsSection } from "./AlertsSection";
 import { BackupSection } from "./backup-section";
+import { DatabaseSection } from "./database-section";
 import { DesignsFound, FontsFound } from "./found-lists";
 import { HttpsSection } from "./HttpsSection";
 import { ServerSection } from "./server-section";
 import { useRestartServer } from "./use-restart-server";
 import { RestartBadge } from "./restart-badge";
 
-type SectionId = "folders" | "iniss" | "network" | "https" | "alerts" | "server" | "backup";
+type SectionId = "folders" | "iniss" | "network" | "https" | "alerts" | "server" | "database" | "backup";
 
 const SECTIONS: { id: SectionId; label: TextKey; icon: LucideIcon }[] = [
   { id: "folders", label: "settings.folders", icon: FolderOpen },
@@ -47,6 +61,7 @@ const SECTIONS: { id: SectionId; label: TextKey; icon: LucideIcon }[] = [
   { id: "https", label: "settings.https", icon: ShieldCheck },
   { id: "alerts", label: "settings.alerts", icon: BellRing },
   { id: "server", label: "settings.server", icon: Server },
+  { id: "database", label: "database.section", icon: Database },
   { id: "backup", label: "settings.backup", icon: DatabaseBackup },
 ];
 
@@ -261,6 +276,10 @@ export function SettingsPage() {
 
           <Section id="server" description={t("settings.server.hint")}>
             <ServerSection databasePath={form.databasePath} />
+          </Section>
+
+          <Section id="database" description={t("database.section.hint")}>
+            <DatabaseSection />
           </Section>
 
           <Section id="backup" description={t("settings.backup.hint")}>

@@ -10,15 +10,15 @@ namespace TableSimulator.Infrastructure.Settings;
 /// </summary>
 public sealed class DbSettingsStore : ISettingsStore
 {
-    private readonly string _databaseFile;
+    private readonly DatabaseConnection _database;
     private readonly Lock _lock = new();
     private AppSettings _current;
 
-    public DbSettingsStore(string databaseFile, AppSettings loaded, int? portOverride)
+    public DbSettingsStore(DatabaseConnection database, AppSettings loaded, int? portOverride)
     {
-        ArgumentNullException.ThrowIfNull(databaseFile);
+        ArgumentNullException.ThrowIfNull(database);
         ArgumentNullException.ThrowIfNull(loaded);
-        _databaseFile = databaseFile;
+        _database = database;
         _current = portOverride is { } port ? loaded with { HttpPort = port } : loaded;
     }
 
@@ -36,7 +36,7 @@ public sealed class DbSettingsStore : ISettingsStore
     public void Save(AppSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        using (var db = ServerDatabase.Open(_databaseFile))
+        using (var db = ServerDatabase.Open(_database))
             new SettingsRepository(db).Save(settings);
         lock (_lock)
             _current = settings;

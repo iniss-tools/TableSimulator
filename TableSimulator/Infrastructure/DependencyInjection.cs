@@ -1,5 +1,6 @@
 using TableSimulator.Application.Alerts;
 using TableSimulator.Application.Backup;
+using TableSimulator.Application.Database;
 using TableSimulator.Infrastructure.Alerts;
 using TableSimulator.Application.Https;
 using TableSimulator.Application.Live;
@@ -32,6 +33,7 @@ public static class DependencyInjection
         services.AddSingleton<TransportManager>();
         services.AddSingleton<SimulatorConfigStore>();
         services.AddSingleton<IServerBackup, ServerBackup>();
+        services.AddSingleton<IDatabaseSettings, DatabaseSettings>();
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<XmlTableFolders>();
         services.AddSingleton<LiveHub>();

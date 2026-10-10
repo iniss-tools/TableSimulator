@@ -1438,7 +1438,7 @@ export const sk = {
   "monitor.paused": "pozastavené",
   "settings.backup": "Záloha a obnova",
   "settings.backup.hint":
-    "Celý simulátor v jednom súbore ZIP: databáza (nastavenie, linky a tabule, používatelia a kľúče, virtuálne tabule, informačné panely, scenáre, štatistika, audit), vlastné vzhľady a súbory panelov, voliteľne aj záznamy komunikácie. Obnova sa použije pri najbližšom štarte servera; pôvodné údaje sa odložia do priečinka before-restore. Heslá certifikátu HTTPS a e-mailu sú šifrované kľúčmi tohto počítača – na inom počítači ich treba zadať znova.",
+    "Celý simulátor v jednom súbore ZIP: databáza (nastavenie, linky a tabule, používatelia a kľúče, virtuálne tabule, informačné panely, scenáre, štatistika, audit), vlastné vzhľady a súbory panelov, voliteľne aj záznamy komunikácie. Obnova sa použije pri najbližšom štarte servera; pôvodné údaje sa odložia do priečinka before-restore. Záloha má rovnaký tvar pri SQLite aj PostgreSQL – prenesiete ňou údaje aj medzi nimi. Heslá certifikátu HTTPS a e-mailu sú šifrované kľúčmi tohto počítača – na inom počítači ich treba zadať znova.",
   "backup.download": "Stiahnuť zálohu",
   "backup.recordings": "vrátane záznamov komunikácie",
   "backup.restore": "Obnoviť zo zálohy…",
@@ -1458,6 +1458,52 @@ export const sk = {
   "error.backup.noPending": "Žiadna obnova nie je pripravená.",
   "backup.last.done": "Naposledy obnovené {at} zo zálohy z {created}. Pôvodné údaje sú v {folder}.",
   "backup.last.failed": "Obnova {at} zlyhala ({error}) – server beží s pôvodnými údajmi, záloha ostala v {folder}.",
+  "database.section": "Databáza",
+  "database.section.hint":
+    "Kde simulátor ukladá svoje údaje: súbor SQLite v priečinku nastavení (predvolené) alebo server PostgreSQL. Výber je v súbore database.json mimo databázy a prejaví sa po reštarte simulátora.",
+  "database.active": "Používaná",
+  "database.sqlite": "SQLite",
+  "database.sqlite.option": "SQLite – súbor v priečinku nastavení",
+  "database.postgres": "PostgreSQL",
+  "database.provider": "Databáza",
+  "database.provider.sqlite.hint": "Netreba žiadny databázový server; zálohu databázy obsahuje záloha simulátora.",
+  "database.provider.postgres.hint":
+    "Údaje budú na serveri PostgreSQL. Súbor SQLite ostane bez zmeny – po návrate na SQLite simulátor pokračuje s údajmi, ktoré v ňom boli.",
+  "database.host": "Server",
+  "database.port": "Port",
+  "database.name": "Názov databázy",
+  "database.username": "Používateľ",
+  "database.username.hint":
+    "Prázdny = prihlásenie účtom Windows, ak ho server PostgreSQL dovoľuje. Stačí používateľ s právami k tejto databáze, nie správca servera.",
+  "database.password": "Heslo",
+  "database.options": "Ďalšie parametre pripojenia",
+  "database.options.hint":
+    "Voliteľné dvojice názov=hodnota oddelené bodkočiarkou, napr. SSL Mode=Require; Timeout=30. Heslo sem nepatrí – ukladá sa zašifrované pre tento počítač.",
+  "database.migration.hint":
+    "Nová databáza začne prázdna – prevezme len nastavenie servera (porty, prístup, priečinky). Linky, tabule, používateľov a ostatné údaje prenesiete zálohou: stiahnite zálohu, prepnite databázu, reštartujte simulátor a zálohu obnovte.",
+  "database.test": "Overiť pripojenie",
+  "database.test.ok": "Pripojenie v poriadku",
+  "database.test.failed": "Pripojenie zlyhalo",
+  "database.test.version": "PostgreSQL {version}",
+  "database.test.initialized": "Databáza už obsahuje údaje simulátora – po reštarte ich simulátor použije.",
+  "database.test.empty": "Databáza je prázdna – simulátor si v nej po reštarte založí tabuľky.",
+  "database.test.missing": "Databáza ešte neexistuje – simulátor ju po reštarte založí.",
+  "database.test.noSchemaRight":
+    "Používateľ nesmie v databáze zakladať tabuľky – pridajte mu na serveri PostgreSQL právo CREATE v schéme alebo ho nastavte ako vlastníka databázy.",
+  "database.test.noCreateRight": "Databáza neexistuje a používateľ ju nesmie založiť – založte ju na serveri PostgreSQL (vlastník = tento používateľ).",
+  "database.save": "Uložiť výber databázy",
+  "database.saved": "Výber databázy je uložený.",
+  "database.saved.restart": "Výber databázy je uložený – prejaví sa po reštarte simulátora.",
+  "database.restart.title": "Po reštarte bude simulátor používať databázu {database}",
+  "database.restart.service": "Simulátor beží ako služba Windows – reštartujte ho tlačidlom nižšie.",
+  "database.restart.manual": "Ukončite simulátor a spustite ho znova.",
+  "database.configError": "Výber databázy sa nedá prečítať: {error}",
+  "error.database.host": "Zadajte server PostgreSQL (bez medzier).",
+  "error.database.port": "Port musí byť od 1 do 65535.",
+  "error.database.name": "Zadajte názov databázy.",
+  "error.database.options":
+    "Ďalšie parametre musia byť dvojice názov=hodnota oddelené bodkočiarkou – bez servera, používateľa a hesla, tie majú vlastné polia.",
+  "database.discard": "Zahodiť",
 } as const;
 
 export type TextKey = keyof typeof sk;

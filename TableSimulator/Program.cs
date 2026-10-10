@@ -13,6 +13,7 @@ using TableSimulator.Infrastructure.OpenApi;
 using TableSimulator.Infrastructure.Persistence;
 using TableSimulator.Infrastructure.Realtime;
 using TableSimulator.Infrastructure.Settings;
+using TableSimulator.Application.Settings;
 using TableSimulator.Persistence;
 
 // parametre: --data <priecinok> (nastavenia a databaza), --port <cislo>, --no-browser, --reset-admin [meno] (nove heslo
@@ -30,10 +31,12 @@ try
         Log.Warning("Parameter --config je zruseny - linky a tabule su v databaze; subor nahrajte na stranke Linky (Importovat)");
     // nastavenie je v databaze - treba ho skor, nez sa server zostavi (porty, pristup zo siete, prihlasovanie)
     using var bootstrapLog = new SerilogLoggerFactory(Log.Logger);
+    // databaza podla database.json v priecinku nastaveni (bez neho SQLite)
+    var database = DatabaseConfig.ToConnection(paths, DatabaseConfig.Load(paths, bootstrapLog.CreateLogger(typeof(DatabaseConfig).FullName!)));
     // obnova zalohy pripravena z webu - skor, nez sa databaza otvori
-    await ServerBackup.ApplyPendingAsync(paths, bootstrapLog.CreateLogger(typeof(ServerBackup).FullName!), DateTimeOffset.Now);
-    var settings = new DbSettingsStore(paths.DatabaseFile,
-        await DatabaseBootstrap.PrepareAsync(paths, bootstrapLog.CreateLogger(typeof(DatabaseBootstrap).FullName!)), commandLine.Port);
+    await ServerBackup.ApplyPendingAsync(paths, database, bootstrapLog.CreateLogger(typeof(ServerBackup).FullName!), DateTimeOffset.Now);
+    var settings = new DbSettingsStore(database,
+        await DatabaseBootstrap.PrepareAsync(paths, database, bootstrapLog.CreateLogger(typeof(DatabaseBootstrap).FullName!)), commandLine.Port);
     var endpoints = ServerEndpoints.From(settings.Current);
 
     var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args, ContentRootPath = AppContext.BaseDirectory, WebRootPath = paths.WebRoot });
@@ -43,7 +46,9 @@ try
     builder.Services.AddSerilog((_, logger) => SerilogSetup.Configure(logger, paths));
     builder.Services.AddProblemDetails();
     builder.Services.AddInfrastructure(paths, settings, endpoints);
-    builder.Services.AddPersistence(paths.DatabaseFile);
+    builder.Services.AddPersistence(database);
+    builder.Services.AddSingleton(new DatabaseInfo(database.Provider == DatabaseProvider.Postgres ? DatabaseConfig.Postgres : DatabaseConfig.Sqlite,
+        database.Description));
     builder.Services.AddAuth(paths, new AuthMode(settings.Current.LoginRequired));
     builder.Services.AddApplication();
     builder.Services.AddEndpoints(typeof(Program).Assembly);

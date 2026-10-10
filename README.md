@@ -53,7 +53,8 @@ vetvu registra INISSu v HKCU prihláseného používateľa (načítanie stanice 
 
 ## Údaje servera
 
-Všetko, čo server uchováva, je v databáze `tablesimulator.db` (SQLite) v priečinku nastavení: nastavenie servera,
+Všetko, čo server uchováva, je v databáze – predvolene `tablesimulator.db` (SQLite) v priečinku nastavení, voliteľne
+na serveri PostgreSQL (pozri [Databáza PostgreSQL](#databáza-postgresql)): nastavenie servera,
 linky a tabule (profil tabule ako JSON v stĺpci, ostatné údaje v stĺpcoch, enumy kľúčmi z JSON – `display`,
 `noReply`…), používatelia, prístupové kľúče, audit, virtuálne tabule a ich rozloženia, informačné panely (správy,
 playlisty a skupiny ako JSON v stĺpci), scenáre porúch (kroky ako JSON v stĺpci; export liniek a tabúľ ich nenesie)
@@ -73,11 +74,53 @@ pridá len chýbajúce linky a tabule (ako pri nahratí záznamu), s voľbou *na
 všetky; neplatný súbor (`config.invalid`, aj tabuľa bez linky či nepodporovaná trieda) nič nezmení. Import je
 v audite (`ImportConfig`, cieľ `add`/`replace`).
 
+### Databáza PostgreSQL
+
+Namiesto súboru SQLite môže simulátor ukladať údaje na server PostgreSQL. Výber je mimo databázy v súbore
+`database.json` v priečinku nastavení; bez neho SQLite. Nastavuje sa v **Nastaveniach** v časti *Databáza*
+(`GET`/`PUT /api/database`, oprávnenie správy nastavení): server, port, databáza, používateľ (prázdny = prihlásenie
+účtom Windows, ak ho server PostgreSQL dovolí), heslo a ďalšie parametre Npgsql (napr. `SSL Mode=Require`, bez
+servera, používateľa a hesla). **Overiť pripojenie** (`POST /api/database/test`) skúsi prihlásenie a povie, či
+databáza existuje, či už má tabuľky simulátora a či ich používateľ smie založiť. Zmena sa prejaví **po reštarte
+servera** – pri službe Windows tlačidlom reštartu. Pri štarte server databázu založí (právo `CREATEDB`) alebo
+zmigruje (právo `CREATE` v schéme); stačí vlastník databázy, nie správca servera PostgreSQL. Ak server PostgreSQL pri štarte nie je dostupný, simulátor nenabehne (dôvod je v logu);
+služba Windows sa po zlyhaní spustí znova (po 5 s, 10 s a potom každú minútu).
+
+```json
+{
+  "provider": "postgres",
+  "postgres": { "host": "db.local", "port": 5432, "database": "tablesimulator", "username": "simulator", "password": "…", "options": "SSL Mode=Require" }
+}
+```
+
+Heslo je v súbore zašifrované DPAPI pre počítač (`protectedPassword`, ako kľúče ochrany dát) – kópia súboru na inom
+počítači nepomôže, správca tohto počítača ho však rozšifrovať vie; preto používateľ PostgreSQL len s právami
+k databáze simulátora. Čitateľné `password` napísané do súboru ručne server pri štarte zašifruje a súbor prepíše.
+Na inom počítači treba heslo zadať znova (server bez neho nenabehne a povie prečo).
+
+**Nová databáza začne prázdna** – prevezme len nastavenie servera zo SQLite (porty, prístup, priečinky), aby server
+nabehol na rovnakej adrese. Linky, tabule, používateľov a ostatné údaje prenesie záloha, ktorá má pri oboch
+databázach rovnaký tvar: stiahnuť zálohu, prepnúť databázu, reštartovať, obnoviť zálohu a znova reštartovať. Súbor
+SQLite ostáva bez zmeny – po návrate na SQLite simulátor pokračuje s údajmi, ktoré v ňom boli. Údaje medzi
+databázami prenáša `DatabaseCopier` (Persistence): rovnaký model, tabuľky v poradí cudzích kľúčov s pôvodnými
+kľúčmi, v PostgreSQL potom posunie postupnosti identity; všetko v jednej transakcii.
+
+Testy nad PostgreSQL (`PostgresTests`, časť `DatabaseApiTests`) bežia len s pripojením v premennej
+`TABLESIMULATOR_TEST_POSTGRES` (používateľ smie zakladať databázy – každý test si založí a zmaže vlastnú
+`ts_test_…`), inak sa preskočia. Stačí kontajner:
+
+```bash
+docker run -d --name ts-pg -e POSTGRES_PASSWORD=<heslo> -p 55432:5432 postgres:17
+```
+
+a `TABLESIMULATOR_TEST_POSTGRES=Host=localhost;Port=55432;Database=postgres;Username=postgres;Password=<heslo>`.
+
 ### Záloha a obnova
 
 V **Nastaveniach** v časti *Záloha a obnova* stiahne **Stiahnuť zálohu** celý simulátor ako ZIP (`GET /api/backup/file`,
 oprávnenie správy nastavení): `backup.json` (kedy, verzia servera, posledná migrácia, počty), `tablesimulator.db`
-(online kópia SQLite – linky a tabule sa predtým uložia), `designs/<id>/…` (vlastné vzhľady), `media/…` (súbory
+(online kópia SQLite – linky a tabule sa predtým uložia; pri PostgreSQL sa údaje prenesú do súboru SQLite rovnakého
+tvaru, takže zálohu obnoví server s ktoroukoľvek databázou), `designs/<id>/…` (vlastné vzhľady), `media/…` (súbory
 informačných panelov) a s voľbou *vrátane záznamov komunikácie* aj `recordings/*.tsrec`. Kľúče ochrany dát
 a certifikáty HTTPS sa nezálohujú – heslá certifikátu a e-mailu sú šifrované kľúčmi počítača a na inom počítači
 ich treba zadať znova (dovtedy sa správajú ako prázdne).
@@ -87,7 +130,8 @@ simulátora, migrácie – záloha z novšieho servera sa odmietne) a rozbalí d
 Použije sa pri **najbližšom štarte servera**, skôr než sa databáza otvorí – pri službe Windows tlačidlom reštartu,
 inak zastavením a spustením programu; dovtedy sa dá zrušiť (`DELETE /api/backup/restore`). Pri obnove sa databáza
 a súbory panelov vymenia celé, vlastné vzhľady a záznamy zo zálohy sa pridajú (rovnomenné sa nahradia); všetko
-pôvodné sa odloží do `before-restore\<čas>`. Ak obnova zlyhá, server nabehne s pôvodnou databázou a záloha ostane
+pôvodné sa odloží do `before-restore\<čas>` (pri PostgreSQL sa tabuľky vyprázdnia a naplnia zo zálohy a pôvodné
+údaje sa odložia ako `tablesimulator.db`). Ak obnova zlyhá, server nabehne s pôvodnou databázou a záloha ostane
 v `restore.failed-<čas>`. Výsledok poslednej obnovy (aj pri službe, kde nie je konzola) ukáže stránka
 (`GET /api/backup`, súbor `restore-result.json`).
 
@@ -568,7 +612,11 @@ Zmena databázy = nová migrácia pre každého poskytovateľa:
 
 ```bash
 dotnet ef migrations add <Nazov> --project TableSimulator.Persistence --startup-project TableSimulator.Persistence --context SqliteAppDbContext --output-dir Migrations/Sqlite
+dotnet ef migrations add <Nazov> --project TableSimulator.Persistence --startup-project TableSimulator.Persistence --context PostgresAppDbContext --output-dir Migrations/Postgres
 ```
+
+PostgreSQL ukladá časy (`timestamptz`) len v UTC – `PostgresAppDbContext` ich pri zápise prevedie, pri čítaní
+označí ako UTC.
 
 Server databázu pri štarte vytvorí alebo zmigruje (ešte pred zostavením servera – `DatabaseBootstrap` – kvôli
 nastaveniu) a doplní roly.

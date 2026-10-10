@@ -250,6 +250,26 @@ export type CreateUserRequest = {
     password: string;
 };
 
+export type DatabaseKind = 'sqlite' | 'postgres';
+
+export type DatabaseSettingsDto = {
+    active: DatabaseKind;
+    activeDescription: string;
+    provider: DatabaseKind;
+    postgres: PostgresSettingsDto;
+    restartRequired: boolean;
+    error: null | string;
+};
+
+export type DatabaseTestResultDto = {
+    ok: boolean;
+    error: null | string;
+    version: null | string;
+    exists: boolean;
+    canCreate: boolean;
+    initialized: boolean;
+};
+
 export type DesignFrameDto = {
     width: number;
     color: string;
@@ -605,6 +625,24 @@ export type PlayRequest = {
     loop: boolean;
     position: number;
     paused: boolean;
+};
+
+export type PostgresSettingsDto = {
+    host: string;
+    port: number;
+    database: string;
+    username: string;
+    passwordSet: boolean;
+    options: string;
+};
+
+export type PostgresSettingsRequest = {
+    host: string;
+    port: number;
+    database: string;
+    username: string;
+    password: null | string;
+    options: string;
 };
 
 export type RecorderStatusDto = {
@@ -1051,6 +1089,11 @@ export type TrafficStatisticsDto = {
     boards: Array<BoardTrafficPointDto>;
     statusChanges: Array<LineStatusChangeDto>;
     retentionDays: number;
+};
+
+export type UpdateDatabaseRequest = {
+    provider: DatabaseKind;
+    postgres: PostgresSettingsRequest;
 };
 
 export type UpdateReplayRequest = {
@@ -3207,6 +3250,81 @@ export type GetDesignsResponses = {
 };
 
 export type GetDesignsResponse = GetDesignsResponses[keyof GetDesignsResponses];
+
+export type GetDatabaseSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/database';
+};
+
+export type GetDatabaseSettingsErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetDatabaseSettingsError = GetDatabaseSettingsErrors[keyof GetDatabaseSettingsErrors];
+
+export type GetDatabaseSettingsResponses = {
+    /**
+     * OK
+     */
+    200: DatabaseSettingsDto;
+};
+
+export type GetDatabaseSettingsResponse = GetDatabaseSettingsResponses[keyof GetDatabaseSettingsResponses];
+
+export type UpdateDatabaseSettingsData = {
+    body: UpdateDatabaseRequest;
+    path?: never;
+    query?: never;
+    url: '/api/database';
+};
+
+export type UpdateDatabaseSettingsErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type UpdateDatabaseSettingsError = UpdateDatabaseSettingsErrors[keyof UpdateDatabaseSettingsErrors];
+
+export type UpdateDatabaseSettingsResponses = {
+    /**
+     * OK
+     */
+    200: DatabaseSettingsDto;
+};
+
+export type UpdateDatabaseSettingsResponse = UpdateDatabaseSettingsResponses[keyof UpdateDatabaseSettingsResponses];
+
+export type TestDatabaseData = {
+    body: PostgresSettingsRequest;
+    path?: never;
+    query?: never;
+    url: '/api/database/test';
+};
+
+export type TestDatabaseErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type TestDatabaseError = TestDatabaseErrors[keyof TestDatabaseErrors];
+
+export type TestDatabaseResponses = {
+    /**
+     * OK
+     */
+    200: DatabaseTestResultDto;
+};
+
+export type TestDatabaseResponse = TestDatabaseResponses[keyof TestDatabaseResponses];
 
 export type ExportConfigData = {
     body?: never;

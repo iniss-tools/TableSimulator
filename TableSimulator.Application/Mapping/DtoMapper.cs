@@ -169,12 +169,12 @@ public static partial class DtoMapper
             result.UnsupportedLines.ToArray(), result.SkippedBoards.ToArray());
     }
 
-    /// <summary>Nastavenie servera; <paramref name="paths" /> doplni subor databazy.</summary>
-    public static SettingsDto ToDto(AppSettings settings, AppPaths paths)
+    /// <summary>Nastavenie servera; <paramref name="database" /> doplni popis databazy.</summary>
+    public static SettingsDto ToDto(AppSettings settings, DatabaseInfo database)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        ArgumentNullException.ThrowIfNull(paths);
-        return new SettingsDto(settings.HttpPort, settings.AllowNetwork, settings.FontsFolder, settings.DesignsFolder, settings.ConnectHost, paths.DatabaseFile)
+        ArgumentNullException.ThrowIfNull(database);
+        return new SettingsDto(settings.HttpPort, settings.AllowNetwork, settings.FontsFolder, settings.DesignsFolder, settings.ConnectHost, database.Description)
         {
             MonitorFolder = settings.MonitorFolder,
             RequireLogin = settings.RequireLogin,

@@ -66,7 +66,7 @@ public sealed class DatabaseBootstrapTests
         await File.WriteAllTextAsync(paths.LegacySettingsFile, """{"httpPort":5999,"requireLogin":true,"monitorFolder":"C:\\Monitor","virtualFolders":["C:\\Logy"]}""");
         await File.WriteAllTextAsync(paths.LegacyConfigFile, SimulatorConfigJson.Serialize(Config));
 
-        var settings = await DatabaseBootstrap.PrepareAsync(paths, NullLogger.Instance);
+        var settings = await DatabaseBootstrap.PrepareAsync(paths, DatabaseConnection.Sqlite(paths.DatabaseFile), NullLogger.Instance);
 
         Assert.AreEqual(5999, settings.HttpPort);
         Assert.IsTrue(settings.RequireLogin);
@@ -78,7 +78,7 @@ public sealed class DatabaseBootstrapTests
 
         // druhy start - z databazy, novy subor sa uz nepouzije
         await File.WriteAllTextAsync(paths.LegacySettingsFile, """{"httpPort":6000}""");
-        Assert.AreEqual(5999, (await DatabaseBootstrap.PrepareAsync(paths, NullLogger.Instance)).HttpPort);
+        Assert.AreEqual(5999, (await DatabaseBootstrap.PrepareAsync(paths, DatabaseConnection.Sqlite(paths.DatabaseFile), NullLogger.Instance)).HttpPort);
         Assert.IsTrue(File.Exists(paths.LegacySettingsFile));
     }
 
@@ -87,7 +87,7 @@ public sealed class DatabaseBootstrapTests
     {
         var paths = Paths();
 
-        var settings = await DatabaseBootstrap.PrepareAsync(paths, NullLogger.Instance);
+        var settings = await DatabaseBootstrap.PrepareAsync(paths, DatabaseConnection.Sqlite(paths.DatabaseFile), NullLogger.Instance);
 
         Assert.AreEqual(new AppSettings().HttpPort, settings.HttpPort);
         Assert.AreEqual(SimulatorConfigJson.Serialize(DatabaseBootstrap.DefaultConfig()), SimulatorConfigJson.Serialize(await LoadAsync(paths)));
@@ -100,7 +100,7 @@ public sealed class DatabaseBootstrapTests
         await File.WriteAllTextAsync(paths.LegacySettingsFile, "{zle");
         await File.WriteAllTextAsync(paths.LegacyConfigFile, "[]");
 
-        var settings = await DatabaseBootstrap.PrepareAsync(paths, NullLogger.Instance);
+        var settings = await DatabaseBootstrap.PrepareAsync(paths, DatabaseConnection.Sqlite(paths.DatabaseFile), NullLogger.Instance);
 
         Assert.AreEqual(new AppSettings().HttpPort, settings.HttpPort);
         Assert.IsTrue(File.Exists(paths.LegacySettingsFile + ".bad"));
@@ -112,7 +112,7 @@ public sealed class DatabaseBootstrapTests
     public async Task Ulozenie_NahradiVsetkoAEnumyAkoKluceJson()
     {
         var paths = Paths();
-        await DatabaseBootstrap.PrepareAsync(paths, NullLogger.Instance);
+        await DatabaseBootstrap.PrepareAsync(paths, DatabaseConnection.Sqlite(paths.DatabaseFile), NullLogger.Instance);
         await using var db = ServerDatabase.Open(paths.DatabaseFile);
         var repository = new SimulatorConfigRepository(db);
 
@@ -132,7 +132,7 @@ public sealed class DatabaseBootstrapTests
     public async Task Nastavenie_UlozeneVsetkyHodnoty()
     {
         var paths = Paths();
-        await DatabaseBootstrap.PrepareAsync(paths, NullLogger.Instance);
+        await DatabaseBootstrap.PrepareAsync(paths, DatabaseConnection.Sqlite(paths.DatabaseFile), NullLogger.Instance);
         var settings = new AppSettings
         {
             HttpPort = 5480, AllowNetwork = true, RequireLogin = true, FontsFolder = "F", DesignsFolder = "D", ConnectHost = "10.0.0.5",

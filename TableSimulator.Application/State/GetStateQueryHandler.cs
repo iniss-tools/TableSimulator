@@ -7,7 +7,7 @@ using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Application.State;
 
-public sealed class GetStateQueryHandler(Simulator simulator, ISettingsStore settings, AppPaths paths) : IQueryHandler<GetStateQuery, StateDto>
+public sealed class GetStateQueryHandler(Simulator simulator, ISettingsStore settings, DatabaseInfo database) : IQueryHandler<GetStateQuery, StateDto>
 {
     public Task<Result<StateDto>> Handle(GetStateQuery query, CancellationToken cancellationToken)
     {
@@ -17,7 +17,7 @@ public sealed class GetStateQueryHandler(Simulator simulator, ISettingsStore set
             s.Boards.Select(DtoMapper.ToDto).ToArray(),
             Simulator.SupportedClasses.ToArray(),
             DtoMapper.Manufacturers,
-            DtoMapper.ToDto(current, paths)));
+            DtoMapper.ToDto(current, database)));
         return Task.FromResult(Result.Success(state));
     }
 }

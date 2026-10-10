@@ -5,8 +5,8 @@ using TableSimulator.Contracts.Settings;
 
 namespace TableSimulator.Application.Settings;
 
-public sealed class GetSettingsQueryHandler(ISettingsStore settings, AppPaths paths) : IQueryHandler<GetSettingsQuery, SettingsDto>
+public sealed class GetSettingsQueryHandler(ISettingsStore settings, DatabaseInfo database) : IQueryHandler<GetSettingsQuery, SettingsDto>
 {
     public Task<Result<SettingsDto>> Handle(GetSettingsQuery query, CancellationToken cancellationToken) =>
-        Task.FromResult(Result.Success(DtoMapper.ToDto(settings.Current, paths)));
+        Task.FromResult(Result.Success(DtoMapper.ToDto(settings.Current, database)));
 }

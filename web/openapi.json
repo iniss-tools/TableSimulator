@@ -2819,6 +2819,114 @@
         }
       }
     },
+    "/api/database": {
+      "get": {
+        "tags": [
+          "Database"
+        ],
+        "operationId": "GetDatabaseSettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatabaseSettingsDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Database"
+        ],
+        "operationId": "UpdateDatabaseSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDatabaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatabaseSettingsDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/database/test": {
+      "post": {
+        "tags": [
+          "Database"
+        ],
+        "operationId": "TestDatabase",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostgresSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatabaseTestResultDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/config": {
       "get": {
         "tags": [
@@ -4693,6 +4801,83 @@
           }
         }
       },
+      "DatabaseKind": {
+        "enum": [
+          "sqlite",
+          "postgres"
+        ]
+      },
+      "DatabaseSettingsDto": {
+        "required": [
+          "active",
+          "activeDescription",
+          "provider",
+          "postgres",
+          "restartRequired",
+          "error"
+        ],
+        "type": "object",
+        "properties": {
+          "active": {
+            "$ref": "#/components/schemas/DatabaseKind"
+          },
+          "activeDescription": {
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/DatabaseKind"
+          },
+          "postgres": {
+            "$ref": "#/components/schemas/PostgresSettingsDto"
+          },
+          "restartRequired": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "DatabaseTestResultDto": {
+        "required": [
+          "ok",
+          "error",
+          "version",
+          "exists",
+          "canCreate",
+          "initialized"
+        ],
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "version": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exists": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "initialized": {
+            "type": "boolean"
+          }
+        }
+      },
       "DesignFrameDto": {
         "required": [
           "width",
@@ -6187,6 +6372,73 @@
           },
           "paused": {
             "type": "boolean"
+          }
+        }
+      },
+      "PostgresSettingsDto": {
+        "required": [
+          "host",
+          "port",
+          "database",
+          "username",
+          "passwordSet",
+          "options"
+        ],
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "database": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "passwordSet": {
+            "type": "boolean"
+          },
+          "options": {
+            "type": "string"
+          }
+        }
+      },
+      "PostgresSettingsRequest": {
+        "required": [
+          "host",
+          "port",
+          "database",
+          "username",
+          "password",
+          "options"
+        ],
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "database": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "options": {
+            "type": "string"
           }
         }
       },
@@ -8067,6 +8319,21 @@
           }
         }
       },
+      "UpdateDatabaseRequest": {
+        "required": [
+          "provider",
+          "postgres"
+        ],
+        "type": "object",
+        "properties": {
+          "provider": {
+            "$ref": "#/components/schemas/DatabaseKind"
+          },
+          "postgres": {
+            "$ref": "#/components/schemas/PostgresSettingsRequest"
+          }
+        }
+      },
       "UpdateReplayRequest": {
         "required": [
           "paused",
@@ -8858,6 +9125,9 @@
     },
     {
       "name": "Designs"
+    },
+    {
+      "name": "Database"
     },
     {
       "name": "Config"

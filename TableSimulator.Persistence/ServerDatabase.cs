@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using TableSimulator.Persistence.Postgres;
 using TableSimulator.Persistence.Sqlite;
 
 namespace TableSimulator.Persistence;
@@ -13,9 +14,18 @@ public static class ServerDatabase
     public static string ConnectionString(string databaseFile) =>
         new SqliteConnectionStringBuilder { DataSource = databaseFile, Pooling = false }.ToString();
 
-    /// <summary>Databaza v subore <paramref name="databaseFile" /> (volajuci ju uvolni).</summary>
+    /// <summary>Databaza v subore SQLite <paramref name="databaseFile" /> (volajuci ju uvolni).</summary>
     public static AppDbContext Open(string databaseFile) =>
         new SqliteAppDbContext(new DbContextOptionsBuilder<SqliteAppDbContext>().UseSqlite(ConnectionString(databaseFile)).Options);
+
+    /// <summary>Databaza podla poskytovatela (volajuci ju uvolni).</summary>
+    public static AppDbContext Open(DatabaseConnection database)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+        return database.Provider == DatabaseProvider.Postgres
+            ? new PostgresAppDbContext(new DbContextOptionsBuilder<PostgresAppDbContext>().UseNpgsql(database.ConnectionString).Options)
+            : new SqliteAppDbContext(new DbContextOptionsBuilder<SqliteAppDbContext>().UseSqlite(database.ConnectionString).Options);
+    }
 
     /// <summary>
     /// Konzistentna kopia databazy do suboru <paramref name="targetFile" /> pocas behu servera (online zaloha SQLite -
@@ -43,8 +53,8 @@ public static class ServerDatabase
     public static async Task MigrateAsync(AppDbContext db, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(db);
-        var folder = Path.GetDirectoryName(db.Database.GetDbConnection().DataSource);
-        if (!string.IsNullOrEmpty(folder))
+        // priecinok len pre subor SQLite - pri PostgreSQL je DataSource adresa servera
+        if (db is SqliteAppDbContext && Path.GetDirectoryName(db.Database.GetDbConnection().DataSource) is { Length: > 0 } folder)
             Directory.CreateDirectory(folder);
         await db.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
     }
