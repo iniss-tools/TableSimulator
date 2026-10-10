@@ -565,6 +565,11 @@ namespace TableSimulator.Persistence.Migrations.Postgres
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
                     b.Property<string>("Name")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
@@ -572,6 +577,9 @@ namespace TableSimulator.Persistence.Migrations.Postgres
                     b.Property<string>("NormalizedName")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.PrimitiveCollection<List<string>>("Permissions")
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 

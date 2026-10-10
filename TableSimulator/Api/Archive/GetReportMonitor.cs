@@ -15,5 +15,5 @@ public sealed class GetReportMonitor : IEndpoint
         app.MapGet("archive/reports/live", async (int? limit, IQueryHandler<GetReportMonitorQuery, ReportMonitorDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new GetReportMonitorQuery(limit ?? DefaultLimit), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<ReportMonitorDto>()
-            .RequireAuthorization(Permissions.SimulatorView);
+            .RequireAuthorization(Permissions.ArchiveView);
 }

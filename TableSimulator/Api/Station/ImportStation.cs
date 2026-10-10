@@ -14,5 +14,5 @@ public sealed class ImportStation : IEndpoint
             CancellationToken cancellationToken) =>
             (await handler.Handle(new ImportStationCommand(request), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<StationImportedDto>()
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.LinesManage);
 }

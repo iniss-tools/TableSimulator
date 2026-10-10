@@ -28,7 +28,9 @@ function newBoard(line: number, manufacturer: string): SetBoardRequest {
 
 export function BoardsPage() {
   const live = useSimulatorState();
-  const edit = useCan()(PERMISSIONS.edit);
+  const can = useCan();
+  const edit = can(PERMISSIONS.lines);
+  const control = can(PERMISSIONS.boards);
   const [filter, setFilter] = useState(ALL_LINES);
   const [editing, setEditing] = useState<{ config: SetBoardRequest; isNew: boolean } | null>(null);
   const monitor = useQuery(getMonitorOptions()).data;
@@ -83,7 +85,7 @@ export function BoardsPage() {
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,560px),1fr))] gap-4">
           {boards.map((b) => (
-            <BoardCard key={b.id} board={b} edit={edit} onEdit={() => setEditing({ config: boardConfig(b), isNew: false })} />
+            <BoardCard key={b.id} board={b} edit={edit} control={control} onEdit={() => setEditing({ config: boardConfig(b), isNew: false })} />
           ))}
         </div>
       )}

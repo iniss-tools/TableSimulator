@@ -1,7 +1,8 @@
 namespace TableSimulator.Application.Auth;
 
 /// <summary>
-/// Pevne roly a ich opravnenia: spravca smie vsetko, operator ovlada simulator, pozorovatel len pozera.
+/// Vstavane roly: spravca smie vzdy vsetko (aj opravnenia pridane neskor), operator a pozorovatel su upravitelne
+/// predvolene roly. Dalsie roly si zaklada spravca (<see cref="RoleCatalog" />).
 /// </summary>
 public static class Roles
 {
@@ -9,19 +10,26 @@ public static class Roles
     public const string Operator = "operator";
     public const string Viewer = "viewer";
 
-    private static readonly Dictionary<string, string[]> Map = new(StringComparer.Ordinal)
+    /// <summary>Najdlhsi nazov roly.</summary>
+    public const int MaxDisplayName = 40;
+
+    /// <summary>Vstavane roly od najvyssej.</summary>
+    public static IReadOnlyList<string> BuiltIn { get; } = [Admin, Operator, Viewer];
+
+    /// <summary>Rola je vstavana (neda sa zmazat; spravca ani upravit).</summary>
+    public static bool IsBuiltIn(string? role) => role is Admin or Operator or Viewer;
+
+    /// <summary>Predvolene opravnenia vstavanej roly (pri prvom starte a po aktualizacii zo starych pevnych roli).</summary>
+    public static IReadOnlyList<string> DefaultsOf(string? role) => role switch
     {
-        [Admin] = [.. Permissions.All],
-        [Operator] = [Permissions.SimulatorView, Permissions.LogView, Permissions.SimulatorEdit, Permissions.RecordingsManage],
-        [Viewer] = [Permissions.SimulatorView, Permissions.LogView]
+        Admin => Permissions.All,
+        Operator =>
+        [
+            Permissions.SimulatorView, Permissions.LogView, Permissions.ArchiveView, Permissions.StatisticsView, Permissions.LinesManage,
+            Permissions.BoardsControl, Permissions.ScenariosManage, Permissions.DesignsManage, Permissions.RecordingsManage, Permissions.VirtualManage,
+            Permissions.SignageManage
+        ],
+        Viewer => [Permissions.SimulatorView, Permissions.LogView, Permissions.ArchiveView, Permissions.StatisticsView],
+        _ => []
     };
-
-    /// <summary>Vsetky roly od najvyssej.</summary>
-    public static IReadOnlyList<string> All { get; } = [Admin, Operator, Viewer];
-
-    /// <summary>Opravnenia roly; neznama rola nema ziadne.</summary>
-    public static IReadOnlyList<string> PermissionsOf(string? role) => role is not null && Map.TryGetValue(role, out var p) ? p : [];
-
-    /// <summary>Roly, ktore opravnenie maju.</summary>
-    public static IReadOnlyList<string> WithPermission(string permission) => All.Where(r => Map[r].Contains(permission)).ToArray();
 }

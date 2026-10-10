@@ -10,13 +10,15 @@ namespace TableSimulator.Infrastructure.Auth;
 
 /// <summary>
 /// Sprava pouzivatelov cez ASP.NET Core Identity. Zmena roly sa prihlasenemu prejavi pri dalsom overeni prihlasenia
-/// (do minuty); vypnutie, nove heslo a odstranenie zmenia razitko a prihlasenie zrusia.
+/// (do minuty); vypnutie, nove heslo a odstranenie zmenia razitko a prihlasenie zrusia. Pouzivatel bez niektoreho
+/// opravnenia nesmie pridelit rolu s nim ani spravovat pouzivatela s takou rolou (napr. nastavit heslo spravcovi).
 /// </summary>
 public sealed class UserService(
     UserManager<AppUser> users,
     SignInManager<AppUser> signIn,
     AuthMode mode,
     ICurrentUser current,
+    RoleCatalog roles,
     LoginThrottle throttle,
     TimeProvider time) : IUserService
 {
@@ -36,6 +38,8 @@ public sealed class UserService(
 
     public async Task<Result> CreateAsync(string userName, string displayName, string role, string password, CancellationToken cancellationToken)
     {
+        if (!CanManage(role))
+            return Result.Failure(UserErrors.RoleTooHigh());
         var user = new AppUser { UserName = userName, DisplayName = displayName, CreatedAt = time.GetUtcNow() };
         var created = await users.CreateAsync(user, password).ConfigureAwait(false);
         if (!created.Succeeded)
@@ -49,6 +53,8 @@ public sealed class UserService(
         if (await users.FindByNameAsync(userName).ConfigureAwait(false) is not { } user)
             return Result.Failure(UserErrors.NotFound(userName));
         var oldRole = await RoleOfAsync(user).ConfigureAwait(false);
+        if (!CanManage(oldRole) || !CanManage(role))
+            return Result.Failure(UserErrors.RoleTooHigh());
         if (IsSelf(user) && (role != oldRole || disabled))
             return Result.Failure(UserErrors.Self());
         if (LosesAdmin(user, oldRole, role == Roles.Admin && !disabled) && await EnabledAdminsAsync().ConfigureAwait(false) <= 1)
@@ -76,6 +82,8 @@ public sealed class UserService(
     {
         if (await users.FindByNameAsync(userName).ConfigureAwait(false) is not { } user)
             return Result.Failure(UserErrors.NotFound(userName));
+        if (!CanManage(await RoleOfAsync(user).ConfigureAwait(false)))
+            return Result.Failure(UserErrors.RoleTooHigh());
         // heslo sa overi skor, nez sa stare odstrani - pouzivatel nesmie ostat bez hesla
         foreach (var validator in users.PasswordValidators)
         {
@@ -97,10 +105,12 @@ public sealed class UserService(
         return await UnlockAsync(user).ConfigureAwait(false);
     }
 
-    public async Task<Result> UnlockAsync(string userName, CancellationToken cancellationToken) =>
-        await users.FindByNameAsync(userName).ConfigureAwait(false) is { } user
-            ? await UnlockAsync(user).ConfigureAwait(false)
-            : Result.Failure(UserErrors.NotFound(userName));
+    public async Task<Result> UnlockAsync(string userName, CancellationToken cancellationToken)
+    {
+        if (await users.FindByNameAsync(userName).ConfigureAwait(false) is not { } user)
+            return Result.Failure(UserErrors.NotFound(userName));
+        return CanManage(await RoleOfAsync(user).ConfigureAwait(false)) ? await UnlockAsync(user).ConfigureAwait(false) : Result.Failure(UserErrors.RoleTooHigh());
+    }
 
     public async Task<Result> DeleteAsync(string userName, CancellationToken cancellationToken)
     {
@@ -108,7 +118,10 @@ public sealed class UserService(
             return Result.Failure(UserErrors.NotFound(userName));
         if (IsSelf(user))
             return Result.Failure(UserErrors.Self());
-        if (LosesAdmin(user, await RoleOfAsync(user).ConfigureAwait(false), false) && await EnabledAdminsAsync().ConfigureAwait(false) <= 1)
+        var role = await RoleOfAsync(user).ConfigureAwait(false);
+        if (!CanManage(role))
+            return Result.Failure(UserErrors.RoleTooHigh());
+        if (LosesAdmin(user, role, false) && await EnabledAdminsAsync().ConfigureAwait(false) <= 1)
             return Result.Failure(UserErrors.LastAdmin());
         var deleted = await users.DeleteAsync(user).ConfigureAwait(false);
         return deleted.Succeeded ? Result.Success() : Result.Failure(IdentityErrors.ToError(deleted.Errors));
@@ -146,6 +159,9 @@ public sealed class UserService(
     /// <summary>Prihlaseny pouzivatel meni sam seba (bez prihlasovania je kazdy "local" - nikto z databazy).</summary>
     private bool IsSelf(AppUser user) => mode.LoginRequired && string.Equals(user.UserName, current.UserName, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Prihlaseny ma vsetky opravnenia roly - smie ju pridelit a spravovat pouzivatelov s nou.</summary>
+    private bool CanManage(string role) => roles.Covers(current.Role, roles.PermissionsOf(role));
+
     /// <summary>Aktivny spravca prestane byt aktivnym spravcom.</summary>
     private static bool LosesAdmin(AppUser user, string oldRole, bool staysAdmin) => oldRole == Roles.Admin && !user.IsDisabled && !staysAdmin;
 
@@ -153,7 +169,7 @@ public sealed class UserService(
 
     private async Task<string> RoleOfAsync(AppUser user)
     {
-        var roles = await users.GetRolesAsync(user).ConfigureAwait(false);
-        return Roles.All.FirstOrDefault(roles.Contains) ?? Roles.Viewer;
+        var assigned = await users.GetRolesAsync(user).ConfigureAwait(false);
+        return assigned.Count > 0 ? assigned[0] : Roles.Viewer;
     }
 }

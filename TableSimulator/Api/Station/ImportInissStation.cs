@@ -13,5 +13,5 @@ public sealed class ImportInissStation : IEndpoint
         app.MapPost("station/iniss", async (ICommandHandler<ImportInissStationCommand, StationImportedDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new ImportInissStationCommand(), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<StationImportedDto>()
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.LinesManage);
 }

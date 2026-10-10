@@ -1,24 +1,41 @@
-// Opravnenia a roly (rovnake nazvy ako politiky a roly servera - TableSimulator.Application.Auth).
+// Opravnenia a vstavane roly (rovnake kluce ako politiky a roly servera - TableSimulator.Application.Auth).
 import type { MeDto } from "./generated/types.gen";
 
 export const PERMISSIONS = {
   view: "simulator.view",
   log: "log.view",
-  edit: "simulator.edit",
-  recordings: "recordings.manage",
-  settings: "settings.manage",
-  users: "users.manage",
+  archive: "archive.view",
+  statistics: "statistics.view",
   audit: "audit.view",
+  lines: "lines.manage",
+  boards: "boards.control",
+  scenarios: "scenarios.manage",
+  designs: "designs.manage",
+  recordings: "recordings.manage",
+  virtual: "virtual.manage",
+  signage: "signage.manage",
+  settings: "settings.manage",
+  server: "server.manage",
+  users: "users.manage",
+  keys: "keys.manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
-export type Role = "admin" | "operator" | "viewer";
+/** Vsetky opravnenia v poradi servera. */
+export const ALL_PERMISSIONS: Permission[] = Object.values(PERMISSIONS);
 
-/** Roly od najvyssej. */
-export const ROLES: Role[] = ["admin", "operator", "viewer"];
+/** Vstavane roly od najvyssej - nazov im dava rozhranie podla jazyka. */
+export const BUILT_IN_ROLES = ["admin", "operator", "viewer"] as const;
 
-/** Ci prihlaseny pouzivatel ma opravnenie. */
-export function can(me: MeDto | null | undefined, permission: Permission): boolean {
-  return me?.permissions.includes(permission) ?? false;
+export type BuiltInRole = (typeof BUILT_IN_ROLES)[number];
+
+export function isBuiltInRole(name: string | null | undefined): name is BuiltInRole {
+  return BUILT_IN_ROLES.includes(name as BuiltInRole);
+}
+
+/** Ci prihlaseny pouzivatel ma opravnenie (pri zozname aspon jedno z nich). */
+export function can(me: MeDto | null | undefined, permission: Permission | readonly Permission[]): boolean {
+  const own = me?.permissions ?? [];
+  return typeof permission === "string" ? own.includes(permission) : permission.some((p) => own.includes(p));
 }

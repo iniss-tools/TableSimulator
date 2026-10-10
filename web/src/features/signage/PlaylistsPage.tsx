@@ -26,7 +26,7 @@ import { durationText, itemDuration, newPlaylist, playlistSummary, todayIso } fr
 const column = columnsFor<SignagePlaylistDto>();
 
 export function PlaylistsPage() {
-  const edit = useCan()(PERMISSIONS.edit);
+  const edit = useCan()(PERMISSIONS.signage);
   const data = useQuery(getSignageOverviewOptions()).data;
   const [editing, setEditing] = useState<{ id: number | null; playlist: SetSignagePlaylistRequest } | null>(null);
 

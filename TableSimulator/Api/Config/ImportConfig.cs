@@ -14,5 +14,5 @@ public sealed class ImportConfig : IEndpoint
                 CancellationToken cancellationToken) =>
             (await handler.Handle(new ImportConfigCommand(request.Content ?? "", request.Replace), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<ConfigImportedDto>()
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.LinesManage);
 }

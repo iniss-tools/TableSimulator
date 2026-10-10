@@ -12,5 +12,5 @@ public sealed class DeleteVirtualBoard : IEndpoint
         app.MapDelete("virtual/{id:int}", async (int id, ICommandHandler<DeleteVirtualBoardCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new DeleteVirtualBoardCommand(id), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(StatusCodes.Status204NoContent)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.VirtualManage);
 }

@@ -109,7 +109,7 @@ const sourceColumn = columnsFor<VirtualSourceDto>();
 const layoutColumn = columnsFor<VirtualLayoutDto>();
 
 export function VirtualBoardsPage() {
-  const edit = useCan()(PERMISSIONS.edit);
+  const edit = useCan()(PERMISSIONS.virtual);
   // zmeny XML a definicii prinasa WebSocket (live.ts)
   const overview = useQuery(getVirtualOverviewOptions());
   const data = overview.data;

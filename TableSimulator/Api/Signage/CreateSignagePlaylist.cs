@@ -14,5 +14,5 @@ public sealed class CreateSignagePlaylist : IEndpoint
             CancellationToken cancellationToken) =>
             (await handler.Handle(new SaveSignagePlaylistCommand(null, request), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<SignageCreatedDto>()
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.SignageManage);
 }

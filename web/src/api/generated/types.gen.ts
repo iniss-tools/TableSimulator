@@ -591,6 +591,7 @@ export type MeDto = {
     userName: null | string;
     displayName: null | string;
     role: null | string;
+    roleName: null | string;
     permissions: Array<string>;
     accessKey: boolean;
 };
@@ -738,6 +739,19 @@ export type RestoreResultDto = {
     error: null | string;
 };
 
+export type RoleCreatedDto = {
+    name: string;
+};
+
+export type RoleDto = {
+    name: string;
+    displayName: string;
+    builtIn: boolean;
+    permissions: Array<string>;
+    users: number;
+    keys: number;
+};
+
 export type RowDto = {
     row: number;
     elements: Array<ElementDto>;
@@ -818,6 +832,11 @@ export type SetLineRequest = {
 
 export type SetPasswordRequest = {
     password: string;
+};
+
+export type SetRoleRequest = {
+    displayName: string;
+    permissions: Array<string>;
 };
 
 export type SetSignageGroupRequest = {
@@ -2493,6 +2512,110 @@ export type StopFaultScenarioResponses = {
 };
 
 export type StopFaultScenarioResponse = StopFaultScenarioResponses[keyof StopFaultScenarioResponses];
+
+export type GetRolesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/roles';
+};
+
+export type GetRolesErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetRolesError = GetRolesErrors[keyof GetRolesErrors];
+
+export type GetRolesResponses = {
+    /**
+     * OK
+     */
+    200: Array<RoleDto>;
+};
+
+export type GetRolesResponse = GetRolesResponses[keyof GetRolesResponses];
+
+export type CreateRoleData = {
+    body: SetRoleRequest;
+    path?: never;
+    query?: never;
+    url: '/api/roles';
+};
+
+export type CreateRoleErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type CreateRoleError = CreateRoleErrors[keyof CreateRoleErrors];
+
+export type CreateRoleResponses = {
+    /**
+     * OK
+     */
+    200: RoleCreatedDto;
+};
+
+export type CreateRoleResponse = CreateRoleResponses[keyof CreateRoleResponses];
+
+export type DeleteRoleData = {
+    body?: never;
+    path: {
+        name: string;
+    };
+    query?: never;
+    url: '/api/roles/{name}';
+};
+
+export type DeleteRoleErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type DeleteRoleError = DeleteRoleErrors[keyof DeleteRoleErrors];
+
+export type DeleteRoleResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteRoleResponse = DeleteRoleResponses[keyof DeleteRoleResponses];
+
+export type UpdateRoleData = {
+    body: SetRoleRequest;
+    path: {
+        name: string;
+    };
+    query?: never;
+    url: '/api/roles/{name}';
+};
+
+export type UpdateRoleErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type UpdateRoleError = UpdateRoleErrors[keyof UpdateRoleErrors];
+
+export type UpdateRoleResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type UpdateRoleResponse = UpdateRoleResponses[keyof UpdateRoleResponses];
 
 export type PlayRecordingData = {
     body: PlayRequest;

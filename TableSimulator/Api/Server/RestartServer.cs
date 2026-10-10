@@ -12,5 +12,5 @@ public sealed class RestartServer : IEndpoint
         app.MapPost("server/restart", async (ICommandHandler<RestartServerCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new RestartServerCommand(), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(204)
-            .RequireAuthorization(Permissions.SettingsManage);
+            .RequireAuthorization(Permissions.ServerManage);
 }

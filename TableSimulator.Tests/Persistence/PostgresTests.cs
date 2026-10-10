@@ -76,7 +76,7 @@ public sealed class PostgresTests
             CancellationToken.None);
         await new AccessKeyRepository(db).AddAsync(new AccessKey(Guid.NewGuid(), "Tablet", "device", "viewer", "abc", "hash1",
             new DateTime(2026, 10, 1, 6, 0, 0, DateTimeKind.Utc), "admin", null), CancellationToken.None);
-        var role = new AppRole { Id = Guid.NewGuid(), Name = "admin", NormalizedName = "ADMIN" };
+        var role = new AppRole { Id = Guid.NewGuid(), Name = "panely", NormalizedName = "PANELY", DisplayName = "Panely", Permissions = ["simulator.view", "signage.manage"] };
         var user = new AppUser
         {
             Id = Guid.NewGuid(), UserName = "spravca", NormalizedUserName = "SPRAVCA", DisplayName = "Správca",
@@ -107,6 +107,8 @@ public sealed class PostgresTests
         var user = await db.Users.SingleAsync();
         Assert.AreEqual(new DateTimeOffset(2026, 10, 1, 6, 0, 0, TimeSpan.Zero), user.CreatedAt.ToUniversalTime());
         Assert.AreEqual(1, await db.UserRoles.CountAsync());
+        // opravnenia roly: v SQLite JSON, v PostgreSQL pole text[]
+        CollectionAssert.AreEqual(new[] { "simulator.view", "signage.manage" }, (await db.Roles.SingleAsync()).Permissions);
         var data = await new TrafficStatisticsRepository(db).QueryAsync(990, 1010, 10, null, CancellationToken.None);
         Assert.AreEqual(7, data.Lines.Single().Ok);
         Assert.AreEqual("connected", data.StatusChanges.Single().Status);

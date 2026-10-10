@@ -20,7 +20,7 @@ const column = columnsFor<SignageGroupDto>();
 const EMPTY: SetSignageGroupRequest = { name: "", note: "", playlists: [], defaultPlaylist: null, defaultMessage: null };
 
 export function GroupsPage() {
-  const edit = useCan()(PERMISSIONS.edit);
+  const edit = useCan()(PERMISSIONS.signage);
   const data = useQuery(getSignageOverviewOptions()).data;
   const [editing, setEditing] = useState<{ id: number | null; group: SetSignageGroupRequest } | null>(null);
 

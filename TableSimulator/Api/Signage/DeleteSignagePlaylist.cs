@@ -12,5 +12,5 @@ public sealed class DeleteSignagePlaylist : IEndpoint
         app.MapDelete("signage/playlists/{id:int}", async (int id, ICommandHandler<DeleteSignageCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new DeleteSignageCommand(SignageEntity.Playlist, id), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(StatusCodes.Status204NoContent)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.SignageManage);
 }

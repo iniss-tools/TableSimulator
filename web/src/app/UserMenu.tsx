@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Bell, ChevronsUpDown, KeyRound, Languages, LogOut, Monitor, Moon, Sun, SunMoon } from "lucide-react";
 import { toast } from "sonner";
 import { forgetAccessKey, logout, queryClient, type MeDto } from "@/api";
+import { roleLabel } from "@/features/roles/roles";
 import { PasswordDialog } from "@/features/users/PasswordDialog";
 import {
   DropdownMenu,
@@ -21,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
-import { setLanguage, t, useLanguage, type Language, type TextKey } from "@/i18n";
+import { setLanguage, t, useLanguage, type Language } from "@/i18n";
 import { setTheme, THEMES, useTheme, type Theme } from "@/lib/theme";
 import { notificationsSupported, setNotifications, useNotifications } from "./notifications";
 
@@ -48,7 +49,7 @@ export function UserMenu({ me }: { me: MeDto }) {
 
   // bez prihlasovania je kazdy na tomto pocitaci spravca; karta s klucom je zariadenie
   const name = me.accessKey ? t("user.device") : me.loginRequired ? me.displayName || me.userName || "" : t("user.local");
-  const role = t(`role.${me.role ?? "viewer"}` as TextKey);
+  const role = roleLabel(me.role ?? "viewer", me.roleName);
 
   return (
     <>

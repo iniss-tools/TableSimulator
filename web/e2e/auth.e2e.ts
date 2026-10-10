@@ -27,3 +27,28 @@ test("prvy spravca, odhlasenie a prihlasenie", async ({ page }) => {
   await page.getByRole("button", { name: "Prihlásiť" }).click();
   await expect(page.getByRole("link", { name: "Tabule", exact: true })).toBeVisible();
 });
+
+test("vlastna rola: menu len so strankami, na ktore ma pouzivatel opravnenie", async ({ page }) => {
+  // spravca z predchadzajuceho testu zalozi rolu a pouzivatela cez API
+  const headers = { "X-Requested-With": "TableSimulator" };
+  expect((await page.request.post("/api/auth/login", { headers, data: { userName: "spravca", password: "heslo-e2e-1", remember: false } })).ok()).toBe(true);
+  const role = await page.request.post("/api/roles", { headers, data: { displayName: "Panely", permissions: ["simulator.view", "signage.manage"] } });
+  expect(role.ok()).toBe(true);
+  const { name } = (await role.json()) as { name: string };
+  const user = await page.request.post("/api/users", { headers, data: { userName: "panely", displayName: "", role: name, password: "heslo-panely-1" } });
+  expect(user.ok()).toBe(true);
+  await page.request.post("/api/auth/logout", { headers });
+
+  await page.goto("/");
+  await page.getByLabel("Prihlasovacie meno").fill("panely");
+  await page.getByLabel("Heslo", { exact: true }).fill("heslo-panely-1");
+  await page.getByRole("button", { name: "Prihlásiť" }).click();
+  await expect(page.getByRole("link", { name: "Tabule", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Správy", exact: true })).toBeVisible();
+  for (const hidden of ["Štatistiky", "Archív tabúľ", "Používatelia", "Roly", "Audit", "Nastavenia"])
+    await expect(page.getByRole("link", { name: hidden, exact: true })).toBeHidden();
+  await expect(page.getByRole("button", { name: /Panely/ })).toBeVisible();
+
+  await page.goto("/#/settings");
+  await expect(page.getByText("Na túto stránku nemáte oprávnenie.")).toBeVisible();
+});

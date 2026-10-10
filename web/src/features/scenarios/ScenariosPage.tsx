@@ -89,7 +89,7 @@ function ScenarioCard({ scenario, boards, edit, onEdit }: CardProps) {
 }
 
 export function ScenariosPage() {
-  const edit = useCan()(PERMISSIONS.edit);
+  const edit = useCan()(PERMISSIONS.scenarios);
   const live = useSimulatorState();
   const query = useQuery(getFaultScenariosOptions());
   const scenarios = query.data ?? [];

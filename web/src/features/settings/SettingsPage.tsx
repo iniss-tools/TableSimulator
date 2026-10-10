@@ -25,9 +25,12 @@ import {
   getServerInfoOptions,
   getHttpsStatusQueryKey,
   getStateQueryKey,
+  PERMISSIONS,
   queryClient,
   updateSettingsMutation,
+  useCan,
   useSimulatorState,
+  type Permission,
   type SettingsDto,
 } from "@/api";
 import { confirmAction } from "@/components/common/confirm";
@@ -54,19 +57,22 @@ import { RestartBadge } from "./restart-badge";
 
 type SectionId = "folders" | "iniss" | "network" | "https" | "alerts" | "server" | "database" | "backup";
 
-const SECTIONS: { id: SectionId; label: TextKey; icon: LucideIcon }[] = [
-  { id: "folders", label: "settings.folders", icon: FolderOpen },
-  { id: "iniss", label: "settings.iniss", icon: TrainFront },
-  { id: "network", label: "settings.network", icon: Network },
-  { id: "https", label: "settings.https", icon: ShieldCheck },
-  { id: "alerts", label: "settings.alerts", icon: BellRing },
-  { id: "server", label: "settings.server", icon: Server },
-  { id: "database", label: "database.section", icon: Database },
-  { id: "backup", label: "settings.backup", icon: DatabaseBackup },
+// cast vidi len ten, kto ma jej opravnenie (nastavenie servera alebo zaloha a restart)
+const SECTIONS: { id: SectionId; label: TextKey; icon: LucideIcon; permission: Permission | Permission[] }[] = [
+  { id: "folders", label: "settings.folders", icon: FolderOpen, permission: PERMISSIONS.settings },
+  { id: "iniss", label: "settings.iniss", icon: TrainFront, permission: PERMISSIONS.settings },
+  { id: "network", label: "settings.network", icon: Network, permission: PERMISSIONS.settings },
+  { id: "https", label: "settings.https", icon: ShieldCheck, permission: PERMISSIONS.settings },
+  { id: "alerts", label: "settings.alerts", icon: BellRing, permission: PERMISSIONS.settings },
+  { id: "server", label: "settings.server", icon: Server, permission: [PERMISSIONS.settings, PERMISSIONS.server] },
+  { id: "database", label: "database.section", icon: Database, permission: PERMISSIONS.settings },
+  { id: "backup", label: "settings.backup", icon: DatabaseBackup, permission: PERMISSIONS.server },
 ];
 
 function Section({ id, description, children }: { id: SectionId; description: ReactNode; children: ReactNode }) {
-  const { label, icon: Icon } = SECTIONS.find((s) => s.id === id)!;
+  const { label, icon: Icon, permission } = SECTIONS.find((s) => s.id === id)!;
+  const allowed = useCan()(permission);
+  if (!allowed) return null;
   return (
     <Card id={`settings-${id}`} className="scroll-mt-16">
       <CardHeader className="border-b">
@@ -119,7 +125,9 @@ export function SettingsPage() {
   // nove heslo SMTP oznameni; null = nechat ulozene
   const [smtpPassword, setSmtpPassword] = useState<string | null>(null);
   // sluzbu Windows sa da po ulozeni hned restartovat
-  const service = useQuery(getServerInfoOptions()).data?.service === true;
+  const can = useCan();
+  // restart z webu len pri sluzbe Windows a s opravnenim
+  const service = useQuery(getServerInfoOptions()).data?.service === true && can(PERMISSIONS.server);
   const restart = useRestartServer();
 
   const update = useMutation({
@@ -170,7 +178,7 @@ export function SettingsPage() {
       <div className="grid gap-6 lg:grid-cols-[11rem_minmax(0,48rem)]">
         <nav aria-label={t("nav.settings")} className="hidden lg:block">
           <ul className="sticky top-16 flex flex-col gap-0.5">
-            {SECTIONS.map(({ id, label, icon: Icon }) => (
+            {SECTIONS.filter((s) => can(s.permission)).map(({ id, label, icon: Icon }) => (
               <li key={id}>
                 <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-foreground" onClick={() => scrollTo(id)}>
                   <Icon />
@@ -287,7 +295,7 @@ export function SettingsPage() {
           </Section>
 
           {/* lista ostava na spodku okna - aj chyba ulozenia je viditelna pri ktorejkolvek casti */}
-          <div className="sticky bottom-0 z-10 -mx-1 flex flex-col gap-3 border-t bg-background/95 px-1 py-3 backdrop-blur">
+          <div hidden={!can(PERMISSIONS.settings)} className="sticky bottom-0 z-10 -mx-1 flex flex-col gap-3 border-t bg-background/95 px-1 py-3 backdrop-blur">
             {update.error && (
               <Alert variant="destructive">
                 <CircleAlert />

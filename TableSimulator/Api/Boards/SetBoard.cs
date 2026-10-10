@@ -14,5 +14,5 @@ public sealed class SetBoard : IEndpoint
             CancellationToken cancellationToken) =>
             (await handler.Handle(new SetBoardCommand(line, address, request), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(StatusCodes.Status204NoContent)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.LinesManage);
 }

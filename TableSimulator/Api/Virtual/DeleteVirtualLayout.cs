@@ -12,5 +12,5 @@ public sealed class DeleteVirtualLayout : IEndpoint
         app.MapDelete("virtual/layouts/{id}", async (string id, ICommandHandler<DeleteVirtualLayoutCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new DeleteVirtualLayoutCommand(id), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(StatusCodes.Status204NoContent)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.VirtualManage);
 }

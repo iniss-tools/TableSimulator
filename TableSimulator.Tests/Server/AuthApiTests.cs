@@ -139,7 +139,7 @@ public sealed class AuthApiTests
         var me = await login.Content.ReadFromJsonAsync<MeDto>();
 
         Assert.AreEqual(Roles.Viewer, me!.Role);
-        CollectionAssert.DoesNotContain(me.Permissions.ToArray(), Permissions.SimulatorEdit);
+        CollectionAssert.DoesNotContain(me.Permissions.ToArray(), Permissions.LinesManage);
         Assert.AreEqual(HttpStatusCode.OK, (await client.GetAsync("/api/state")).StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, (await client.GetAsync("/api/log")).StatusCode);
         Assert.AreEqual(HttpStatusCode.Forbidden,

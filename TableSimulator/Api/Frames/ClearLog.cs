@@ -12,5 +12,5 @@ public sealed class ClearLog : IEndpoint
         app.MapDelete("log", async (ICommandHandler<ClearLogCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new ClearLogCommand(), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(StatusCodes.Status204NoContent)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.BoardsControl);
 }

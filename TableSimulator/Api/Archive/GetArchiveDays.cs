@@ -13,5 +13,5 @@ public sealed class GetArchiveDays : IEndpoint
         app.MapGet("archive", async (IQueryHandler<GetArchiveDaysQuery, ArchiveDaysDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new GetArchiveDaysQuery(), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<ArchiveDaysDto>()
-            .RequireAuthorization(Permissions.SimulatorView);
+            .RequireAuthorization(Permissions.ArchiveView);
 }

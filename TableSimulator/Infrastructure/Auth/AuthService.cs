@@ -92,6 +92,6 @@ public sealed class AuthService(
     private async Task<string> RoleOfAsync(AppUser user)
     {
         var roles = await users.GetRolesAsync(user).ConfigureAwait(false);
-        return Roles.All.FirstOrDefault(roles.Contains) ?? Roles.Viewer;
+        return roles.Count > 0 ? roles[0] : Roles.Viewer;
     }
 }

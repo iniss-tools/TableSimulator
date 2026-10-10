@@ -12,5 +12,5 @@ public sealed class StartFaultScenario : IEndpoint
         app.MapPost("scenarios/{id:int}/start", async (int id, ICommandHandler<StartFaultScenarioCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new StartFaultScenarioCommand(id), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(StatusCodes.Status204NoContent)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.ScenariosManage);
 }

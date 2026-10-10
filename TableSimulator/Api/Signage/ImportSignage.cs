@@ -22,5 +22,5 @@ public sealed class ImportSignage : IEndpoint
             })
             .Accepts<Stream>("application/octet-stream")
             .Produces<SignageImportedDto>()
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.SignageManage);
 }

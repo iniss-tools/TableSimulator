@@ -4,7 +4,7 @@ using TableSimulator.Contracts.Auth;
 
 namespace TableSimulator.Application.Auth;
 
-public sealed class SetupCommandHandler(IAuthService auth) : ICommandHandler<SetupCommand, MeDto>
+public sealed class SetupCommandHandler(IAuthService auth, RoleCatalog roles) : ICommandHandler<SetupCommand, MeDto>
 {
     public async Task<Result<MeDto>> Handle(SetupCommand command, CancellationToken cancellationToken)
     {
@@ -18,6 +18,6 @@ public sealed class SetupCommandHandler(IAuthService auth) : ICommandHandler<Set
 
         var displayName = string.IsNullOrWhiteSpace(command.DisplayName) ? command.UserName.Trim() : command.DisplayName.Trim();
         var created = await auth.CreateFirstAdminAsync(command.UserName.Trim(), displayName, command.Password, cancellationToken).ConfigureAwait(false);
-        return created.IsSuccess ? Result.Success(MeFactory.Create(auth, created.Value)) : Result.Failure<MeDto>(created.Error);
+        return created.IsSuccess ? Result.Success(MeFactory.Create(roles, auth, created.Value)) : Result.Failure<MeDto>(created.Error);
     }
 }

@@ -23,8 +23,10 @@ public static class LiveSocketEndpoint
             if (wantsLog && !(await authorization.AuthorizeAsync(context.User, Permissions.LogView)).Succeeded)
                 return Results.StatusCode(StatusCodes.Status403Forbidden);
 
+            // opravnenia sa urcia pri pripojeni - zmena roly plati od noveho spojenia
+            var archive = (await authorization.AuthorizeAsync(context.User, Permissions.ArchiveView)).Succeeded;
             using var socket = await context.WebSockets.AcceptWebSocketAsync();
-            await hub.ServeAsync(socket, wantsLog, context.RequestAborted);
+            await hub.ServeAsync(socket, wantsLog, archive, context.RequestAborted);
             return Results.Empty;
         }).RequireAuthorization(Permissions.SimulatorView);
 

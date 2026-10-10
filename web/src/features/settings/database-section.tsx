@@ -10,9 +10,11 @@ import {
   getDatabaseSettingsQueryKey,
   getServerInfoOptions,
   getStateQueryKey,
+  PERMISSIONS,
   queryClient,
   testDatabase,
   updateDatabaseSettingsMutation,
+  useCan,
   type DatabaseKind,
   type DatabaseSettingsDto,
   type DatabaseTestResultDto,
@@ -72,7 +74,9 @@ function noSubmit(e: KeyboardEvent) {
 
 export function DatabaseSection() {
   const current = useQuery(getDatabaseSettingsOptions()).data;
-  const service = useQuery(getServerInfoOptions()).data?.service === true;
+  // restart z webu len pri sluzbe Windows a s opravnenim
+  const can = useCan();
+  const service = useQuery(getServerInfoOptions()).data?.service === true && can(PERMISSIONS.server);
   const restart = useRestartServer();
   // rozpracovany vyber; null = ukazuje sa ulozeny
   const [draft, setDraft] = useState<UpdateDatabaseRequest | null>(null);

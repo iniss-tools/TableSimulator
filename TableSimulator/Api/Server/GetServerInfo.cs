@@ -13,5 +13,5 @@ public sealed class GetServerInfo : IEndpoint
         app.MapGet("server", async (IQueryHandler<GetServerInfoQuery, ServerInfoDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new GetServerInfoQuery(), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<ServerInfoDto>()
-            .RequireAuthorization(Permissions.SettingsManage);
+            .RequireAuthorization(Policies.ServerView);
 }

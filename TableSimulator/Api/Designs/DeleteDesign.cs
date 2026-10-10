@@ -12,5 +12,5 @@ public sealed class DeleteDesign : IEndpoint
         app.MapDelete("designs/{id}", async (string id, ICommandHandler<DeleteDesignCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new DeleteDesignCommand(id), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(204)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.DesignsManage);
 }

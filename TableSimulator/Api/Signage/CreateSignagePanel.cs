@@ -14,5 +14,5 @@ public sealed class CreateSignagePanel : IEndpoint
             CancellationToken cancellationToken) =>
             (await handler.Handle(new SaveSignagePanelCommand(null, request), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<SignageCreatedDto>()
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.SignageManage);
 }

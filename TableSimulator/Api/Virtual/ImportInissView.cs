@@ -14,5 +14,5 @@ public sealed class ImportInissView : IEndpoint
             CancellationToken cancellationToken) =>
             (await handler.Handle(new ImportInissViewCommand(request.Content, request.Replace), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<InissViewImportedDto>()
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.VirtualManage);
 }

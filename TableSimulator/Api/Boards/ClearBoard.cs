@@ -12,5 +12,5 @@ public sealed class ClearBoard : IEndpoint
         app.MapPost("boards/{id}/clear", async (string id, ICommandHandler<ClearBoardCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new ClearBoardCommand(id), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(StatusCodes.Status204NoContent)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.BoardsControl);
 }

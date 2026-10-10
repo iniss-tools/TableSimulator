@@ -14,5 +14,5 @@ public sealed class CreateSignageGroup : IEndpoint
             CancellationToken cancellationToken) =>
             (await handler.Handle(new SaveSignageGroupCommand(null, request), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<SignageCreatedDto>()
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.SignageManage);
 }

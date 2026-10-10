@@ -1,13 +1,14 @@
 // Novy pouzivatel (meno, rola, heslo) alebo uprava existujuceho (meno, rola, vypnutie).
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { createUserMutation, errorText, ROLES, updateUserMutation, type Role, type UserDto } from "@/api";
+import { createUserMutation, errorText, updateUserMutation, type UserDto } from "@/api";
 import { FormDialog } from "@/components/common/form-dialog";
 import { CheckField, FormField } from "@/components/common/form-field";
 import { OptionSelect } from "@/components/common/option-select";
 import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { t, type TextKey } from "@/i18n";
+import { t } from "@/i18n";
+import { refreshRoles, roleSummary, useRoles } from "@/features/roles/roles";
 import { refreshUsers } from "./users";
 
 export function UserDialog({ initial, isNew, onClose }: { initial: UserDto; isNew: boolean; onClose: () => void }) {
@@ -15,8 +16,11 @@ export function UserDialog({ initial, isNew, onClose }: { initial: UserDto; isNe
   const [password, setPassword] = useState("");
   const [again, setAgain] = useState("");
   const [mismatch, setMismatch] = useState(false);
+  const roles = useRoles();
   const saved = () => {
     void refreshUsers();
+    // pocty pouzivatelov pri rolach
+    void refreshRoles();
     onClose();
   };
   const create = useMutation({ ...createUserMutation(), onSuccess: saved });
@@ -45,13 +49,8 @@ export function UserDialog({ initial, isNew, onClose }: { initial: UserDto; isNe
         <FormField label={t("auth.displayName")}>
           <Input value={user.displayName} onChange={(e) => setUser({ ...user, displayName: e.target.value })} />
         </FormField>
-        <FormField label={t("users.role")} hint={t(`users.role.${user.role}.hint` as TextKey)}>
-          <OptionSelect<Role>
-            value={user.role as Role}
-            onValueChange={(role) => setUser({ ...user, role })}
-            options={ROLES.map((r) => ({ value: r, label: t(`role.${r}`) }))}
-            className="w-full"
-          />
+        <FormField label={t("users.role")} hint={roleSummary(roles.find(user.role))}>
+          <OptionSelect<string> value={user.role} onValueChange={(role) => setUser({ ...user, role })} options={roles.options} className="w-full" />
         </FormField>
         {isNew ? (
           <div className="grid gap-4 sm:grid-cols-2">

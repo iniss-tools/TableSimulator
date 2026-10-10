@@ -4,7 +4,7 @@ using TableSimulator.Contracts.Auth;
 
 namespace TableSimulator.Application.Auth;
 
-public sealed class LoginCommandHandler(IAuthService auth) : ICommandHandler<LoginCommand, MeDto>
+public sealed class LoginCommandHandler(IAuthService auth, RoleCatalog roles) : ICommandHandler<LoginCommand, MeDto>
 {
     public async Task<Result<MeDto>> Handle(LoginCommand command, CancellationToken cancellationToken)
     {
@@ -14,7 +14,7 @@ public sealed class LoginCommandHandler(IAuthService auth) : ICommandHandler<Log
         var (outcome, user) = await auth.SignInAsync(command.UserName.Trim(), command.Password, command.Remember, cancellationToken).ConfigureAwait(false);
         return outcome switch
         {
-            SignInOutcome.Success when user is not null => Result.Success(MeFactory.Create(auth, user)),
+            SignInOutcome.Success when user is not null => Result.Success(MeFactory.Create(roles, auth, user)),
             SignInOutcome.LockedOut => Result.Failure<MeDto>(AuthErrors.LockedOut()),
             SignInOutcome.Disabled => Result.Failure<MeDto>(AuthErrors.Disabled()),
             SignInOutcome.TooManyAttempts => Result.Failure<MeDto>(AuthErrors.TooManyAttempts()),

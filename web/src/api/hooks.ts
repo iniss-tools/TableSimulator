@@ -10,7 +10,7 @@ export function useMe(): MeDto | undefined {
 }
 
 /** Opravnenia prihlaseneho pouzivatela pre komponenty. */
-export function useCan(): (permission: Permission) => boolean {
+export function useCan(): (permission: Permission | readonly Permission[]) => boolean {
   const me = useMe();
   return (permission) => can(me, permission);
 }

@@ -13,5 +13,5 @@ public sealed class GetAccessKeys : IEndpoint
         app.MapGet("keys", async (IQueryHandler<GetAccessKeysQuery, IReadOnlyList<AccessKeyDto>> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new GetAccessKeysQuery(), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<IReadOnlyList<AccessKeyDto>>()
-            .RequireAuthorization(Permissions.UsersManage);
+            .RequireAuthorization(Permissions.KeysManage);
 }

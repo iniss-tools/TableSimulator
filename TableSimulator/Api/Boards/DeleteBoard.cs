@@ -12,5 +12,5 @@ public sealed class DeleteBoard : IEndpoint
         app.MapDelete("boards/{id}", async (string id, ICommandHandler<DeleteBoardCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new DeleteBoardCommand(id), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(StatusCodes.Status204NoContent)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.LinesManage);
 }

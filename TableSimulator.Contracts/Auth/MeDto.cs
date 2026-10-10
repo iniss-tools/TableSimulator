@@ -6,7 +6,8 @@ namespace TableSimulator.Contracts.Auth;
 /// <param name="Authenticated">poziadavka je prihlasena</param>
 /// <param name="UserName">prihlasovacie meno; null = neprihlaseny</param>
 /// <param name="DisplayName">meno pre zobrazenie</param>
-/// <param name="Role">rola (<c>admin</c>, <c>operator</c>, <c>viewer</c>); null = neprihlaseny</param>
+/// <param name="Role">kluc roly (vstavane <c>admin</c>, <c>operator</c>, <c>viewer</c> alebo vlastna); null = neprihlaseny</param>
+/// <param name="RoleName">nazov vlastnej roly; null = vstavana (nazov podla jazyka rozhrania) alebo neprihlaseny</param>
 /// <param name="Permissions">opravnenia roly - rozhranie podla nich skryje, co pouzivatel nesmie</param>
 public sealed record MeDto(
     bool LoginRequired,
@@ -15,6 +16,7 @@ public sealed record MeDto(
     string? UserName,
     string? DisplayName,
     string? Role,
+    string? RoleName,
     IReadOnlyList<string> Permissions)
 {
     /// <summary>Poziadavka prisla s pristupovym klucom (zariadenie, program) - nema heslo ani odhlasenie.</summary>

@@ -151,6 +151,7 @@ const pages = [
     component: lazyRouteComponent(() => import("@/features/archive/ReportMonitorPage"), "ReportMonitorPage"),
   }),
   createRoute({ getParentRoute: () => shell, path: "/users", component: lazyRouteComponent(() => import("@/features/users/UsersPage"), "UsersPage") }),
+  createRoute({ getParentRoute: () => shell, path: "/roles", component: lazyRouteComponent(() => import("@/features/roles/RolesPage"), "RolesPage") }),
   createRoute({ getParentRoute: () => shell, path: "/keys", component: lazyRouteComponent(() => import("@/features/keys/KeysPage"), "KeysPage") }),
   createRoute({ getParentRoute: () => shell, path: "/audit", component: lazyRouteComponent(() => import("@/features/audit/AuditPage"), "AuditPage") }),
   createRoute({

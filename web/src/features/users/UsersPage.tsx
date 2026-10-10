@@ -13,7 +13,8 @@ import { columnsFor } from "@/components/data-table/features";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/format";
-import { t, type TextKey } from "@/i18n";
+import { t } from "@/i18n";
+import { useRoles } from "@/features/roles/roles";
 import { PasswordDialog } from "./PasswordDialog";
 import { UserDialog } from "./UserDialog";
 import { refreshUsers } from "./users";
@@ -26,6 +27,7 @@ const act = (action: Promise<unknown>) => action.then(refreshUsers, (e) => toast
 export function UsersPage() {
   const me = useMe();
   const query = useQuery(getUsersOptions());
+  const roles = useRoles();
   const [editing, setEditing] = useState<{ user: UserDto; isNew: boolean } | null>(null);
   const [password, setPassword] = useState<string | null>(null);
   const self = useCallback((u: UserDto) => me?.loginRequired === true && me.userName?.toLowerCase() === u.userName.toLowerCase(), [me]);
@@ -50,7 +52,7 @@ export function UsersPage() {
           );
         },
       }),
-      column.accessor((u) => t(`role.${u.role}` as TextKey), { id: "role", header: t("users.role") }),
+      column.accessor((u) => roles.label(u.role), { id: "role", header: t("users.role") }),
       column.accessor((u) => (u.disabled ? t("users.disabled") : u.lockedUntil ? t("users.locked", { time: "" }) : t("users.active")), {
         id: "state",
         header: t("users.state"),
@@ -102,8 +104,8 @@ export function UsersPage() {
         },
       }),
     ],
-    // stlpce zavisia od prihlaseneho (self)
-    [self],
+    // stlpce zavisia od prihlaseneho (self) a nazvov roli
+    [self, roles],
   );
 
   return (

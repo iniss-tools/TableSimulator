@@ -1,7 +1,7 @@
 // Ako server bezi: sluzba Windows (restart z webu) alebo program v okne (prikaz na instalaciu sluzby), priecinky.
 import { useQuery } from "@tanstack/react-query";
 import { RotateCw } from "lucide-react";
-import { getServerInfoOptions } from "@/api";
+import { getServerInfoOptions, PERMISSIONS, useCan } from "@/api";
 import { CopyButton } from "@/components/common/copy-button";
 import { StatusBadge } from "@/components/common/status-badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ function PathRow({ label, path }: { label: string; path: string }) {
 export function ServerSection({ databasePath }: { databasePath: string }) {
   const info = useQuery(getServerInfoOptions()).data;
   const restart = useRestartServer();
+  const canRestart = useCan()(PERMISSIONS.server);
   const install = info && `TableSimulator.exe --install-service --data "${info.dataFolder}"`;
 
   return (
@@ -38,7 +39,7 @@ export function ServerSection({ databasePath }: { databasePath: string }) {
         <PathRow label={t("server.database")} path={databasePath} />
       </dl>
       <p className="text-muted-foreground">{t("settings.database.hint")}</p>
-      {info?.service && (
+      {info?.service && canRestart && (
         <div className="flex flex-wrap items-center gap-3">
           <Button type="button" variant="outline" disabled={restart.pending} onClick={restart.run}>
             {restart.pending ? <Spinner /> : <RotateCw />}

@@ -194,7 +194,7 @@ export function LogPage() {
           {paused ? <Play /> : <Pause />}
           {paused ? t("log.resume") : t("log.pause")}
         </Button>
-        {can(PERMISSIONS.edit) && (
+        {can(PERMISSIONS.boards) && (
           <Button
             variant="outline"
             onClick={() => {

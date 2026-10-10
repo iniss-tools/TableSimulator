@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Archive;
 using TableSimulator.Application.Audit;
+using TableSimulator.Application.Auth;
 using TableSimulator.Application.Decorators;
 using TableSimulator.Application.Designs;
 using TableSimulator.Application.Fonts;
@@ -50,6 +51,7 @@ public static class DependencyInjection
         ValidatorOptions.Global.LanguageManager.Enabled = false;
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
 
+        services.AddSingleton<RoleCatalog>();
         services.AddSingleton<RecordingService>();
         services.AddSingleton<FontCatalog>();
         services.AddSingleton<DesignCatalog>();

@@ -14,7 +14,7 @@ public sealed class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
 
     public string? DisplayName => IsAuthenticated ? Principal!.FindFirst(AuthClaims.DisplayName)?.Value ?? UserName : null;
 
-    public string? Role => IsAuthenticated ? Roles.All.FirstOrDefault(Principal!.IsInRole) : null;
+    public string? Role => IsAuthenticated ? AuthClaims.RoleOf(Principal!) : null;
 
     public string? Address => accessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 

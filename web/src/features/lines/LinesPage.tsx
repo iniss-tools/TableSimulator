@@ -36,7 +36,7 @@ function StatusCell({ line }: { line: LineDto }) {
 
 export function LinesPage() {
   const live = useSimulatorState();
-  const edit = useCan()(PERMISSIONS.edit);
+  const edit = useCan()(PERMISSIONS.lines);
   const [editing, setEditing] = useState<{ config: SetLineRequest; isNew: boolean } | null>(null);
   const [inissOpen, setInissOpen] = useState(false);
   const upload = useRef<HTMLInputElement>(null);

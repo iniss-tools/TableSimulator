@@ -13,5 +13,5 @@ public sealed class GetInissStation : IEndpoint
         app.MapGet("station/iniss", async (IQueryHandler<GetInissStationQuery, InissStationDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new GetInissStationQuery(), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<InissStationDto>()
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.LinesManage);
 }

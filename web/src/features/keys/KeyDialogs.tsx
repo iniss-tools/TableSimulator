@@ -11,11 +11,9 @@ import {
   getServerInfoOptions,
   getSignageOverviewOptions,
   getVirtualOverviewOptions,
-  ROLES,
   useSimulatorState,
   type AccessKeyCreatedDto,
   type AccessKeyKind,
-  type Role,
 } from "@/api";
 import { CopyButton } from "@/components/common/copy-button";
 import { FormDialog } from "@/components/common/form-dialog";
@@ -25,6 +23,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { t, type TextKey } from "@/i18n";
+import { roleSummary, useRoles } from "@/features/roles/roles";
 
 const LOOPBACK = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
@@ -46,7 +45,8 @@ function CopyField({ value, id }: { value: string; id?: string }) {
 export function NewKeyDialog({ onClose }: { onClose: (created: AccessKeyCreatedDto | null) => void }) {
   const [name, setName] = useState("");
   const [kind, setKind] = useState<AccessKeyKind>("device");
-  const [role, setRole] = useState<Role>("operator");
+  const roles = useRoles();
+  const [role, setRole] = useState("operator");
   const create = useMutation({ ...createAccessKeyMutation(), onSuccess: onClose });
   // zariadenie smie vzdy len pozerat
   const effectiveRole = kind === "device" ? "viewer" : role;
@@ -75,14 +75,8 @@ export function NewKeyDialog({ onClose }: { onClose: (created: AccessKeyCreatedD
             className="w-full"
           />
         </FormField>
-        <FormField label={t("users.role")} hint={kind === "device" ? t("keys.role.device") : t(`users.role.${role}.hint` as TextKey)}>
-          <OptionSelect<Role>
-            value={effectiveRole}
-            onValueChange={setRole}
-            disabled={kind === "device"}
-            options={ROLES.map((r) => ({ value: r, label: t(`role.${r}`) }))}
-            className="w-full"
-          />
+        <FormField label={t("users.role")} hint={kind === "device" ? t("keys.role.device") : roleSummary(roles.find(role))}>
+          <OptionSelect<string> value={effectiveRole} onValueChange={setRole} disabled={kind === "device"} options={roles.options} className="w-full" />
         </FormField>
       </FieldGroup>
     </FormDialog>

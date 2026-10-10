@@ -13,5 +13,5 @@ public sealed class SetDesign : IEndpoint
         app.MapPut("designs/{id}", async (string id, SetDesignRequest request, ICommandHandler<SetDesignCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new SetDesignCommand(id, request), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(204)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.DesignsManage);
 }

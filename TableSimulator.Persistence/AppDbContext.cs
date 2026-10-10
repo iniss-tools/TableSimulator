@@ -74,6 +74,7 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
     {
         base.OnModelCreating(builder);
         builder.Entity<AppUser>(user => user.Property(u => u.DisplayName).HasMaxLength(100));
+        builder.Entity<AppRole>(role => role.Property(r => r.DisplayName).HasMaxLength(TableSimulator.Application.Auth.Roles.MaxDisplayName));
         builder.Entity<SettingsRecord>(settings =>
         {
             settings.ToTable("ServerSettings");

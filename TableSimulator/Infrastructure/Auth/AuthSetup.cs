@@ -11,8 +11,8 @@ using TableSimulator.Persistence.Identity;
 namespace TableSimulator.Infrastructure.Auth;
 
 /// <summary>
-/// Prihlasovanie: ASP.NET Core Identity nad databazou simulatora s cookie, politika pre kazde opravnenie
-/// a pre ostatne poziadavky aspon prihlasenie. Bez prihlasovania je kazda poziadavka spravca (<see cref="LocalAuthenticationHandler" />).
+/// Prihlasovanie: ASP.NET Core Identity nad databazou simulatora s cookie, politika pre kazde opravnenie (podla roly
+/// v <see cref="RoleCatalog" />) a pre ostatne poziadavky aspon prihlasenie. Bez prihlasovania je kazda poziadavka spravca (<see cref="LocalAuthenticationHandler" />).
 /// </summary>
 public static class AuthSetup
 {
@@ -31,6 +31,7 @@ public static class AuthSetup
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IRoleService, RoleService>();
         services.AddSingleton<LoginThrottle>();
 
         // kluce podpisu cookie pri nastaveniach - po restarte (aj prenesenej instalacii a v sluzbe Windows) prihlasenie plati
@@ -88,7 +89,10 @@ public static class AuthSetup
         var authorization = services.AddAuthorizationBuilder()
             .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
         foreach (var permission in Permissions.All)
-            authorization.AddPolicy(permission, policy => policy.RequireAuthenticatedUser().RequireRole(Roles.WithPermission(permission)));
+            authorization.AddPolicy(permission, policy => policy.RequireAuthenticatedUser().AddRequirements(new PermissionRequirement([permission])));
+        foreach (var (name, permissions) in Policies.AnyOf)
+            authorization.AddPolicy(name, policy => policy.RequireAuthenticatedUser().AddRequirements(new PermissionRequirement(permissions)));
+        services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
         return services;
     }
 }

@@ -12,5 +12,5 @@ public sealed class DeleteFaultScenario : IEndpoint
         app.MapDelete("scenarios/{id:int}", async (int id, ICommandHandler<DeleteFaultScenarioCommand> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new DeleteFaultScenarioCommand(id), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(StatusCodes.Status204NoContent)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.ScenariosManage);
 }

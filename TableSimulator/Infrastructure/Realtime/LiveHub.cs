@@ -39,14 +39,23 @@ public sealed class LiveHub : ILiveNotifier, IDisposable
     }
 
     /// <inheritdoc />
-    public void Publish(LiveMessage message) => _ = SendAllAsync(Serialize(message), message is FramesMessage);
+    public void Publish(LiveMessage message) => _ = SendAllAsync(Serialize(message), message switch
+    {
+        FramesMessage => Audience.Log,
+        ReportsMessage => Audience.Archive,
+        _ => Audience.All
+    });
 
     /// <summary>Obsluzi jedno spojenie WebSocket az do jeho zatvorenia.</summary>
-    public async Task ServeAsync(WebSocket socket, bool wantsLog, CancellationToken token)
+    /// <param name="socket">spojenie</param>
+    /// <param name="wantsLog">posielat zaznamy komunikacie (spojenie s opravnenim, ktore o ne poziadalo)</param>
+    /// <param name="archive">posielat priebezne hlasenia (opravnenie na archiv)</param>
+    /// <param name="token">koniec spojenia</param>
+    public async Task ServeAsync(WebSocket socket, bool wantsLog, bool archive, CancellationToken token)
     {
         ArgumentNullException.ThrowIfNull(socket);
         var id = Guid.NewGuid();
-        var client = new Client(socket, wantsLog);
+        var client = new Client(socket, wantsLog, archive);
         _clients[id] = client;
         try
         {
@@ -93,7 +102,7 @@ public sealed class LiveHub : ILiveNotifier, IDisposable
                 }
 
                 if (structure)
-                    await SendAllAsync(Serialize(new StructureMessage()), false).ConfigureAwait(false);
+                    await SendAllAsync(Serialize(new StructureMessage()), Audience.All).ConfigureAwait(false);
 
                 if (boards.Count > 0 || lines.Count > 0)
                 {
@@ -102,13 +111,13 @@ public sealed class LiveHub : ILiveNotifier, IDisposable
                         boards.Select(s.FindBoard).OfType<SimBoard>().Select(DtoMapper.ToDto).ToArray(),
                         lines.Select(s.FindLine).OfType<SimLine>().Select(l => DtoMapper.ToDto(l, host)).ToArray()));
                     foreach (var board in boardDtos)
-                        await SendAllAsync(Serialize(new BoardMessage(board)), false).ConfigureAwait(false);
+                        await SendAllAsync(Serialize(new BoardMessage(board)), Audience.All).ConfigureAwait(false);
                     foreach (var line in lineDtos)
-                        await SendAllAsync(Serialize(new LineMessage(line)), false).ConfigureAwait(false);
+                        await SendAllAsync(Serialize(new LineMessage(line)), Audience.All).ConfigureAwait(false);
                 }
 
                 if (frames.Count > 0)
-                    await SendAllAsync(Serialize(new FramesMessage(frames.ToArray())), true).ConfigureAwait(false);
+                    await SendAllAsync(Serialize(new FramesMessage(frames.ToArray())), Audience.Log).ConfigureAwait(false);
 
                 boards.Clear();
                 lines.Clear();
@@ -125,11 +134,11 @@ public sealed class LiveHub : ILiveNotifier, IDisposable
     /// <summary>Sprava s druhom vo vlastnosti <c>type</c> (polymorfny kontrakt).</summary>
     private static byte[] Serialize(LiveMessage message) => JsonSerializer.SerializeToUtf8Bytes(message, JsonDefaults.Wire);
 
-    private async Task SendAllAsync(byte[] data, bool logOnly)
+    private async Task SendAllAsync(byte[] data, Audience audience)
     {
         foreach (var client in _clients.Values)
         {
-            if (logOnly && !client.WantsLog)
+            if (audience == Audience.Log && !client.WantsLog || audience == Audience.Archive && !client.Archive)
                 continue;
             await client.SendAsync(data).ConfigureAwait(false);
         }
@@ -155,11 +164,25 @@ public sealed class LiveHub : ILiveNotifier, IDisposable
         _cts.Dispose();
     }
 
-    private sealed class Client(WebSocket socket, bool wantsLog) : IDisposable
+    /// <summary>Komu sa sprava posiela.</summary>
+    private enum Audience
+    {
+        All,
+
+        /// <summary>Spojenia so zaznamom komunikacie.</summary>
+        Log,
+
+        /// <summary>Spojenia s opravnenim na archiv.</summary>
+        Archive
+    }
+
+    private sealed class Client(WebSocket socket, bool wantsLog, bool archive) : IDisposable
     {
         private readonly SemaphoreSlim _send = new(1, 1);
 
         public bool WantsLog => wantsLog;
+
+        public bool Archive => archive;
 
         public async Task SendAsync(byte[] data)
         {

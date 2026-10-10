@@ -19,7 +19,7 @@ import { durationText, KIND_ICONS, KINDS, messageUsers, newMessage } from "./sig
 const column = columnsFor<SignageMessageDto>();
 
 export function MessagesPage() {
-  const edit = useCan()(PERMISSIONS.edit);
+  const edit = useCan()(PERMISSIONS.signage);
   const data = useQuery(getSignageOverviewOptions()).data;
   const [editing, setEditing] = useState<{ id: number | null; message: SignageMessageDto["definition"]; mediaName: string | null } | null>(null);
 

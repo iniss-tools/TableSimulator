@@ -99,7 +99,7 @@ function StatusCell({ panel }: { panel: SignagePanelDto }) {
 const panelUrl = (id: number) => `${location.origin}/#/panel/${id}`;
 
 export function PanelsPage() {
-  const edit = useCan()(PERMISSIONS.edit);
+  const edit = useCan()(PERMISSIONS.signage);
   const data = useQuery({ ...getSignageOverviewOptions(), refetchInterval: REFRESH_MS, refetchOnMount: "always" }).data;
   const [editing, setEditing] = useState<{ id: number | null; panel: SetSignagePanelRequest } | null>(null);
 

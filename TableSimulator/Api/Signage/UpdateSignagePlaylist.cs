@@ -14,5 +14,5 @@ public sealed class UpdateSignagePlaylist : IEndpoint
             CancellationToken cancellationToken) =>
             (await handler.Handle(new SaveSignagePlaylistCommand(id, request), cancellationToken)).Match(_ => Results.NoContent(), CustomResults.Problem))
             .Produces(StatusCodes.Status204NoContent)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.SignageManage);
 }

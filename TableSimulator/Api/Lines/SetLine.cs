@@ -14,5 +14,5 @@ public sealed class SetLine : IEndpoint
             CancellationToken cancellationToken) =>
             (await handler.Handle(new SetLineCommand(number, request), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(StatusCodes.Status204NoContent)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.LinesManage);
 }

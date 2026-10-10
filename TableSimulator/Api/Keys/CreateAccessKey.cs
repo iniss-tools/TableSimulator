@@ -14,5 +14,5 @@ public sealed class CreateAccessKey : IEndpoint
             CancellationToken cancellationToken) =>
             (await handler.Handle(new CreateAccessKeyCommand(request), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<AccessKeyCreatedDto>()
-            .RequireAuthorization(Permissions.UsersManage);
+            .RequireAuthorization(Permissions.KeysManage);
 }

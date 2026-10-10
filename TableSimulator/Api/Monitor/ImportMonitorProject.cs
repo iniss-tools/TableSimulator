@@ -15,5 +15,5 @@ public sealed class ImportMonitorProject : IEndpoint
             (await handler.Handle(new ImportMonitorProjectCommand(request.Project, request.Line), cancellationToken))
             .Match(Results.Ok, CustomResults.Problem))
             .Produces<MonitorImportedDto>()
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.LinesManage);
 }

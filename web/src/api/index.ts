@@ -8,5 +8,5 @@ export { accessKey, authHeaders, deviceLink, forgetAccessKey, socketUrl } from "
 export { manufacturersFor, useCan, useMe, useSimulatorState, type SimulatorState } from "./hooks";
 export { onDesignChanged, openSocket, useConnection } from "./live";
 export type { LiveMessage } from "./messages";
-export { can, PERMISSIONS, ROLES, type Permission, type Role } from "./permissions";
+export { ALL_PERMISSIONS, BUILT_IN_ROLES, can, isBuiltInRole, PERMISSIONS, type BuiltInRole, type Permission } from "./permissions";
 export { queryClient } from "./query";

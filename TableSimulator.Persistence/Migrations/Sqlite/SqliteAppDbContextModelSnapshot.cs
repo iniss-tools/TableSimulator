@@ -541,12 +541,20 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                         .IsConcurrencyToken()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("NormalizedName")
                         .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.PrimitiveCollection<string>("Permissions")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

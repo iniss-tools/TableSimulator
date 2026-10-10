@@ -181,7 +181,8 @@ function BoardClock({ clock, setAt }: { clock: string; setAt: string }) {
   return <> · {t("board.clock", { time: new Date(Date.parse(clock) + (now - Date.parse(setAt))).toLocaleString(locale()) })}</>;
 }
 
-export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: () => void; edit: boolean }) {
+/** Karta tabule; `edit` = uprava a mazanie (linky a tabule), `control` = poruchy a vymazanie obsahu. */
+export function BoardCard({ board, onEdit, edit, control }: { board: BoardDto; onEdit: () => void; edit: boolean; control: boolean }) {
   const name = board.name || t(board.display.family === "amplifier" ? "amplifier.unnamed" : "board.unnamed", { address: board.address });
   const last = board.stats.lastFrameAt ? new Date(board.stats.lastFrameAt).toLocaleTimeString(locale()) : null;
   const d = board.display;
@@ -216,22 +217,24 @@ export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: ()
             <Maximize />
           </Button>
           {edit && (
-            <>
-              <Button variant="ghost" size="icon-sm" title={t("common.edit")} onClick={onEdit}>
-                <Pencil />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                title={t("board.clear")}
-                onClick={() => clearBoard({ path: { id: board.id }, throwOnError: true }).catch(failed)}
-              >
-                <Eraser />
-              </Button>
-              <Button variant="ghost" size="icon-sm" title={t("common.delete")} onClick={remove}>
-                <Trash2 />
-              </Button>
-            </>
+            <Button variant="ghost" size="icon-sm" title={t("common.edit")} onClick={onEdit}>
+              <Pencil />
+            </Button>
+          )}
+          {control && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              title={t("board.clear")}
+              onClick={() => clearBoard({ path: { id: board.id }, throwOnError: true }).catch(failed)}
+            >
+              <Eraser />
+            </Button>
+          )}
+          {edit && (
+            <Button variant="ghost" size="icon-sm" title={t("common.delete")} onClick={remove}>
+              <Trash2 />
+            </Button>
           )}
         </div>
       </CardHeader>
@@ -253,7 +256,7 @@ export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: ()
           {d.amplifier?.onSince && <AmplifierOn since={d.amplifier.onSince} />}
           {d.clock && d.clockSetAt && <BoardClock clock={d.clock} setAt={d.clockSetAt} />}
         </span>
-        <FaultControl board={board} edit={edit} />
+        <FaultControl board={board} edit={control} />
       </CardFooter>
     </Card>
   );

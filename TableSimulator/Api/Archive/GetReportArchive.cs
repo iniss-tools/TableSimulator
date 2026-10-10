@@ -17,5 +17,5 @@ public sealed class GetReportArchive : IEndpoint
             (await handler.Handle(new GetReportArchiveQuery(date, train, text, newest ?? false, offset ?? 0, limit ?? DefaultLimit), cancellationToken))
             .Match(Results.Ok, CustomResults.Problem))
             .Produces<ReportArchivePageDto>()
-            .RequireAuthorization(Permissions.SimulatorView);
+            .RequireAuthorization(Permissions.ArchiveView);
 }

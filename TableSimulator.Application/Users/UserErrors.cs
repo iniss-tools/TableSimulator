@@ -13,5 +13,9 @@ public static class UserErrors
 
     public static Error LastAdmin() => Error.Conflict("users.lastAdmin", "At least one enabled administrator must remain.");
 
+    /// <summary>Pouzivatel nesmie pridelit ani spravovat opravnenia, ktore sam nema.</summary>
+    public static Error RoleTooHigh() =>
+        Error.Forbidden("users.roleTooHigh", "You cannot assign or manage a role with permissions you do not have yourself.");
+
     public static Error CurrentPassword() => Error.Problem("users.currentPassword", "The current password is not correct.");
 }

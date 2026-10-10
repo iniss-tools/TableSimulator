@@ -14,5 +14,5 @@ public sealed class SetFaultScenario : IEndpoint
             CancellationToken cancellationToken) =>
             (await handler.Handle(new SetFaultScenarioCommand(id, request), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(StatusCodes.Status204NoContent)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.ScenariosManage);
 }

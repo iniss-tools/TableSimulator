@@ -78,7 +78,7 @@ v audite (`ImportConfig`, cieľ `add`/`replace`).
 
 Namiesto súboru SQLite môže simulátor ukladať údaje na server PostgreSQL. Výber je mimo databázy v súbore
 `database.json` v priečinku nastavení; bez neho SQLite. Nastavuje sa v **Nastaveniach** v časti *Databáza*
-(`GET`/`PUT /api/database`, oprávnenie správy nastavení): server, port, databáza, používateľ (prázdny = prihlásenie
+(`GET`/`PUT /api/database`, oprávnenie `settings.manage`): server, port, databáza, používateľ (prázdny = prihlásenie
 účtom Windows, ak ho server PostgreSQL dovolí), heslo a ďalšie parametre Npgsql (napr. `SSL Mode=Require`, bez
 servera, používateľa a hesla). **Overiť pripojenie** (`POST /api/database/test`) skúsi prihlásenie a povie, či
 databáza existuje, či už má tabuľky simulátora a či ich používateľ smie založiť. Zmena sa prejaví **po reštarte
@@ -118,7 +118,7 @@ a `TABLESIMULATOR_TEST_POSTGRES=Host=localhost;Port=55432;Database=postgres;User
 ### Záloha a obnova
 
 V **Nastaveniach** v časti *Záloha a obnova* stiahne **Stiahnuť zálohu** celý simulátor ako ZIP (`GET /api/backup/file`,
-oprávnenie správy nastavení): `backup.json` (kedy, verzia servera, posledná migrácia, počty), `tablesimulator.db`
+oprávnenie `server.manage`): `backup.json` (kedy, verzia servera, posledná migrácia, počty), `tablesimulator.db`
 (online kópia SQLite – linky a tabule sa predtým uložia; pri PostgreSQL sa údaje prenesú do súboru SQLite rovnakého
 tvaru, takže zálohu obnoví server s ktoroukoľvek databázou), `designs/<id>/…` (vlastné vzhľady), `media/…` (súbory
 informačných panelov) a s voľbou *vrátane záznamov komunikácie* aj `recordings/*.tsrec`. Kľúče ochrany dát
@@ -720,17 +720,42 @@ sieťach /64; úspešné prihlásenie počítadlo nenuluje. Počítadlo je v pam
 *Zostať prihlásený* drží prihlásenie 14 dní od posledného použitia (aj po reštarte servera), inak do zatvorenia
 prehliadača.
 
-| Rola          | Môže                                                                         |
-|---------------|------------------------------------------------------------------------------|
-| `admin`       | všetko vrátane nastavení servera, používateľov a auditu                       |
-| `operator`    | tabule a linky meniť, záznamy nahrávať, prehrávať a mazať, komunikácia        |
-| `viewer`      | tabule, linky, záznamy a komunikáciu len pozerať                              |
+Používateľ aj prístupový kľúč má **jednu rolu** a rola určuje oprávnenia podľa činností:
 
-Oprávnenia (`simulator.view`, `simulator.edit`, `recordings.manage`, `log.view`, `settings.manage`, `users.manage`,
-`audit.view`) kontroluje server na každom endpointe aj na WebSockete; webové rozhranie podľa `/api/auth/me` len skryje, čo
-používateľ nesmie.
+| Oprávnenie           | Smie                                                                                 |
+|----------------------|--------------------------------------------------------------------------------------|
+| `simulator.view`     | prehľad – linky, tabule, záznamy, scenáre, vzhľady, virtuálne tabule a panely pozerať (má ho každá rola) |
+| `log.view`           | log komunikácie (aj na WebSockete s `?log=1`)                                         |
+| `archive.view`       | archív tabúľ a hlásení, monitor hlásení (aj správy `reports` na WebSockete)           |
+| `statistics.view`    | štatistiky komunikácie                                                               |
+| `audit.view`         | audit                                                                                |
+| `lines.manage`       | linky a tabule meniť, import stanice, konfigurácie a projektov Monitora               |
+| `boards.control`     | poruchy tabúľ, vymazanie obsahu tabule a logu komunikácie                            |
+| `scenarios.manage`   | scenáre porúch upraviť, spustiť a zastaviť                                           |
+| `designs.manage`     | vlastné vzhľady                                                                      |
+| `recordings.manage`  | záznamy nahrávať, nahrať, mazať a prehrávať                                          |
+| `virtual.manage`     | virtuálne tabule, rozloženia, import z INISSView                                     |
+| `signage.manage`     | informačné panely – správy, playlisty, skupiny, panely, súbory                        |
+| `settings.manage`    | nastavenie servera vrátane HTTPS, databázy a upozornení                              |
+| `server.manage`      | záloha a obnova simulátora, reštart služby                                           |
+| `users.manage`       | používatelia a roly                                                                  |
+| `keys.manage`        | prístupové kľúče                                                                     |
 
-Stránka **Používatelia** (správca) zakladá používateľov, mení im zobrazované meno, rolu a vypnutie, nastavuje nové
+Vstavané roly: **správca** (`admin`) má vždy všetky oprávnenia, aj tie, ktoré pribudnú v ďalších verziách – nedá sa
+upraviť ani zmazať. **Operátor** (`operator`, predvolene všetko okrem správy, auditu a nastavenia) a **pozorovateľ**
+(`viewer`, predvolene prehľad, log, archív a štatistiky) sa dajú upraviť, nie zmazať. Stránka **Roly** pridá vlastné
+roly (kľúč z názvu bez diakritiky, napr. `informacne-panely`), upraví ich a odstráni rolu, ktorú nemá žiadny
+používateľ ani kľúč (`GET`/`POST /api/roles`, `PUT`/`DELETE /api/roles/{name}`). Oprávnenia rolí sú v databáze
+(`AspNetRoles.Permissions`); databáza zo staršej verzie dostane pri štarte predvolené oprávnenia vstavaných rolí.
+
+Server ich kontroluje na každom endpointe (politika = oprávnenie, `PermissionHandler` podľa roly v prihlásení
+a katalógu rolí v pamäti) aj na WebSockete; webové rozhranie podľa `/api/auth/me` len skryje, čo používateľ nesmie.
+Zmena oprávnení roly platí hneď, zmena roly používateľa do minúty, otvorený WebSocket má oprávnenia z pripojenia.
+**Nikto nepridelí viac, než sám má:** rolu s oprávnením, ktoré prihlásený nemá, nemôže založiť, upraviť ani
+prideliť používateľovi či kľúču a nespravuje používateľa ani kľúč s takou rolou (nenastaví heslo správcovi);
+vlastnú rolu nemení.
+
+Stránka **Používatelia** (oprávnenie `users.manage`) zakladá používateľov, mení im zobrazované meno, rolu a vypnutie, nastavuje nové
 heslo (zruší aj zablokovanie), odomkne zablokovaný účet a odstráni ho. Svoju rolu nikto nezmení a seba nevypne ani
 neodstráni; aktívny správca musí ostať aspoň jeden. Zmena roly sa prihlásenému prejaví do minúty bez odhlásenia,
 vypnutie, nové heslo a odstránenie ho do minúty odhlásia. Vlastné heslo si každý zmení v ponuke pod svojím menom.

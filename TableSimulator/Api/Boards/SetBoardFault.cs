@@ -14,5 +14,5 @@ public sealed class SetBoardFault : IEndpoint
             CancellationToken cancellationToken) =>
             (await handler.Handle(new SetBoardFaultCommand(id, fault), cancellationToken)).Match(Results.NoContent, CustomResults.Problem))
             .Produces(StatusCodes.Status204NoContent)
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.BoardsControl);
 }

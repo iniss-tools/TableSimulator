@@ -14,5 +14,5 @@ public sealed class GetTrafficStatistics : IEndpoint
             IQueryHandler<GetTrafficStatisticsQuery, TrafficStatisticsDto> handler, CancellationToken cancellationToken) =>
             (await handler.Handle(new GetTrafficStatisticsQuery(from, to, line), cancellationToken)).Match(Results.Ok, CustomResults.Problem))
             .Produces<TrafficStatisticsDto>()
-            .RequireAuthorization(Permissions.SimulatorView);
+            .RequireAuthorization(Permissions.StatisticsView);
 }

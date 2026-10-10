@@ -22,5 +22,5 @@ public sealed class UploadSignageMedia : IEndpoint
         })
             .Accepts<Stream>("application/octet-stream")
             .Produces<SignageMediaDto>()
-            .RequireAuthorization(Permissions.SimulatorEdit);
+            .RequireAuthorization(Permissions.SignageManage);
 }

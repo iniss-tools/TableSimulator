@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/format";
 import { t, type TextKey } from "@/i18n";
+import { useRoles } from "@/features/roles/roles";
 import { CreatedKeyDialog, NewKeyDialog } from "./KeyDialogs";
 
 const refreshKeys = () => queryClient.invalidateQueries({ queryKey: getAccessKeysQueryKey() });
@@ -21,6 +22,7 @@ const column = columnsFor<AccessKeyDto>();
 
 export function KeysPage() {
   const query = useQuery(getAccessKeysOptions());
+  const roles = useRoles();
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<AccessKeyCreatedDto | null>(null);
 
@@ -33,7 +35,7 @@ export function KeysPage() {
     () => [
       column.accessor("name", { header: t("keys.name"), cell: ({ getValue }) => <span className="font-medium">{getValue()}</span> }),
       column.accessor((k) => t(`keys.kind.${k.kind}` as TextKey), { id: "kind", header: t("keys.kind") }),
-      column.accessor((k) => t(`role.${k.role}` as TextKey), { id: "role", header: t("users.role") }),
+      column.accessor((k) => roles.label(k.role), { id: "role", header: t("users.role") }),
       column.accessor("prefix", {
         header: t("keys.prefix"),
         enableSorting: false,
@@ -64,7 +66,7 @@ export function KeysPage() {
         cell: ({ row }) => <RowActions actions={[{ label: t("common.delete"), icon: Trash2, destructive: true, onClick: () => remove(row.original) }]} />,
       }),
     ],
-    [],
+    [roles],
   );
 
   return (
