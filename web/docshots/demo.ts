@@ -250,13 +250,21 @@ export default async function demo() {
   // priecinok logov INISSu s XML tabul a dennymi archivmi, virtualne tabule
   const folder = writeInissLog(join(DATA, "iniss-log"));
   const settings = (await (await api.get("/api/settings")).json()) as SettingsDto;
-  const saved = await api.put("/api/settings", { data: { ...settings, virtualFolders: [folder] } });
+  // pristup zo siete (zariadenia s klucom) - plati az po restarte, okno kluca uz neupozornuje, ze je vypnuty
+  const saved = await api.put("/api/settings", { data: { ...settings, virtualFolders: [folder], allowNetwork: true } });
   if (!saved.ok()) throw new Error(`Nastavenie: ${await saved.text()}`);
   for (const { id, ...board } of VIRTUAL) {
     const response = await api.put(`/api/virtual/${id}`, { data: board });
     if (!response.ok()) throw new Error(`Virtualna tabula ${id}: ${await response.text()}`);
   }
   await seedSignage(api);
+  for (const key of [
+    { name: "Monitor v hale", kind: "device", role: "viewer" },
+    { name: "GVDEditor", kind: "api", role: "operator" },
+  ]) {
+    const response = await api.post("/api/keys", { data: key });
+    if (!response.ok()) throw new Error(`Kluc ${key.name}: ${await response.text()}`);
+  }
   await api.dispose();
 
   const recorder = await request.newContext({ baseURL: DOCSHOTS_SERVER.url, extraHTTPHeaders: API_HEADERS });
