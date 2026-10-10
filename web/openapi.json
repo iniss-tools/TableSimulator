@@ -481,6 +481,64 @@
         }
       }
     },
+    "/api/statistics": {
+      "get": {
+        "tags": [
+          "Statistics"
+        ],
+        "operationId": "GetTrafficStatistics",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "line",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrafficStatisticsDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/station/iniss": {
       "get": {
         "tags": [
@@ -4165,6 +4223,56 @@
           }
         }
       },
+      "BoardTrafficPointDto": {
+        "required": [
+          "line",
+          "address",
+          "time",
+          "frames",
+          "acks",
+          "naks",
+          "unanswered",
+          "maxGapMs"
+        ],
+        "type": "object",
+        "properties": {
+          "line": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "address": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "frames": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "acks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "naks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unanswered": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxGapMs": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          }
+        }
+      },
       "ComparisonStepDto": {
         "required": [
           "kind",
@@ -5464,6 +5572,106 @@
           "lost",
           "outage"
         ]
+      },
+      "LineStatusChangeDto": {
+        "required": [
+          "line",
+          "time",
+          "status",
+          "detail"
+        ],
+        "type": "object",
+        "properties": {
+          "line": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LineStatus"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "LineTrafficPointDto": {
+        "required": [
+          "line",
+          "time",
+          "ok",
+          "badChecksum",
+          "noBoard",
+          "noise",
+          "other",
+          "replies",
+          "faults",
+          "bytesIn",
+          "bytesOut",
+          "connections",
+          "disconnections"
+        ],
+        "type": "object",
+        "properties": {
+          "line": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ok": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "badChecksum": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "noBoard": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "noise": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "other": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "replies": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "faults": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bytesIn": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bytesOut": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "connections": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "disconnections": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
       },
       "LoginRequest": {
         "required": [
@@ -7394,6 +7602,54 @@
           }
         }
       },
+      "TrafficStatisticsDto": {
+        "required": [
+          "from",
+          "to",
+          "bucketMinutes",
+          "lines",
+          "boards",
+          "statusChanges",
+          "retentionDays"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "bucketMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LineTrafficPointDto"
+            }
+          },
+          "boards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardTrafficPointDto"
+            }
+          },
+          "statusChanges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LineStatusChangeDto"
+            }
+          },
+          "retentionDays": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "UpdateSettingsRequest": {
         "required": [
           "httpPort",
@@ -8097,6 +8353,9 @@
     },
     {
       "name": "Users"
+    },
+    {
+      "name": "Statistics"
     },
     {
       "name": "Station"

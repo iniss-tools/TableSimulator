@@ -4,6 +4,7 @@ using TableSimulator.Core.Lines;
 using TableSimulator.Core.Protocols;
 using TableSimulator.Core.Protocols.Apel;
 using TableSimulator.Core.Protocols.Elsvo;
+using TableSimulator.Core.Statistics;
 using TableSimulator.Core.Protocols.Elektrocas;
 using TableSimulator.Core.Protocols.Elen;
 using TableSimulator.Core.Protocols.Ers;
@@ -61,6 +62,7 @@ public sealed class Simulator
     private readonly Dictionary<string, SimBoard> _boards = [];
     private readonly LinkedList<FrameRecord> _log = [];
     private readonly TimeProvider _time;
+    private readonly TrafficCollector _traffic = new();
     private SessionRecorder? _recorder;
     private long _seq;
 
@@ -359,6 +361,7 @@ public sealed class Simulator
             if (line.Outage == outage)
                 return true;
             line.Outage = outage;
+            _traffic.Status(number, line.Status, outage ? LineStatus.Outage : LineStatus.Stopped, null, Now);
             line.Status = outage ? LineStatus.Outage : LineStatus.Stopped;
             line.StatusDetail = null;
             line.StatusSince = Now;
@@ -367,6 +370,16 @@ public sealed class Simulator
 
         Raise([new LineChanged(number)]);
         return true;
+    }
+
+    /// <summary>
+    /// Odoberie statistiku komunikacie od posledneho odberu do minuty <paramref name="minute" /> (server kazdu minutu
+    /// a pri zastaveni).
+    /// </summary>
+    public TrafficSample TakeTraffic(long minute)
+    {
+        lock (_lock)
+            return _traffic.Take(minute, _boards.Values);
     }
 
     /// <summary>Zmaze obsah tabule (ako po zapnuti).</summary>
@@ -403,6 +416,7 @@ public sealed class Simulator
 
             if (status == LineStatus.Listening && line.Status is LineStatus.Connected or LineStatus.Lost)
                 status = LineStatus.Lost;
+            _traffic.Status(number, line.Status, status, detail, Now);
             if (status != line.Status)
                 line.StatusSince = Now;
             line.Status = status;
@@ -432,8 +446,11 @@ public sealed class Simulator
                 line.LastReceivedAt = Now;
             context = new Context(this, line);
             line.Protocol.Receive(data, context);
+            var sent = 0L;
             foreach (var reply in context.Replies)
-                line.Stats.BytesOut += reply.Bytes.Length;
+                sent += reply.Bytes.Length;
+            line.Stats.BytesOut += sent;
+            _traffic.Bytes(lineNumber, data.Length, sent);
             line.Version++;
 
             if (source == TrafficSource.Line && _recorder is { } recorder)
@@ -657,6 +674,7 @@ public sealed class Simulator
     private FrameRecord AddLog(int line, FrameDirection direction, int? address, byte[] bytes, FrameStatus status, FrameInfo info)
     {
         var record = new FrameRecord(++_seq, Now, line, direction, address, bytes, status, info);
+        _traffic.Frame(line, direction, status);
         _log.AddLast(record);
         while (_log.Count > LogCapacity)
             _log.RemoveFirst();

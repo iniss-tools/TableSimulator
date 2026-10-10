@@ -198,6 +198,17 @@ export type BoardTemplateDto = {
     profile: BoardProfileDto;
 };
 
+export type BoardTrafficPointDto = {
+    line: number;
+    address: number;
+    time: string;
+    frames: number;
+    acks: number;
+    naks: number;
+    unanswered: number;
+    maxGapMs: null | number;
+};
+
 export type ComparisonStepDto = {
     kind: ComparisonStepKind;
     a: null | BoardStateDto;
@@ -504,6 +515,29 @@ export type LineStatsDto = {
 };
 
 export type LineStatus = 'stopped' | 'listening' | 'connected' | 'error' | 'lost' | 'outage';
+
+export type LineStatusChangeDto = {
+    line: number;
+    time: string;
+    status: LineStatus;
+    detail: null | string;
+};
+
+export type LineTrafficPointDto = {
+    line: number;
+    time: string;
+    ok: number;
+    badChecksum: number;
+    noBoard: number;
+    noise: number;
+    other: number;
+    replies: number;
+    faults: number;
+    bytesIn: number;
+    bytesOut: number;
+    connections: number;
+    disconnections: number;
+};
 
 export type LoginRequest = {
     userName: string;
@@ -970,6 +1004,16 @@ export type TableArchiveTableDto = {
     columns: Array<TableArchiveColumnDto>;
     logical: string;
     row: string;
+};
+
+export type TrafficStatisticsDto = {
+    from: string;
+    to: string;
+    bucketMinutes: number;
+    lines: Array<LineTrafficPointDto>;
+    boards: Array<BoardTrafficPointDto>;
+    statusChanges: Array<LineStatusChangeDto>;
+    retentionDays: number;
 };
 
 export type UpdateSettingsRequest = {
@@ -1480,6 +1524,35 @@ export type UnlockUserResponses = {
 };
 
 export type UnlockUserResponse = UnlockUserResponses[keyof UnlockUserResponses];
+
+export type GetTrafficStatisticsData = {
+    body?: never;
+    path?: never;
+    query: {
+        from: string;
+        to: string;
+        line?: number;
+    };
+    url: '/api/statistics';
+};
+
+export type GetTrafficStatisticsErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetTrafficStatisticsError = GetTrafficStatisticsErrors[keyof GetTrafficStatisticsErrors];
+
+export type GetTrafficStatisticsResponses = {
+    /**
+     * OK
+     */
+    200: TrafficStatisticsDto;
+};
+
+export type GetTrafficStatisticsResponse = GetTrafficStatisticsResponses[keyof GetTrafficStatisticsResponses];
 
 export type GetInissStationData = {
     body?: never;

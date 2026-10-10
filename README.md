@@ -56,7 +56,8 @@ vetvu registra INISSu v HKCU prihláseného používateľa (načítanie stanice 
 Všetko, čo server uchováva, je v databáze `tablesimulator.db` (SQLite) v priečinku nastavení: nastavenie servera,
 linky a tabule (profil tabule ako JSON v stĺpci, ostatné údaje v stĺpcoch, enumy kľúčmi z JSON – `display`,
 `noReply`…), používatelia, prístupové kľúče, audit, virtuálne tabule a ich rozloženia, informačné panely (správy,
-playlisty a skupiny ako JSON v stĺpci) a scenáre porúch (kroky ako JSON v stĺpci; export liniek a tabúľ ich nenesie). Mimo nej ostávajú súbory, ktoré sa upravujú alebo prenášajú ako súbory:
+playlisty a skupiny ako JSON v stĺpci), scenáre porúch (kroky ako JSON v stĺpci; export liniek a tabúľ ich nenesie)
+a štatistika komunikácie (minútové súhrny 30 dní). Mimo nej ostávajú súbory, ktoré sa upravujú alebo prenášajú ako súbory:
 záznamy komunikácie (`recordings\*.tsrec`), vlastné vzhľady (`designs\<id>\design.json`, menia sa ručne a server ich
 načíta hneď), obrázky a videá správ (`media\`), certifikáty HTTPS (`https\`), kľúče ochrany dát (`keys\`) a logy.
 
@@ -272,6 +273,27 @@ Riadiaci INISS má v `TPhysic` všetky tabule, aj vzdialené (`COMUNICATION_PORT
   Pravidelné dotazy na stav front (asi raz za sekundu, ak má linka okruhy z `Audio.txt`) do komunikácie nejdú.
 - V komunikácii sa ukazuje celá správa vzdialeného INISSu, význam podľa správy tabule. Do **zrkadla** (COM) idú
   vybalené správy tabúľ so súčtom, nie obal – ELEN Monitor ich teda prečíta.
+
+## Štatistiky komunikácie
+
+Stránka **Štatistiky** ukazuje komunikáciu v čase za hodinu, deň, týždeň alebo 30 dní (šípky posúvajú obdobie
+dozadu), pre všetky linky alebo jednu:
+
+- **Správy od INISSu** podľa výsledku – v poriadku, zlý súčet, bez tabule (adresa, kde nikto nie je), šum (úseky
+  bajtov mimo správ), iná chyba,
+- **Odpovede tabúľ** – bez poruchy a ovplyvnené predstieranou poruchou (aj vynechané),
+- **Bajty** od INISSu a do INISSu,
+- **Stav liniek** ako farebný pás (pripojený, čaká, INISS sa odpojil / chyba / výpadok zo scenára, zastavená) a počty
+  pripojení a odpojení INISSu,
+- **Tabule** – súčty za obdobie (správy, ACK, NAK, bez odpovede) a **najdlhšia pauza** medzi správami pre tabuľu
+  (ako často ju INISS obnovuje); kliknutím graf tabule po intervaloch.
+
+Simulátor počíta komunikáciu po minútach (aj prehrávané záznamy) a služba servera na začiatku každej minúty zapíše
+skončenú minútu do databázy (pri zastavení servera aj rozpracovanú – po reštarte sa k nej pripočíta). Každú zmenu
+stavu linky zapíše s časom. Štatistika staršia než 30 dní sa maže pri štarte a raz za deň (posledná zmena stavu
+každej linky ostane – je to stav na začiatku uchovaného obdobia). Graf zoskupuje minúty podľa obdobia: do 3 h po
+minúte, do 2 dní po 10 min, do týždňa po hodine, inak po 6 h. API: `GET /api/statistics?from=&to=&line=` (najviac
+31 dní, intervaly bez komunikácie chýbajú).
 
 ## Scenáre porúch
 

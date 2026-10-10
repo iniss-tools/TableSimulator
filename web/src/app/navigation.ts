@@ -3,6 +3,7 @@ import {
   Activity,
   Archive,
   Cable,
+  ChartColumn,
   Disc3,
   GitCompareArrows,
   Group,
@@ -30,6 +31,7 @@ export type NavPath =
   | "/lines"
   | "/scenarios"
   | "/log"
+  | "/statistics"
   | "/recordings"
   | "/recordings/compare"
   | "/virtual"
@@ -65,6 +67,7 @@ export const NAV: NavGroup[] = [
       { to: "/lines", label: "nav.lines", icon: Cable, permission: PERMISSIONS.view },
       { to: "/scenarios", label: "nav.scenarios", icon: Siren, permission: PERMISSIONS.view },
       { to: "/log", label: "nav.log", icon: Activity, permission: PERMISSIONS.log },
+      { to: "/statistics", label: "nav.statistics", icon: ChartColumn, permission: PERMISSIONS.view },
       { to: "/recordings", label: "nav.recordings", icon: Disc3, permission: PERMISSIONS.view },
       { to: "/recordings/compare", label: "nav.compare", icon: GitCompareArrows, permission: PERMISSIONS.view },
     ],

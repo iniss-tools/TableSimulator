@@ -349,6 +349,115 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                     b.ToTable("SignagePlaylists", (string)null);
                 });
 
+            modelBuilder.Entity("TableSimulator.Application.Statistics.BoardTrafficRecord", b =>
+                {
+                    b.Property<int>("Line")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Address")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Minute")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Acks")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Frames")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("MaxGapMs")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Naks")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Unanswered")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Line", "Address", "Minute");
+
+                    b.HasIndex("Minute");
+
+                    b.ToTable("BoardTraffic", (string)null);
+                });
+
+            modelBuilder.Entity("TableSimulator.Application.Statistics.LineStatusRecord", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Detail")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Line")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("TimeMs")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TimeMs");
+
+                    b.ToTable("LineStatusChanges", (string)null);
+                });
+
+            modelBuilder.Entity("TableSimulator.Application.Statistics.LineTrafficRecord", b =>
+                {
+                    b.Property<int>("Line")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Minute")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("BadChecksum")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("BytesIn")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("BytesOut")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Connections")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Disconnections")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Faults")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("NoBoard")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Noise")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Ok")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Other")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Replies")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Line", "Minute");
+
+                    b.HasIndex("Minute");
+
+                    b.ToTable("LineTraffic", (string)null);
+                });
+
             modelBuilder.Entity("TableSimulator.Application.Virtual.VirtualBoard", b =>
                 {
                     b.Property<int>("Id")

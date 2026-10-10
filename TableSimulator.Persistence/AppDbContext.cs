@@ -4,6 +4,7 @@ using TableSimulator.Application.Audit;
 using TableSimulator.Application.Keys;
 using TableSimulator.Application.Scenarios;
 using TableSimulator.Application.Signage;
+using TableSimulator.Application.Statistics;
 using TableSimulator.Application.Virtual;
 using TableSimulator.Core.Boards;
 using TableSimulator.Core.Lines;
@@ -16,7 +17,7 @@ namespace TableSimulator.Persistence;
 
 /// <summary>
 /// Databaza simulatora: nastavenie servera, linky a tabule, pouzivatelia a roly (ASP.NET Core Identity), pristupove
-/// kluce, audit, virtualne tabule, informacne panely a scenare porucha. Model je nezavisly od poskytovatela - kazdy
+/// kluce, audit, virtualne tabule, informacne panely, scenare porucha a statistika komunikacie. Model je nezavisly od poskytovatela - kazdy
 /// poskytovatel ma vlastnu odvodenu triedu a vlastne migracie (<see cref="Sqlite.SqliteAppDbContext" />).
 /// </summary>
 public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext<AppUser, AppRole, Guid>(options)
@@ -56,6 +57,15 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
 
     /// <summary>Nahrate obrazky a videa sprav.</summary>
     public DbSet<SignageMediaRecord> SignageMedia => Set<SignageMediaRecord>();
+
+    /// <summary>Minutova statistika komunikacie liniek.</summary>
+    public DbSet<LineTrafficRecord> LineTraffic => Set<LineTrafficRecord>();
+
+    /// <summary>Minutova statistika komunikacie tabul.</summary>
+    public DbSet<BoardTrafficRecord> BoardTraffic => Set<BoardTrafficRecord>();
+
+    /// <summary>Zmeny stavu liniek (pripojenie, odpojenie, vypadok).</summary>
+    public DbSet<LineStatusRecord> LineStatuses => Set<LineStatusRecord>();
 
     /// <summary>Scenare porucha.</summary>
     public DbSet<FaultScenarioRecord> FaultScenarios => Set<FaultScenarioRecord>();
@@ -150,6 +160,29 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
             layout.HasKey(l => l.Id);
             layout.Property(l => l.Id).HasMaxLength(40);
             layout.Property(l => l.Name).HasMaxLength(100);
+        });
+        // statistika: minuta od 1. 1. 1970 UTC ako cislo - porovnava sa a zoskupuje v kazdej databaze rovnako
+        builder.Entity<LineTrafficRecord>(traffic =>
+        {
+            traffic.ToTable("LineTraffic");
+            traffic.HasKey(t => new { t.Line, t.Minute });
+            traffic.HasIndex(t => t.Minute);
+        });
+        builder.Entity<BoardTrafficRecord>(traffic =>
+        {
+            traffic.ToTable("BoardTraffic");
+            traffic.HasKey(t => new { t.Line, t.Address, t.Minute });
+            traffic.HasIndex(t => t.Minute);
+        });
+        builder.Entity<LineStatusRecord>(status =>
+        {
+            status.ToTable("LineStatusChanges");
+            status.HasKey(s => s.Id);
+            status.Property(s => s.Id).ValueGeneratedOnAdd();
+            status.Property(s => s.Status).HasMaxLength(20);
+            status.Property(s => s.Detail).HasMaxLength(200);
+            // zmien stavu je malo (desiatky za den) - staci index casu
+            status.HasIndex(s => s.TimeMs);
         });
         // kroky scenara su JSON ako v API - scenarov je malo a citaju sa vzdy cele
         builder.Entity<FaultScenarioRecord>(scenario =>

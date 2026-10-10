@@ -29,6 +29,12 @@ internal static partial class ServerLog
     [LoggerMessage(Level = LogLevel.Error, Message = "Cistenie auditu zlyhalo")]
     public static partial void AuditCleanupFailed(ILogger logger, Exception exception);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Statistika: odstranenych {Count} zaznamov starsich nez {Days} dni")]
+    public static partial void StatisticsCleaned(ILogger logger, int count, int days);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Zapis alebo cistenie statistiky komunikacie zlyhalo")]
+    public static partial void StatisticsFailed(ILogger logger, Exception exception);
+
     [LoggerMessage(Level = LogLevel.Error, Message = "Prechod priecinkov s XML tabul zlyhal")]
     public static partial void XmlTablesFailed(ILogger logger, Exception exception);
 }

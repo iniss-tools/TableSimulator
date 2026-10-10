@@ -198,7 +198,7 @@ public static partial class DtoMapper
         _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null)
     };
 
-    private static Contracts.Lines.LineStatus ToDto(Core.Lines.LineStatus status) => status switch
+    public static Contracts.Lines.LineStatus ToDto(Core.Lines.LineStatus status) => status switch
     {
         Core.Lines.LineStatus.Stopped => Contracts.Lines.LineStatus.Stopped,
         Core.Lines.LineStatus.Listening => Contracts.Lines.LineStatus.Listening,

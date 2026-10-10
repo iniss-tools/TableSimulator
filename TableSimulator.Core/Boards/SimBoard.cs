@@ -76,11 +76,38 @@ public sealed class ElenDisplay : BoardDisplay
 /// </summary>
 public sealed class BoardStats
 {
+    private DateTimeOffset? _lastFrameAt;
+    private long? _maxGapMs;
+
     public long Frames { get; set; }
     public long Acks { get; set; }
     public long Naks { get; set; }
     public long Unanswered { get; set; }
-    public DateTimeOffset? LastFrameAt { get; set; }
+
+    /// <summary>Posledna sprava pre tabulu; nova hodnota zaznamena pauzu od predchadzajucej (statistika).</summary>
+    public DateTimeOffset? LastFrameAt
+    {
+        get => _lastFrameAt;
+        set
+        {
+            if (_lastFrameAt is { } last && value is { } now && now > last)
+            {
+                var gap = (long)(now - last).TotalMilliseconds;
+                if (_maxGapMs is not { } max || gap > max)
+                    _maxGapMs = gap;
+            }
+
+            _lastFrameAt = value;
+        }
+    }
+
+    /// <summary>Najdlhsia pauza medzi spravami od posledneho odberu [ms] a jej vynulovanie; null = ziadna.</summary>
+    internal long? TakeMaxGap()
+    {
+        var gap = _maxGapMs;
+        _maxGapMs = null;
+        return gap;
+    }
 }
 
 /// <summary>
