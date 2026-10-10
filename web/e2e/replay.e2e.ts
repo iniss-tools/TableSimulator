@@ -29,7 +29,7 @@ test("prehravanie zaznamu s casovou osou", async ({ page }) => {
   };
 
   await page.getByRole("row").filter({ hasText: "e2e casova os" }).getByRole("button", { name: "Prehrať" }).click();
-  const timeline = page.getByLabel("Časová os záznamu – posun na miesto");
+  const timeline = page.getByLabel("Časová os záznamu");
   const player = page.locator("[data-slot=card]").filter({ has: timeline });
   await expect(player.getByText(/Prehráva sa/)).toBeVisible();
   await player.getByRole("button", { name: "Pozastaviť" }).click();

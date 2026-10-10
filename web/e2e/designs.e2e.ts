@@ -18,7 +18,7 @@ test("novy vzhlad, uprava a zmazanie", async ({ page }) => {
   await page.getByRole("textbox", { name: "Pozadie hlavičky" }).last().fill("#7a0000");
   await expect(page.getByText("Neuložené zmeny")).toBeVisible();
   await page.getByRole("button", { name: "Uložiť" }).click();
-  await expect(page.getByText("Vzhľad uložený – tabule sa prekreslili.")).toBeVisible();
+  await expect(page.getByText("Vzhľad je uložený a tabule sa prekreslili.")).toBeVisible();
 
   const design = (await (await page.request.get("/designs/test-e2e/design.json")).json()) as { pitch: number; header: { background: string } };
   expect(design.pitch).toBe(7);
