@@ -41,9 +41,12 @@ function free(port: number): Promise<boolean> {
   });
 }
 
-/** Port linky: predvoleny 47000 + cislo ako v dokumentacii, ak je obsadeny, 48000 + cislo. */
-async function portOf(line: number): Promise<number> {
-  if (await free(47000 + line)) return 47000 + line;
+/**
+ * Port linky: predvoleny 47000 + cislo ako v dokumentacii, ak je obsadeny, 48000 + cislo. Porty liniek ukazkoveho servera
+ * (cisty server zalozi predvolenu linku 1 na 47001) su vlastne, nie obsadene - stanica ich prevezme.
+ */
+async function portOf(line: number, own: Set<number>): Promise<number> {
+  if (own.has(47000 + line) || (await free(47000 + line))) return 47000 + line;
   console.warn(`Port ${47000 + line} je obsadeny - linka ${line} pocuva na ${48000 + line} (snimky ukazu iny port).`);
   return 48000 + line;
 }
@@ -231,7 +234,11 @@ function seedStatistics() {
 
 export default async function demo() {
   const api = await request.newContext({ baseURL: DOCSHOTS_SERVER.url, extraHTTPHeaders: API_HEADERS });
-  const lines = await Promise.all(LINES.map(async (l) => ({ ...l, port: await portOf(l.number) })));
+  const current = (await (await api.get("/api/state")).json()) as StateDto;
+  const own = new Set(current.lines.map((l) => Number(/:(\d+)$/.exec(l.endpoint)?.[1])));
+  const lines = await Promise.all(LINES.map(async (l) => ({ ...l, port: await portOf(l.number, own) })));
+  // predvolena linka cisteho servera prec - nacitanie stanice by jej nechalo povodny nazov
+  for (const line of current.lines) await api.delete(`/api/lines/${line.number}`);
   const station = await api.post("/api/station", {
     data: {
       lines,
