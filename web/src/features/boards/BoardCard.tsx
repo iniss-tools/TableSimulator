@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { clearBoard, deleteBoard, errorText, setBoard, setBoardFault, type BoardDto, type BoardFaultDto, type FaultKind } from "@/api";
 import { confirmAction } from "@/components/common/confirm";
 import { OptionSelect } from "@/components/common/option-select";
+import { StatusBadge } from "@/components/common/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -203,6 +204,11 @@ export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: ()
             · {board.manufacturer}
             {board.autoCreated && <> · {t("board.auto")}</>}
           </div>
+          {board.poweredOff && (
+            <div className="mt-1">
+              <StatusBadge tone="bad">{t("board.poweredOff")}</StatusBadge>
+            </div>
+          )}
         </div>
         <div className="flex shrink-0 items-center">
           <SnapshotMenu board={board} view={view} />
@@ -231,7 +237,7 @@ export function BoardCard({ board, onEdit, edit }: { board: BoardDto; onEdit: ()
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {board.mismatch && <MismatchWarning board={board} edit={edit} />}
-        <BoardView ref={view} board={board} />
+        <BoardView ref={view} board={board} className={cn(board.poweredOff && "opacity-40")} />
         {!board.profile.fontFile && d.family !== "flaps" && d.family !== "amplifier" && (
           <p className="text-xs text-muted-foreground">{t("board.approxFont")}</p>
         )}

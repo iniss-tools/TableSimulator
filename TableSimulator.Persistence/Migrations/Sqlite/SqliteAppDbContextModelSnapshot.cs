@@ -213,6 +213,26 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                     b.ToTable("AccessKeys", (string)null);
                 });
 
+            modelBuilder.Entity("TableSimulator.Application.Scenarios.FaultScenarioRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Definition")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FaultScenarios", (string)null);
+                });
+
             modelBuilder.Entity("TableSimulator.Application.Signage.SignageGroupRecord", b =>
                 {
                     b.Property<int>("Id")

@@ -55,7 +55,8 @@ public static partial class DtoMapper
             ToDto(board.Display, board.ManufacturerKey), board.Version)
         {
             SecondAddress = board.SecondAddress,
-            Mismatch = board.Mismatch is { } m ? new ManufacturerMismatchDto(m.Evidence, m.Suggested.ToArray()) : null
+            Mismatch = board.Mismatch is { } m ? new ManufacturerMismatchDto(m.Evidence, m.Suggested.ToArray()) : null,
+            PoweredOff = board.PoweredOff
         };
     }
 
@@ -204,6 +205,7 @@ public static partial class DtoMapper
         Core.Lines.LineStatus.Connected => Contracts.Lines.LineStatus.Connected,
         Core.Lines.LineStatus.Error => Contracts.Lines.LineStatus.Error,
         Core.Lines.LineStatus.Lost => Contracts.Lines.LineStatus.Lost,
+        Core.Lines.LineStatus.Outage => Contracts.Lines.LineStatus.Outage,
         _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
     };
 

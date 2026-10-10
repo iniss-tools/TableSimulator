@@ -7,6 +7,7 @@ using TableSimulator.Application.Decorators;
 using TableSimulator.Application.Designs;
 using TableSimulator.Application.Fonts;
 using TableSimulator.Application.Recordings;
+using TableSimulator.Application.Scenarios;
 using TableSimulator.Application.Signage;
 using TableSimulator.Application.Station;
 using TableSimulator.Application.Virtual;
@@ -56,6 +57,7 @@ public static class DependencyInjection
         services.AddSingleton<ArchiveCatalog>();
         services.AddScoped<StationImporter>();
         services.AddSingleton<SignagePanelTracker>();
+        services.AddSingleton<ScenarioRunner>();
         services.AddSingleton<SignageMediaStore>();
         services.AddSingleton<XslTablePages>();
         services.AddSingleton<InissViewSite>();

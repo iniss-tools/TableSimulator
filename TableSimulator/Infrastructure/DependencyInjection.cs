@@ -34,6 +34,8 @@ public static class DependencyInjection
         services.AddSingleton<LiveHub>();
         services.AddSingleton<ILiveNotifier>(sp => sp.GetRequiredService<LiveHub>());
         services.AddHostedService<SimulatorHostedService>();
+        // za SimulatorHostedService - pri ukonceni servera zastavi scenare skor, nez sa linky a tabule ulozia
+        services.AddHostedService<ScenarioHostedService>();
         services.AddHostedService<DesignWatcherService>();
         services.AddHostedService<XmlTableWatcherService>();
         services.AddHostedService<AuditRetentionService>();

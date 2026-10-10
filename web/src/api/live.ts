@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 import { socketUrl } from "./auth";
 import {
   getDesignsQueryKey,
+  getFaultScenariosQueryKey,
   getFontsQueryKey,
   getMeQueryKey,
   getMonitorQueryKey,
@@ -133,6 +134,9 @@ function apply(message: LiveMessage) {
       break;
     case "signage":
       invalidateSignage();
+      break;
+    case "scenarios":
+      void queryClient.invalidateQueries({ queryKey: getFaultScenariosQueryKey() });
       break;
   }
 }

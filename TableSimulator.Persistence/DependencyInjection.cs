@@ -2,10 +2,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TableSimulator.Application.Audit;
 using TableSimulator.Application.Keys;
+using TableSimulator.Application.Scenarios;
 using TableSimulator.Application.Signage;
 using TableSimulator.Application.Virtual;
 using TableSimulator.Persistence.Audit;
 using TableSimulator.Persistence.Keys;
+using TableSimulator.Persistence.Scenarios;
 using TableSimulator.Persistence.Signage;
 using TableSimulator.Persistence.Simulation;
 using TableSimulator.Persistence.Sqlite;
@@ -26,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditLog, AuditLog>();
         services.AddScoped<IAccessKeyRepository, AccessKeyRepository>();
         services.AddScoped<ISignageRepository, SignageRepository>();
+        services.AddScoped<IFaultScenarioRepository, FaultScenarioRepository>();
         return services;
     }
 }

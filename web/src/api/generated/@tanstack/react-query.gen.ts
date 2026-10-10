@@ -3,8 +3,8 @@
 import { type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { clearBoard, clearLog, compareRecordings, createAccessKey, createSignageGroup, createSignageMessage, createSignagePanel, createSignagePlaylist, createUser, deleteAccessKey, deleteBoard, deleteDesign, deleteLine, deleteRecording, deleteSignageGroup, deleteSignageMessage, deleteSignagePanel, deleteSignagePlaylist, deleteUser, deleteVirtualBoard, deleteVirtualLayout, downloadHttpsCertificate, downloadRecording, exportConfig, exportSignage, getAccessKeys, getArchiveDays, getAudit, getBoard, getDesigns, getFont, getFonts, getHttpsStatus, getInissStation, getLog, getMe, getMonitor, getRecordingBoard, getRecordings, getReportArchive, getServerInfo, getSettings, getSignageMedia, getSignageOverview, getSignageProgram, getState, getTableArchive, getUsers, getVirtualOverview, getVirtualView, getWebManifest, changePassword, importConfig, importInissStation, importInissView, importMonitorProject, importSignage, importStation, login, logout, type Options, playRecording, restartServer, setBoard, setBoardFault, setDesign, setLine, setup, setUserPassword, setVirtualBoard, setVirtualLayout, startRecording, stopRecording, stopReplay, testAlerts, unlockUser, updateSettings, updateSignageGroup, updateSignageMessage, updateSignagePanel, updateSignagePlaylist, updateUser, uploadRecording, uploadSignageMedia } from '../sdk.gen';
-import type { ClearBoardData, ClearBoardError, ClearBoardResponse, ClearLogData, ClearLogError, ClearLogResponse, CompareRecordingsData, CompareRecordingsError, CompareRecordingsResponse, CreateAccessKeyData, CreateAccessKeyError, CreateAccessKeyResponse, CreateSignageGroupData, CreateSignageGroupError, CreateSignageGroupResponse, CreateSignageMessageData, CreateSignageMessageError, CreateSignageMessageResponse, CreateSignagePanelData, CreateSignagePanelError, CreateSignagePanelResponse, CreateSignagePlaylistData, CreateSignagePlaylistError, CreateSignagePlaylistResponse, CreateUserData, CreateUserError, CreateUserResponse, DeleteAccessKeyData, DeleteAccessKeyError, DeleteAccessKeyResponse, DeleteBoardData, DeleteBoardError, DeleteBoardResponse, DeleteDesignData, DeleteDesignError, DeleteDesignResponse, DeleteLineData, DeleteLineError, DeleteLineResponse, DeleteRecordingData, DeleteRecordingError, DeleteRecordingResponse, DeleteSignageGroupData, DeleteSignageGroupError, DeleteSignageGroupResponse, DeleteSignageMessageData, DeleteSignageMessageError, DeleteSignageMessageResponse, DeleteSignagePanelData, DeleteSignagePanelError, DeleteSignagePanelResponse, DeleteSignagePlaylistData, DeleteSignagePlaylistError, DeleteSignagePlaylistResponse, DeleteUserData, DeleteUserError, DeleteUserResponse, DeleteVirtualBoardData, DeleteVirtualBoardError, DeleteVirtualBoardResponse, DeleteVirtualLayoutData, DeleteVirtualLayoutError, DeleteVirtualLayoutResponse, DownloadHttpsCertificateData, DownloadHttpsCertificateError, DownloadRecordingData, DownloadRecordingError, ExportConfigData, ExportConfigError, ExportSignageData, ExportSignageError, GetAccessKeysData, GetAccessKeysError, GetAccessKeysResponse, GetArchiveDaysData, GetArchiveDaysError, GetArchiveDaysResponse, GetAuditData, GetAuditError, GetAuditResponse, GetBoardData, GetBoardError, GetBoardResponse, GetDesignsData, GetDesignsError, GetDesignsResponse, GetFontData, GetFontError, GetFontResponse, GetFontsData, GetFontsError, GetFontsResponse, GetHttpsStatusData, GetHttpsStatusError, GetHttpsStatusResponse, GetInissStationData, GetInissStationError, GetInissStationResponse, GetLogData, GetLogError, GetLogResponse, GetMeData, GetMeError, GetMeResponse, GetMonitorData, GetMonitorError, GetMonitorResponse, GetRecordingBoardData, GetRecordingBoardError, GetRecordingBoardResponse, GetRecordingsData, GetRecordingsError, GetRecordingsResponse, GetReportArchiveData, GetReportArchiveError, GetReportArchiveResponse, GetServerInfoData, GetServerInfoError, GetServerInfoResponse, GetSettingsData, GetSettingsError, GetSettingsResponse, GetSignageMediaData, GetSignageMediaError, GetSignageOverviewData, GetSignageOverviewError, GetSignageOverviewResponse, GetSignageProgramData, GetSignageProgramError, GetSignageProgramResponse, GetStateData, GetStateError, GetStateResponse, GetTableArchiveData, GetTableArchiveError, GetTableArchiveResponse, GetUsersData, GetUsersError, GetUsersResponse, GetVirtualOverviewData, GetVirtualOverviewError, GetVirtualOverviewResponse, GetVirtualViewData, GetVirtualViewError, GetVirtualViewResponse, GetWebManifestData, GetWebManifestError, GetWebManifestResponse, ChangePasswordData, ChangePasswordError, ChangePasswordResponse, ImportConfigData, ImportConfigError, ImportConfigResponse, ImportInissStationData, ImportInissStationError, ImportInissStationResponse, ImportInissViewData, ImportInissViewError, ImportInissViewResponse, ImportMonitorProjectData, ImportMonitorProjectError, ImportMonitorProjectResponse, ImportSignageData, ImportSignageError, ImportSignageResponse, ImportStationData, ImportStationError, ImportStationResponse, LoginData, LoginError, LoginResponse, LogoutData, LogoutError, LogoutResponse, PlayRecordingData, PlayRecordingError, PlayRecordingResponse, RestartServerData, RestartServerError, RestartServerResponse, SetBoardData, SetBoardError, SetBoardFaultData, SetBoardFaultError, SetBoardFaultResponse, SetBoardResponse, SetDesignData, SetDesignError, SetDesignResponse, SetLineData, SetLineError, SetLineResponse, SetupData, SetupError, SetupResponse, SetUserPasswordData, SetUserPasswordError, SetUserPasswordResponse, SetVirtualBoardData, SetVirtualBoardError, SetVirtualBoardResponse, SetVirtualLayoutData, SetVirtualLayoutError, SetVirtualLayoutResponse, StartRecordingData, StartRecordingError, StartRecordingResponse, StopRecordingData, StopRecordingError, StopRecordingResponse, StopReplayData, StopReplayError, StopReplayResponse, TestAlertsData, TestAlertsError, TestAlertsResponse, UnlockUserData, UnlockUserError, UnlockUserResponse, UpdateSettingsData, UpdateSettingsError, UpdateSettingsResponse, UpdateSignageGroupData, UpdateSignageGroupError, UpdateSignageGroupResponse, UpdateSignageMessageData, UpdateSignageMessageError, UpdateSignageMessageResponse, UpdateSignagePanelData, UpdateSignagePanelError, UpdateSignagePanelResponse, UpdateSignagePlaylistData, UpdateSignagePlaylistError, UpdateSignagePlaylistResponse, UpdateUserData, UpdateUserError, UpdateUserResponse, UploadRecordingData, UploadRecordingError, UploadRecordingResponse, UploadSignageMediaData, UploadSignageMediaError, UploadSignageMediaResponse } from '../types.gen';
+import { clearBoard, clearLog, compareRecordings, createAccessKey, createFaultScenario, createSignageGroup, createSignageMessage, createSignagePanel, createSignagePlaylist, createUser, deleteAccessKey, deleteBoard, deleteDesign, deleteFaultScenario, deleteLine, deleteRecording, deleteSignageGroup, deleteSignageMessage, deleteSignagePanel, deleteSignagePlaylist, deleteUser, deleteVirtualBoard, deleteVirtualLayout, downloadHttpsCertificate, downloadRecording, exportConfig, exportSignage, getAccessKeys, getArchiveDays, getAudit, getBoard, getDesigns, getFaultScenarios, getFont, getFonts, getHttpsStatus, getInissStation, getLog, getMe, getMonitor, getRecordingBoard, getRecordings, getReportArchive, getServerInfo, getSettings, getSignageMedia, getSignageOverview, getSignageProgram, getState, getTableArchive, getUsers, getVirtualOverview, getVirtualView, getWebManifest, changePassword, importConfig, importInissStation, importInissView, importMonitorProject, importSignage, importStation, login, logout, type Options, playRecording, restartServer, setBoard, setBoardFault, setDesign, setFaultScenario, setLine, setup, setUserPassword, setVirtualBoard, setVirtualLayout, startFaultScenario, startRecording, stopFaultScenario, stopRecording, stopReplay, testAlerts, unlockUser, updateSettings, updateSignageGroup, updateSignageMessage, updateSignagePanel, updateSignagePlaylist, updateUser, uploadRecording, uploadSignageMedia } from '../sdk.gen';
+import type { ClearBoardData, ClearBoardError, ClearBoardResponse, ClearLogData, ClearLogError, ClearLogResponse, CompareRecordingsData, CompareRecordingsError, CompareRecordingsResponse, CreateAccessKeyData, CreateAccessKeyError, CreateAccessKeyResponse, CreateFaultScenarioData, CreateFaultScenarioError, CreateFaultScenarioResponse, CreateSignageGroupData, CreateSignageGroupError, CreateSignageGroupResponse, CreateSignageMessageData, CreateSignageMessageError, CreateSignageMessageResponse, CreateSignagePanelData, CreateSignagePanelError, CreateSignagePanelResponse, CreateSignagePlaylistData, CreateSignagePlaylistError, CreateSignagePlaylistResponse, CreateUserData, CreateUserError, CreateUserResponse, DeleteAccessKeyData, DeleteAccessKeyError, DeleteAccessKeyResponse, DeleteBoardData, DeleteBoardError, DeleteBoardResponse, DeleteDesignData, DeleteDesignError, DeleteDesignResponse, DeleteFaultScenarioData, DeleteFaultScenarioError, DeleteFaultScenarioResponse, DeleteLineData, DeleteLineError, DeleteLineResponse, DeleteRecordingData, DeleteRecordingError, DeleteRecordingResponse, DeleteSignageGroupData, DeleteSignageGroupError, DeleteSignageGroupResponse, DeleteSignageMessageData, DeleteSignageMessageError, DeleteSignageMessageResponse, DeleteSignagePanelData, DeleteSignagePanelError, DeleteSignagePanelResponse, DeleteSignagePlaylistData, DeleteSignagePlaylistError, DeleteSignagePlaylistResponse, DeleteUserData, DeleteUserError, DeleteUserResponse, DeleteVirtualBoardData, DeleteVirtualBoardError, DeleteVirtualBoardResponse, DeleteVirtualLayoutData, DeleteVirtualLayoutError, DeleteVirtualLayoutResponse, DownloadHttpsCertificateData, DownloadHttpsCertificateError, DownloadRecordingData, DownloadRecordingError, ExportConfigData, ExportConfigError, ExportSignageData, ExportSignageError, GetAccessKeysData, GetAccessKeysError, GetAccessKeysResponse, GetArchiveDaysData, GetArchiveDaysError, GetArchiveDaysResponse, GetAuditData, GetAuditError, GetAuditResponse, GetBoardData, GetBoardError, GetBoardResponse, GetDesignsData, GetDesignsError, GetDesignsResponse, GetFaultScenariosData, GetFaultScenariosError, GetFaultScenariosResponse, GetFontData, GetFontError, GetFontResponse, GetFontsData, GetFontsError, GetFontsResponse, GetHttpsStatusData, GetHttpsStatusError, GetHttpsStatusResponse, GetInissStationData, GetInissStationError, GetInissStationResponse, GetLogData, GetLogError, GetLogResponse, GetMeData, GetMeError, GetMeResponse, GetMonitorData, GetMonitorError, GetMonitorResponse, GetRecordingBoardData, GetRecordingBoardError, GetRecordingBoardResponse, GetRecordingsData, GetRecordingsError, GetRecordingsResponse, GetReportArchiveData, GetReportArchiveError, GetReportArchiveResponse, GetServerInfoData, GetServerInfoError, GetServerInfoResponse, GetSettingsData, GetSettingsError, GetSettingsResponse, GetSignageMediaData, GetSignageMediaError, GetSignageOverviewData, GetSignageOverviewError, GetSignageOverviewResponse, GetSignageProgramData, GetSignageProgramError, GetSignageProgramResponse, GetStateData, GetStateError, GetStateResponse, GetTableArchiveData, GetTableArchiveError, GetTableArchiveResponse, GetUsersData, GetUsersError, GetUsersResponse, GetVirtualOverviewData, GetVirtualOverviewError, GetVirtualOverviewResponse, GetVirtualViewData, GetVirtualViewError, GetVirtualViewResponse, GetWebManifestData, GetWebManifestError, GetWebManifestResponse, ChangePasswordData, ChangePasswordError, ChangePasswordResponse, ImportConfigData, ImportConfigError, ImportConfigResponse, ImportInissStationData, ImportInissStationError, ImportInissStationResponse, ImportInissViewData, ImportInissViewError, ImportInissViewResponse, ImportMonitorProjectData, ImportMonitorProjectError, ImportMonitorProjectResponse, ImportSignageData, ImportSignageError, ImportSignageResponse, ImportStationData, ImportStationError, ImportStationResponse, LoginData, LoginError, LoginResponse, LogoutData, LogoutError, LogoutResponse, PlayRecordingData, PlayRecordingError, PlayRecordingResponse, RestartServerData, RestartServerError, RestartServerResponse, SetBoardData, SetBoardError, SetBoardFaultData, SetBoardFaultError, SetBoardFaultResponse, SetBoardResponse, SetDesignData, SetDesignError, SetDesignResponse, SetFaultScenarioData, SetFaultScenarioError, SetFaultScenarioResponse, SetLineData, SetLineError, SetLineResponse, SetupData, SetupError, SetupResponse, SetUserPasswordData, SetUserPasswordError, SetUserPasswordResponse, SetVirtualBoardData, SetVirtualBoardError, SetVirtualBoardResponse, SetVirtualLayoutData, SetVirtualLayoutError, SetVirtualLayoutResponse, StartFaultScenarioData, StartFaultScenarioError, StartFaultScenarioResponse, StartRecordingData, StartRecordingError, StartRecordingResponse, StopFaultScenarioData, StopFaultScenarioError, StopFaultScenarioResponse, StopRecordingData, StopRecordingError, StopRecordingResponse, StopReplayData, StopReplayError, StopReplayResponse, TestAlertsData, TestAlertsError, TestAlertsResponse, UnlockUserData, UnlockUserError, UnlockUserResponse, UpdateSettingsData, UpdateSettingsError, UpdateSettingsResponse, UpdateSignageGroupData, UpdateSignageGroupError, UpdateSignageGroupResponse, UpdateSignageMessageData, UpdateSignageMessageError, UpdateSignageMessageResponse, UpdateSignagePanelData, UpdateSignagePanelError, UpdateSignagePanelResponse, UpdateSignagePlaylistData, UpdateSignagePlaylistError, UpdateSignagePlaylistResponse, UpdateUserData, UpdateUserError, UpdateUserResponse, UploadRecordingData, UploadRecordingError, UploadRecordingResponse, UploadSignageMediaData, UploadSignageMediaError, UploadSignageMediaResponse } from '../types.gen';
 
 export const deleteVirtualBoardMutation = (options?: Partial<Options<DeleteVirtualBoardData>>): UseMutationOptions<DeleteVirtualBoardResponse, DeleteVirtualBoardError, Options<DeleteVirtualBoardData>> => {
     const mutationOptions: UseMutationOptions<DeleteVirtualBoardResponse, DeleteVirtualBoardError, Options<DeleteVirtualBoardData>> = {
@@ -600,6 +600,91 @@ export const restartServerMutation = (options?: Partial<Options<RestartServerDat
     const mutationOptions: UseMutationOptions<RestartServerResponse, RestartServerError, Options<RestartServerData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await restartServer({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getFaultScenariosQueryKey = (options?: Options<GetFaultScenariosData>) => createQueryKey('getFaultScenarios', options);
+
+export const getFaultScenariosOptions = (options?: Options<GetFaultScenariosData>) => queryOptions<GetFaultScenariosResponse, GetFaultScenariosError, GetFaultScenariosResponse, ReturnType<typeof getFaultScenariosQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getFaultScenarios({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getFaultScenariosQueryKey(options)
+});
+
+export const createFaultScenarioMutation = (options?: Partial<Options<CreateFaultScenarioData>>): UseMutationOptions<CreateFaultScenarioResponse, CreateFaultScenarioError, Options<CreateFaultScenarioData>> => {
+    const mutationOptions: UseMutationOptions<CreateFaultScenarioResponse, CreateFaultScenarioError, Options<CreateFaultScenarioData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createFaultScenario({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteFaultScenarioMutation = (options?: Partial<Options<DeleteFaultScenarioData>>): UseMutationOptions<DeleteFaultScenarioResponse, DeleteFaultScenarioError, Options<DeleteFaultScenarioData>> => {
+    const mutationOptions: UseMutationOptions<DeleteFaultScenarioResponse, DeleteFaultScenarioError, Options<DeleteFaultScenarioData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteFaultScenario({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const setFaultScenarioMutation = (options?: Partial<Options<SetFaultScenarioData>>): UseMutationOptions<SetFaultScenarioResponse, SetFaultScenarioError, Options<SetFaultScenarioData>> => {
+    const mutationOptions: UseMutationOptions<SetFaultScenarioResponse, SetFaultScenarioError, Options<SetFaultScenarioData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await setFaultScenario({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const startFaultScenarioMutation = (options?: Partial<Options<StartFaultScenarioData>>): UseMutationOptions<StartFaultScenarioResponse, StartFaultScenarioError, Options<StartFaultScenarioData>> => {
+    const mutationOptions: UseMutationOptions<StartFaultScenarioResponse, StartFaultScenarioError, Options<StartFaultScenarioData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await startFaultScenario({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const stopFaultScenarioMutation = (options?: Partial<Options<StopFaultScenarioData>>): UseMutationOptions<StopFaultScenarioResponse, StopFaultScenarioError, Options<StopFaultScenarioData>> => {
+    const mutationOptions: UseMutationOptions<StopFaultScenarioResponse, StopFaultScenarioError, Options<StopFaultScenarioData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await stopFaultScenario({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

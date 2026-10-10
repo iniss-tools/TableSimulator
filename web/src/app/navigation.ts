@@ -16,6 +16,7 @@ import {
   MonitorPlay,
   Palette,
   Settings,
+  Siren,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -27,6 +28,7 @@ export type NavPath =
   | "/"
   | "/designs"
   | "/lines"
+  | "/scenarios"
   | "/log"
   | "/recordings"
   | "/recordings/compare"
@@ -61,6 +63,7 @@ export const NAV: NavGroup[] = [
       { to: "/", label: "nav.boards", icon: LayoutGrid, permission: PERMISSIONS.view },
       { to: "/designs", label: "nav.designs", icon: Palette, permission: PERMISSIONS.edit },
       { to: "/lines", label: "nav.lines", icon: Cable, permission: PERMISSIONS.view },
+      { to: "/scenarios", label: "nav.scenarios", icon: Siren, permission: PERMISSIONS.view },
       { to: "/log", label: "nav.log", icon: Activity, permission: PERMISSIONS.log },
       { to: "/recordings", label: "nav.recordings", icon: Disc3, permission: PERMISSIONS.view },
       { to: "/recordings/compare", label: "nav.compare", icon: GitCompareArrows, permission: PERMISSIONS.view },

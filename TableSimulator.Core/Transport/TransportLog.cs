@@ -20,6 +20,9 @@ internal static partial class TransportLog
     [LoggerMessage(Level = LogLevel.Warning, Message = "Linka {Line} ({Endpoint}) nebezi: {Error}")]
     public static partial void Failed(ILogger logger, int line, LineEndpoint endpoint, string? error);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Linka {Line}: predstierany vypadok - spojenie zavrete")]
+    public static partial void Outage(ILogger logger, int line);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Linka {Line} zastavena")]
     public static partial void Stopped(ILogger logger, int line);
 

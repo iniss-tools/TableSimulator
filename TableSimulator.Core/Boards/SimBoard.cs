@@ -144,6 +144,9 @@ public sealed class SimBoard
     /// <summary>Spravy od INISSu patria inemu vyrobcovi; null = nic take sa nezistilo.</summary>
     public ManufacturerMismatch? Mismatch { get; internal set; }
 
+    /// <summary>Predstierany vypadok napajania: tabula nic neprijima ani neodpoveda, po navrate je prazdna.</summary>
+    public bool PoweredOff { get; internal set; }
+
     /// <summary>Tabulu vytvorilo samoucenie (prva sprava na neznamu adresu).</summary>
     public bool AutoCreated { get; init; }
 

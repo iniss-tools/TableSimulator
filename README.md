@@ -56,7 +56,7 @@ vetvu registra INISSu v HKCU prihláseného používateľa (načítanie stanice 
 Všetko, čo server uchováva, je v databáze `tablesimulator.db` (SQLite) v priečinku nastavení: nastavenie servera,
 linky a tabule (profil tabule ako JSON v stĺpci, ostatné údaje v stĺpcoch, enumy kľúčmi z JSON – `display`,
 `noReply`…), používatelia, prístupové kľúče, audit, virtuálne tabule a ich rozloženia, informačné panely (správy,
-playlisty a skupiny ako JSON v stĺpci). Mimo nej ostávajú súbory, ktoré sa upravujú alebo prenášajú ako súbory:
+playlisty a skupiny ako JSON v stĺpci) a scenáre porúch (kroky ako JSON v stĺpci; export liniek a tabúľ ich nenesie). Mimo nej ostávajú súbory, ktoré sa upravujú alebo prenášajú ako súbory:
 záznamy komunikácie (`recordings\*.tsrec`), vlastné vzhľady (`designs\<id>\design.json`, menia sa ručne a server ich
 načíta hneď), obrázky a videá správ (`media\`), certifikáty HTTPS (`https\`), kľúče ochrany dát (`keys\`) a logy.
 
@@ -272,6 +272,27 @@ Riadiaci INISS má v `TPhysic` všetky tabule, aj vzdialené (`COMUNICATION_PORT
   Pravidelné dotazy na stav front (asi raz za sekundu, ak má linka okruhy z `Audio.txt`) do komunikácie nejdú.
 - V komunikácii sa ukazuje celá správa vzdialeného INISSu, význam podľa správy tabule. Do **zrkadla** (COM) idú
   vybalené správy tabúľ so súčtom, nie obal – ELEN Monitor ich teda prečíta.
+
+## Scenáre porúch
+
+Stránka **Scenáre porúch** skladá poruchy v čase, napr. „od 10 s na 30 s tabuľa 5 neodpovedá, od 40 s vypadne linka“.
+Krok scenára má začiatok a trvanie (v sekundách od začiatku cyklu), linku, cieľ (jedna tabuľa alebo všetky tabule
+linky) a čo sa stane:
+
+- **porucha tabule** – ako ručná porucha na karte (neodpovedá, NAK, oneskorenie, nezmysel, stav),
+- **výpadok napájania** – tabuľa nič neprijíma ani neodpovedá (ako keby na adrese nikto nebol, samoučenie ju
+  nenahradí), zhasne a po návrate je prázdna, kým jej INISS obsah nepošle znova; karta ukazuje *Bez napájania*,
+- **výpadok linky** – simulátor zastaví spojenie linky: TCP spojenie zavrie a nové neprijíma, k rúre sa nepripája,
+  sériový port zavrie; linka má stav *výpadok (scenár)* (nie je to výpadok INISSu – oznámenia o výpadkoch ho
+  nehlásia). Po skončení sa linka spustí znova.
+
+Scenár beží **raz** (skončí po poslednom kroku) alebo **dookola** s dĺžkou cyklu podľa krokov alebo zadanou. Server
+ho posúva 5× za sekundu a mení len to, čo sa zmenilo; tabuľa, ktorú už žiadny krok neovláda, dostane späť poruchu
+spred scenára, aj po zastavení. Naraz môže bežať viac scenárov – porucha tej istej tabule z neskôr spusteného
+scenára prepíše skoršiu. Ručná zmena poruchy počas scenára platí do ďalšej zmeny scenára. Úprava bežiaceho scenára
+platí hneď (čas spustenia ostáva). Beh sa neukladá: pri zastavení servera sa scenáre zastavia a vrátia poruchy,
+po štarte nebežia. API: `GET/POST /api/scenarios`, `PUT/DELETE /api/scenarios/{id}`, `POST /api/scenarios/{id}/start`
+a `/stop` (oprávnenie úprav simulátora), zmena ide prehliadačom správou `scenarios`.
 
 ## Hlavičky tabúľ
 

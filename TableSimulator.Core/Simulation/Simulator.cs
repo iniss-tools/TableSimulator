@@ -324,6 +324,51 @@ public sealed class Simulator
         return true;
     }
 
+    /// <summary>
+    /// Vypadok napajania tabule: vypnuta tabula zhasne (obsah sa zmaze), spravy INISSu nedostava a neodpoveda - ako keby na
+    /// adrese nikto nebol; po zapnuti je prazdna, kym jej INISS obsah neposle znova. Vrati false, ak tabula nie je.
+    /// </summary>
+    public bool SetPower(string id, bool on)
+    {
+        lock (_lock)
+        {
+            if (!_boards.TryGetValue(id, out var board))
+                return false;
+            if (board.PoweredOff == !on)
+                return true;
+            board.PoweredOff = !on;
+            if (!on)
+                board.Display.Clear();
+            board.Version++;
+        }
+
+        Raise([new BoardChanged(id)]);
+        return true;
+    }
+
+    /// <summary>
+    /// Predstierany vypadok linky: linka ma stav <see cref="LineStatus.Outage" /> a prenos ju nespusti
+    /// (<see cref="Transport.TransportManager.SyncAsync" /> treba zavolat potom). Vrati false, ak linka nie je.
+    /// </summary>
+    public bool SetLineOutage(int number, bool outage)
+    {
+        lock (_lock)
+        {
+            if (!_lines.TryGetValue(number, out var line))
+                return false;
+            if (line.Outage == outage)
+                return true;
+            line.Outage = outage;
+            line.Status = outage ? LineStatus.Outage : LineStatus.Stopped;
+            line.StatusDetail = null;
+            line.StatusSince = Now;
+            line.Version++;
+        }
+
+        Raise([new LineChanged(number)]);
+        return true;
+    }
+
     /// <summary>Zmaze obsah tabule (ako po zapnuti).</summary>
     public bool ClearBoard(string id)
     {
@@ -347,7 +392,8 @@ public sealed class Simulator
     {
         lock (_lock)
         {
-            if (!_lines.TryGetValue(number, out var line))
+            // pocas vypadku prenos linky konci - jeho stav vypadok neprepise
+            if (!_lines.TryGetValue(number, out var line) || line.Outage)
                 return;
             if (status == LineStatus.Connected && line.Status != LineStatus.Connected)
             {
@@ -633,15 +679,16 @@ public sealed class Simulator
 
         public DateTimeOffset Now => sim.Now;
 
-        public IReadOnlyList<SimBoard> Boards => sim._boards.Values.Where(b => b.Line == line.Number).ToList();
+        public IReadOnlyList<SimBoard> Boards => sim._boards.Values.Where(b => b.Line == line.Number && !b.PoweredOff).ToList();
 
         public SimBoard? FindBoard(int address, string? manufacturer = null)
         {
+            // tabula bez napajania nic neprijima - ako keby na adrese nikto nebol, samoucenie ju nenahradi
             var id = SimBoard.MakeId(line.Number, address);
             if (sim._boards.TryGetValue(id, out var board))
-                return board;
+                return board.PoweredOff ? null : board;
             if (sim._boards.Values.FirstOrDefault(b => b.Line == line.Number && b.SecondAddress == address) is { } second)
-                return second;
+                return second.PoweredOff ? null : second;
             if (!line.AutoLearn)
                 return null;
 

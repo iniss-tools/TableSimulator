@@ -55,4 +55,5 @@ export const SAMPLE_BOARD: BoardDto = {
   version: 0,
   secondAddress: null,
   mismatch: null,
+  poweredOff: false,
 };

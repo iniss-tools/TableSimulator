@@ -17,4 +17,6 @@ export type LiveMessage =
   /** Zmenili sa XML tabul (mena suborov) alebo definicie virtualnych tabul. */
   | { type: "virtual"; sources: string[]; definitions: boolean }
   /** Zmenili sa spravy, playlisty, skupiny alebo panely informacnych panelov. */
-  | { type: "signage" };
+  | { type: "signage" }
+  /** Zmenili sa scenare porucha alebo ich beh. */
+  | { type: "scenarios" };

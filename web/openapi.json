@@ -1469,6 +1469,225 @@
         }
       }
     },
+    "/api/scenarios": {
+      "post": {
+        "tags": [
+          "Scenarios"
+        ],
+        "operationId": "CreateFaultScenario",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FaultScenarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaultScenarioDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Scenarios"
+        ],
+        "operationId": "GetFaultScenarios",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FaultScenarioDto"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scenarios/{id}": {
+      "delete": {
+        "tags": [
+          "Scenarios"
+        ],
+        "operationId": "DeleteFaultScenario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Scenarios"
+        ],
+        "operationId": "SetFaultScenario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FaultScenarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scenarios/{id}/start": {
+      "post": {
+        "tags": [
+          "Scenarios"
+        ],
+        "operationId": "StartFaultScenario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scenarios/{id}/stop": {
+      "post": {
+        "tags": [
+          "Scenarios"
+        ],
+        "operationId": "StopFaultScenario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/replay": {
       "post": {
         "tags": [
@@ -3642,7 +3861,8 @@
           "display",
           "version",
           "secondAddress",
-          "mismatch"
+          "mismatch",
+          "poweredOff"
         ],
         "type": "object",
         "properties": {
@@ -3704,6 +3924,9 @@
                 "$ref": "#/components/schemas/ManufacturerMismatchDto"
               }
             ]
+          },
+          "poweredOff": {
+            "type": "boolean"
           }
         }
       },
@@ -4302,6 +4525,82 @@
           "garbage",
           "status"
         ]
+      },
+      "FaultScenarioDto": {
+        "required": [
+          "id",
+          "name",
+          "loop",
+          "cycleMs",
+          "steps",
+          "run"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "loop": {
+            "type": "boolean"
+          },
+          "cycleMs": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioStepDto"
+            }
+          },
+          "run": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ScenarioRunDto"
+              }
+            ]
+          }
+        }
+      },
+      "FaultScenarioRequest": {
+        "required": [
+          "name",
+          "loop",
+          "cycleMs",
+          "steps"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "loop": {
+            "type": "boolean"
+          },
+          "cycleMs": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioStepDto"
+            }
+          }
+        }
       },
       "FlapModuleDto": {
         "required": [
@@ -5162,7 +5461,8 @@
           "listening",
           "connected",
           "error",
-          "lost"
+          "lost",
+          "outage"
         ]
       },
       "LoginRequest": {
@@ -5719,6 +6019,88 @@
           },
           "text": {
             "type": "string"
+          }
+        }
+      },
+      "ScenarioAction": {
+        "enum": [
+          "fault",
+          "powerLoss",
+          "lineOutage"
+        ]
+      },
+      "ScenarioRunDto": {
+        "required": [
+          "startedAt",
+          "lengthMs",
+          "cycle",
+          "activeSteps"
+        ],
+        "type": "object",
+        "properties": {
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lengthMs": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cycle": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activeSteps": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      },
+      "ScenarioStepDto": {
+        "required": [
+          "atMs",
+          "durationMs",
+          "line",
+          "address",
+          "action",
+          "fault"
+        ],
+        "type": "object",
+        "properties": {
+          "atMs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "durationMs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "line": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "address": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "action": {
+            "$ref": "#/components/schemas/ScenarioAction"
+          },
+          "fault": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BoardFaultDto"
+              }
+            ]
           }
         }
       },
@@ -7730,6 +8112,9 @@
     },
     {
       "name": "Server"
+    },
+    {
+      "name": "Scenarios"
     },
     {
       "name": "Replay"

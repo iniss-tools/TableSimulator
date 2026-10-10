@@ -142,6 +142,7 @@ export type BoardDto = {
     version: number;
     secondAddress: null | number;
     mismatch: null | ManufacturerMismatchDto;
+    poweredOff: boolean;
 };
 
 export type BoardFaultDto = {
@@ -275,6 +276,22 @@ export type ElementDto = {
 };
 
 export type FaultKind = 'none' | 'noReply' | 'nak' | 'delay' | 'garbage' | 'status';
+
+export type FaultScenarioDto = {
+    id: number;
+    name: string;
+    loop: boolean;
+    cycleMs: null | number;
+    steps: Array<ScenarioStepDto>;
+    run: null | ScenarioRunDto;
+};
+
+export type FaultScenarioRequest = {
+    name: string;
+    loop: boolean;
+    cycleMs: null | number;
+    steps: Array<ScenarioStepDto>;
+};
 
 export type FlapModuleDto = {
     line: number;
@@ -486,7 +503,7 @@ export type LineStatsDto = {
     connections: number;
 };
 
-export type LineStatus = 'stopped' | 'listening' | 'connected' | 'error' | 'lost';
+export type LineStatus = 'stopped' | 'listening' | 'connected' | 'error' | 'lost' | 'outage';
 
 export type LoginRequest = {
     userName: string;
@@ -622,6 +639,24 @@ export type RunDto = {
     font: number;
     codes: Array<number>;
     text: string;
+};
+
+export type ScenarioAction = 'fault' | 'powerLoss' | 'lineOutage';
+
+export type ScenarioRunDto = {
+    startedAt: string;
+    lengthMs: number;
+    cycle: number;
+    activeSteps: Array<number>;
+};
+
+export type ScenarioStepDto = {
+    atMs: number;
+    durationMs: number;
+    line: number;
+    address: null | number;
+    action: ScenarioAction;
+    fault: null | BoardFaultDto;
 };
 
 export type ServerInfoDto = {
@@ -2140,6 +2175,164 @@ export type RestartServerResponses = {
 };
 
 export type RestartServerResponse = RestartServerResponses[keyof RestartServerResponses];
+
+export type GetFaultScenariosData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/scenarios';
+};
+
+export type GetFaultScenariosErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetFaultScenariosError = GetFaultScenariosErrors[keyof GetFaultScenariosErrors];
+
+export type GetFaultScenariosResponses = {
+    /**
+     * OK
+     */
+    200: Array<FaultScenarioDto>;
+};
+
+export type GetFaultScenariosResponse = GetFaultScenariosResponses[keyof GetFaultScenariosResponses];
+
+export type CreateFaultScenarioData = {
+    body: FaultScenarioRequest;
+    path?: never;
+    query?: never;
+    url: '/api/scenarios';
+};
+
+export type CreateFaultScenarioErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type CreateFaultScenarioError = CreateFaultScenarioErrors[keyof CreateFaultScenarioErrors];
+
+export type CreateFaultScenarioResponses = {
+    /**
+     * OK
+     */
+    200: FaultScenarioDto;
+};
+
+export type CreateFaultScenarioResponse = CreateFaultScenarioResponses[keyof CreateFaultScenarioResponses];
+
+export type DeleteFaultScenarioData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/scenarios/{id}';
+};
+
+export type DeleteFaultScenarioErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type DeleteFaultScenarioError = DeleteFaultScenarioErrors[keyof DeleteFaultScenarioErrors];
+
+export type DeleteFaultScenarioResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteFaultScenarioResponse = DeleteFaultScenarioResponses[keyof DeleteFaultScenarioResponses];
+
+export type SetFaultScenarioData = {
+    body: FaultScenarioRequest;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/scenarios/{id}';
+};
+
+export type SetFaultScenarioErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type SetFaultScenarioError = SetFaultScenarioErrors[keyof SetFaultScenarioErrors];
+
+export type SetFaultScenarioResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type SetFaultScenarioResponse = SetFaultScenarioResponses[keyof SetFaultScenarioResponses];
+
+export type StartFaultScenarioData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/scenarios/{id}/start';
+};
+
+export type StartFaultScenarioErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type StartFaultScenarioError = StartFaultScenarioErrors[keyof StartFaultScenarioErrors];
+
+export type StartFaultScenarioResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type StartFaultScenarioResponse = StartFaultScenarioResponses[keyof StartFaultScenarioResponses];
+
+export type StopFaultScenarioData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/scenarios/{id}/stop';
+};
+
+export type StopFaultScenarioErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type StopFaultScenarioError = StopFaultScenarioErrors[keyof StopFaultScenarioErrors];
+
+export type StopFaultScenarioResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type StopFaultScenarioResponse = StopFaultScenarioResponses[keyof StopFaultScenarioResponses];
 
 export type PlayRecordingData = {
     body: PlayRequest;

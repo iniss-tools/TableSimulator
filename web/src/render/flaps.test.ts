@@ -31,6 +31,7 @@ function board(manufacturer: string, rows: { row: number; codes: string }[], pro
     stats: { frames: 0, acks: 0, naks: 0, unanswered: 0, lastFrameAt: null },
     secondAddress: null,
     mismatch: null,
+    poweredOff: false,
     display: {
       family: "flaps",
       brightness: 100,

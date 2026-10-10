@@ -136,6 +136,9 @@ public sealed class LineHost : IAsyncDisposable
             case LineStatus.Error when previous != LineStatus.Error:
                 TransportLog.Failed(_logger, Line, Endpoint, detail);
                 break;
+            case LineStatus.Stopped when _simulator.Read(s => s.FindLine(Line)?.Outage == true):
+                TransportLog.Outage(_logger, Line);
+                break;
             case LineStatus.Stopped:
                 TransportLog.Stopped(_logger, Line);
                 break;
@@ -469,7 +472,8 @@ public sealed class TransportManager : IAsyncDisposable
         await _sync.WaitAsync().ConfigureAwait(false);
         try
         {
-            var wanted = _simulator.Read(s => s.Lines.ToDictionary(l => l.Number, l => l.Endpoint));
+            // linka s predstieranym vypadkom nebezi - po jeho skonceni sa spusti znova
+            var wanted = _simulator.Read(s => s.Lines.Where(l => !l.Outage).ToDictionary(l => l.Number, l => l.Endpoint));
             var mirrors = _simulator.Read(s => s.Lines.Where(l => l.Mirror != null).ToDictionary(l => l.Number, l => l.Mirror!));
             lock (_mirrorLock)
             {

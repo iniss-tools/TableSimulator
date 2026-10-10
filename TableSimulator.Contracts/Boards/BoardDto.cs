@@ -23,4 +23,7 @@ public sealed record BoardDto(
 
     /// <summary>Spravy od INISSu patria inemu vyrobcovi; null = v poriadku.</summary>
     public ManufacturerMismatchDto? Mismatch { get; init; }
+
+    /// <summary>Predstierany vypadok napajania (scenar porucha) - tabula je zhasnuta a neodpoveda.</summary>
+    public bool PoweredOff { get; init; }
 }

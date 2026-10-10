@@ -7,7 +7,8 @@ import { formatAgo } from "@/lib/format";
 /** Vyber vsetkych liniek (cisla liniek su 1-100). */
 export const ALL_LINES = 0;
 
-export const STATUS_TONES: Record<LineStatus, Tone> = { connected: "ok", listening: "wait", lost: "bad", error: "bad", stopped: "off" };
+// vypadok zo scenara porucha je zamerny - nie je to vypadok INISSu (isOutage), len cervena farba
+export const STATUS_TONES: Record<LineStatus, Tone> = { connected: "ok", listening: "wait", lost: "bad", error: "bad", stopped: "off", outage: "bad" };
 
 /** Vypadok - INISS sa odpojil alebo linka nebezi (obsadeny port, chybajuci seriovy port). */
 export const isOutage = (status: LineStatus): status is "lost" | "error" => status === "lost" || status === "error";

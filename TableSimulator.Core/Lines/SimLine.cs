@@ -137,7 +137,10 @@ public enum LineStatus
     [JsonStringEnumMemberName("error")] Error,
 
     /// <summary>INISS sa odpojil (TCP, rura) - linka caka, kym sa pripoji znova.</summary>
-    [JsonStringEnumMemberName("lost")] Lost
+    [JsonStringEnumMemberName("lost")] Lost,
+
+    /// <summary>Predstierany vypadok linky (scenar porucha) - spojenie je zavrete a nove sa neprijima.</summary>
+    [JsonStringEnumMemberName("outage")] Outage
 }
 
 /// <summary>
@@ -197,6 +200,9 @@ public sealed class SimLine
 
     /// <summary>Podrobnosti stavu - pripojeny klient alebo chyba.</summary>
     public string? StatusDetail { get; internal set; }
+
+    /// <summary>Predstierany vypadok linky - prenos linky nebezi (<see cref="LineStatus.Outage" />).</summary>
+    public bool Outage { get; internal set; }
 
     /// <summary>Od kedy linka je v sucasnom stave.</summary>
     public DateTimeOffset StatusSince { get; internal set; }

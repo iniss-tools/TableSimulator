@@ -48,6 +48,7 @@ function board(rows: Board["display"]["rows"], extra: Partial<Board["display"]> 
     },
     secondAddress: null,
     mismatch: null,
+    poweredOff: false,
     display: {
       family: "elen",
       brightness: 99,

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TableSimulator.Application.Audit;
 using TableSimulator.Application.Keys;
+using TableSimulator.Application.Scenarios;
 using TableSimulator.Application.Signage;
 using TableSimulator.Application.Virtual;
 using TableSimulator.Core.Boards;
@@ -15,7 +16,7 @@ namespace TableSimulator.Persistence;
 
 /// <summary>
 /// Databaza simulatora: nastavenie servera, linky a tabule, pouzivatelia a roly (ASP.NET Core Identity), pristupove
-/// kluce, audit, virtualne tabule a informacne panely. Model je nezavisly od poskytovatela - kazdy
+/// kluce, audit, virtualne tabule, informacne panely a scenare porucha. Model je nezavisly od poskytovatela - kazdy
 /// poskytovatel ma vlastnu odvodenu triedu a vlastne migracie (<see cref="Sqlite.SqliteAppDbContext" />).
 /// </summary>
 public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext<AppUser, AppRole, Guid>(options)
@@ -55,6 +56,9 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
 
     /// <summary>Nahrate obrazky a videa sprav.</summary>
     public DbSet<SignageMediaRecord> SignageMedia => Set<SignageMediaRecord>();
+
+    /// <summary>Scenare porucha.</summary>
+    public DbSet<FaultScenarioRecord> FaultScenarios => Set<FaultScenarioRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -146,6 +150,14 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
             layout.HasKey(l => l.Id);
             layout.Property(l => l.Id).HasMaxLength(40);
             layout.Property(l => l.Name).HasMaxLength(100);
+        });
+        // kroky scenara su JSON ako v API - scenarov je malo a citaju sa vzdy cele
+        builder.Entity<FaultScenarioRecord>(scenario =>
+        {
+            scenario.ToTable("FaultScenarios");
+            scenario.HasKey(s => s.Id);
+            scenario.Property(s => s.Id).ValueGeneratedOnAdd();
+            scenario.Property(s => s.Name).HasMaxLength(100);
         });
         // obsah sprav, playlistov a skupin je JSON ako v API - je ich malo a citaju sa vzdy vsetky
         builder.Entity<SignageMessageRecord>(message =>
