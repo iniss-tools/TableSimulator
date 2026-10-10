@@ -10,6 +10,9 @@ public static class RecordingErrors
     public const string Empty = "recording.empty";
     public const string Speed = "replay.speed";
     public const string Time = "recording.time";
+    public const string Buckets = "recording.buckets";
+
+    public static Error NoReplay() => Error.Conflict("replay.none", "No recording has been played yet.");
 
     public static Error NotFound(string name) => Error.NotFound("recording.notFound", $"Recording '{name}' does not exist.");
 

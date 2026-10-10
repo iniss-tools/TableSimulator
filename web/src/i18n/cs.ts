@@ -1419,4 +1419,11 @@ export const cs: Record<TextKey, string> = {
   "stats.board": "Linka {line} · adresa {address}",
   "error.statistics.range": "Období statistiky je neplatné (konec po začátku, nejvýše 31 dní).",
   "error.statistics.line": "Číslo linky musí být 1 – 100.",
+  "replay.paused": "Přehrávání {name} pozastaveno",
+  "replay.pause": "Pozastavit",
+  "replay.resume": "Pokračovat",
+  "replay.play": "Přehrát",
+  "replay.timeline": "Časová osa záznamu – posun na místo",
+  "error.replay.none": "Zatím se nic nepřehrávalo.",
+  "error.recording.buckets": "Počet úseků časové osy musí být 1 – 2000.",
 };

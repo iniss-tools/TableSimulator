@@ -589,6 +589,8 @@ export type PlayRequest = {
     name: string;
     speed: number;
     loop: boolean;
+    position: number;
+    paused: boolean;
 };
 
 export type RecorderStatusDto = {
@@ -597,6 +599,11 @@ export type RecorderStatusDto = {
     started: null | string;
     entries: number;
     bytes: number;
+};
+
+export type RecordingActivityDto = {
+    duration: number;
+    counts: Array<number>;
 };
 
 export type RecordingComparisonDto = {
@@ -628,7 +635,7 @@ export type RecordingSideDto = {
     note: null | string;
 };
 
-export type ReplayState = 'running' | 'finished' | 'stopped';
+export type ReplayState = 'running' | 'paused' | 'finished' | 'stopped';
 
 export type ReplayStatusDto = {
     name: string;
@@ -638,6 +645,7 @@ export type ReplayStatusDto = {
     speed: number;
     loop: boolean;
     pass: number;
+    at: string;
 };
 
 export type ReportArchiveEntryDto = {
@@ -1014,6 +1022,13 @@ export type TrafficStatisticsDto = {
     boards: Array<BoardTrafficPointDto>;
     statusChanges: Array<LineStatusChangeDto>;
     retentionDays: number;
+};
+
+export type UpdateReplayRequest = {
+    paused: null | boolean;
+    position: null | number;
+    speed: null | number;
+    loop: null | boolean;
 };
 
 export type UpdateSettingsRequest = {
@@ -2432,6 +2447,31 @@ export type PlayRecordingResponses = {
 
 export type PlayRecordingResponse = PlayRecordingResponses[keyof PlayRecordingResponses];
 
+export type UpdateReplayData = {
+    body: UpdateReplayRequest;
+    path?: never;
+    query?: never;
+    url: '/api/replay';
+};
+
+export type UpdateReplayErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type UpdateReplayError = UpdateReplayErrors[keyof UpdateReplayErrors];
+
+export type UpdateReplayResponses = {
+    /**
+     * OK
+     */
+    200: ReplayStatusDto;
+};
+
+export type UpdateReplayResponse = UpdateReplayResponses[keyof UpdateReplayResponses];
+
 export type StopReplayData = {
     body?: never;
     path?: never;
@@ -2536,6 +2576,35 @@ export type DownloadRecordingResponses = {
      */
     200: unknown;
 };
+
+export type GetRecordingActivityData = {
+    body?: never;
+    path: {
+        name: string;
+    };
+    query?: {
+        buckets?: number;
+    };
+    url: '/api/recordings/{name}/activity';
+};
+
+export type GetRecordingActivityErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetRecordingActivityError = GetRecordingActivityErrors[keyof GetRecordingActivityErrors];
+
+export type GetRecordingActivityResponses = {
+    /**
+     * OK
+     */
+    200: RecordingActivityDto;
+};
+
+export type GetRecordingActivityResponse = GetRecordingActivityResponses[keyof GetRecordingActivityResponses];
 
 export type GetRecordingBoardData = {
     body?: never;

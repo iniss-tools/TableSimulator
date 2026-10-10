@@ -14,12 +14,11 @@ import {
   queryClient,
   startRecording,
   stopRecording,
-  stopReplay,
   uploadRecording,
   useCan,
   type RecorderStatusDto,
   type RecordingInfoDto,
-  type ReplayStatusDto,
+  type RecordingsDto,
 } from "@/api";
 import { confirmAction } from "@/components/common/confirm";
 import { OptionSelect } from "@/components/common/option-select";
@@ -32,24 +31,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { useNow } from "@/hooks/use-now";
 import { locale, t } from "@/i18n";
-
-const SPEEDS = [1, 2, 5, 10, 0];
+import { duration, isOlderReplay, SPEEDS } from "./replay";
+import { ReplayPlayer } from "./ReplayPlayer";
 
 /** Zaznamy, nahravanie a prehravanie - zmeny prinasa WebSocket. */
-const useRecordings = () => useQuery(getRecordingsOptions()).data;
+// znova nacitany zoznam nesmie prepisat novsi stav prehravania zo servera (WebSocket, odpoved na posun)
+const useRecordings = () =>
+  useQuery({
+    ...getRecordingsOptions(),
+    structuralSharing: (old: unknown, next: unknown) => {
+      const previous = old as RecordingsDto | undefined;
+      const fresh = next as RecordingsDto;
+      return previous && isOlderReplay(fresh.replay, previous.replay) ? { ...fresh, replay: previous.replay } : fresh;
+    },
+  }).data;
 const refresh = () => queryClient.invalidateQueries({ queryKey: getRecordingsQueryKey() });
 const failed = (e: unknown) => toast.error(errorText(e));
-
-function duration(seconds: number): string {
-  const s = Math.max(0, Math.round(seconds));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return h > 0 ? `${h}:${pad(m)}:${pad(s % 60)}` : `${m}:${pad(s % 60)}`;
-}
 
 function size(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -100,31 +99,6 @@ function Recorder({ recorder, manage }: { recorder: RecorderStatusDto | undefine
         {t("rec.start")}
       </Button>
     </form>
-  );
-}
-
-/** Posledne prehravanie: stav, poloha a zastavenie. */
-function Replay({ replay, manage }: { replay: ReplayStatusDto; manage: boolean }) {
-  const percent = replay.duration > 0 ? Math.min(100, (replay.position / replay.duration) * 100) : 100;
-  return (
-    <Card>
-      <CardContent className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="font-medium">{t(`replay.${replay.state}`, { name: replay.name })}</span>
-          <span className="flex-1 text-sm text-muted-foreground">
-            {duration(replay.position)} / {duration(replay.duration)} · {replay.speed > 0 ? `${replay.speed}×` : t("rec.speed.max")}
-            {replay.loop && <> · {t("replay.pass", { pass: replay.pass })}</>}
-          </span>
-          {replay.state === "running" && manage && (
-            <Button variant="outline" onClick={() => stopReplay({ throwOnError: true }).catch(failed)}>
-              <Square />
-              {t("replay.stop")}
-            </Button>
-          )}
-        </div>
-        <Progress value={percent} />
-      </CardContent>
-    </Card>
   );
 }
 
@@ -183,7 +157,7 @@ export function RecordingsPage() {
                   size="sm"
                   variant="outline"
                   disabled={recordingName === r.name}
-                  onClick={() => playRecording({ body: { name: r.name, speed, loop }, throwOnError: true }).catch(failed)}
+                  onClick={() => playRecording({ body: { name: r.name, speed, loop, position: 0, paused: false }, throwOnError: true }).catch(failed)}
                 >
                   <Play />
                   {t("rec.play")}
@@ -224,7 +198,7 @@ export function RecordingsPage() {
       <PageHeader description={t("rec.hint")} />
       <div className="mb-6 flex flex-col gap-3">
         <Recorder recorder={recorder} manage={manage} />
-        {recordings?.replay && <Replay replay={recordings.replay} manage={manage} />}
+        {recordings?.replay && <ReplayPlayer replay={recordings.replay} manage={manage} />}
       </div>
       <DataTable
         columns={columns}

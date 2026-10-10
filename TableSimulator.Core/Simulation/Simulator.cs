@@ -382,6 +382,45 @@ public sealed class Simulator
             return _traffic.Take(minute, _boards.Values);
     }
 
+    /// <summary>
+    /// Prehratie naprazdno pri posune prehravania zaznamu: tabule liniek <paramref name="lines" /> zmaze (aj rozpracovane
+    /// spravy linky) a spracuje spravy INISSu <paramref name="frames" /> - tabule dostanu obsah ako v danom mieste
+    /// zaznamu, no nic sa nezapise do komunikacie ani statistiky, pocitadla liniek a tabul ostanu a INISSu sa nic
+    /// neposle. Na konci jedna zmena struktury (prehliadace nacitaju stav znova).
+    /// </summary>
+    public void FastForward(IReadOnlyCollection<int> lines, IEnumerable<(int Line, byte[] Bytes)> frames)
+    {
+        ArgumentNullException.ThrowIfNull(lines);
+        ArgumentNullException.ThrowIfNull(frames);
+        lock (_lock)
+        {
+            foreach (var number in lines)
+                _lines.GetValueOrDefault(number)?.Protocol.Reset();
+            foreach (var board in _boards.Values.Where(b => lines.Contains(b.Line)))
+                board.Display.Clear();
+
+            var boardStats = _boards.Values.ToDictionary(b => b, b => b.Stats.Save());
+            var lineStats = _lines.Values.ToDictionary(l => l, l => l.Stats.Save());
+            foreach (var (number, bytes) in frames)
+            {
+                if (_lines.TryGetValue(number, out var line))
+                    line.Protocol.Receive(bytes, new Context(this, line, quiet: true));
+            }
+
+            // tabula zo samoucenia pocas prehratia naprazdno zacina s nulovymi pocitadlami
+            foreach (var board in _boards.Values)
+            {
+                board.Stats.Restore(boardStats.TryGetValue(board, out var saved) ? saved : default);
+                board.Version++;
+            }
+
+            foreach (var (line, saved) in lineStats)
+                line.Stats.Restore(saved);
+        }
+
+        Raise([new StructureChanged()]);
+    }
+
     /// <summary>Zmaze obsah tabule (ako po zapnuti).</summary>
     public bool ClearBoard(string id)
     {
@@ -684,7 +723,8 @@ public sealed class Simulator
     /// <summary>
     /// Kontext spracovania prijatych bajtov - bezi pod zamkom simulatora.
     /// </summary>
-    private sealed class Context(Simulator sim, SimLine line) : ILineContext
+    /// <param name="quiet">prehratie naprazdno (<see cref="FastForward" />): bez zaznamu komunikacie, statistiky a odpovedi</param>
+    private sealed class Context(Simulator sim, SimLine line, bool quiet = false) : ILineContext
     {
         public List<SimulatorEvent> Events { get; } = [];
 
@@ -727,12 +767,15 @@ public sealed class Simulator
             Events.Add(new BoardChanged(board.Id));
         }
 
-        public void LogReceived(byte[] bytes, int? address, FrameStatus status, FrameInfo info) =>
-            Events.Add(new FrameLogged(sim.AddLog(line.Number, FrameDirection.Received, address, bytes, status, info)));
+        public void LogReceived(byte[] bytes, int? address, FrameStatus status, FrameInfo info)
+        {
+            if (!quiet)
+                Events.Add(new FrameLogged(sim.AddLog(line.Number, FrameDirection.Received, address, bytes, status, info)));
+        }
 
         public void Reply(SimBoard board, byte[] bytes, FrameInfo info, bool positive = true)
         {
-            if (line.Mode == LineMode.Monitor)
+            if (line.Mode == LineMode.Monitor || quiet)
                 return;
 
             var reply = BoardFaults.Apply(board, line.Protocol, bytes, info, positive);
@@ -744,7 +787,7 @@ public sealed class Simulator
 
         public void ReplyRaw(int? address, byte[] bytes, TimeSpan delay, FrameStatus status, FrameInfo info, bool log = true)
         {
-            if (line.Mode == LineMode.Monitor)
+            if (line.Mode == LineMode.Monitor || quiet)
                 return;
 
             Replies.Add(new LineReply(bytes, delay));

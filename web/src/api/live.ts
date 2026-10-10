@@ -121,11 +121,15 @@ function apply(message: LiveMessage) {
       // dokonceny zaznam pribudol do zoznamu
       if (!message.status.recording) void queryClient.invalidateQueries({ queryKey: recordingsKey });
       break;
-    case "replay":
+    case "replay": {
+      // starsia sprava (odoslana pred posunom) nesmie vratit polohu spat
+      const current = queryClient.getQueryData<RecordingsDto>(recordingsKey)?.replay;
+      if (current && current.name === message.status.name && Date.parse(message.status.at) < Date.parse(current.at)) break;
       updateRecordings((r) => ({ ...r, replay: message.status }));
       // po dohrani mohol pribudnut zaznam s novym casom
-      if (message.status.state !== "running") void queryClient.invalidateQueries({ queryKey: recordingsKey });
+      if (message.status.state === "finished" || message.status.state === "stopped") void queryClient.invalidateQueries({ queryKey: recordingsKey });
       break;
+    }
     case "recordings":
       void queryClient.invalidateQueries({ queryKey: recordingsKey });
       break;

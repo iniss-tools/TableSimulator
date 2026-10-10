@@ -126,8 +126,13 @@ public sealed class RecordingService : IAsyncDisposable
     /// <summary>
     /// Prehra zaznam: doplni linky a tabule zo zaznamu, ktore v simulatore chybaju, a posiela spravy INISSu do liniek.
     /// </summary>
+    /// <param name="name">zaznam</param>
+    /// <param name="speed">rychlost; 0 = bez cakania</param>
+    /// <param name="loop">dokola</param>
+    /// <param name="position">odkial [s]; od ineho miesta nez od zaciatku sa zaznam najprv prehra naprazdno</param>
+    /// <param name="paused">len pripravit na mieste a pozastavit</param>
     /// <returns>stav prehravania; null = zaznam neexistuje</returns>
-    public async Task<ReplayStatusDto?> PlayAsync(string name, double speed, bool loop)
+    public async Task<ReplayStatusDto?> PlayAsync(string name, double speed, bool loop, double position = 0, bool paused = false)
     {
         if (PathFor(name) is not { } path || !File.Exists(path))
             return null;
@@ -140,8 +145,58 @@ public sealed class RecordingService : IAsyncDisposable
         var player = new ReplayPlayer(_simulator, recording, name, speed, loop);
         player.Progress += status => _live.Publish(new ReplayMessage(DtoMapper.ToDto(status)));
         _player = player;
-        player.Start();
+        player.Start(position, paused);
         return DtoMapper.ToDto(player.Status);
+    }
+
+    /// <summary>
+    /// Zmeni posledne prehravanie: rychlost, opakovanie, posun a pozastavenie. Zastavene prehravanie sa pri posune
+    /// alebo pokracovani spusti znova od daneho miesta.
+    /// </summary>
+    /// <returns>stav prehravania; null = este nic neprehravalo</returns>
+    public async Task<ReplayStatusDto?> UpdateReplayAsync(UpdateReplayRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (_player is not { } player)
+            return null;
+
+        var status = player.Status;
+        if (status.State == Core.Recording.ReplayState.Stopped)
+        {
+            if (request.Position is null && request.Paused != false)
+                return DtoMapper.ToDto(status);
+            return await PlayAsync(player.Name, request.Speed ?? status.Speed, request.Loop ?? status.Loop, request.Position ?? status.Position,
+                request.Paused == true).ConfigureAwait(false);
+        }
+
+        if (request.Speed is { } speed)
+            player.SetSpeed(speed);
+        if (request.Loop is { } loop)
+            player.SetLoop(loop);
+        if (request.Position is { } position)
+            await player.SeekAsync(position).ConfigureAwait(false);
+        if (request.Paused == true)
+            player.Pause();
+        else if (request.Paused == false)
+            player.Resume();
+        return DtoMapper.ToDto(player.Status);
+    }
+
+    /// <summary>Hustota sprav INISSu v zazname po <paramref name="buckets" /> usekoch; null = zaznam neexistuje.</summary>
+    public async Task<RecordingActivityDto?> ActivityAsync(string name, int buckets)
+    {
+        if (PathFor(name) is not { } path || !File.Exists(path))
+            return null;
+        var recording = await Task.Run(() => RecordingFileFormat.Load(path)).ConfigureAwait(false);
+        var counts = new int[Math.Max(1, buckets)];
+        var duration = recording.Duration;
+        foreach (var entry in recording.Entries.Where(e => e.Direction == FrameDirection.Received))
+        {
+            var index = duration > 0 ? (int)(entry.Time / duration * counts.Length) : 0;
+            counts[Math.Clamp(index, 0, counts.Length - 1)]++;
+        }
+
+        return new RecordingActivityDto(duration, counts);
     }
 
     /// <summary>Zastavi prehravanie.</summary>

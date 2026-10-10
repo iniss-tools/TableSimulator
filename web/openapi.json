@@ -1784,6 +1784,44 @@
             }
           }
         }
+      },
+      "put": {
+        "tags": [
+          "Replay"
+        ],
+        "operationId": "UpdateReplay",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReplayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayStatusDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/replay/stop": {
@@ -1909,6 +1947,54 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings/{name}/activity": {
+      "get": {
+        "tags": [
+          "Recordings"
+        ],
+        "operationId": "GetRecordingActivity",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buckets",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingActivityDto"
+                }
+              }
+            }
           },
           "default": {
             "description": "Error (ProblemDetails)",
@@ -5849,7 +5935,9 @@
         "required": [
           "name",
           "speed",
-          "loop"
+          "loop",
+          "position",
+          "paused"
         ],
         "type": "object",
         "properties": {
@@ -5861,6 +5949,13 @@
             "format": "double"
           },
           "loop": {
+            "type": "boolean"
+          },
+          "position": {
+            "type": "number",
+            "format": "double"
+          },
+          "paused": {
             "type": "boolean"
           }
         }
@@ -5898,6 +5993,26 @@
           "bytes": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "RecordingActivityDto": {
+        "required": [
+          "duration",
+          "counts"
+        ],
+        "type": "object",
+        "properties": {
+          "duration": {
+            "type": "number",
+            "format": "double"
+          },
+          "counts": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         }
       },
@@ -6029,6 +6144,7 @@
       "ReplayState": {
         "enum": [
           "running",
+          "paused",
           "finished",
           "stopped"
         ]
@@ -6041,7 +6157,8 @@
           "duration",
           "speed",
           "loop",
-          "pass"
+          "pass",
+          "at"
         ],
         "type": "object",
         "properties": {
@@ -6069,6 +6186,10 @@
           "pass": {
             "type": "integer",
             "format": "int32"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -7647,6 +7768,43 @@
           "retentionDays": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "UpdateReplayRequest": {
+        "required": [
+          "paused",
+          "position",
+          "speed",
+          "loop"
+        ],
+        "type": "object",
+        "properties": {
+          "paused": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "position": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "speed": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "loop": {
+            "type": [
+              "null",
+              "boolean"
+            ]
           }
         }
       },

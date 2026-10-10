@@ -101,6 +101,16 @@ public sealed class BoardStats
         }
     }
 
+    /// <summary>Stav pocitadiel - prehratie naprazdno ich na konci vrati.</summary>
+    internal (long Frames, long Acks, long Naks, long Unanswered, DateTimeOffset? LastFrameAt, long? MaxGapMs) Save() =>
+        (Frames, Acks, Naks, Unanswered, _lastFrameAt, _maxGapMs);
+
+    /// <summary>Vrati pocitadla ulozene <see cref="Save" /> (pauza sa nezapocita).</summary>
+    internal void Restore((long Frames, long Acks, long Naks, long Unanswered, DateTimeOffset? LastFrameAt, long? MaxGapMs) saved)
+    {
+        (Frames, Acks, Naks, Unanswered, _lastFrameAt, _maxGapMs) = saved;
+    }
+
     /// <summary>Najdlhsia pauza medzi spravami od posledneho odberu [ms] a jej vynulovanie; null = ziadna.</summary>
     internal long? TakeMaxGap()
     {

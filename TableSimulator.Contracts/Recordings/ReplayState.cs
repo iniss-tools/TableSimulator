@@ -9,6 +9,9 @@ public enum ReplayState
     /// <summary>Prehrava sa.</summary>
     [JsonStringEnumMemberName("running")] Running,
 
+    /// <summary>Pozastavene - caka na pokracovanie alebo posun.</summary>
+    [JsonStringEnumMemberName("paused")] Paused,
+
     /// <summary>Dohralo.</summary>
     [JsonStringEnumMemberName("finished")] Finished,
 

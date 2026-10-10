@@ -143,10 +143,11 @@ public static partial class DtoMapper
         return new ReplayStatusDto(status.Name, status.State switch
         {
             Core.Recording.ReplayState.Running => Contracts.Recordings.ReplayState.Running,
+            Core.Recording.ReplayState.Paused => Contracts.Recordings.ReplayState.Paused,
             Core.Recording.ReplayState.Finished => Contracts.Recordings.ReplayState.Finished,
             Core.Recording.ReplayState.Stopped => Contracts.Recordings.ReplayState.Stopped,
             _ => throw new ArgumentOutOfRangeException(nameof(status), status.State, null)
-        }, status.Position, status.Duration, status.Speed, status.Loop, status.Pass);
+        }, status.Position, status.Duration, status.Speed, status.Loop, status.Pass, status.At);
     }
 
     public static BoardTemplateDto ToDto(BoardTemplate template)

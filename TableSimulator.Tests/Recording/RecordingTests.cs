@@ -46,7 +46,15 @@ public class RecordingTests
         return output.ToArray();
     }
 
-    private static string[] Rows(Simulator sim) => sim.Read(s => s.Boards
+    /// <summary>Dohrany zaznam - prehravac potom caka na posun alebo pokracovanie, nekonci.</summary>
+    private static async Task FinishedAsync(ReplayPlayer player)
+    {
+        for (var i = 0; i < 1000 && player.Status.State != ReplayState.Finished; i++)
+            await Task.Delay(10);
+        Assert.AreEqual(ReplayState.Finished, player.Status.State);
+    }
+
+        private static string[] Rows(Simulator sim) => sim.Read(s => s.Boards
         .SelectMany(b => ((ElenDisplay)b.Display).Rows.OrderBy(r => r.Key).Select(r => $"{b.Id}/{r.Key}: {r.Value.PlainText}"))
         .ToArray());
 
@@ -113,7 +121,7 @@ public class RecordingTests
         Assert.IsTrue(copy.AddMissing(recording.Header.Config));
         await using var player = new ReplayPlayer(copy, recording, "test", 0, false);
         player.Start();
-        await player.Completion;
+        await FinishedAsync(player);
 
         CollectionAssert.AreEqual(Rows(original), Rows(copy));
         Assert.AreEqual(ReplayState.Finished, player.Status.State);
@@ -130,7 +138,7 @@ public class RecordingTests
 
         await using var player = new ReplayPlayer(sim, recording, "test", 0, false);
         player.Start();
-        await player.Completion;
+        await FinishedAsync(player);
         await sim.StopRecording()!.DisposeAsync();
 
         Assert.AreEqual(0, recorder.Entries);
@@ -165,10 +173,113 @@ public class RecordingTests
         await using var player = new ReplayPlayer(sim, recording, "test", 2, false);
         var started = DateTime.UtcNow;
         player.Start();
-        await player.Completion;
+        await FinishedAsync(player);
 
         // 0,4 s pri dvojnasobnej rychlosti = asi 0,2 s
         Assert.IsGreaterThanOrEqualTo(0.18, (DateTime.UtcNow - started).TotalSeconds);
         Assert.AreEqual("Žilina", ((ElenDisplay)sim.Read(s => s.FindBoard("3-3"))!.Display).Rows[2].PlainText);
+    }
+
+    /// <summary>Zaznam s riadkami A, B, C tabule 3 v case 0, 1 a 2 s.</summary>
+    private static RecordingFile Abc()
+    {
+        var header = new RecordingHeader(RecordingFile.FormatName, 1, DateTimeOffset.UnixEpoch, Create().ToConfig(), null);
+        return new RecordingFile(header, [
+            new RecordingEntry(0, 3, FrameDirection.Received, ElenFrame.Build(3, 1, Hex("81 10 80 1B 52 41"))),
+            new RecordingEntry(1, 3, FrameDirection.Received, ElenFrame.Build(3, 1, Hex("81 10 80 1B 52 42"))),
+            new RecordingEntry(2, 3, FrameDirection.Received, ElenFrame.Build(3, 1, Hex("81 10 80 1B 52 43")))
+        ]);
+    }
+
+    private static string Text(Simulator sim) =>
+        sim.Read(s => s.FindBoard("3-3") is { Display: ElenDisplay display } && display.Rows.TryGetValue(1, out var row) ? row.PlainText : "");
+
+    [TestMethod]
+    public async Task Posun_ObsahZMiestaBezZapisuDoKomunikacieAPocitadiel()
+    {
+        var sim = Create();
+        sim.Receive(3, ElenFrame.Build(3, 1, Hex("81 10 80 1B 52 58")));
+        var frames = sim.Read(s => s.FindBoard("3-3")!.Stats.Frames);
+        var logged = sim.LogSince(0).Count;
+        await using var player = new ReplayPlayer(sim, Abc(), "abc", 1, false);
+        player.Start(paused: true);
+
+        await player.SeekAsync(1.5);
+        Assert.AreEqual("B", Text(sim));
+        Assert.AreEqual(ReplayState.Paused, player.Status.State);
+        Assert.AreEqual(1.5, player.Status.Position);
+
+        // dozadu: tabula sa zmaze a prehra od zaciatku - predchadzajuci obsah X zmizne
+        await player.SeekAsync(0.5);
+        Assert.AreEqual("A", Text(sim));
+        Assert.AreEqual(frames, sim.Read(s => s.FindBoard("3-3")!.Stats.Frames));
+        Assert.HasCount(logged, sim.LogSince(0));
+
+        // pokracovanie bez cakania dohra zvysok
+        player.SetSpeed(0);
+        player.Resume();
+        await FinishedAsync(player);
+        Assert.AreEqual("C", Text(sim));
+        Assert.AreEqual(frames + 2, sim.Read(s => s.FindBoard("3-3")!.Stats.Frames));
+    }
+
+    [TestMethod]
+    public async Task Pauza_ZastaviCasAPokracovanie()
+    {
+        var sim = Create();
+        var header = new RecordingHeader(RecordingFile.FormatName, 1, DateTimeOffset.UnixEpoch, Create().ToConfig(), null);
+        var recording = new RecordingFile(header, [.. Abc().Entries.Select(e => e with { Time = e.Time * 0.3 })]);
+        await using var player = new ReplayPlayer(sim, recording, "abc", 1, false);
+
+        player.Start();
+        for (var i = 0; i < 100 && Text(sim) != "A"; i++)
+            await Task.Delay(5);
+        player.Pause();
+        var paused = player.Status.Position;
+        await Task.Delay(500);
+
+        Assert.AreEqual("A", Text(sim));
+        Assert.AreEqual(paused, player.Status.Position);
+        player.Resume();
+        await FinishedAsync(player);
+        Assert.AreEqual("C", Text(sim));
+    }
+
+    [TestMethod]
+    public async Task Rychlost_ZmenaPocasPrehravania()
+    {
+        var sim = Create();
+        await using var player = new ReplayPlayer(sim, Abc(), "abc", 1, false);
+        var started = DateTime.UtcNow;
+
+        player.Start();
+        await Task.Delay(100);
+        player.SetSpeed(10);
+        await FinishedAsync(player);
+
+        // 2 s zaznamu: 0,1 s povodnou rychlostou a zvysok desatnasobnou - daleko pod 2 s
+        Assert.IsLessThan(1.2, (DateTime.UtcNow - started).TotalSeconds);
+        Assert.AreEqual(10, player.Status.Speed);
+        Assert.AreEqual(2, player.Status.Position);
+    }
+
+    [TestMethod]
+    public async Task Dohrane_PosunPozastaviNaMiesteAPokracovanieZacneOdZaciatku()
+    {
+        var sim = Create();
+        await using var player = new ReplayPlayer(sim, Abc(), "abc", 0, false);
+        player.Start();
+        await FinishedAsync(player);
+
+        await player.SeekAsync(1.5);
+        Assert.AreEqual((ReplayState.Paused, "B"), (player.Status.State, Text(sim)));
+
+        player.Resume();
+        await FinishedAsync(player);
+        Assert.AreEqual("C", Text(sim));
+
+        player.Resume();
+        await FinishedAsync(player);
+        Assert.AreEqual(2, player.Status.Pass);
     }
 }

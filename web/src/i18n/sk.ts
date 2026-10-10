@@ -1418,6 +1418,13 @@ export const sk = {
   "stats.board": "Linka {line} · adresa {address}",
   "error.statistics.range": "Obdobie štatistiky je neplatné (koniec po začiatku, najviac 31 dní).",
   "error.statistics.line": "Číslo linky musí byť 1 – 100.",
+  "replay.paused": "Prehrávanie {name} pozastavené",
+  "replay.pause": "Pozastaviť",
+  "replay.resume": "Pokračovať",
+  "replay.play": "Prehrať",
+  "replay.timeline": "Časová os záznamu – posun na miesto",
+  "error.replay.none": "Zatiaľ sa nič neprehrávalo.",
+  "error.recording.buckets": "Počet úsekov časovej osi musí byť 1 – 2000.",
 } as const;
 
 export type TextKey = keyof typeof sk;

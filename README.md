@@ -338,6 +338,14 @@ dokola – správy idú do liniek simulátora, akoby ich posielal INISS, a odpov
 bez INISSu, na ukážky a na prenos situácie z inej stanice (súbor sa dá stiahnuť a na inom počítači nahrať); linky
 a tabule zo záznamu, ktoré v simulátore chýbajú, sa pri prehratí doplnia.
 
+Prehrávač nad zoznamom má **časovú os** s hustotou správ v zázname (kde INISS posielal): kliknutím alebo ťahom (aj
+šípkami klávesnice) sa prehrávanie posunie na ľubovoľné miesto. Tabule liniek zo záznamu sa vtedy zmažú a správy pred
+tým miestom sa prehrajú naprázdno – bez zápisu do komunikácie, štatistiky a počítadiel tabúľ – takže tabule ukazujú
+obsah z daného miesta. Počas prehrávania sa dá meniť rýchlosť (1×, 2×, 5×, 10×, bez čakania) a opakovanie,
+pozastaviť a pokračovať; dohraný záznam po posune čaká pozastavený, *Prehrať* ho spustí znova od začiatku, zastavený
+sa posunom alebo *Prehrať* spustí od daného miesta. API: `POST /api/replay` (aj `position`, `paused`),
+`PUT /api/replay` `{paused, position, speed, loop}` (`null` = nemeniť), `GET /api/recordings/{name}/activity?buckets=`.
+
 Formát je JSON Lines v UTF-8: prvý riadok je hlavička s linkami a tabuľami v čase začiatku, potom jeden riadok na
 kus prevádzky – `{"t":1.234,"line":1,"rx":"0185…"}` od INISSu alebo `{"t":…,"line":1,"tx":"06"}` odpoveď tabule
 (`t` sú sekundy od začiatku, bajty v hex). Ukladajú sa bajty tak, ako prišli, nie celé správy, aby prehratie prešlo

@@ -9,5 +9,6 @@ public sealed class PlayRecordingCommandValidator : AbstractValidator<PlayRecord
     {
         RuleFor(c => c.Name).Must(RecordingNames.IsValid).WithErrorCode(RecordingErrors.Name);
         RuleFor(c => c.Speed).InclusiveBetween(0, 1000).WithErrorCode(RecordingErrors.Speed);
+        RuleFor(c => c.Position).GreaterThanOrEqualTo(0).WithErrorCode(RecordingErrors.Time);
     }
 }
