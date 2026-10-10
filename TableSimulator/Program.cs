@@ -5,6 +5,7 @@ using TableSimulator.Api;
 using TableSimulator.Application;
 using TableSimulator.Infrastructure;
 using TableSimulator.Infrastructure.Auth;
+using TableSimulator.Infrastructure.Backup;
 using TableSimulator.Infrastructure.Hosting;
 using TableSimulator.Infrastructure.Https;
 using TableSimulator.Infrastructure.Logging;
@@ -29,6 +30,8 @@ try
         Log.Warning("Parameter --config je zruseny - linky a tabule su v databaze; subor nahrajte na stranke Linky (Importovat)");
     // nastavenie je v databaze - treba ho skor, nez sa server zostavi (porty, pristup zo siete, prihlasovanie)
     using var bootstrapLog = new SerilogLoggerFactory(Log.Logger);
+    // obnova zalohy pripravena z webu - skor, nez sa databaza otvori
+    await ServerBackup.ApplyPendingAsync(paths, bootstrapLog.CreateLogger(typeof(ServerBackup).FullName!), DateTimeOffset.Now);
     var settings = new DbSettingsStore(paths.DatabaseFile,
         await DatabaseBootstrap.PrepareAsync(paths, bootstrapLog.CreateLogger(typeof(DatabaseBootstrap).FullName!)), commandLine.Port);
     var endpoints = ServerEndpoints.From(settings.Current);

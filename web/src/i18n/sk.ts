@@ -1436,6 +1436,28 @@ export const sk = {
   "monitor.resume": "Pokračovať (nových {count})",
   "monitor.live": "naživo",
   "monitor.paused": "pozastavené",
+  "settings.backup": "Záloha a obnova",
+  "settings.backup.hint":
+    "Celý simulátor v jednom súbore ZIP: databáza (nastavenie, linky a tabule, používatelia a kľúče, virtuálne tabule, informačné panely, scenáre, štatistika, audit), vlastné vzhľady a súbory panelov, voliteľne aj záznamy komunikácie. Obnova sa použije pri najbližšom štarte servera; pôvodné údaje sa odložia do priečinka before-restore. Heslá certifikátu HTTPS a e-mailu sú šifrované kľúčmi tohto počítača – na inom počítači ich treba zadať znova.",
+  "backup.download": "Stiahnuť zálohu",
+  "backup.recordings": "vrátane záznamov komunikácie",
+  "backup.restore": "Obnoviť zo zálohy…",
+  "backup.restore.title": "Obnoviť simulátor zo zálohy?",
+  "backup.restore.confirm":
+    "Pri najbližšom štarte servera sa databáza nahradí zálohou – všetky nastavenia, linky, tabule, používatelia a ostatné údaje budú zo zálohy. Vlastné vzhľady a záznamy zo zálohy sa pridajú, súbory panelov sa vymenia. Pôvodné údaje sa odložia.",
+  "backup.prepared": "Obnova je pripravená – použije sa pri najbližšom štarte servera.",
+  "backup.pending.title": "Pripravená obnova zálohy",
+  "backup.pending.text": "Záloha z {created} (server {version}): vlastných vzhľadov {designs}, súborov panelov {media}.",
+  "backup.pending.recordings": "Záznamov komunikácie {count}.",
+  "backup.pending.service": "Použije sa po reštarte servera.",
+  "backup.pending.manual": "Použije sa, keď server zastavíte a znova spustíte.",
+  "backup.cancel": "Zrušiť obnovu",
+  "error.backup.format": "Súbor nie je záloha simulátora.",
+  "error.backup.newer": "Záloha je z novšej verzie servera – najprv server aktualizujte.",
+  "error.backup.tooLarge": "Záloha je väčšia ako 8 GB.",
+  "error.backup.noPending": "Žiadna obnova nie je pripravená.",
+  "backup.last.done": "Naposledy obnovené {at} zo zálohy z {created}. Pôvodné údaje sú v {folder}.",
+  "backup.last.failed": "Obnova {at} zlyhala ({error}) – server beží s pôvodnými údajmi, záloha ostala v {folder}.",
 } as const;
 
 export type TextKey = keyof typeof sk;

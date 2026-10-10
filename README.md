@@ -73,6 +73,24 @@ pridá len chýbajúce linky a tabule (ako pri nahratí záznamu), s voľbou *na
 všetky; neplatný súbor (`config.invalid`, aj tabuľa bez linky či nepodporovaná trieda) nič nezmení. Import je
 v audite (`ImportConfig`, cieľ `add`/`replace`).
 
+### Záloha a obnova
+
+V **Nastaveniach** v časti *Záloha a obnova* stiahne **Stiahnuť zálohu** celý simulátor ako ZIP (`GET /api/backup/file`,
+oprávnenie správy nastavení): `backup.json` (kedy, verzia servera, posledná migrácia, počty), `tablesimulator.db`
+(online kópia SQLite – linky a tabule sa predtým uložia), `designs/<id>/…` (vlastné vzhľady), `media/…` (súbory
+informačných panelov) a s voľbou *vrátane záznamov komunikácie* aj `recordings/*.tsrec`. Kľúče ochrany dát
+a certifikáty HTTPS sa nezálohujú – heslá certifikátu a e-mailu sú šifrované kľúčmi počítača a na inom počítači
+ich treba zadať znova (dovtedy sa správajú ako prázdne).
+
+**Obnoviť zo zálohy…** (`POST /api/backup/restore`, telo = ZIP, najviac 8 GB) zálohu skontroluje (formát, databáza
+simulátora, migrácie – záloha z novšieho servera sa odmietne) a rozbalí do `restore.pending` v priečinku nastavení.
+Použije sa pri **najbližšom štarte servera**, skôr než sa databáza otvorí – pri službe Windows tlačidlom reštartu,
+inak zastavením a spustením programu; dovtedy sa dá zrušiť (`DELETE /api/backup/restore`). Pri obnove sa databáza
+a súbory panelov vymenia celé, vlastné vzhľady a záznamy zo zálohy sa pridajú (rovnomenné sa nahradia); všetko
+pôvodné sa odloží do `before-restore\<čas>`. Ak obnova zlyhá, server nabehne s pôvodnou databázou a záloha ostane
+v `restore.failed-<čas>`. Výsledok poslednej obnovy (aj pri službe, kde nie je konzola) ukáže stránka
+(`GET /api/backup`, súbor `restore-result.json`).
+
 Server zapisuje záznam (Serilog) do konzoly a do denných súborov `logs\tablesimulator-RRRRMMDD.log` v priečinku
 nastavení (14 dní): spojenia liniek s INISSom, vybavené príkazy, prihlásenia, odmietnuté požiadavky a chyby.
 Riadok súboru nesie meno prihláseného používateľa (`-` bez prihlásenia a mimo požiadaviek).

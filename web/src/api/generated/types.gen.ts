@@ -116,6 +116,20 @@ export type AuditPageDto = {
     hasMore: boolean;
 };
 
+export type BackupInfoDto = {
+    created: string;
+    serverVersion: string;
+    designs: number;
+    media: number;
+    recordings: null | number;
+};
+
+export type BackupStatusDto = {
+    pending: null | BackupInfoDto;
+    service: boolean;
+    lastRestore: null | RestoreResultDto;
+};
+
 export type BoardComparisonDto = {
     id: string;
     name: string;
@@ -677,6 +691,13 @@ export type ReportMonitorDto = {
     entries: Array<ReportArchiveEntryDto>;
     total: number;
     skipped: number;
+};
+
+export type RestoreResultDto = {
+    at: string;
+    backup: BackupInfoDto;
+    folder: string;
+    error: null | string;
 };
 
 export type RowDto = {
@@ -3370,6 +3391,106 @@ export type SetBoardFaultResponses = {
 };
 
 export type SetBoardFaultResponse = SetBoardFaultResponses[keyof SetBoardFaultResponses];
+
+export type CancelRestoreData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/backup/restore';
+};
+
+export type CancelRestoreErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type CancelRestoreError = CancelRestoreErrors[keyof CancelRestoreErrors];
+
+export type CancelRestoreResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type CancelRestoreResponse = CancelRestoreResponses[keyof CancelRestoreResponses];
+
+export type RestoreBackupData = {
+    body: Stream;
+    path?: never;
+    query?: never;
+    url: '/api/backup/restore';
+};
+
+export type RestoreBackupErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type RestoreBackupError = RestoreBackupErrors[keyof RestoreBackupErrors];
+
+export type RestoreBackupResponses = {
+    /**
+     * OK
+     */
+    200: BackupInfoDto;
+};
+
+export type RestoreBackupResponse = RestoreBackupResponses[keyof RestoreBackupResponses];
+
+export type CreateBackupData = {
+    body?: never;
+    path?: never;
+    query?: {
+        recordings?: boolean;
+    };
+    url: '/api/backup/file';
+};
+
+export type CreateBackupErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type CreateBackupError = CreateBackupErrors[keyof CreateBackupErrors];
+
+export type CreateBackupResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetBackupStatusData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/backup';
+};
+
+export type GetBackupStatusErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetBackupStatusError = GetBackupStatusErrors[keyof GetBackupStatusErrors];
+
+export type GetBackupStatusResponses = {
+    /**
+     * OK
+     */
+    200: BackupStatusDto;
+};
+
+export type GetBackupStatusResponse = GetBackupStatusResponses[keyof GetBackupStatusResponses];
 
 export type ChangePasswordData = {
     body: ChangePasswordRequest;

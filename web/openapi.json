@@ -3084,6 +3084,129 @@
         }
       }
     },
+    "/api/backup/restore": {
+      "delete": {
+        "tags": [
+          "Backup"
+        ],
+        "operationId": "CancelRestore",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Backup"
+        ],
+        "operationId": "RestoreBackup",
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "$ref": "#/components/schemas/Stream"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupInfoDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backup/file": {
+      "get": {
+        "tags": [
+          "Backup"
+        ],
+        "operationId": "CreateBackup",
+        "parameters": [
+          {
+            "name": "recordings",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backup": {
+      "get": {
+        "tags": [
+          "Backup"
+        ],
+        "operationId": "GetBackupStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupStatusDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/password": {
       "post": {
         "tags": [
@@ -3983,6 +4106,73 @@
           },
           "hasMore": {
             "type": "boolean"
+          }
+        }
+      },
+      "BackupInfoDto": {
+        "required": [
+          "created",
+          "serverVersion",
+          "designs",
+          "media",
+          "recordings"
+        ],
+        "type": "object",
+        "properties": {
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "serverVersion": {
+            "type": "string"
+          },
+          "designs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "media": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recordings": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "BackupStatusDto": {
+        "required": [
+          "pending",
+          "service",
+          "lastRestore"
+        ],
+        "type": "object",
+        "properties": {
+          "pending": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BackupInfoDto"
+              }
+            ]
+          },
+          "service": {
+            "type": "boolean"
+          },
+          "lastRestore": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RestoreResultDto"
+              }
+            ]
           }
         }
       },
@@ -6379,6 +6569,33 @@
           }
         }
       },
+      "RestoreResultDto": {
+        "required": [
+          "at",
+          "backup",
+          "folder",
+          "error"
+        ],
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "backup": {
+            "$ref": "#/components/schemas/BackupInfoDto"
+          },
+          "folder": {
+            "type": "string"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "RowDto": {
         "required": [
           "row",
@@ -8647,6 +8864,9 @@
     },
     {
       "name": "Boards"
+    },
+    {
+      "name": "Backup"
     },
     {
       "name": "Auth"

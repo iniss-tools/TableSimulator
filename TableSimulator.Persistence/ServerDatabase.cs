@@ -17,6 +17,28 @@ public static class ServerDatabase
     public static AppDbContext Open(string databaseFile) =>
         new SqliteAppDbContext(new DbContextOptionsBuilder<SqliteAppDbContext>().UseSqlite(ConnectionString(databaseFile)).Options);
 
+    /// <summary>
+    /// Konzistentna kopia databazy do suboru <paramref name="targetFile" /> pocas behu servera (online zaloha SQLite -
+    /// zapisy inych spojeni pockaju alebo sa zopakuju).
+    /// </summary>
+    public static void BackupTo(string databaseFile, string targetFile)
+    {
+        using var source = new SqliteConnection(ConnectionString(databaseFile));
+        using var target = new SqliteConnection(ConnectionString(targetFile));
+        source.Open();
+        target.Open();
+        source.BackupDatabase(target);
+    }
+
+    /// <summary>Migracie, ktore v databaze su a ktore server pozna - na kontrolu zalohy pred obnovou.</summary>
+    public static async Task<(IReadOnlyList<string> Applied, IReadOnlyList<string> Known)> MigrationsAsync(string databaseFile,
+        CancellationToken cancellationToken = default)
+    {
+        await using var db = Open(databaseFile);
+        var applied = (await db.Database.GetAppliedMigrationsAsync(cancellationToken).ConfigureAwait(false)).ToList();
+        return (applied, db.Database.GetMigrations().ToList());
+    }
+
     /// <summary>Zalozi priecinok a databazu uvedie na poslednu migraciu.</summary>
     public static async Task MigrateAsync(AppDbContext db, CancellationToken cancellationToken = default)
     {
