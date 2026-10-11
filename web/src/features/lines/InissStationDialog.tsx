@@ -1,5 +1,5 @@
 // Nacitanie liniek a tabul z instalacie INISSu nastavenej v Nastaveniach: nahlad (linky, tabule, zistenia) a import.
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CircleAlert, FolderOpen, Info, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import {
   type InissTableDto,
   type StationImportedDto,
 } from "@/api";
+import { CheckField } from "@/components/common/form-field";
 import { StatusBadge } from "@/components/common/status-badge";
 import { DataTable } from "@/components/data-table/data-table";
 import { columnsFor } from "@/components/data-table/features";
@@ -23,7 +24,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import { hasText, t, type TextKey } from "@/i18n";
+import { getLanguage, hasText, t, type TextKey } from "@/i18n";
 
 const SEVERITY_CLASS: Record<InissProblemDto["severity"], string> = {
   error: "text-red-700 dark:text-red-400",
@@ -48,6 +49,7 @@ function Tables({ tables, amplifiers }: { tables: InissTableDto[]; amplifiers: I
       {tables.map((table) => (
         <span key={`${table.grafikon}/${table.name}`} className={table.shown ? undefined : "text-muted-foreground"}>
           {t("iniss.table", { name: table.name, address: table.address, manufacturer: table.manufacturer || "?" })}
+          {table.face && table.face.kind !== "other" && <span className="text-xs text-muted-foreground"> · {t(`iniss.kind.${table.face.kind}`)}</span>}
           {table.automatic && <span className="text-xs text-muted-foreground"> · {t("iniss.automatic")}</span>}
           {!table.shown && <span className="text-xs"> · {t("iniss.notShown")}</span>}
         </span>
@@ -71,6 +73,7 @@ function importedText(result: StationImportedDto): string {
   ];
   if (result.virtualBoardsAdded > 0 || result.virtualBoardsKept > 0)
     parts.push(t("iniss.imported.virtual", { added: result.virtualBoardsAdded, kept: result.virtualBoardsKept }));
+  if (result.facesAssigned > 0) parts.push(t("iniss.imported.faces", { assigned: result.facesAssigned, added: result.facesAdded }));
   if (result.logFolder !== "none" && result.logFolder !== "watched") parts.push(t(`iniss.logFolder.${result.logFolder}` as TextKey));
   return parts.join(" ");
 }
@@ -79,6 +82,7 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
   // pri kazdom otvoreni znova - instalacia INISSu sa mohla zmenit
   const query = useQuery({ ...getInissStationOptions(), staleTime: 0, gcTime: 0, retry: false });
   const station = query.data;
+  const [facesForExisting, setFacesForExisting] = useState(false);
   const load = useMutation({
     ...importInissStationMutation(),
     onSuccess: (result) => {
@@ -213,6 +217,12 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
                 <Info />
                 <AlertDescription>{t("iniss.keep")}</AlertDescription>
               </Alert>
+              <CheckField
+                label={t("iniss.facesExisting")}
+                hint={t("iniss.facesExisting.hint")}
+                checked={facesForExisting}
+                onCheckedChange={setFacesForExisting}
+              />
             </>
           )}
           {load.error && (
@@ -224,7 +234,11 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
         </div>
         <DialogFooter>
           <DialogClose render={<Button type="button" variant="outline" />}>{t("common.cancel")}</DialogClose>
-          <Button type="button" disabled={!station || nothing || load.isPending} onClick={() => load.mutate({})}>
+          <Button
+            type="button"
+            disabled={!station || nothing || load.isPending}
+            onClick={() => load.mutate({ body: { faceLanguage: getLanguage(), facesForExisting } })}
+          >
             {load.isPending && <Spinner />}
             {t("iniss.load")}
           </Button>

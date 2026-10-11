@@ -2,6 +2,7 @@ using System.Buffers;
 using TableSimulator.Application.Abstractions.Results;
 using TableSimulator.Application.Settings;
 using TableSimulator.Contracts.Boards;
+using TableSimulator.Contracts.Faces;
 using TableSimulator.Contracts.Station;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Simulation;
@@ -104,10 +105,10 @@ public static class InissStations
     }
 
     /// <summary>
-    /// Linky a tabule na zalozenie v simulatore: aktivne linky s cislom a ich tabule so znamym vyrobcom, priecinok
-    /// logov a tabule s exportom do XML.
+    /// Linky a tabule na zalozenie v simulatore: aktivne linky s cislom a ich tabule so znamym vyrobcom (s datami
+    /// pre celo), priecinok logov a tabule s exportom do XML.
     /// </summary>
-    public static StationImportRequest ToRequest(InissStationDto station)
+    public static StationImportRequest ToRequest(InissStationDto station, InissStationImportRequest? options = null)
     {
         ArgumentNullException.ThrowIfNull(station);
         var lines = new List<StationLineDto>();
@@ -118,12 +119,16 @@ public static class InissStations
                 continue;
             lines.Add(new StationLineDto(number, line.TableClass, line.SimulatorPort, line.Section));
             boards.AddRange(line.Tables.Where(t => t.Manufacturer.Length > 0 && t.Address is >= 0 and <= 255)
-                .Select(t => new StationBoardDto(number, t.Address, t.Manufacturer, t.Name) { Flaps = t.Flaps, FlapRecords = t.FlapRecords }));
+                .Select(t => new StationBoardDto(number, t.Address, t.Manufacturer, t.Name) { Flaps = t.Flaps, FlapRecords = t.FlapRecords, Face = t.Face }));
             boards.AddRange(line.Amplifiers.Select(a => new StationBoardDto(number, a.Address, AmplifierManufacturer, a.Name)));
         }
 
         var xml = station.XmlTables.Where(t => t.Source.Length <= 100 && t.Source.AsSpan().IndexOfAny(InvalidXmlName) < 0).ToList();
-        return new StationImportRequest(lines, boards) { LogFolder = station.LogFolder, XmlTables = xml };
+        return new StationImportRequest(lines, boards)
+        {
+            LogFolder = station.LogFolder, XmlTables = xml, FaceLanguage = options?.FaceLanguage ?? StationFaceLanguage.Sk,
+            FacesForExisting = options?.FacesForExisting ?? false
+        };
     }
 
     /// <summary>Port linky v simulatore: z TablePort, ak INISS posiela cez TCP (napr. uz presmerovany), inak 47000 + cislo.</summary>
@@ -143,13 +148,35 @@ public static class InissStations
         var catalog = table.Table.TableCatalog;
         var manufacturer = catalog?.Manufacturer?.Name ?? "";
         var dto = new InissTableDto(table.Table.Key, table.Table.ID, table.Grafikon, manufacturer, automatic,
-            manufacturers.Contains(manufacturer, StringComparer.OrdinalIgnoreCase), problem);
+            manufacturers.Contains(manufacturer, StringComparer.OrdinalIgnoreCase), problem) { Face = Face(table.Face) };
         if (catalog is null || !FlapLayouts.IsFlapBoard(catalog.Manufacturer))
             return dto;
 
         // listova tabula: co je na listoch, vie len predloha a jej prekodovacie tabulky
         var layout = FlapLayouts.Build(catalog);
         return dto with { Flaps = Flaps(layout), FlapRecords = layout.Records };
+    }
+
+    /// <summary>Co o cele tabule vedia data stanice (rovnako posiela GVDEditor).</summary>
+    public static StationFaceDto? Face(TableFaceInfo? info) => info is null
+        ? null
+        : new StationFaceDto(Kind(info.ViewType), info.LinesPerRecord, info.Records, info.Width, info.RowHeight,
+            info.Columns.Select(c => new StationFaceColumnDto(c.Line, c.Start, c.End, c.Align switch
+            {
+                1 => FaceAlign.Right,
+                2 => FaceAlign.Center,
+                _ => FaceAlign.Left
+            }, c.Content)).ToList(),
+            info.Tracks, info.Platforms, info.Station);
+
+    private static StationBoardKind Kind(string viewType)
+    {
+        var type = TableViewType.Parse(viewType);
+        return type == TableViewType.Odchodova ? StationBoardKind.Departures
+            : type == TableViewType.Prichodova ? StationBoardKind.Arrivals
+            : type == TableViewType.Nastupistna ? StationBoardKind.Platform
+            : type == TableViewType.Podchodova ? StationBoardKind.Underpass
+            : StationBoardKind.Other;
     }
 
     private static FlapProfileDto Flaps(FlapLayout layout) => new()

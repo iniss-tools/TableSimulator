@@ -21,4 +21,10 @@ public sealed record StationImportedDto(
 
     /// <summary>Co sa stalo s priecinkom logov INISSu.</summary>
     public StationLogFolder LogFolder { get; init; }
+
+    /// <summary>Nove predlohy ciel z dat stanice.</summary>
+    public int FacesAdded { get; init; }
+
+    /// <summary>Tabule, ktore dostali celo z dat stanice.</summary>
+    public int FacesAssigned { get; init; }
 }

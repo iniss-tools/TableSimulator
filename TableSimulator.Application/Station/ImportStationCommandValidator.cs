@@ -1,4 +1,5 @@
 using FluentValidation;
+using TableSimulator.Contracts.Station;
 
 namespace TableSimulator.Application.Station;
 
@@ -26,7 +27,19 @@ public sealed class ImportStationCommandValidator : AbstractValidator<ImportStat
                 board.RuleFor(b => b.Manufacturer).NotEmpty().WithErrorCode("station.manufacturer");
                 board.RuleFor(b => b.Flaps).Must(Boards.FlapProfileRules.IsValid).WithErrorCode("station.flaps");
                 board.RuleFor(b => b.FlapRecords).InclusiveBetween(1, 64).WithErrorCode("station.flaps");
+                board.RuleFor(b => b.Face).Must(IsValidFace).WithErrorCode("station.face");
             });
+            RuleFor(c => c.Request.FaceLanguage).IsInEnum().WithErrorCode("station.face");
         });
     }
+
+    /// <summary>Data pre celo v medziach (ako rozmer tabule) - z nich simulator sklada predlohu.</summary>
+    private static bool IsValidFace(StationFaceDto? face) =>
+        face is null
+        || (Enum.IsDefined(face.Kind) && face.LinesPerRecord is >= 1 and <= 16 && face.Records is >= 1 and <= 256 && face.Width is >= 0 and <= 4096
+            && face.RowHeight is >= 0 and <= 64 && face.Columns is { Count: <= 64 } columns
+            && columns.All(c => c is not null && Enum.IsDefined(c.Align) && c.Line is >= 0 and < 16 && c.Start >= 0 && c.End <= 8192 && c.Content is >= 0 and <= 255)
+            && Texts(face.Tracks) && Texts(face.Platforms) && face.Station is { Length: <= 100 });
+
+    private static bool Texts(IReadOnlyList<string>? texts) => texts is { Count: <= 64 } && texts.All(t => t is { Length: <= 20 });
 }

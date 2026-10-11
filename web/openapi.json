@@ -573,6 +573,22 @@
           "Station"
         ],
         "operationId": "ImportInissStation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/InissStationImportRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -6458,6 +6474,22 @@
           }
         }
       },
+      "InissStationImportRequest": {
+        "required": [
+          "faceLanguage",
+          "facesForExisting"
+        ],
+        "type": "object",
+        "properties": {
+          "faceLanguage": {
+            "$ref": "#/components/schemas/StationFaceLanguage"
+          },
+          "facesForExisting": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
       "InissTableDto": {
         "required": [
           "name",
@@ -6468,7 +6500,8 @@
           "shown",
           "problem",
           "flaps",
-          "flapRecords"
+          "flapRecords",
+          "face"
         ],
         "type": "object",
         "properties": {
@@ -6514,6 +6547,16 @@
           "flapRecords": {
             "type": "integer",
             "format": "int32"
+          },
+          "face": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StationFaceDto"
+              }
+            ]
           }
         }
       },
@@ -8714,7 +8757,8 @@
           "manufacturer",
           "name",
           "flaps",
-          "flapRecords"
+          "flapRecords",
+          "face"
         ],
         "type": "object",
         "properties": {
@@ -8746,8 +8790,121 @@
           "flapRecords": {
             "type": "integer",
             "format": "int32"
+          },
+          "face": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StationFaceDto"
+              }
+            ]
           }
         }
+      },
+      "StationBoardKind": {
+        "enum": [
+          "other",
+          "departures",
+          "arrivals",
+          "platform",
+          "underpass"
+        ]
+      },
+      "StationFaceColumnDto": {
+        "required": [
+          "line",
+          "start",
+          "end",
+          "align",
+          "content"
+        ],
+        "type": "object",
+        "properties": {
+          "line": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "start": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "end": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "align": {
+            "$ref": "#/components/schemas/FaceAlign"
+          },
+          "content": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "StationFaceDto": {
+        "required": [
+          "kind",
+          "linesPerRecord",
+          "records",
+          "width",
+          "rowHeight",
+          "columns",
+          "tracks",
+          "platforms",
+          "station"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/StationBoardKind"
+          },
+          "linesPerRecord": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "records": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "width": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rowHeight": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationFaceColumnDto"
+            }
+          },
+          "tracks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "station": {
+            "type": "string"
+          }
+        }
+      },
+      "StationFaceLanguage": {
+        "enum": [
+          "sk",
+          "cs"
+        ],
+        "default": "sk"
       },
       "StationImportedDto": {
         "required": [
@@ -8759,7 +8916,9 @@
           "skippedBoards",
           "virtualBoardsAdded",
           "virtualBoardsKept",
-          "logFolder"
+          "logFolder",
+          "facesAdded",
+          "facesAssigned"
         ],
         "type": "object",
         "properties": {
@@ -8802,6 +8961,14 @@
           },
           "logFolder": {
             "$ref": "#/components/schemas/StationLogFolder"
+          },
+          "facesAdded": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "facesAssigned": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -8810,7 +8977,9 @@
           "lines",
           "boards",
           "logFolder",
-          "xmlTables"
+          "xmlTables",
+          "faceLanguage",
+          "facesForExisting"
         ],
         "type": "object",
         "properties": {
@@ -8837,6 +9006,12 @@
             "items": {
               "$ref": "#/components/schemas/StationXmlTableDto"
             }
+          },
+          "faceLanguage": {
+            "$ref": "#/components/schemas/StationFaceLanguage"
+          },
+          "facesForExisting": {
+            "type": "boolean"
           }
         }
       },

@@ -12,4 +12,7 @@ public sealed record StationBoardDto(int Line, int Address, string Manufacturer,
 
     /// <summary>Listova tabula: pocet zaznamov (MAX_REC_COUNT).</summary>
     public int FlapRecords { get; init; } = 1;
+
+    /// <summary>Co o cele tabule vedia data stanice; null = nic (tabula bez cela).</summary>
+    public StationFaceDto? Face { get; init; }
 }

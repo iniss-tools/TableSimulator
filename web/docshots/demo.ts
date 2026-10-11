@@ -249,6 +249,7 @@ export default async function demo() {
         name: b.name,
         flaps: b.flaps ?? null,
         flapRecords: 4,
+        face: null,
       })),
       logFolder: null,
       xmlTables: [],

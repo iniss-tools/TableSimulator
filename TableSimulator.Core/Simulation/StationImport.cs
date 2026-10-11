@@ -8,6 +8,9 @@ public sealed record StationImport
 {
     public List<StationLine> Lines { get; init; } = [];
     public List<StationBoard> Boards { get; init; } = [];
+
+    /// <summary>Celo z dat stanice dostanu aj tabule, ktore uz su a celo nemaju (inak len nove tabule).</summary>
+    public bool FacesForExisting { get; init; }
 }
 
 /// <summary>Linka stanice.</summary>
@@ -34,6 +37,18 @@ public sealed record StationBoard(int Line, int Address, string Manufacturer)
 
     /// <summary>Listova tabula: pocet zaznamov (MAX_REC_COUNT) - riadkov je zaznamy × riadky zaznamu.</summary>
     public int FlapRecords { get; init; } = 1;
+
+    /// <summary>Predloha cela z dat stanice (<see cref="BoardFace.Id" />); null = bez cela.</summary>
+    public string? Face { get; init; }
+
+    /// <summary>Hodnoty premennych cela (kolaj, nastupiste, stanica).</summary>
+    public IReadOnlyDictionary<string, string>? FaceValues { get; init; }
+
+    /// <summary>Sirka riadku v bodoch z katalogu (nie listova tabula); 0 = podla vyrobcu.</summary>
+    public int Width { get; init; }
+
+    /// <summary>Riadkov tabule z katalogu (nie listova tabula); 0 = podla vyrobcu.</summary>
+    public int Rows { get; init; }
 }
 
 /// <summary>Co import stanice v simulatore zmenil.</summary>
@@ -49,4 +64,8 @@ public sealed record StationImportResult(
     int BoardsAdded,
     int BoardsKept,
     IReadOnlyList<int> UnsupportedLines,
-    IReadOnlyList<string> SkippedBoards);
+    IReadOnlyList<string> SkippedBoards)
+{
+    /// <summary>Predlohy ciel, ktore tabule z importu dostali (jedna polozka na tabulu).</summary>
+    public IReadOnlyList<string> FacesAssigned { get; init; } = [];
+}

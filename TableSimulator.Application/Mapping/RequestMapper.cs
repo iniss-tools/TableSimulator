@@ -118,8 +118,11 @@ public static partial class RequestMapper
             Lines = request.Lines.Select(l => new StationLine(l.Number, l.TableClass, l.Port) { Name = l.Name }).ToList(),
             Boards = request.Boards.Select(b => new StationBoard(b.Line, b.Address, b.Manufacturer)
             {
-                Name = b.Name, Flaps = b.Flaps is { } f ? ToFlaps(f) : null, FlapRecords = b.FlapRecords
-            }).ToList()
+                Name = b.Name, Flaps = b.Flaps is { } f ? ToFlaps(f) : null, FlapRecords = b.FlapRecords,
+                Width = b.Face is { Width: > 0 } face && b.Flaps is null ? Math.Max(face.Width, face.Columns.Select(c => c.End).DefaultIfEmpty().Max()) : 0,
+                Rows = b.Face is { Width: > 0 } rows && b.Flaps is null ? Math.Max(1, rows.Records) * Math.Max(1, rows.LinesPerRecord) : 0
+            }).ToList(),
+            FacesForExisting = request.FacesForExisting
         };
     }
 }

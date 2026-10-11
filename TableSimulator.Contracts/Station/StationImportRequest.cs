@@ -11,4 +11,10 @@ public sealed record StationImportRequest(IReadOnlyList<StationLineDto> Lines, I
 
     /// <summary>Tabule s exportom do XML - simulator pre ne zalozi virtualne tabule, ktore este nema.</summary>
     public IReadOnlyList<StationXmlTableDto> XmlTables { get; init; } = [];
+
+    /// <summary>Jazyk popisov na celach, ktore simulator zalozi tabuliam z dat stanice.</summary>
+    public StationFaceLanguage FaceLanguage { get; init; }
+
+    /// <summary>Celo z dat stanice dostanu aj tabule, ktore uz v simulatore su a celo nemaju.</summary>
+    public bool FacesForExisting { get; init; }
 }

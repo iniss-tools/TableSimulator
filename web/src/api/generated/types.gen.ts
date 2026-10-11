@@ -588,6 +588,11 @@ export type InissStationDto = {
     unservedAmplifiers: Array<InissAmplifierDto>;
 };
 
+export type InissStationImportRequest = {
+    faceLanguage: StationFaceLanguage;
+    facesForExisting: boolean;
+};
+
 export type InissTableDto = {
     name: string;
     address: number;
@@ -598,6 +603,7 @@ export type InissTableDto = {
     problem: null | InissProblemDto;
     flaps: null | FlapProfileDto;
     flapRecords: number;
+    face: null | StationFaceDto;
 };
 
 export type InissViewImportedDto = {
@@ -1135,7 +1141,32 @@ export type StationBoardDto = {
     name: string;
     flaps: null | FlapProfileDto;
     flapRecords: number;
+    face: null | StationFaceDto;
 };
+
+export type StationBoardKind = 'other' | 'departures' | 'arrivals' | 'platform' | 'underpass';
+
+export type StationFaceColumnDto = {
+    line: number;
+    start: number;
+    end: number;
+    align: FaceAlign;
+    content: number;
+};
+
+export type StationFaceDto = {
+    kind: StationBoardKind;
+    linesPerRecord: number;
+    records: number;
+    width: number;
+    rowHeight: number;
+    columns: Array<StationFaceColumnDto>;
+    tracks: Array<string>;
+    platforms: Array<string>;
+    station: string;
+};
+
+export type StationFaceLanguage = 'sk' | 'cs';
 
 export type StationImportedDto = {
     linesAdded: number;
@@ -1147,6 +1178,8 @@ export type StationImportedDto = {
     virtualBoardsAdded: number;
     virtualBoardsKept: number;
     logFolder: StationLogFolder;
+    facesAdded: number;
+    facesAssigned: number;
 };
 
 export type StationImportRequest = {
@@ -1154,6 +1187,8 @@ export type StationImportRequest = {
     boards: Array<StationBoardDto>;
     logFolder: null | string;
     xmlTables: Array<StationXmlTableDto>;
+    faceLanguage: StationFaceLanguage;
+    facesForExisting: boolean;
 };
 
 export type StationLineDto = {
@@ -1785,7 +1820,7 @@ export type GetInissStationResponses = {
 export type GetInissStationResponse = GetInissStationResponses[keyof GetInissStationResponses];
 
 export type ImportInissStationData = {
-    body?: never;
+    body?: null | InissStationImportRequest;
     path?: never;
     query?: never;
     url: '/api/station/iniss';

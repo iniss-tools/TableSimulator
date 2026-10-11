@@ -57,6 +57,9 @@ public sealed class Simulator
     /// <summary>Kolko zaznamov komunikacie sa drzi.</summary>
     public const int LogCapacity = 5000;
 
+    /// <summary>Najvacsi rozmer novej tabule z katalogu stanice (ako overenie profilu tabule).</summary>
+    private const int MaxImportWidth = 4096, MaxImportRows = 256;
+
     private readonly Lock _lock = new();
     private readonly SortedDictionary<int, SimLine> _lines = [];
     private readonly Dictionary<string, SimBoard> _boards = [];
@@ -179,6 +182,7 @@ public sealed class Simulator
         int linesAdded = 0, linesUpdated = 0, boardsAdded = 0, boardsKept = 0;
         var unsupported = new List<int>();
         var skipped = new List<string>();
+        var faces = new List<string>();
         lock (_lock)
         {
             foreach (var station in import.Lines)
@@ -249,6 +253,14 @@ public sealed class Simulator
                         existing.Version++;
                     }
 
+                    // celo len na vyziadanie a len tabuli bez cela - celo vybrate (aj odobrate) obsluhou ostane
+                    if (import.FacesForExisting && board.Face is { } face && existing.Profile is { Face: null, Header: null })
+                    {
+                        existing.Profile = WithFace(existing.Profile, board, face);
+                        existing.Version++;
+                        faces.Add(face);
+                    }
+
                     boardsKept++;
                     continue;
                 }
@@ -262,6 +274,17 @@ public sealed class Simulator
                         Flaps = layout, Rows = Math.Max(1, board.FlapRecords * Math.Max(1, layout.LinesPerRecord)), Width = Math.Max(1, positions) * 8
                     };
                 }
+                else if (board.Width > 0 && board.Rows > 0)
+                {
+                    // rozmer z katalogu - samoucenie ho len zvacsi
+                    profile = profile with { Width = Math.Min(board.Width, MaxImportWidth), Rows = Math.Min(board.Rows, MaxImportRows) };
+                }
+
+                if (board.Face is { } newFace)
+                {
+                    profile = WithFace(profile, board, newFace);
+                    faces.Add(newFace);
+                }
 
                 AddBoardCore(new BoardConfig(board.Line, board.Address, key) { Name = board.Name, Profile = profile });
                 boardsAdded++;
@@ -269,8 +292,14 @@ public sealed class Simulator
         }
 
         Raise([new StructureChanged()]);
-        return new StationImportResult(linesAdded, linesUpdated, boardsAdded, boardsKept, unsupported, skipped);
+        return new StationImportResult(linesAdded, linesUpdated, boardsAdded, boardsKept, unsupported, skipped) { FacesAssigned = faces };
     }
+
+    /// <summary>Profil s celom z importu stanice.</summary>
+    private static BoardProfile WithFace(BoardProfile profile, StationBoard board, string face) => profile with
+    {
+        Face = face, FaceValues = board.FaceValues is { Count: > 0 } values ? new Dictionary<string, string>(values, StringComparer.Ordinal) : null
+    };
 
     /// <summary>Odstrani linku aj s jej tabulami.</summary>
     public bool RemoveLine(int number)

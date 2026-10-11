@@ -13,6 +13,6 @@ public sealed class ImportInissStationCommandHandler(ISettingsStore settings, St
         var station = InissStations.Read(settings.Current);
         if (station.IsFailure)
             return Result.Failure<StationImportedDto>(station.Error);
-        return Result.Success(await importer.ImportAsync(InissStations.ToRequest(station.Value), cancellationToken).ConfigureAwait(false));
+        return Result.Success(await importer.ImportAsync(InissStations.ToRequest(station.Value, command.Options), cancellationToken).ConfigureAwait(false));
     }
 }

@@ -168,7 +168,7 @@ public static partial class DtoMapper
     {
         ArgumentNullException.ThrowIfNull(result);
         return new StationImportedDto(result.LinesAdded, result.LinesUpdated, result.BoardsAdded, result.BoardsKept,
-            result.UnsupportedLines.ToArray(), result.SkippedBoards.ToArray());
+            result.UnsupportedLines.ToArray(), result.SkippedBoards.ToArray()) { FacesAssigned = result.FacesAssigned.Count };
     }
 
     /// <summary>Nastavenie servera; <paramref name="database" /> doplni popis databazy.</summary>

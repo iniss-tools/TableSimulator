@@ -21,7 +21,7 @@ public sealed class FaceHeaders(IFaceRepository faces)
         if (config.Boards.All(b => b.Profile.Header is null))
             return (config, false);
 
-        var known = await KnownAsync(cancellationToken).ConfigureAwait(false);
+        var known = await KnownFaces.LoadAsync(faces, cancellationToken).ConfigureAwait(false);
         var boards = new List<BoardConfig>(config.Boards.Count);
         foreach (var board in config.Boards)
             boards.Add(await AbsorbAsync(board, known, null, null, cancellationToken).ConfigureAwait(false));
@@ -37,11 +37,11 @@ public sealed class FaceHeaders(IFaceRepository faces)
         ArgumentNullException.ThrowIfNull(board);
         if (board.Profile.Header is null)
             return board;
-        var known = await KnownAsync(cancellationToken).ConfigureAwait(false);
+        var known = await KnownFaces.LoadAsync(faces, cancellationToken).ConfigureAwait(false);
         return await AbsorbAsync(board, known, name, idHint, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<BoardConfig> AbsorbAsync(BoardConfig board, Known known, string? name, string? idHint, CancellationToken cancellationToken)
+    private async Task<BoardConfig> AbsorbAsync(BoardConfig board, KnownFaces known, string? name, string? idHint, CancellationToken cancellationToken)
     {
         if (board.Profile.Header is not { } header)
             return board;
@@ -51,57 +51,18 @@ public sealed class FaceHeaders(IFaceRepository faces)
 
         var face = BoardFaces.FromHeader(header, "", "");
         var content = BoardFaces.Content(face);
-        if (!known.ByContent.TryGetValue(content, out var id))
+        var id = known.FindByContent(content);
+        if (id is null)
         {
-            id = known.NewId(idHint);
+            id = known.NewId(idHint, HeaderPrefix);
             var title = !string.IsNullOrWhiteSpace(name) ? name.Trim()
                 : !string.IsNullOrWhiteSpace(board.Name) ? board.Name.Trim()
                 : string.Create(CultureInfo.InvariantCulture, $"{board.Line}-{board.Address}");
             face = face with { Id = id, Name = title.Length > 100 ? title[..100] : title };
             await faces.SaveAsync(new FaceRecord(id, face.Name, BoardFaces.Serialize(face)), cancellationToken).ConfigureAwait(false);
-            known.Add(id, content);
+            known.Add(id, face.Name, content);
         }
 
         return board with { Profile = board.Profile with { Header = null, Face = id } };
-    }
-
-    private async Task<Known> KnownAsync(CancellationToken cancellationToken)
-    {
-        var known = new Known();
-        foreach (var face in BoardFaces.BuiltIn)
-            known.Ids.Add(face.Id);
-        foreach (var record in await faces.ListAsync(cancellationToken).ConfigureAwait(false))
-            known.Add(record.Id, BoardFaces.Content(BoardFaces.Deserialize(record)));
-        return known;
-    }
-
-    /// <summary>Obsadene kluce a vlastne predlohy podla obsahu.</summary>
-    private sealed class Known
-    {
-        public HashSet<string> Ids { get; } = new(StringComparer.OrdinalIgnoreCase);
-
-        public Dictionary<string, string> ByContent { get; } = new(StringComparer.Ordinal);
-
-        public void Add(string id, string content)
-        {
-            Ids.Add(id);
-            ByContent.TryAdd(content, id);
-        }
-
-        /// <summary>Volny kluc: napoveda (ak je volna), inak napoveda alebo <c>hlavicka</c> s cislom.</summary>
-        public string NewId(string? hint)
-        {
-            var stem = BoardFaces.Slug(hint ?? "", 34);
-            if (stem.Length > 0 && !Ids.Contains(stem))
-                return stem;
-            if (stem.Length == 0)
-                stem = HeaderPrefix;
-            for (var n = 1;; n++)
-            {
-                var id = string.Create(CultureInfo.InvariantCulture, $"{stem}-{n}");
-                if (!Ids.Contains(id))
-                    return id;
-            }
-        }
     }
 }

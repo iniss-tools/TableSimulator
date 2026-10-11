@@ -15,4 +15,7 @@ public sealed record InissTableDto(string Name, int Address, string Grafikon, st
 
     /// <summary>Listova tabula: pocet zaznamov (MAX_REC_COUNT).</summary>
     public int FlapRecords { get; init; } = 1;
+
+    /// <summary>Co o cele tabule vedia data stanice; null = tabula nema katalogovu predlohu.</summary>
+    public StationFaceDto? Face { get; init; }
 }

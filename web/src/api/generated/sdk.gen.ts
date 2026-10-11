@@ -90,7 +90,14 @@ export const getTrafficStatistics = <ThrowOnError extends boolean = false>(optio
 
 export const getInissStation = <ThrowOnError extends boolean = false>(options?: Options<GetInissStationData, ThrowOnError>): RequestResult<GetInissStationResponses, GetInissStationErrors, ThrowOnError> => (options?.client ?? client).get<GetInissStationResponses, GetInissStationErrors, ThrowOnError>({ url: '/api/station/iniss', ...options });
 
-export const importInissStation = <ThrowOnError extends boolean = false>(options?: Options<ImportInissStationData, ThrowOnError>): RequestResult<ImportInissStationResponses, ImportInissStationErrors, ThrowOnError> => (options?.client ?? client).post<ImportInissStationResponses, ImportInissStationErrors, ThrowOnError>({ url: '/api/station/iniss', ...options });
+export const importInissStation = <ThrowOnError extends boolean = false>(options?: Options<ImportInissStationData, ThrowOnError>): RequestResult<ImportInissStationResponses, ImportInissStationErrors, ThrowOnError> => (options?.client ?? client).post<ImportInissStationResponses, ImportInissStationErrors, ThrowOnError>({
+    url: '/api/station/iniss',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
 
 export const importStation = <ThrowOnError extends boolean = false>(options: Options<ImportStationData, ThrowOnError>): RequestResult<ImportStationResponses, ImportStationErrors, ThrowOnError> => (options.client ?? client).post<ImportStationResponses, ImportStationErrors, ThrowOnError>({
     url: '/api/station',

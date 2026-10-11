@@ -4,4 +4,5 @@ using TableSimulator.Contracts.Station;
 namespace TableSimulator.Application.Station;
 
 /// <summary>Nacita instalaciu INISSu z nastavenia a zalozi jej linky a tabule (ako import stanice z GVDEditora).</summary>
-public sealed record ImportInissStationCommand : ICommand<StationImportedDto>;
+/// <param name="Options">jazyk popisov na celach a ci celo dostanu aj tabule bez cela; null = predvolene</param>
+public sealed record ImportInissStationCommand(InissStationImportRequest? Options = null) : ICommand<StationImportedDto>;
