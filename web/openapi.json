@@ -2857,6 +2857,113 @@
         }
       }
     },
+    "/api/faces/{id}": {
+      "delete": {
+        "tags": [
+          "Faces"
+        ],
+        "operationId": "DeleteFace",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Faces"
+        ],
+        "operationId": "SetFace",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BoardFaceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/faces": {
+      "get": {
+        "tags": [
+          "Faces"
+        ],
+        "operationId": "GetFaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BoardFaceDto"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/designs/{id}": {
       "delete": {
         "tags": [
@@ -4557,6 +4664,54 @@
           }
         }
       },
+      "BoardFaceDto": {
+        "required": [
+          "id",
+          "name",
+          "builtIn",
+          "margin",
+          "rowGap",
+          "rowGroup",
+          "groupGap",
+          "elements"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "builtIn": {
+            "type": "boolean"
+          },
+          "margin": {
+            "$ref": "#/components/schemas/FaceMarginDto"
+          },
+          "rowGap": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "rowGroup": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "groupGap": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "elements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FaceElementDto"
+            }
+          }
+        }
+      },
       "BoardFaultDto": {
         "required": [
           "kind",
@@ -4624,6 +4779,8 @@
           "monochrome",
           "swapRedGreen",
           "header",
+          "face",
+          "faceValues",
           "movingFont",
           "autoSize",
           "rotationMs",
@@ -4690,6 +4847,21 @@
                 "$ref": "#/components/schemas/BoardHeaderDto"
               }
             ]
+          },
+          "face": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "faceValues": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "movingFont": {
             "type": "integer",
@@ -5269,6 +5441,177 @@
             }
           }
         }
+      },
+      "FaceAlign": {
+        "enum": [
+          "left",
+          "center",
+          "right"
+        ]
+      },
+      "FaceAnchor": {
+        "enum": [
+          "face",
+          "matrix",
+          "row",
+          "top",
+          "bottom",
+          "left",
+          "right"
+        ]
+      },
+      "FaceClockFormat": {
+        "enum": [
+          "H:mm",
+          "HH:mm",
+          "HH:mm:ss"
+        ]
+      },
+      "FaceElementDto": {
+        "required": [
+          "kind",
+          "anchor",
+          "row",
+          "x",
+          "y",
+          "width",
+          "height",
+          "align",
+          "vAlign",
+          "text",
+          "size",
+          "size2",
+          "bold",
+          "color",
+          "fill",
+          "border",
+          "radius",
+          "maxWidth",
+          "spacing",
+          "format"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/FaceElementKind"
+          },
+          "anchor": {
+            "$ref": "#/components/schemas/FaceAnchor"
+          },
+          "row": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "x": {
+            "type": "number",
+            "format": "double"
+          },
+          "y": {
+            "type": "number",
+            "format": "double"
+          },
+          "width": {
+            "type": "number",
+            "format": "double"
+          },
+          "height": {
+            "type": "number",
+            "format": "double"
+          },
+          "align": {
+            "$ref": "#/components/schemas/FaceAlign"
+          },
+          "vAlign": {
+            "$ref": "#/components/schemas/FaceVAlign"
+          },
+          "text": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number",
+            "format": "double"
+          },
+          "size2": {
+            "type": "number",
+            "format": "double"
+          },
+          "bold": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "color": {
+            "type": "string"
+          },
+          "fill": {
+            "type": "string"
+          },
+          "border": {
+            "type": "number",
+            "format": "double"
+          },
+          "radius": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxWidth": {
+            "type": "number",
+            "format": "double"
+          },
+          "spacing": {
+            "type": "number",
+            "format": "double"
+          },
+          "format": {
+            "$ref": "#/components/schemas/FaceClockFormat"
+          }
+        }
+      },
+      "FaceElementKind": {
+        "enum": [
+          "rect",
+          "text",
+          "clock"
+        ]
+      },
+      "FaceMarginDto": {
+        "required": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ],
+        "type": "object",
+        "properties": {
+          "left": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          },
+          "top": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          },
+          "right": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          },
+          "bottom": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          }
+        }
+      },
+      "FaceVAlign": {
+        "enum": [
+          "top",
+          "middle",
+          "bottom"
+        ]
       },
       "FaultKind": {
         "enum": [
@@ -9342,6 +9685,9 @@
     },
     {
       "name": "Fonts"
+    },
+    {
+      "name": "Faces"
     },
     {
       "name": "Designs"

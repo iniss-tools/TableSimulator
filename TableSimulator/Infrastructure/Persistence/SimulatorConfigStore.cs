@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TableSimulator.Application.Faces;
 using TableSimulator.Core.Simulation;
 using TableSimulator.Persistence.Simulation;
 
@@ -29,14 +30,24 @@ public sealed partial class SimulatorConfigStore : IDisposable
         _simulator.Changed += OnChanged;
     }
 
-    /// <summary>Nacita linky a tabule z databazy do simulatora.</summary>
+    /// <summary>Nacita linky a tabule z databazy do simulatora; hlavicky tabul zo starsich verzii prevedie na predlohy ciel.</summary>
     public async Task LoadAsync(CancellationToken cancellationToken)
     {
         SimulatorConfig config;
+        bool converted;
         await using (var scope = _scopes.CreateAsyncScope())
+        {
             config = await scope.ServiceProvider.GetRequiredService<SimulatorConfigRepository>().LoadAsync(cancellationToken).ConfigureAwait(false);
+            (config, converted) = await scope.ServiceProvider.GetRequiredService<FaceHeaders>().AbsorbAsync(config, cancellationToken).ConfigureAwait(false);
+        }
+
         _simulator.Load(config);
         Loaded(_logger, config.Lines.Count, config.Boards.Count);
+        if (converted)
+        {
+            HeadersConverted(_logger);
+            ScheduleSave();
+        }
     }
 
     /// <summary>Naplanuje ulozenie.</summary>
@@ -79,6 +90,9 @@ public sealed partial class SimulatorConfigStore : IDisposable
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Linky a tabule z databazy: {Lines} liniek, {Boards} tabul")]
     private static partial void Loaded(ILogger logger, int lines, int boards);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Hlavicky tabul prevedene na predlohy ciel")]
+    private static partial void HeadersConverted(ILogger logger);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Linky a tabule sa nepodarilo ulozit do databazy")]
     private static partial void SaveFailed(ILogger logger, Exception exception);

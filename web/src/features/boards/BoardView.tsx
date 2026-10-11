@@ -1,14 +1,16 @@
 // Ziva tabula: rasterizacia obsahu + LED renderer, prisposobena velkosti miesta; snimka do PNG v pevnej mierke.
 // Listove tabule (ERS, FERS) kresli FlapView.
-import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from "react";
-import { useConnection, type BoardDto as Board } from "@/api";
+import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getFacesOptions, useConnection, type BoardFaceDto, type BoardDto as Board } from "@/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { DEFAULT_DESIGN, defaultDesignId, loadDesign, type LedDesign } from "@/render/design";
 import { ElenGlyphSource, loadFontSet, type ElenFontSet, type GlyphSource } from "@/render/fonts";
 import { fallbackGlyphSource } from "@/render/pixel-fonts";
 import { CHAR_WIDTH } from "@/render/chars";
-import { blinkPhase, boardClock, hasClock, isAnimated, rasterize } from "@/render/rasterize";
+import { faceValues, hasFaceClock, resolveFace } from "@/render/face";
+import { blinkPhase, boardClock, isAnimated, rasterize } from "@/render/rasterize";
 import { LedRenderer, ledSize } from "@/render/led";
 import { AmplifierView } from "./AmplifierView";
 import { FlapView } from "./FlapView";
@@ -46,9 +48,8 @@ function snapshotScale(width: number): number {
 const fallbackFor = (b: Board) => fallbackGlyphSource(b.display.family, b.profile.rowHeight, CHAR_WIDTH);
 
 /** Nakresli obsah tabule v case t (ms) - striedanie, blikanie, posun aj hodiny ako v danej chvili. */
-function drawBoard(renderer: LedRenderer, b: Board, d: LedDesign, glyphs: GlyphSource, scale: number, t: number) {
+function drawBoard(renderer: LedRenderer, b: Board, d: LedDesign, face: BoardFaceDto | null, glyphs: GlyphSource, scale: number, t: number) {
   const frame = rasterize(b, glyphs, t);
-  const clock = boardClock(b, t);
   renderer.render(
     frame,
     d,
@@ -59,8 +60,9 @@ function drawBoard(renderer: LedRenderer, b: Board, d: LedDesign, glyphs: GlyphS
       blinkOn: blinkPhase(b.profile, t, b.display),
       monochrome: b.profile.monochrome,
       swapRedGreen: b.profile.swapRedGreen,
-      header: b.profile.header,
-      clock: `${String(clock.getHours()).padStart(2, "0")}:${String(clock.getMinutes()).padStart(2, "0")}`,
+      face,
+      values: faceValues(b),
+      time: boardClock(b, t),
     },
     scale,
   );
@@ -79,6 +81,8 @@ interface Props {
   className?: string;
   /** Vzhlad namiesto vzhladu tabule (nahlad v editore vzhladov). */
   design?: LedDesign;
+  /** Celo namiesto cela tabule (nahlad v editore ciel); null = bez cela. */
+  face?: BoardFaceDto | null;
   ref?: Ref<BoardViewHandle>;
 }
 
@@ -88,8 +92,13 @@ export function BoardView(props: Props) {
   return family === "flaps" ? <FlapView {...props} /> : <LedBoardView {...props} />;
 }
 
-function LedBoardView({ board, fit = "width", className, design: override, ref }: Props) {
+function LedBoardView({ board, fit = "width", className, design: override, face: faceOverride, ref }: Props) {
   const { designVersion } = useConnection();
+  const faces = useQuery(getFacesOptions()).data;
+  // stabilny objekt - zmena cela prekresli celu tabulu
+  const { face: faceId, header } = board.profile;
+  const resolved = useMemo(() => resolveFace(faceId, header, faces), [faceId, header, faces]);
+  const face = faceOverride !== undefined ? faceOverride : resolved;
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [loaded, setDesign] = useState<LedDesign>(DEFAULT_DESIGN);
@@ -138,11 +147,11 @@ function LedBoardView({ board, fit = "width", className, design: override, ref }
   }, []);
 
   // vstupy kreslenia v refe, aby slucka animacie vzdy videla posledne hodnoty
-  const inputs = useRef({ board, design, source: null as GlyphSource | null, scale: 1 });
+  const inputs = useRef({ board, design, face, source: null as GlyphSource | null, scale: 1 });
   const renderer = useRef<LedRenderer | null>(null);
 
   const rowHeight = board.profile.rowHeight;
-  const natural = ledSize({ width: board.profile.width, height: board.profile.rows * rowHeight }, design, rowHeight, board.profile.header);
+  const natural = ledSize({ width: board.profile.width, height: board.profile.rows * rowHeight }, design, rowHeight, face);
   const cssScale =
     space.width > 0
       ? fit === "contain" && space.height > 0
@@ -154,19 +163,21 @@ function LedBoardView({ board, fit = "width", className, design: override, ref }
   const scale = cssScale * (window.devicePixelRatio || 1);
   // pred efektom kreslenia (layout efekt bezi skor)
   useLayoutEffect(() => {
-    inputs.current = { board, design, source, scale };
+    inputs.current = { board, design, face, source, scale };
   });
 
-  const ready = (override !== undefined || loadedDesign === designKey) && (!fontFile || font?.file === fontFile);
+  // celo z predlohy sa kresli az s nacitanymi predlohami (bez skoku rozmeru)
+  const facesReady = faceOverride !== undefined || !board.profile.face || faces !== undefined;
+  const ready = (override !== undefined || loadedDesign === designKey) && (!fontFile || font?.file === fontFile) && facesReady;
 
   useImperativeHandle(
     ref,
     () => ({
       snapshot: () => {
-        const { board: b, design: d, source: s } = inputs.current;
+        const { board: b, design: d, face: f, source: s } = inputs.current;
         const canvas = document.createElement("canvas");
-        const size = ledSize({ width: b.profile.width, height: b.profile.rows * b.profile.rowHeight }, d, b.profile.rowHeight, b.profile.header);
-        drawBoard(new LedRenderer(canvas), b, d, s ?? fallbackFor(b), snapshotScale(size.width), Date.now());
+        const size = ledSize({ width: b.profile.width, height: b.profile.rows * b.profile.rowHeight }, d, b.profile.rowHeight, f);
+        drawBoard(new LedRenderer(canvas), b, d, f, s ?? fallbackFor(b), snapshotScale(size.width), Date.now());
         return new Promise<Blob>((resolve, reject) => canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("PNG"))), "image/png"));
       },
     }),
@@ -182,7 +193,7 @@ function LedBoardView({ board, fit = "width", className, design: override, ref }
     let last = 0;
 
     const draw = (now: number) => {
-      const { board: b, design: d, source: s, scale } = inputs.current;
+      const { board: b, design: d, face: f, source: s, scale } = inputs.current;
       let glyphs = s;
       if (!glyphs) {
         const key = `${b.display.family}|${b.profile.rowHeight}`;
@@ -192,16 +203,16 @@ function LedBoardView({ board, fit = "width", className, design: override, ref }
         }
         glyphs = fallback;
       }
-      drawBoard(renderer.current!, b, d, glyphs, scale, Date.now());
+      drawBoard(renderer.current!, b, d, f, glyphs, scale, Date.now());
       last = now;
     };
 
     const start = () => {
       draw(performance.now());
-      // animacia: striedanie, blikanie a posun ~30× za sekundu; samotne hodiny staci raz za sekundu
+      // animacia: striedanie, blikanie a posun ~30× za sekundu; samotne hodiny staci 4× za sekundu (sekundy bez preskoku)
       const animated = isAnimated(board);
-      if (animated || hasClock(board)) {
-        const interval = animated ? 33 : 1000;
+      if (animated || hasFaceClock(face)) {
+        const interval = animated ? 33 : 250;
         const tick = (now: number) => {
           if (now - last >= interval) draw(now);
           raf = requestAnimationFrame(tick);
@@ -221,7 +232,7 @@ function LedBoardView({ board, fit = "width", className, design: override, ref }
       cancel?.();
       cancelAnimationFrame(raf);
     };
-  }, [board, design, fontSet, cssScale, ready]);
+  }, [board, design, face, fontSet, cssScale, ready]);
 
   return (
     <div ref={box} className={cn("w-full leading-0", fit === "contain" && "flex h-full items-center justify-center", className)}>

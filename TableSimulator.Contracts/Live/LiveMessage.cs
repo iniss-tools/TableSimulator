@@ -18,4 +18,5 @@ namespace TableSimulator.Contracts.Live;
 [JsonDerivedType(typeof(SignageChangedMessage), "signage")]
 [JsonDerivedType(typeof(ScenariosMessage), "scenarios")]
 [JsonDerivedType(typeof(ReportsMessage), "reports")]
+[JsonDerivedType(typeof(FacesMessage), "faces")]
 public abstract record LiveMessage;

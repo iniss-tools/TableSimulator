@@ -1,6 +1,8 @@
+using TableSimulator.Application.Faces;
 using TableSimulator.Application.Monitor;
 using TableSimulator.Application.Settings;
 using TableSimulator.Core.Simulation;
+using TableSimulator.Tests.Application;
 
 namespace TableSimulator.Tests.Monitor;
 
@@ -25,7 +27,7 @@ public class MonitorImportTests
     {
         var simulator = new Simulator();
         simulator.SetLine(new LineConfig(2, tableClass, "TCP://127.0.0.1:47002") { Manufacturer = manufacturer });
-        var handler = new ImportMonitorProjectCommandHandler(simulator, new TestSettings());
+        var handler = new ImportMonitorProjectCommandHandler(simulator, new TestSettings(), new FaceHeaders(new MemoryFaceRepository()));
 
         var result = await handler.Handle(new ImportMonitorProjectCommand("projekt", 2), CancellationToken.None);
 
@@ -39,7 +41,7 @@ public class MonitorImportTests
     {
         var simulator = new Simulator();
         simulator.SetLine(new LineConfig(1, 4, "TCP://127.0.0.1:47001"));
-        var handler = new ImportMonitorProjectCommandHandler(simulator, new TestSettings());
+        var handler = new ImportMonitorProjectCommandHandler(simulator, new TestSettings(), new FaceHeaders(new MemoryFaceRepository()));
 
         var result = await handler.Handle(new ImportMonitorProjectCommand("projekt", 1), CancellationToken.None);
 

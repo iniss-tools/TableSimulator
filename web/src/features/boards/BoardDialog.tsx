@@ -23,7 +23,7 @@ import { boardKind, defaultProfile } from "@/lib/boards";
 import { CHAR_WIDTH } from "@/render/chars";
 import { t } from "@/i18n";
 import { FlapListsEditor } from "./FlapListsEditor";
-import { HeaderEditor } from "./HeaderEditor";
+import { FaceSection } from "./FaceSection";
 import { baseFontHeight, useFontHeight } from "./font-height";
 
 const num = (value: string) => Number.parseInt(value, 10) || 0;
@@ -100,7 +100,7 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
           <TabsTrigger value="board">{t("board.tab.board")}</TabsTrigger>
           {!amplifier && <TabsTrigger value="profile">{t("board.tab.profile")}</TabsTrigger>}
           {flaps && p.flaps && <TabsTrigger value="lists">{t("board.tab.lists")}</TabsTrigger>}
-          {board && <TabsTrigger value="header">{t("section.header")}</TabsTrigger>}
+          {!amplifier && <TabsTrigger value="face">{t("board.tab.face")}</TabsTrigger>}
           {board && <TabsTrigger value="timing">{t("section.timing")}</TabsTrigger>}
         </TabsList>
 
@@ -277,10 +277,17 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
           </TabsContent>
         )}
 
-        <TabsContent value="header" className="flex flex-col gap-4 pt-2">
-          <FieldDescription>{t("section.header.hint")}</FieldDescription>
-          <HeaderEditor header={p.header} width={p.width} onChange={(header) => profile({ header })} />
-        </TabsContent>
+        {!amplifier && (
+          <TabsContent value="face" className="pt-2">
+            <FaceSection
+              profile={p}
+              onChange={profile}
+              manufacturer={config.manufacturer}
+              name={config.name}
+              live={isNew ? undefined : live.boards.find((b) => b.line === config.line && b.address === config.address)}
+            />
+          </TabsContent>
+        )}
 
         <TabsContent value="timing" className="pt-2">
           <div className="grid gap-4 sm:grid-cols-2">

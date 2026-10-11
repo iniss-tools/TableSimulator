@@ -44,8 +44,17 @@ public sealed record BoardProfile
     /// <summary>Panel ma zamenenu cervenu a zelenu (konfiguracia panelu s farebnostou 2).</summary>
     public bool SwapRedGreen { get; init; }
 
-    /// <summary>Hlavicka tabule - stitok nad maticou s textami a hodinami; null = bez hlavicky.</summary>
+    /// <summary>
+    /// Hlavicka tabule - stitok nad maticou s textami a hodinami; null = bez hlavicky. Starsi tvar cela: server ju pri
+    /// ulozeni tabule prevedie na predlohu cela (<see cref="Face" />), ostava pre import z ELEN Monitora a stare subory.
+    /// </summary>
     public BoardHeader? Header { get; init; }
+
+    /// <summary>Predloha cela (<see cref="BoardFace.Id" />); null = bez cela.</summary>
+    public string? Face { get; init; }
+
+    /// <summary>Hodnoty premennych cela (<c>track</c> → <c>1</c>); null = ziadne.</summary>
+    public IReadOnlyDictionary<string, string>? FaceValues { get; init; }
 
     /// <summary>Pismo pohybliveho textu.</summary>
     public int MovingFont { get; init; } = 0x52;

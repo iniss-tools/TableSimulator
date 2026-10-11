@@ -1,7 +1,8 @@
-// Vykreslenie bodov tabule ako LED matice podla vzhladu, s hlavickou nad maticou. Prekresluju sa len body, ktore
-// sa zmenili; hlavicka (texty a hodiny) sa kresli pri kazdom prekresleni.
-import type { BoardHeaderDto as BoardHeader } from "../api/generated/types.gen";
-import type { LedDesign } from "./design";
+// Vykreslenie bodov tabule ako LED matice podla vzhladu, v okne cela tabule. Prekresluju sa len body, ktore sa
+// zmenili; celo (plochy a texty) sa kresli pri celom prekresleni, jeho hodiny pri kazdom.
+import type { BoardFaceDto } from "../api/generated/types.gen";
+import { faceStyle, type LedDesign } from "./design";
+import { drawFace, drawFaceClocks, hasFaceClock, rowOffset, rowSpacing, type FaceGeometry } from "./face";
 import type { DotFrame } from "./rasterize";
 
 /** Co okrem bodov ovplyvnuje kreslenie. */
@@ -16,19 +17,37 @@ export interface LedOptions {
   monochrome: boolean;
   /** Panel so zamenenou cervenou a zelenou. */
   swapRedGreen: boolean;
-  header: BoardHeader | null;
-  /** Text hodin v hlavicke (HH:mm). */
-  clock: string;
+  /** Celo tabule; null = bez cela. */
+  face: BoardFaceDto | null;
+  /** Hodnoty premennych cela. */
+  values: Record<string, string>;
+  /** Cas hodin cela. */
+  time: Date;
+}
+
+/** Rozlozenie tabule v CSS px pri mierke 1: celkovy rozmer a geometria cela (od vnutorneho okraja ramu). */
+export function ledLayout(frame: { width: number; height: number }, design: LedDesign, rowHeight: number, face: BoardFaceDto | null) {
+  const rows = Math.max(1, Math.ceil(frame.height / Math.max(1, rowHeight)));
+  const p = design.pitch;
+  const pad = design.padding;
+  const spacing = rowSpacing(face, design.rowGap);
+  const offset = (r: number) => rowOffset(r, spacing.rowGap, spacing.group, spacing.groupGap);
+  const m = face?.margin ?? { left: 0, top: 0, right: 0, bottom: 0 };
+  const matrixHeight = frame.height + offset(rows - 1);
+  const inner = { x: 0, y: 0, w: (2 * pad + m.left + frame.width + m.right) * p, h: (2 * pad + m.top + matrixHeight + m.bottom) * p };
+  const matrix = { x: (pad + m.left) * p, y: (pad + m.top) * p, w: frame.width * p, h: matrixHeight * p };
+  const geometry: FaceGeometry = {
+    unit: p,
+    face: inner,
+    matrix,
+    rows: Array.from({ length: rows }, (_, r) => ({ x: matrix.x, y: matrix.y + (r * rowHeight + offset(r)) * p, w: matrix.w, h: rowHeight * p })),
+  };
+  return { width: 2 * design.frame.width + inner.w, height: 2 * design.frame.width + inner.h, geometry, offset };
 }
 
 /** Rozmer tabule v CSS px pri mierke 1. */
-export function ledSize(frame: { width: number; height: number }, design: LedDesign, rowHeight: number, header?: BoardHeader | null) {
-  const rows = Math.max(1, Math.ceil(frame.height / Math.max(1, rowHeight)));
-  const p = design.pitch;
-  const inner = design.padding * p;
-  const headerHeight = (header?.height ?? 0) * p;
-  const width = 2 * design.frame.width + 2 * inner + frame.width * p;
-  const height = 2 * design.frame.width + 2 * inner + headerHeight + frame.height * p + (rows - 1) * design.rowGap * p;
+export function ledSize(frame: { width: number; height: number }, design: LedDesign, rowHeight: number, face: BoardFaceDto | null = null) {
+  const { width, height } = ledLayout(frame, design, rowHeight, face);
   return { width, height };
 }
 
@@ -105,28 +124,29 @@ export class LedRenderer {
    * Vykresli tabulu v mierke scale (CSS px × devicePixelRatio).
    */
   render(frame: DotFrame, design: LedDesign, options: LedOptions, scale: number) {
-    const { rowHeight, header } = options;
-    const size = ledSize(frame, design, rowHeight, header);
-    const cw = Math.max(1, Math.round(size.width * scale));
-    const ch = Math.max(1, Math.round(size.height * scale));
+    const { rowHeight, face } = options;
+    const layout = ledLayout(frame, design, rowHeight, face);
+    const g = layout.geometry;
+    const cw = Math.max(1, Math.round(layout.width * scale));
+    const ch = Math.max(1, Math.round(layout.height * scale));
     const levels = [0, level(options.brightness), level(options.brightnessGreen), level(Math.max(options.brightness, options.brightnessGreen))];
-    const key = `${cw}x${ch}|${frame.width}x${frame.height}|${levels.join()}|${options.monochrome}|${options.swapRedGreen}|${JSON.stringify(header)}|${JSON.stringify(design)}`;
+    const key = `${cw}x${ch}|${frame.width}x${frame.height}|${levels.join()}|${options.monochrome}|${options.swapRedGreen}|${JSON.stringify(face)}|${JSON.stringify(options.values)}|${JSON.stringify(design)}`;
     const ctx = this.canvas.getContext("2d")!;
     const p = design.pitch * scale;
     const fw = design.frame.width * scale;
-    const headerHeight = (header?.height ?? 0) * p;
-    const originX = fw + design.padding * p;
-    const originY = fw + headerHeight + design.padding * p;
-    const gap = design.rowGap * p;
+    const originX = fw + g.matrix.x * scale;
+    const originY = fw + g.matrix.y * scale;
+    const row = (y: number) => Math.floor(y / Math.max(1, rowHeight));
     const full = key !== this.key || !this.prev || this.prev.length !== frame.color.length;
+    const style = faceStyle(design);
 
     // bunky su prichytene na cele pixely a neprekryvaju sa - prekreslenie jednej nezasiahne susednu
     const xs = new Int32Array(frame.width + 1);
     for (let x = 0; x <= frame.width; x++) xs[x] = Math.round(originX + x * p);
     const ys = new Int32Array(frame.height + 1);
-    for (let y = 0; y <= frame.height; y++) ys[y] = Math.round(originY + y * p + Math.floor(Math.min(y, frame.height - 1) / Math.max(1, rowHeight)) * gap);
+    for (let y = 0; y <= frame.height; y++) ys[y] = Math.round(originY + y * p + layout.offset(row(Math.min(y, frame.height - 1))) * p);
     const hs = new Int32Array(frame.height);
-    for (let y = 0; y < frame.height; y++) hs[y] = Math.max(1, Math.round(originY + (y + 1) * p + Math.floor(y / Math.max(1, rowHeight)) * gap) - ys[y]);
+    for (let y = 0; y < frame.height; y++) hs[y] = Math.max(1, Math.round(originY + (y + 1) * p + layout.offset(row(y)) * p) - ys[y]);
 
     if (full) {
       this.key = key;
@@ -151,18 +171,23 @@ export class LedRenderer {
       ctx.fill();
       ctx.fillStyle = design.background;
       ctx.fillRect(fw, fw, cw - 2 * fw, ch - 2 * fw);
-      if (design.gapColor && gap > 0) {
+      // vypln medzier medzi riadkami - v sirke matice s okrajom, celo vedla nej ju prekryje
+      if (design.gapColor) {
         ctx.fillStyle = design.gapColor;
+        const left = Math.round(originX - design.padding * p);
+        const width = Math.round((frame.width + 2 * design.padding) * p);
         for (let y = rowHeight; y < frame.height; y += rowHeight) {
-          const top = Math.round(originY + y * p + (y / rowHeight - 1) * gap);
-          ctx.fillRect(fw, top, cw - 2 * fw, Math.round(gap));
+          const top = Math.round(originY + y * p + layout.offset(row(y) - 1) * p);
+          const bottom = Math.round(originY + y * p + layout.offset(row(y)) * p);
+          if (bottom > top) ctx.fillRect(left, top, width, bottom - top);
         }
       }
       if (this.sprites.off) drawOffRows(ctx, this.sprites.off, xs, ys, hs);
+      if (face) this.inFace(ctx, fw, scale, () => drawFace(ctx, face, g, style, options.values));
       this.prev = new Uint8Array(frame.color.length);
     }
 
-    if (header && headerHeight > 0) this.drawHeader(ctx, header, design, options.clock, fw, cw - 2 * fw, Math.round(headerHeight), p);
+    if (face && hasFaceClock(face)) this.inFace(ctx, fw, scale, () => drawFaceClocks(ctx, face, g, style, options.time));
 
     const sprites = this.sprites!;
     const prev = this.prev!;
@@ -197,42 +222,12 @@ export class LedRenderer {
     }
   }
 
-  /** Hlavicka: pozadie, texty a hodiny; polohy v bodoch × p. */
-  private drawHeader(
-    ctx: CanvasRenderingContext2D,
-    header: BoardHeader,
-    design: LedDesign,
-    clock: string,
-    left: number,
-    width: number,
-    height: number,
-    p: number,
-  ) {
-    const style = design.header;
-    const top = left;
+  /** Kreslenie cela v px pri mierke 1 od vnutorneho okraja ramu. */
+  private inFace(ctx: CanvasRenderingContext2D, frameWidth: number, scale: number, draw: () => void) {
     ctx.save();
-    ctx.beginPath();
-    ctx.rect(left, top, width, height);
-    ctx.clip();
-    ctx.fillStyle = style.background;
-    ctx.fillRect(left, top, width, height);
-    ctx.textBaseline = "top";
-    ctx.fillStyle = style.color;
-    for (const text of header.texts) {
-      ctx.font = `${style.bold ? "bold " : ""}${Math.max(1, Math.round(text.height * p))}px ${style.font}`;
-      ctx.fillText(text.text, left + text.x * p, top + text.y * p);
-    }
-    if (header.clock) {
-      const c = header.clock;
-      ctx.font = `bold ${Math.max(1, Math.round(c.height * p))}px ${style.clockFont}`;
-      const w = ctx.measureText(clock).width;
-      const x = left + c.x * p;
-      const y = top + c.y * p;
-      ctx.fillStyle = style.clockBackground;
-      ctx.fillRect(x - p, y - p * 0.5, w + 2 * p, c.height * p + p);
-      ctx.fillStyle = style.clockColor;
-      ctx.fillText(clock, x, y);
-    }
+    ctx.translate(frameWidth, frameWidth);
+    ctx.scale(scale, scale);
+    draw();
     ctx.restore();
   }
 }

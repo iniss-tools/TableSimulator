@@ -1,0 +1,13 @@
+{
+  "id": "kolaj-vlavo",
+  "name": "Nástupištná – koľaj vľavo, stanica a hodiny",
+  "margin": { "left": 36, "top": 15 },
+  "elements": [
+    { "kind": "rect", "anchor": "left", "x": 2, "y": 2, "width": -3, "height": -2, "fill": "panel", "border": 0.6, "color": "#ffffff", "radius": 1 },
+    { "kind": "text", "anchor": "left", "align": "center", "x": -0.5, "y": 5, "size": 4.5, "bold": true, "maxWidth": 28, "text": "KOĽAJ\nTRACK" },
+    { "kind": "text", "anchor": "left", "align": "center", "vAlign": "middle", "x": -0.5, "y": 4, "size": 26, "bold": true, "maxWidth": 28, "text": "{track}" },
+    { "kind": "rect", "anchor": "matrix", "y": -15, "height": 12, "fill": "#dde2ea" },
+    { "kind": "text", "anchor": "matrix", "x": 3, "y": -13.5, "size": 9, "bold": true, "color": "#1d4f9c", "maxWidth": 200, "text": "{station}" },
+    { "kind": "clock", "anchor": "matrix", "align": "right", "x": 2, "y": -13.5, "size": 9, "format": "H:mm" }
+  ]
+}

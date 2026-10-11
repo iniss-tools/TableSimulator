@@ -163,6 +163,26 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                     b.ToTable("AuditEntries", (string)null);
                 });
 
+            modelBuilder.Entity("TableSimulator.Application.Faces.FaceRecord", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Definition")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BoardFaces", (string)null);
+                });
+
             modelBuilder.Entity("TableSimulator.Application.Keys.AccessKey", b =>
                 {
                     b.Property<Guid>("Id")

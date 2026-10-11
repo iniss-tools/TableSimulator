@@ -1,4 +1,5 @@
 // Vzhlad tabule (designs/<id>/design.json) - vsetko, co urcuje, ako tabula vyzera, nie co ukazuje.
+import type { FaceStyle } from "./face";
 
 export interface LedDesign {
   name: string;
@@ -22,7 +23,7 @@ export interface LedDesign {
   frame: { width: number; color: string; radius: number };
   /** Vypln medzi riadkami; null = pozadie. */
   gapColor: string | null;
-  /** Hlavicka tabule (stitok s textami a hodiny). */
+  /** Pismo a farby cela tabule (pasy, panely, texty a hodiny) - kluc z casov, ked celom bola len hlavicka. */
   header: HeaderStyle;
 }
 
@@ -34,6 +35,19 @@ export interface HeaderStyle {
   clockColor: string;
   clockBackground: string;
   clockFont: string;
+}
+
+/** Pismo a farby cela tabule zo vzhladu: pas a panel maju pozadie hlavicky, texty jej farbu a pismo. */
+export function faceStyle(design: LedDesign): FaceStyle {
+  const h = design.header;
+  return {
+    font: h.font,
+    bold: h.bold,
+    colors: { text: h.color, band: h.background, panel: h.background, plate: design.background, accent: h.clockColor },
+    clockFont: h.clockFont,
+    clockColor: h.clockColor,
+    clockBackground: h.clockBackground,
+  };
 }
 
 export const DEFAULT_DESIGN_ID = "elen-led";

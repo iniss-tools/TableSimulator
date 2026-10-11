@@ -74,6 +74,8 @@ export function defaultProfile(manufacturer: string): BoardProfileDto {
     monochrome: false,
     swapRedGreen: false,
     header: null,
+    face: null,
+    faceValues: null,
     rotationMs: 3000,
     flaps: null,
   };

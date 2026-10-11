@@ -24,6 +24,8 @@
 	<ItemGroup>
 		<!-- vstavane rozlozenia virtualnych tabul (data) -->
 		<EmbeddedResource Include="Virtual\Layouts\*.json" />
+		<!-- vstavane predlohy ciel tabul (data) -->
+		<EmbeddedResource Include="Faces\BuiltIn\*.json" />
 	</ItemGroup>
 
 </Project>

@@ -4,6 +4,7 @@ import { collectErrors, openPage } from "./helpers";
 
 const PAGES = [
   "Vzhľady",
+  "Čelá tabúľ",
   "Linky",
   "Komunikácia",
   "Záznamy",

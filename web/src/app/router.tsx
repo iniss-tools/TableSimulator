@@ -97,6 +97,7 @@ const pages = [
     component: lazyRouteComponent(() => import("@/features/scenarios/ScenariosPage"), "ScenariosPage"),
   }),
   createRoute({ getParentRoute: () => shell, path: "/designs", component: lazyRouteComponent(() => import("@/features/designs/DesignsPage"), "DesignsPage") }),
+  createRoute({ getParentRoute: () => shell, path: "/faces", component: lazyRouteComponent(() => import("@/features/faces/FacesPage"), "FacesPage") }),
   createRoute({ getParentRoute: () => shell, path: "/log", component: lazyRouteComponent(() => import("@/features/traffic/LogPage"), "LogPage") }),
   createRoute({
     getParentRoute: () => shell,

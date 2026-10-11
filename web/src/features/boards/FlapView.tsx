@@ -1,8 +1,12 @@
-// Listova tabula (ERS, FERS): moduly s textami listov, prisposobena velkosti miesta; zmenene listy sa chvilu otacaju.
+// Listova tabula (ERS, FERS): moduly s textami listov v okne cela, prisposobena velkosti miesta; zmenene listy sa
+// chvilu otacaju.
 import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react";
-import type { BoardDto as Board } from "@/api";
+import { useQuery } from "@tanstack/react-query";
+import { getFacesOptions, type BoardFaceDto, type BoardDto as Board } from "@/api";
 import { cn } from "@/lib/utils";
-import { drawFlaps, layoutFlaps } from "@/render/flaps";
+import { faceValues, hasFaceClock, resolveFace } from "@/render/face";
+import { drawFlaps, layoutFlaps, type FlapFace } from "@/render/flaps";
+import { boardClock } from "@/render/rasterize";
 import type { BoardViewHandle } from "./BoardView";
 
 /** Najkratsie a najdlhsie otacanie zmeneneho listu na obrazovke [ms] (inak podla profilu tabule). */
@@ -15,17 +19,28 @@ interface Props {
   board: Board;
   fit?: "width" | "contain";
   className?: string;
+  /** Celo namiesto cela tabule (nahlad); null = bez cela. */
+  face?: BoardFaceDto | null;
   ref?: Ref<BoardViewHandle>;
 }
 
-export function FlapView({ board, fit = "width", className, ref }: Props) {
+/** Celo s hodnotami a casom hodin tabule v case t. */
+function flapFace(face: BoardFaceDto | null, board: Board, t: number): FlapFace | null {
+  return face ? { face, values: faceValues(board), time: boardClock(board, t) } : null;
+}
+
+export function FlapView({ board, fit = "width", className, face: faceOverride, ref }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [space, setSpace] = useState({ width: 0, height: 0 });
-  const layout = useMemo(() => layoutFlaps(board), [board]);
-  const latest = useRef(board);
+  const faces = useQuery(getFacesOptions()).data;
+  const { face: faceId, header } = board.profile;
+  const resolved = useMemo(() => resolveFace(faceId, header, faces), [faceId, header, faces]);
+  const face = faceOverride !== undefined ? faceOverride : resolved;
+  const layout = useMemo(() => layoutFlaps(board, face), [board, face]);
+  const latest = useRef({ board, face });
   useLayoutEffect(() => {
-    latest.current = board;
+    latest.current = { board, face };
   });
 
   useEffect(() => {
@@ -48,11 +63,12 @@ export function FlapView({ board, fit = "width", className, ref }: Props) {
     ref,
     () => ({
       snapshot: () => {
-        const snapshot = layoutFlaps(latest.current);
+        const { board: b, face: f } = latest.current;
+        const snapshot = layoutFlaps(b, f);
         const target = document.createElement("canvas");
         target.width = snapshot.width * 2;
         target.height = snapshot.height * 2;
-        drawFlaps(target.getContext("2d")!, snapshot, 2);
+        drawFlaps(target.getContext("2d")!, snapshot, 2, undefined, flapFace(f, b, Date.now()));
         return new Promise<Blob>((resolve, reject) => target.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("PNG"))), "image/png"));
       },
     }),
@@ -82,24 +98,36 @@ export function FlapView({ board, fit = "width", className, ref }: Props) {
 
     let raf = 0;
     const draw = () => {
+      raf = 0;
       const now = performance.now();
       let active = false;
-      drawFlaps(ctx, layout, scale, (key) => {
-        const begin = flips.current.get(key);
-        if (begin === undefined) return null;
-        const age = now - begin;
-        if (age >= rotation) {
-          flips.current.delete(key);
-          return null;
-        }
-        active = true;
-        return Math.abs(Math.cos((age / FLIP_PERIOD) * Math.PI));
-      });
+      drawFlaps(
+        ctx,
+        layout,
+        scale,
+        (key) => {
+          const begin = flips.current.get(key);
+          if (begin === undefined) return null;
+          const age = now - begin;
+          if (age >= rotation) {
+            flips.current.delete(key);
+            return null;
+          }
+          active = true;
+          return Math.abs(Math.cos((age / FLIP_PERIOD) * Math.PI));
+        },
+        flapFace(latest.current.face, latest.current.board, Date.now()),
+      );
       if (active) raf = requestAnimationFrame(draw);
     };
     draw();
-    return () => cancelAnimationFrame(raf);
-  }, [layout, scale, cssScale, rotation]);
+    // hodiny cela bez otacania listov - 4× za sekundu, aby sekundy neskakali
+    const clock = hasFaceClock(face) ? setInterval(() => raf === 0 && draw(), 250) : undefined;
+    return () => {
+      cancelAnimationFrame(raf);
+      clearInterval(clock);
+    };
+  }, [layout, scale, cssScale, rotation, face]);
 
   return (
     <div ref={box} className={cn("w-full leading-0", fit === "contain" && "flex h-full items-center justify-center", className)}>

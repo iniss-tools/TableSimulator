@@ -84,6 +84,8 @@ public static partial class DtoMapper
                     Clock = h.Clock is { } c ? new HeaderClockDto(c.X, c.Y, c.Height) : null
                 }
                 : null,
+            Face = profile.Face,
+            FaceValues = profile.FaceValues,
             MovingFont = profile.MovingFont,
             AutoSize = profile.AutoSize,
             RotationMs = profile.RotationMs,

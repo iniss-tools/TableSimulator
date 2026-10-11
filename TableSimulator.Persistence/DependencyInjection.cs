@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TableSimulator.Application.Audit;
+using TableSimulator.Application.Faces;
 using TableSimulator.Application.Keys;
 using TableSimulator.Application.Scenarios;
 using TableSimulator.Application.Statistics;
 using TableSimulator.Application.Signage;
 using TableSimulator.Application.Virtual;
 using TableSimulator.Persistence.Audit;
+using TableSimulator.Persistence.Faces;
 using TableSimulator.Persistence.Keys;
 using TableSimulator.Persistence.Scenarios;
 using TableSimulator.Persistence.Statistics;
@@ -33,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<SimulatorConfigRepository>();
         services.AddScoped<IVirtualBoardRepository, VirtualBoardRepository>();
         services.AddScoped<IVirtualLayoutRepository, VirtualLayoutRepository>();
+        services.AddScoped<IFaceRepository, FaceRepository>();
         services.AddScoped<IAuditLog, AuditLog>();
         services.AddScoped<IAccessKeyRepository, AccessKeyRepository>();
         services.AddScoped<ISignageRepository, SignageRepository>();

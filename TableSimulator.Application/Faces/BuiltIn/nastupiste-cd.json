@@ -1,0 +1,10 @@
+{
+  "id": "nastupiste-cd",
+  "name": "Nástupištná ČD – nástupiště vpravo",
+  "margin": { "right": 34 },
+  "elements": [
+    { "kind": "rect", "anchor": "right", "x": 3, "y": 2, "width": -2, "height": -2, "fill": "panel" },
+    { "kind": "text", "anchor": "right", "align": "center", "vAlign": "middle", "x": 0.5, "y": -4, "size": 22, "bold": true, "maxWidth": 26, "text": "{platform}." },
+    { "kind": "text", "anchor": "right", "align": "center", "vAlign": "bottom", "x": 0.5, "y": 4, "size": 4, "size2": 2.6, "bold": true, "maxWidth": 26, "text": "NÁSTUPIŠTĚ\nPLATFORM – BAHNSTEIG" }
+  ]
+}

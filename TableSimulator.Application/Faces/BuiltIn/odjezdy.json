@@ -1,0 +1,10 @@
+{
+  "id": "odjezdy",
+  "name": "Odchodová ČD – ODJEZDY / DEPARTURES",
+  "margin": { "top": 16 },
+  "elements": [
+    { "kind": "rect", "anchor": "top", "height": -2, "fill": "band" },
+    { "kind": "text", "anchor": "top", "align": "center", "vAlign": "middle", "y": -1, "size": 10, "text": "ODJEZDY / DEPARTURES" },
+    { "kind": "clock", "anchor": "top", "align": "right", "vAlign": "middle", "x": 4, "y": -1, "size": 9 }
+  ]
+}

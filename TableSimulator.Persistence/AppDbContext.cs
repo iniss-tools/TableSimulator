@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TableSimulator.Application.Audit;
+using TableSimulator.Application.Faces;
 using TableSimulator.Application.Keys;
 using TableSimulator.Application.Scenarios;
 using TableSimulator.Application.Signage;
@@ -36,6 +37,9 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
 
     /// <summary>Vlastne rozlozenia virtualnych tabul.</summary>
     public DbSet<VirtualLayoutRecord> VirtualLayouts => Set<VirtualLayoutRecord>();
+
+    /// <summary>Vlastne predlohy ciel tabul.</summary>
+    public DbSet<FaceRecord> Faces => Set<FaceRecord>();
 
     /// <summary>Audit - kto co urobil.</summary>
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
@@ -161,6 +165,13 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
             layout.HasKey(l => l.Id);
             layout.Property(l => l.Id).HasMaxLength(40);
             layout.Property(l => l.Name).HasMaxLength(100);
+        });
+        builder.Entity<FaceRecord>(face =>
+        {
+            face.ToTable("BoardFaces");
+            face.HasKey(f => f.Id);
+            face.Property(f => f.Id).HasMaxLength(40);
+            face.Property(f => f.Name).HasMaxLength(100);
         });
         // statistika: minuta od 1. 1. 1970 UTC ako cislo - porovnava sa a zoskupuje v kazdej databaze rovnako
         builder.Entity<LineTrafficRecord>(traffic =>

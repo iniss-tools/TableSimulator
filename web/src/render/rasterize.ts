@@ -27,11 +27,6 @@ export function blinkPhase(profile: Profile, timeMs: number, display?: { flashOn
   return timeMs % period < on;
 }
 
-/** Ci tabula ma hodiny v hlavicke - treba prekreslovat aspon raz za sekundu. */
-export function hasClock(board: Board): boolean {
-  return !!board.profile.header?.clock;
-}
-
 /** Cas hodin panelu: od nastavenia INISSom bezi dalej; kym ho INISS nenastavi, cas pocitaca. */
 export function boardClock(board: Board, nowMs: number): Date {
   const d = board.display;

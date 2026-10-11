@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 import { socketUrl } from "./auth";
 import {
   getDesignsQueryKey,
+  getFacesQueryKey,
   getFaultScenariosQueryKey,
   getFontsQueryKey,
   getMeQueryKey,
@@ -127,6 +128,10 @@ function apply(message: LiveMessage) {
       void queryClient.invalidateQueries({ queryKey: getFontsQueryKey() });
       void queryClient.invalidateQueries({ queryKey: getDesignsQueryKey() });
       void queryClient.invalidateQueries({ queryKey: getMonitorQueryKey() });
+      void queryClient.invalidateQueries({ queryKey: getFacesQueryKey() });
+      break;
+    case "faces":
+      void queryClient.invalidateQueries({ queryKey: getFacesQueryKey() });
       break;
     case "design":
       void queryClient.invalidateQueries({ queryKey: getDesignsQueryKey() });
@@ -182,6 +187,7 @@ export function openSocket(onFrames?: (frames: FrameDto[]) => void, withLog = fa
       // co sa zmenilo pocas vypadku
       void queryClient.invalidateQueries({ queryKey: stateKey });
       void queryClient.invalidateQueries({ queryKey: recordingsKey });
+      void queryClient.invalidateQueries({ queryKey: getFacesQueryKey() });
       invalidateVirtual([], true);
       invalidateSignage();
     };

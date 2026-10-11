@@ -43,6 +43,8 @@ function board(rows: Board["display"]["rows"], extra: Partial<Board["display"]> 
       monochrome: false,
       swapRedGreen: false,
       header: null,
+      face: null,
+      faceValues: null,
       rotationMs: 3000,
       flaps: null,
     },

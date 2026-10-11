@@ -159,6 +159,17 @@ export type BoardDto = {
     poweredOff: boolean;
 };
 
+export type BoardFaceDto = {
+    id: string;
+    name: string;
+    builtIn: boolean;
+    margin: FaceMarginDto;
+    rowGap: null | number;
+    rowGroup: number;
+    groupGap: number;
+    elements: Array<FaceElementDto>;
+};
+
 export type BoardFaultDto = {
     kind: FaultKind;
     delayMs: number;
@@ -186,6 +197,10 @@ export type BoardProfileDto = {
     monochrome: boolean;
     swapRedGreen: boolean;
     header: null | BoardHeaderDto;
+    face: null | string;
+    faceValues: null | {
+        [key: string]: string;
+    };
     movingFont: number;
     autoSize: boolean;
     rotationMs: number;
@@ -319,6 +334,46 @@ export type ElementDto = {
     run: null | RunDto;
     parts: null | Array<Array<RunDto>>;
 };
+
+export type FaceAlign = 'left' | 'center' | 'right';
+
+export type FaceAnchor = 'face' | 'matrix' | 'row' | 'top' | 'bottom' | 'left' | 'right';
+
+export type FaceClockFormat = 'H:mm' | 'HH:mm' | 'HH:mm:ss';
+
+export type FaceElementDto = {
+    kind: FaceElementKind;
+    anchor: FaceAnchor;
+    row: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    align: FaceAlign;
+    vAlign: FaceVAlign;
+    text: string;
+    size: number;
+    size2: number;
+    bold: null | boolean;
+    color: string;
+    fill: string;
+    border: number;
+    radius: number;
+    maxWidth: number;
+    spacing: number;
+    format: FaceClockFormat;
+};
+
+export type FaceElementKind = 'rect' | 'text' | 'clock';
+
+export type FaceMarginDto = {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+};
+
+export type FaceVAlign = 'top' | 'middle' | 'bottom';
 
 export type FaultKind = 'none' | 'noReply' | 'nak' | 'delay' | 'garbage' | 'status';
 
@@ -3294,6 +3349,85 @@ export type GetFontsResponses = {
 };
 
 export type GetFontsResponse = GetFontsResponses[keyof GetFontsResponses];
+
+export type DeleteFaceData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/faces/{id}';
+};
+
+export type DeleteFaceErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type DeleteFaceError = DeleteFaceErrors[keyof DeleteFaceErrors];
+
+export type DeleteFaceResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteFaceResponse = DeleteFaceResponses[keyof DeleteFaceResponses];
+
+export type SetFaceData = {
+    body: BoardFaceDto;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/faces/{id}';
+};
+
+export type SetFaceErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type SetFaceError = SetFaceErrors[keyof SetFaceErrors];
+
+export type SetFaceResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type SetFaceResponse = SetFaceResponses[keyof SetFaceResponses];
+
+export type GetFacesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/faces';
+};
+
+export type GetFacesErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetFacesError = GetFacesErrors[keyof GetFacesErrors];
+
+export type GetFacesResponses = {
+    /**
+     * OK
+     */
+    200: Array<BoardFaceDto>;
+};
+
+export type GetFacesResponse = GetFacesResponses[keyof GetFacesResponses];
 
 export type DeleteDesignData = {
     body?: never;

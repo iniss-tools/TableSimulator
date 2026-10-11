@@ -6,6 +6,7 @@ using TableSimulator.Application.Audit;
 using TableSimulator.Application.Auth;
 using TableSimulator.Application.Decorators;
 using TableSimulator.Application.Designs;
+using TableSimulator.Application.Faces;
 using TableSimulator.Application.Fonts;
 using TableSimulator.Application.Recordings;
 using TableSimulator.Application.Scenarios;
@@ -59,6 +60,7 @@ public static class DependencyInjection
         services.AddSingleton<ArchiveCatalog>();
         services.AddSingleton<ReportMonitor>();
         services.AddScoped<StationImporter>();
+        services.AddScoped<FaceHeaders>();
         services.AddSingleton<SignagePanelTracker>();
         services.AddSingleton<ScenarioRunner>();
         services.AddSingleton<SignageMediaStore>();

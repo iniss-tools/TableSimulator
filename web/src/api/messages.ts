@@ -20,5 +20,7 @@ export type LiveMessage =
   | { type: "signage" }
   /** Zmenili sa scenare porucha alebo ich beh. */
   | { type: "scenarios" }
+  /** Zmenili sa vlastne predlohy ciel tabul. */
+  | { type: "faces" }
   /** Pribudli hlasenia v sledovanom archive hlaseni (monitor); reset = sleduje sa iny subor, nacitat znova. */
   | { type: "reports"; date: string | null; added: ReportArchiveEntryDto[]; reset: boolean; total: number; skipped: number };

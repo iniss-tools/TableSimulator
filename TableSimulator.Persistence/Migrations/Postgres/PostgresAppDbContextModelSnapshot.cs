@@ -175,6 +175,26 @@ namespace TableSimulator.Persistence.Migrations.Postgres
                     b.ToTable("AuditEntries", (string)null);
                 });
 
+            modelBuilder.Entity("TableSimulator.Application.Faces.FaceRecord", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Definition")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BoardFaces", (string)null);
+                });
+
             modelBuilder.Entity("TableSimulator.Application.Keys.AccessKey", b =>
                 {
                     b.Property<Guid>("Id")

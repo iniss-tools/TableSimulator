@@ -6,6 +6,7 @@ using TableSimulator.Application.Audit;
 using TableSimulator.Application.Auth;
 using TableSimulator.Application.Boards;
 using TableSimulator.Application.Decorators;
+using TableSimulator.Application.Faces;
 using TableSimulator.Application.Https;
 using TableSimulator.Application.Lines;
 using TableSimulator.Application.Live;
@@ -98,6 +99,7 @@ public class ApplicationPipelineTests
         services.AddSingleton<TransportManager>();
         services.AddSingleton(new AppPaths(folder, Path.Combine(folder, "wwwroot")));
         services.AddSingleton<ISettingsStore>(new TestSettings());
+        services.AddSingleton<IFaceRepository>(new MemoryFaceRepository());
         services.AddSingleton<ILiveNotifier>(live);
         services.AddSingleton<IAuditLog>(audit);
         services.AddSingleton<ICurrentUser>(new TestUser());

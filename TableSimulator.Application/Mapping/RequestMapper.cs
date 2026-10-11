@@ -61,11 +61,22 @@ public static partial class RequestMapper
                     Clock = h.Clock is { } c ? new HeaderClock(c.X, c.Y, c.Height) : null
                 }
                 : null,
+            Face = string.IsNullOrWhiteSpace(profile.Face) ? null : profile.Face.Trim(),
+            FaceValues = FaceValues(profile.FaceValues),
             MovingFont = profile.MovingFont,
             AutoSize = profile.AutoSize,
             RotationMs = profile.RotationMs,
             Flaps = profile.Flaps is { } f ? ToFlaps(f) : null
         };
+    }
+
+    /// <summary>Hodnoty premennych cela bez prazdnych; null = ziadne.</summary>
+    private static Dictionary<string, string>? FaceValues(IReadOnlyDictionary<string, string>? values)
+    {
+        var kept = values?.Where(v => !string.IsNullOrWhiteSpace(v.Key) && !string.IsNullOrEmpty(v.Value))
+            .GroupBy(v => v.Key.Trim(), StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.Last().Value, StringComparer.Ordinal);
+        return kept is { Count: > 0 } ? kept : null;
     }
 
     public static FlapProfile ToFlaps(FlapProfileDto flaps)

@@ -36,8 +36,14 @@ public sealed record BoardProfileDto
     /// <summary>Panel so zamenenou cervenou a zelenou.</summary>
     public bool SwapRedGreen { get; init; }
 
-    /// <summary>Hlavicka; null = bez hlavicky.</summary>
+    /// <summary>Hlavicka (starsi tvar cela) - server ju pri ulozeni tabule prevedie na predlohu cela; null = bez hlavicky.</summary>
     public BoardHeaderDto? Header { get; init; }
+
+    /// <summary>Predloha cela; null = bez cela.</summary>
+    public string? Face { get; init; }
+
+    /// <summary>Hodnoty premennych cela (<c>track</c> → <c>1</c>); null = ziadne.</summary>
+    public IReadOnlyDictionary<string, string>? FaceValues { get; init; }
 
     /// <summary>Pismo pohybliveho textu.</summary>
     public int MovingFont { get; init; } = 0x52;

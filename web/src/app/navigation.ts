@@ -5,6 +5,7 @@ import {
   Cable,
   ChartColumn,
   Disc3,
+  Frame,
   GitCompareArrows,
   Group,
   History,
@@ -30,6 +31,7 @@ import type { TextKey } from "@/i18n";
 export type NavPath =
   | "/"
   | "/designs"
+  | "/faces"
   | "/lines"
   | "/scenarios"
   | "/log"
@@ -69,6 +71,7 @@ export const NAV: NavGroup[] = [
     items: [
       { to: "/", label: "nav.boards", icon: LayoutGrid, permission: PERMISSIONS.view },
       { to: "/designs", label: "nav.designs", icon: Palette, permission: PERMISSIONS.designs },
+      { to: "/faces", label: "nav.faces", icon: Frame, permission: PERMISSIONS.designs },
       { to: "/lines", label: "nav.lines", icon: Cable, permission: PERMISSIONS.view },
       { to: "/scenarios", label: "nav.scenarios", icon: Siren, permission: PERMISSIONS.view },
       { to: "/log", label: "nav.log", icon: Activity, permission: PERMISSIONS.log },
