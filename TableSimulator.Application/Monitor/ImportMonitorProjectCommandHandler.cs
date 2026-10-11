@@ -4,6 +4,7 @@ using TableSimulator.Application.Lines;
 using TableSimulator.Application.Settings;
 using TableSimulator.Contracts.Monitor;
 using TableSimulator.Core.Monitor;
+using TableSimulator.Core.Protocols.Elen;
 using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Application.Monitor;
@@ -13,13 +14,16 @@ public sealed class ImportMonitorProjectCommandHandler(Simulator simulator, ISet
 {
     public Task<Result<MonitorImportedDto>> Handle(ImportMonitorProjectCommand command, CancellationToken cancellationToken)
     {
+        // tabule dostanu vyrobcu samoucenia linky - typy panelov Monitora su len tabule ELEN
+        if (simulator.Read(s => s.FindLine(command.Line)?.Manufacturer) is not { } manufacturer)
+            return Task.FromResult(Result.Failure<MonitorImportedDto>(LineErrors.NotFound(command.Line)));
+        if (ElenVariant.Find(manufacturer) is null)
+            return Task.FromResult(Result.Failure<MonitorImportedDto>(MonitorErrors.NotElenLine(command.Line)));
+
         var monitor = new MonitorFolder(settings.Current.MonitorFolder);
         var entries = monitor.Project(command.Project);
         if (entries.Count == 0)
             return Task.FromResult(Result.Failure<MonitorImportedDto>(MonitorErrors.ProjectNotFound(command.Project)));
-        // tabule dostanu vyrobcu samoucenia linky
-        if (simulator.Read(s => s.FindLine(command.Line)?.Manufacturer) is not { } manufacturer)
-            return Task.FromResult(Result.Failure<MonitorImportedDto>(LineErrors.NotFound(command.Line)));
 
         var count = 0;
         foreach (var entry in entries)

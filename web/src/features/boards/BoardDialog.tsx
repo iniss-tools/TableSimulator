@@ -19,7 +19,8 @@ import { Button } from "@/components/ui/button";
 import { FieldDescription, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AMPLIFIER_MANUFACTURERS, defaultProfile, FLAP_MANUFACTURERS } from "@/lib/boards";
+import { boardKind, defaultProfile } from "@/lib/boards";
+import { CHAR_WIDTH } from "@/render/chars";
 import { t } from "@/i18n";
 import { FlapListsEditor } from "./FlapListsEditor";
 import { HeaderEditor } from "./HeaderEditor";
@@ -57,11 +58,22 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
   // vyrobca, ktory linka nepozna (zo starsich dat), ostava vo vybere
   const shownManufacturers = config.manufacturer && !manufacturers.includes(config.manufacturer) ? [config.manufacturer, ...manufacturers] : manufacturers;
   const fontFiles = p.fontFile && !fonts.includes(p.fontFile) ? [p.fontFile, ...fonts] : fonts;
+  const kind = boardKind(config.manufacturer);
   // listova tabula: pozicie (moduly) namiesto bodov, cas otacania; pisma, hlavicka a casovanie textov nemaju zmysel
-  const flaps = FLAP_MANUFACTURERS.includes(config.manufacturer.toUpperCase());
+  const flaps = kind === "flaps";
   // spinacia jednotka zosilnovaca: len linka, adresa (aj 0), nazov a vyrobca
-  const amplifier = AMPLIFIER_MANUFACTURERS.includes(config.manufacturer.toUpperCase());
+  const amplifier = kind === "amplifier";
   const board = !flaps && !amplifier;
+  // pisma ELEN, farebnost panelu, pohyblivy text a typy panelov Monitora ma len ELEN; znakova tabula ma sirku v znakoch
+  const elen = kind === "elen";
+
+  // iny vyrobca: novej tabule s nezmenenym profilom a tabuli inej rodiny patri predvoleny profil noveho vyrobcu
+  const changeManufacturer = (c: SetBoardRequest, manufacturer: string): SetBoardRequest => {
+    if (manufacturer === c.manufacturer) return c;
+    const untouched = isNew && JSON.stringify(c.profile) === JSON.stringify(defaultProfile(c.manufacturer));
+    const reset = untouched || boardKind(manufacturer) !== boardKind(c.manufacturer);
+    return { ...c, manufacturer, profile: reset ? defaultProfile(manufacturer) : c.profile };
+  };
 
   const applyTemplate = (file: string) => {
     setTemplate(file);
@@ -102,7 +114,7 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
                   onValueChange={(line) => {
                     const available = lineManufacturers(line);
                     const manufacturer = available.includes(config.manufacturer) ? config.manufacturer : (available[0] ?? config.manufacturer);
-                    setConfig({ ...config, line, manufacturer, profile: manufacturer === config.manufacturer ? p : defaultProfile(manufacturer) });
+                    setConfig(changeManufacturer({ ...config, line }, manufacturer));
                   }}
                   options={live.lines.map((l) => ({ value: l.number, label: l.name ? `${l.number} – ${l.name}` : String(l.number) }))}
                   className="w-full"
@@ -139,7 +151,7 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
               <FormField label={t("field.manufacturer")}>
                 <OptionSelect
                   value={config.manufacturer}
-                  onValueChange={(manufacturer) => setConfig({ ...config, manufacturer })}
+                  onValueChange={(manufacturer) => setConfig(changeManufacturer(config, manufacturer))}
                   options={shownManufacturers.map((m) => ({ value: m, label: m }))}
                   className="w-full"
                 />
@@ -187,7 +199,7 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
                 <CheckField label={t("field.autoSize")} checked={p.autoSize} onCheckedChange={(autoSize) => profile({ autoSize })} />
               </>
             )}
-            {!flaps && templates.length > 0 && (
+            {elen && templates.length > 0 && (
               <FormField label={t("field.template")} hint={t("field.template.hint")}>
                 <OptionSelect
                   value={template}
@@ -203,9 +215,21 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
             {!flaps && (
               <>
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <FormField label={t("field.width")}>
-                    <Input type="number" min={8} max={2048} value={p.width} onChange={(e) => profile({ width: num(e.target.value) })} />
-                  </FormField>
+                  {elen ? (
+                    <FormField label={t("field.width")}>
+                      <Input type="number" min={8} max={2048} value={p.width} onChange={(e) => profile({ width: num(e.target.value) })} />
+                    </FormField>
+                  ) : (
+                    <FormField label={t("field.columns")}>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={256}
+                        value={Math.max(1, Math.round(p.width / CHAR_WIDTH))}
+                        onChange={(e) => profile({ width: Math.max(1, num(e.target.value)) * CHAR_WIDTH })}
+                      />
+                    </FormField>
+                  )}
                   <FormField label={t("field.rows")}>
                     <Input type="number" min={1} max={64} value={p.rows} onChange={(e) => profile({ rows: num(e.target.value) })} />
                   </FormField>
@@ -213,15 +237,17 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
                     <Input type="number" min={5} max={64} value={p.rowHeight} onChange={(e) => profile({ rowHeight: num(e.target.value) })} />
                   </FormField>
                 </div>
-                <FormField label={t("field.fontFile")}>
-                  <OptionSelect
-                    value={p.fontFile ?? NONE}
-                    onValueChange={(fontFile) => chooseFont(fontFile || null)}
-                    options={[{ value: NONE, label: t("common.none") }, ...fontFiles.map((f) => ({ value: f, label: f }))]}
-                    className="w-full"
-                  />
-                </FormField>
-                {fontHeight !== null && p.rowHeight < fontHeight && (
+                {elen && (
+                  <FormField label={t("field.fontFile")}>
+                    <OptionSelect
+                      value={p.fontFile ?? NONE}
+                      onValueChange={(fontFile) => chooseFont(fontFile || null)}
+                      options={[{ value: NONE, label: t("common.none") }, ...fontFiles.map((f) => ({ value: f, label: f }))]}
+                      className="w-full"
+                    />
+                  </FormField>
+                )}
+                {elen && fontHeight !== null && p.rowHeight < fontHeight && (
                   <div className="-mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                     <FieldDescription className="text-amber-700 dark:text-amber-300">
                       {t("board.fontTaller", { font: fontHeight, row: p.rowHeight })}
@@ -232,8 +258,12 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
                   </div>
                 )}
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <CheckField label={t("field.monochrome")} checked={p.monochrome} onCheckedChange={(monochrome) => profile({ monochrome })} />
-                  <CheckField label={t("field.swapRedGreen")} checked={p.swapRedGreen} onCheckedChange={(swapRedGreen) => profile({ swapRedGreen })} />
+                  {elen && (
+                    <>
+                      <CheckField label={t("field.monochrome")} checked={p.monochrome} onCheckedChange={(monochrome) => profile({ monochrome })} />
+                      <CheckField label={t("field.swapRedGreen")} checked={p.swapRedGreen} onCheckedChange={(swapRedGreen) => profile({ swapRedGreen })} />
+                    </>
+                  )}
                   <CheckField label={t("field.autoSize")} checked={p.autoSize} onCheckedChange={(autoSize) => profile({ autoSize })} />
                 </div>
               </>
@@ -257,25 +287,29 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
             <FormField label={t("field.alternationMs")}>
               <Input type="number" min={100} step={100} value={p.alternationMs} onChange={(e) => profile({ alternationMs: num(e.target.value) })} />
             </FormField>
-            <FormField label={t("field.scrollSpeed")}>
-              <Input type="number" min={1} max={500} value={p.scrollSpeed} onChange={(e) => profile({ scrollSpeed: num(e.target.value) })} />
-            </FormField>
+            {elen && (
+              <FormField label={t("field.scrollSpeed")}>
+                <Input type="number" min={1} max={500} value={p.scrollSpeed} onChange={(e) => profile({ scrollSpeed: num(e.target.value) })} />
+              </FormField>
+            )}
             <FormField label={t("field.blinkOnMs")}>
               <Input type="number" min={50} step={50} value={p.blinkOnMs} onChange={(e) => profile({ blinkOnMs: num(e.target.value) })} />
             </FormField>
             <FormField label={t("field.blinkOffMs")}>
               <Input type="number" min={50} step={50} value={p.blinkOffMs} onChange={(e) => profile({ blinkOffMs: num(e.target.value) })} />
             </FormField>
-            <FormField label={t("field.movingFont")}>
-              <Input
-                className="font-mono"
-                value={`0x${p.movingFont.toString(16).toUpperCase()}`}
-                onChange={(e) => {
-                  const v = Number.parseInt(e.target.value.replace(/^0x/i, ""), 16);
-                  if (!Number.isNaN(v)) profile({ movingFont: v });
-                }}
-              />
-            </FormField>
+            {elen && (
+              <FormField label={t("field.movingFont")}>
+                <Input
+                  className="font-mono"
+                  value={`0x${p.movingFont.toString(16).toUpperCase()}`}
+                  onChange={(e) => {
+                    const v = Number.parseInt(e.target.value.replace(/^0x/i, ""), 16);
+                    if (!Number.isNaN(v)) profile({ movingFont: v });
+                  }}
+                />
+              </FormField>
+            )}
           </div>
         </TabsContent>
       </Tabs>

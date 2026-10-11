@@ -16,6 +16,19 @@ export const AMPLIFIER_MANUFACTURERS = ["ELSVO"];
 /** Vyrobcovia znakovych tabul Elektrocas (rodina chars). */
 export const CHAR_MANUFACTURERS = ["LCD", "LCD1", "ERP"];
 
+/** Vyrobcovia tabul ELEN (rodina elen) - len tie maju pisma ELEN, pohyblivy text a typy panelov ELEN Monitora. */
+export const ELEN_MANUFACTURERS = ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16KAM", "ELEKON"];
+
+/** Druh tabule podla vyrobcu - urcuje, ake nastavenia profilu maju zmysel; znakove su Elektrocas aj APEL. */
+export type BoardKind = "elen" | "chars" | "flaps" | "amplifier";
+
+export function boardKind(manufacturer: string): BoardKind {
+  const upper = manufacturer.toUpperCase();
+  if (FLAP_MANUFACTURERS.includes(upper)) return "flaps";
+  if (AMPLIFIER_MANUFACTURERS.includes(upper)) return "amplifier";
+  return ELEN_MANUFACTURERS.includes(upper) ? "elen" : "chars";
+}
+
 /** Velkost novej tabule APEL (zodpoveda BoardProfile.DefaultFor) - jednoriadkova a viacriadkova APEL_AN. */
 const APEL_SIZES: Record<string, { width: number; rows: number; rowHeight: number }> = {
   APEL: { width: 30 * 8, rows: 1, rowHeight: 16 },

@@ -6,7 +6,7 @@ import { getMonitorOptions, PERMISSIONS, useCan, useSimulatorState, type SetBoar
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { ALL_LINES } from "@/features/lines/line-status";
-import { boardConfig, defaultProfile } from "@/lib/boards";
+import { boardConfig, boardKind, defaultProfile } from "@/lib/boards";
 import { t } from "@/i18n";
 import { BoardCard } from "./BoardCard";
 import { BoardDialog } from "./BoardDialog";
@@ -37,7 +37,10 @@ export function BoardsPage() {
   const [importing, setImporting] = useState(false);
 
   const boards = live.boards.filter((b) => filter === ALL_LINES || b.line === filter);
-  const firstLine = live.lines[0];
+  // nova tabula patri na linku vybranu v pase liniek, inak na prvu
+  const targetLine = live.lines.find((l) => l.number === filter) ?? live.lines[0];
+  // typy panelov ELEN Monitora su tabule ELEN - import ma zmysel len pre linku s tabulami ELEN
+  const elenLines = live.lines.filter((l) => boardKind(l.manufacturer) === "elen");
 
   return (
     <>
@@ -48,14 +51,17 @@ export function BoardsPage() {
             <Maximize />
             {t("nav.wall")}
           </Button>
-          {edit && monitor?.available && monitor.projects.length > 0 && (
-            <Button variant="outline" disabled={live.lines.length === 0} onClick={() => setImporting(true)}>
+          {edit && monitor?.available && monitor.projects.length > 0 && elenLines.length > 0 && (
+            <Button variant="outline" onClick={() => setImporting(true)}>
               <FileInput />
               {t("monitor.import")}
             </Button>
           )}
           {edit && (
-            <Button disabled={!firstLine} onClick={() => firstLine && setEditing({ config: newBoard(firstLine.number, firstLine.manufacturer), isNew: true })}>
+            <Button
+              disabled={!targetLine}
+              onClick={() => targetLine && setEditing({ config: newBoard(targetLine.number, targetLine.manufacturer), isNew: true })}
+            >
               <Plus />
               {t("boards.add")}
             </Button>
@@ -91,7 +97,7 @@ export function BoardsPage() {
       )}
 
       {editing && <BoardDialog initial={editing.config} isNew={editing.isNew} onClose={() => setEditing(null)} />}
-      {importing && monitor && <MonitorImportDialog monitor={monitor} onClose={() => setImporting(false)} />}
+      {importing && monitor && <MonitorImportDialog monitor={monitor} lines={elenLines} initialLine={targetLine?.number} onClose={() => setImporting(false)} />}
     </>
   );
 }
