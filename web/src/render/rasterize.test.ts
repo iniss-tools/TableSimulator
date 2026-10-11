@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { BoardDto as Board, RunDto as Run } from "../api/generated/types.gen";
-import { ElenGlyphSource, fontIndex, tallDigitCode, type ElenFontSet } from "./fonts";
+import { ElenGlyphSource, fontIndex, tallDigitCode, type ElenFontSet, type GlyphSource } from "./fonts";
 import { blinkPhase, COLOR_NONE, isAnimated, rasterize } from "./rasterize";
 
 // pismo 3 body vysoke, znak 'A' (0x41) 2 body siroky: horny riadok plny, spodny lavy bod
@@ -192,5 +192,36 @@ describe("znakova tabula", () => {
     const b = chars([{ row: 0, layers: [layer(0, "A", 0x90)] }]);
     expect(isAnimated(b)).toBe(true);
     expect(rasterize(b, source(), 0).blink[0]).toBe(1);
+  });
+
+  test("cervene pole 0x7F na LCD svieti celou bunkou cervenou", () => {
+    const b = chars([{ row: 0, layers: [layer(0, "\x7fA")] }]);
+    b.manufacturer = "LCD1";
+    const frame = rasterize(b, source(), 0);
+    expect(at(frame, 0, 0)).toBe(1);
+    expect(at(frame, 7, 1)).toBe(1);
+    expect(at(frame, 7, 2)).toBe(1);
+    expect(at(frame, 8, 0)).toBe(COLOR_NONE);
+    // ina znakova tabula (APEL) kod nepozna
+    b.manufacturer = "APEL";
+    expect(at(rasterize(b, source(), 0), 7, 1)).toBe(0);
+  });
+
+  test("velke pismeno druhu vlaku cez celu vysku bunky a tucne", () => {
+    // 'R' v zdroji: bod v stlpci 0 na riadkoch 2 a 3 bunky vysokej 6
+    const tall: GlyphSource = {
+      glyph: (code) => (code === 0x52 ? { width: 8, height: 6, isSet: (x, y) => x === 0 && (y === 2 || y === 3) } : null),
+    };
+    const b = chars([{ row: 0, layers: [layer(0, "\x81")] }]);
+    b.manufacturer = "LCD1";
+    b.profile = { ...b.profile, rowHeight: 6 };
+    const frame = rasterize(b, tall, 0);
+    for (let y = 1; y <= 4; y++) {
+      expect(at(frame, 0, y)).toBe(COLOR_NONE);
+      expect(at(frame, 1, y)).toBe(COLOR_NONE);
+    }
+    expect(at(frame, 0, 0)).toBe(0);
+    expect(at(frame, 0, 5)).toBe(0);
+    expect(at(frame, 2, 2)).toBe(0);
   });
 });

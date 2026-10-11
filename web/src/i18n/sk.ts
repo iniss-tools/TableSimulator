@@ -869,7 +869,7 @@ export const sk = {
   "designs.off": "Zhasnutý bod",
   "designs.off.none": "nekresliť",
   "designs.color.0": "Bez farby (aj znakové tabule)",
-  "designs.color.1": "Červená",
+  "designs.color.1": "Červená (aj červené pole LCD)",
   "designs.color.2": "Zelená",
   "designs.color.3": "Žltá",
   "designs.color.mono": "Jednofarebný panel",

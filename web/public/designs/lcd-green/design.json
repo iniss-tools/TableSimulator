@@ -5,7 +5,7 @@
   "dot": 0.9,
   "shape": "square",
   "off": "#a3b653",
-  "colors": { "0": "#1f2a12", "1": "#1f2a12", "2": "#1f2a12", "3": "#1f2a12", "mono": "#1f2a12" },
+  "colors": { "0": "#1f2a12", "1": "#b8261c", "2": "#1f2a12", "3": "#1f2a12", "mono": "#1f2a12" },
   "glow": 0,
   "background": "#9eb24d",
   "rowGap": 2,

@@ -261,6 +261,17 @@ public class ElektrocasProtocolTests
     }
 
     [TestMethod]
+    [DataRow("LCD1")]
+    [DataRow("LCD")]
+    [DataRow("ERP")]
+    public void Lcd_CervenePoleAVelkePismenaDruhu(string manufacturer)
+    {
+        Assert.AreEqual("■EC 1", ElektrocasCharset.Decode(Hex("7F 88 90 20 31"), manufacturer));
+        Assert.AreEqual("R IC", ElektrocasCharset.Decode(Hex("81 20 83 90"), manufacturer));
+        Assert.AreNotEqual("■EC", ElektrocasCharset.Decode(Hex("7F 88 90"), "APEL"));
+    }
+
+    [TestMethod]
     public void ZapisLcd1PreTabuluLcd_NesuladVyrobcu()
     {
         var sim = Create(1, "LCD");

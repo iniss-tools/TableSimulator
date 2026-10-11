@@ -871,7 +871,7 @@ export const cs: Record<TextKey, string> = {
   "designs.off": "Zhasnutý bod",
   "designs.off.none": "nekreslit",
   "designs.color.0": "Bez barvy (i znakové tabule)",
-  "designs.color.1": "Červená",
+  "designs.color.1": "Červená (i červené pole LCD)",
   "designs.color.2": "Zelená",
   "designs.color.3": "Žlutá",
   "designs.color.mono": "Jednobarevný panel",
