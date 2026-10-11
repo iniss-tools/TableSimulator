@@ -1,5 +1,5 @@
 // Jeden prvok cela v editore: druh, ukotvenie a poloha, podla druhu rozmer a vypln plochy, text alebo hodiny.
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, Clock, Square, Trash2, Type } from "lucide-react";
 import type { FaceAlign, FaceAnchor, FaceClockFormat, FaceElementDto, FaceVAlign } from "@/api";
 import { FormField } from "@/components/common/form-field";
@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { t, type TextKey } from "@/i18n";
-import { FACE_COLOR_TOKENS } from "./faces";
+import { elementLabel, FACE_COLOR_TOKENS } from "./faces";
 
 const ANCHORS: FaceAnchor[] = ["face", "matrix", "row", "top", "bottom", "left", "right"];
 const ALIGNS: FaceAlign[] = ["left", "center", "right"];
@@ -106,18 +107,35 @@ interface Props {
   index: number;
   count: number;
   readOnly: boolean;
+  /** Prvok je vybrany (aj v nahlade) - karta sa zvyrazni a posunie do pohladu. */
+  selected: boolean;
+  onSelect: () => void;
   onChange: (element: FaceElementDto) => void;
   onMove: (to: number) => void;
   onRemove: () => void;
 }
 
-export function FaceElementCard({ element, index, count, readOnly, onChange, onMove, onRemove }: Props) {
+export function FaceElementCard({ element, index, count, readOnly, selected, onSelect, onChange, onMove, onRemove }: Props) {
   const set = (patch: Partial<FaceElementDto>) => onChange({ ...element, ...patch });
   const Icon = KIND_ICONS[element.kind];
   const summary = element.kind === "text" ? element.text.split("\n")[0] : t(`face.anchor.${element.anchor}`);
+  const card = useRef<HTMLDivElement>(null);
+
+  // prvok vybrany v nahlade - karta do pohladu
+  useEffect(() => {
+    if (selected) card.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [selected]);
 
   return (
-    <Card size="sm">
+    <Card
+      ref={card}
+      size="sm"
+      aria-label={elementLabel(element)}
+      aria-current={selected || undefined}
+      className={cn(selected && "ring-2 ring-sky-500")}
+      onPointerDownCapture={() => !selected && onSelect()}
+      onFocusCapture={() => !selected && onSelect()}
+    >
       <CardHeader className="flex flex-row items-center gap-2 border-b">
         <Icon className="size-4 shrink-0 text-muted-foreground" />
         <CardTitle className="min-w-0 flex-1 truncate">

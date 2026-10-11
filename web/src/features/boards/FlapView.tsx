@@ -1,11 +1,11 @@
 // Listova tabula (ERS, FERS): moduly s textami listov v okne cela, prisposobena velkosti miesta; zmenene listy sa
 // chvilu otacaju.
-import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react";
+import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getFacesOptions, useConnection, type BoardFaceDto, type BoardDto as Board } from "@/api";
 import { cn } from "@/lib/utils";
-import { DEFAULT_FLAP_DESIGN, defaultDesignId, designForFamily, loadDesign, type BoardDesign } from "@/render/design";
-import { faceValues, hasFaceClock, resolveFace } from "@/render/face";
+import { DEFAULT_FLAP_DESIGN, defaultDesignId, designForFamily, faceStyle, loadDesign, type BoardDesign } from "@/render/design";
+import { faceBoxes, faceValues, hasFaceClock, measureContext, resolveFace, type FaceOverlayLayout } from "@/render/face";
 import { drawFlaps, layoutFlaps, type FlapFace } from "@/render/flaps";
 import { boardClock } from "@/render/rasterize";
 import type { BoardViewHandle } from "./BoardView";
@@ -24,6 +24,8 @@ interface Props {
   face?: BoardFaceDto | null;
   /** Vzhlad namiesto vzhladu tabule (nahlad v editore vzhladov). */
   design?: BoardDesign;
+  /** Vrstva nad tabulou s polohami prvkov cela (editor ciel). */
+  overlay?: (layout: FaceOverlayLayout) => ReactNode;
   ref?: Ref<BoardViewHandle>;
 }
 
@@ -32,7 +34,7 @@ function flapFace(face: BoardFaceDto | null, board: Board, t: number): FlapFace 
   return face ? { face, values: faceValues(board), time: boardClock(board, t) } : null;
 }
 
-export function FlapView({ board, fit = "width", className, face: faceOverride, design: designOverride, ref }: Props) {
+export function FlapView({ board, fit = "width", className, face: faceOverride, design: designOverride, overlay, ref }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [space, setSpace] = useState({ width: 0, height: 0 });
@@ -75,6 +77,14 @@ export function FlapView({ board, fit = "width", className, face: faceOverride, 
         : space.width / layout.width
       : 0;
   const scale = cssScale * (window.devicePixelRatio || 1);
+
+  // polohy prvkov cela pre editor; geometria listov uz zacina v rohu platna, hodiny su vzdy pismom
+  const editing = overlay !== undefined;
+  const overlayLayout = useMemo((): FaceOverlayLayout | null => {
+    if (!editing || !face || cssScale <= 0) return null;
+    const g = layout.geometry;
+    return { scale: cssScale, geometry: g, boxes: faceBoxes(measureContext(), face, g, faceStyle(design), faceValues(board), new Date(), false) };
+  }, [editing, face, cssScale, layout, design, board]);
 
   useImperativeHandle(
     ref,
@@ -149,11 +159,14 @@ export function FlapView({ board, fit = "width", className, face: faceOverride, 
 
   return (
     <div ref={box} className={cn("w-full leading-0", fit === "contain" && "flex h-full items-center justify-center", className)}>
-      <canvas
-        ref={canvas}
-        className="block max-w-full rounded-sm"
-        style={cssScale > 0 ? { width: `${layout.width * cssScale}px`, height: `${layout.height * cssScale}px` } : { visibility: "hidden" }}
-      />
+      <div className="relative max-w-full">
+        <canvas
+          ref={canvas}
+          className="block max-w-full rounded-sm"
+          style={cssScale > 0 ? { width: `${layout.width * cssScale}px`, height: `${layout.height * cssScale}px` } : { visibility: "hidden" }}
+        />
+        {overlayLayout && overlay && <div className="absolute inset-0">{overlay(overlayLayout)}</div>}
+      </div>
     </div>
   );
 }

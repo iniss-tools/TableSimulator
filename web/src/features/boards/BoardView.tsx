@@ -1,17 +1,17 @@
 // Ziva tabula: rasterizacia obsahu + LED renderer, prisposobena velkosti miesta; snimka do PNG v pevnej mierke.
 // Listove tabule (ERS, FERS) kresli FlapView.
-import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react";
+import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getFacesOptions, useConnection, type BoardFaceDto, type BoardDto as Board } from "@/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { DEFAULT_DESIGN, defaultDesignId, designForFamily, loadDesign, type BoardDesign } from "@/render/design";
+import { DEFAULT_DESIGN, defaultDesignId, designForFamily, faceStyle, loadDesign, type BoardDesign } from "@/render/design";
 import { ElenGlyphSource, loadFontSet, type ElenFontSet, type GlyphSource } from "@/render/fonts";
 import { fallbackGlyphSource } from "@/render/pixel-fonts";
 import { CHAR_WIDTH } from "@/render/chars";
-import { faceValues, hasFaceClock, resolveFace } from "@/render/face";
+import { faceBoxes, faceValues, hasFaceClock, measureContext, resolveFace, shiftGeometry, type FaceOverlayLayout } from "@/render/face";
 import { blinkPhase, boardClock, isAnimated, rasterize } from "@/render/rasterize";
-import { LedRenderer, ledSize } from "@/render/led";
+import { LedRenderer, ledLayout, ledSize } from "@/render/led";
 import { AmplifierView } from "./AmplifierView";
 import { FlapView } from "./FlapView";
 
@@ -83,6 +83,8 @@ interface Props {
   design?: BoardDesign;
   /** Celo namiesto cela tabule (nahlad v editore ciel); null = bez cela. */
   face?: BoardFaceDto | null;
+  /** Vrstva nad tabulou s polohami prvkov cela (editor ciel). */
+  overlay?: (layout: FaceOverlayLayout) => ReactNode;
   ref?: Ref<BoardViewHandle>;
 }
 
@@ -92,7 +94,7 @@ export function BoardView(props: Props) {
   return family === "flaps" ? <FlapView {...props} /> : <LedBoardView {...props} />;
 }
 
-function LedBoardView({ board, fit = "width", className, design: override, face: faceOverride, ref }: Props) {
+function LedBoardView({ board, fit = "width", className, design: override, face: faceOverride, overlay, ref }: Props) {
   const { designVersion } = useConnection();
   const faces = useQuery(getFacesOptions()).data;
   // stabilny objekt - zmena cela prekresli celu tabulu
@@ -160,6 +162,15 @@ function LedBoardView({ board, fit = "width", className, design: override, face:
         ? Math.min(space.width / natural.width, space.height / natural.height)
         : space.width / natural.width
       : 0;
+
+  // polohy prvkov cela pre editor - od laveho horneho rohu platna (za ramom)
+  const editing = overlay !== undefined;
+  const overlayLayout = useMemo((): FaceOverlayLayout | null => {
+    if (!editing || !face || cssScale <= 0) return null;
+    const frame = { width: board.profile.width, height: board.profile.rows * rowHeight };
+    const g = shiftGeometry(ledLayout(frame, design, rowHeight, face).geometry, design.frame.width, design.frame.width);
+    return { scale: cssScale, geometry: g, boxes: faceBoxes(measureContext(), face, g, faceStyle(design), faceValues(board), new Date(), true) };
+  }, [editing, face, cssScale, board, design, rowHeight]);
 
   const source = fontSet ? new ElenGlyphSource(fontSet, board.profile.fontMap) : null;
   const scale = cssScale * (window.devicePixelRatio || 1);
@@ -245,6 +256,7 @@ function LedBoardView({ board, fit = "width", className, design: override, face:
           style={cssScale > 0 ? { width: `${natural.width * cssScale}px`, height: `${natural.height * cssScale}px` } : { visibility: "hidden" }}
         />
         {!drawn && <Skeleton className="absolute inset-0 rounded-sm" />}
+        {drawn && overlayLayout && overlay && <div className="absolute inset-0">{overlay(overlayLayout)}</div>}
       </div>
     </div>
   );

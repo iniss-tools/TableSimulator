@@ -28,6 +28,12 @@ export function newElement(kind: FaceElementKind): FaceElementDto {
   }
 }
 
+/** Popis prvku pre obsluhu: druh a prvy riadok textu, inak ukotvenie. */
+export function elementLabel(element: FaceElementDto): string {
+  const summary = element.kind === "text" ? element.text.split("\n")[0] : t(`face.anchor.${element.anchor}`);
+  return `${t(`face.kind.${element.kind}`)}: ${summary}`;
+}
+
 /** Tabula na nahlad cela: ziva tabula s upravenym profilom, inak ukazkova (ELEN) alebo prazdna inej rodiny. */
 export function previewBoard(profile: BoardProfileDto, manufacturer: string, name: string, live: BoardDto | undefined): BoardDto {
   if (live) return { ...live, name, profile };
