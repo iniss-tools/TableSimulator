@@ -167,6 +167,7 @@ export type BoardFaceDto = {
     rowGap: null | number;
     rowGroup: number;
     groupGap: number;
+    moduleWidth: number;
     elements: Array<FaceElementDto>;
 };
 
@@ -285,11 +286,31 @@ export type DatabaseTestResultDto = {
     initialized: boolean;
 };
 
+export type DesignFlapColorDto = {
+    top: string;
+    bottom: string;
+    text: string;
+};
+
+export type DesignFlapsDto = {
+    colors: {
+        [key: string]: DesignFlapColorDto;
+    };
+    row: string;
+    split: string;
+    unknown: string;
+    font: string;
+};
+
 export type DesignFrameDto = {
     width: number;
     color: string;
     radius: number;
+    style: DesignFrameStyle;
+    badge: string;
 };
+
+export type DesignFrameStyle = 'flat' | 'metal';
 
 export type DesignHeaderDto = {
     background: string;
@@ -299,6 +320,10 @@ export type DesignHeaderDto = {
     clockColor: string;
     clockBackground: string;
     clockFont: string;
+    panel: null | string;
+    styles: null | {
+        [key: string]: DesignTextStyleDto;
+    };
 };
 
 export type DesignInfoDto = {
@@ -309,7 +334,18 @@ export type DesignInfoDto = {
     overrides: boolean;
 };
 
+export type DesignSeamDto = {
+    color: null | string;
+    width: number;
+};
+
 export type DesignShape = 'circle' | 'square' | 'rounded';
+
+export type DesignTextStyleDto = {
+    color: null | string;
+    font: null | string;
+    bold: null | boolean;
+};
 
 export type DisplayDto = {
     family: string;
@@ -355,6 +391,7 @@ export type FaceElementDto = {
     size: number;
     size2: number;
     bold: null | boolean;
+    style: string;
     color: string;
     fill: string;
     border: number;
@@ -362,6 +399,7 @@ export type FaceElementDto = {
     maxWidth: number;
     spacing: number;
     format: FaceClockFormat;
+    render: FaceRender;
 };
 
 export type FaceElementKind = 'rect' | 'text' | 'clock';
@@ -372,6 +410,8 @@ export type FaceMarginDto = {
     right: number;
     bottom: number;
 };
+
+export type FaceRender = 'text' | 'display';
 
 export type FaceVAlign = 'top' | 'middle' | 'bottom';
 
@@ -867,11 +907,15 @@ export type SetDesignRequest = {
     };
     glow: number;
     background: string;
+    plate: null | string;
+    moduleMargin: number;
     rowGap: number;
     padding: number;
     frame: DesignFrameDto;
     gapColor: null | string;
+    seam: DesignSeamDto;
     header: DesignHeaderDto;
+    flaps: null | DesignFlapsDto;
 };
 
 export type SetLineRequest = {

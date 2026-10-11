@@ -22,7 +22,7 @@ export function newElement(kind: FaceElementKind): FaceElementDto {
     case "rect":
       return { ...NEW_ELEMENT, kind, anchor: "top", height: -2, fill: "band" };
     case "clock":
-      return { ...NEW_ELEMENT, kind, anchor: "top", align: "right", vAlign: "middle", x: 4, size: 9 };
+      return { ...NEW_ELEMENT, kind, anchor: "top", align: "right", vAlign: "middle", x: 4, size: 9, render: "display" };
     default:
       return { ...NEW_ELEMENT, kind, anchor: "top", vAlign: "middle", x: 4, size: 6, text: t("faces.element.newText") };
   }

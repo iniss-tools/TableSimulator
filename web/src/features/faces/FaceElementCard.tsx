@@ -15,6 +15,8 @@ const ANCHORS: FaceAnchor[] = ["face", "matrix", "row", "top", "bottom", "left",
 const ALIGNS: FaceAlign[] = ["left", "center", "right"];
 const VALIGNS: FaceVAlign[] = ["top", "middle", "bottom"];
 const FORMATS: FaceClockFormat[] = ["H:mm", "HH:mm", "HH:mm:ss"];
+/** Pomenovane styly textov zo vzhladu (prazdny = ostatne texty cela). */
+const STYLES = ["", "title", "label", "number"] as const;
 const HEX = /^#[0-9a-fA-F]{6}$/;
 /** Vlastna farba #rrggbb vo vybere farieb. */
 const CUSTOM = "#";
@@ -226,6 +228,15 @@ export function FaceElementCard({ element, index, count, readOnly, onChange, onM
             <NumberInput label={t("face.size2")} value={element.size2} min={0} disabled={readOnly} onChange={(size2) => set({ size2 })} />
             <NumberInput label={t("face.maxWidth")} value={element.maxWidth} min={0} disabled={readOnly} onChange={(maxWidth) => set({ maxWidth })} />
             <NumberInput label={t("face.spacing")} value={element.spacing} disabled={readOnly} onChange={(spacing) => set({ spacing })} />
+            <FormField label={t("face.style")} className="sm:col-span-2">
+              <OptionSelect
+                value={element.style}
+                disabled={readOnly}
+                onValueChange={(style) => set({ style })}
+                options={STYLES.map((style) => ({ value: style, label: t(`face.style.${style || "default"}`) }))}
+                className="w-full"
+              />
+            </FormField>
             <FormField label={t("face.bold")} className="sm:col-span-2">
               <OptionSelect
                 value={element.bold === null ? "default" : element.bold ? "yes" : "no"}
@@ -263,7 +274,15 @@ export function FaceElementCard({ element, index, count, readOnly, onChange, onM
                 className="w-full"
               />
             </FormField>
-            <div className="hidden sm:col-span-2 sm:block" />
+            <FormField label={t("face.render")} className="sm:col-span-2">
+              <OptionSelect
+                value={element.render}
+                disabled={readOnly}
+                onValueChange={(render) => set({ render })}
+                options={(["text", "display"] as const).map((r) => ({ value: r, label: t(`face.render.${r}`) }))}
+                className="w-full"
+              />
+            </FormField>
             <div className="sm:col-span-2">
               <ColorSelect
                 label={t("face.clockColor")}

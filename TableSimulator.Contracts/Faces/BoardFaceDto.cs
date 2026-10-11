@@ -27,6 +27,9 @@ public sealed record BoardFaceDto
     /// <summary>Medzera navyse medzi skupinami riadkov.</summary>
     public int GroupGap { get; init; }
 
+    /// <summary>Sirka modulu v bodoch - na hraniciach modulov su svy (farbu ma vzhlad); 0 = bez svov.</summary>
+    public int ModuleWidth { get; init; }
+
     /// <summary>Prvky cela v poradi kreslenia.</summary>
     public IReadOnlyList<FaceElementDto> Elements { get; init; } = [];
 }

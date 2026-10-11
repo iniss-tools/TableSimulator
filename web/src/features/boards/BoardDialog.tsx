@@ -66,6 +66,9 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
   const board = !flaps && !amplifier;
   // pisma ELEN, farebnost panelu, pohyblivy text a typy panelov Monitora ma len ELEN; znakova tabula ma sirku v znakoch
   const elen = kind === "elen";
+  // vzhlady s kreslenim pre druh tabule (listove pre listove, body pre ostatne); zvoleny ostava vo vybere
+  const renderer = flaps ? "flaps" : "led-matrix";
+  const shownDesigns = designs.filter((d) => d.renderer === renderer || d.id === config.design);
 
   // iny vyrobca: novej tabule s nezmenenym profilom a tabuli inej rodiny patri predvoleny profil noveho vyrobcu
   const changeManufacturer = (c: SetBoardRequest, manufacturer: string): SetBoardRequest => {
@@ -161,7 +164,7 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
                   <OptionSelect
                     value={config.design ?? NONE}
                     onValueChange={(design) => setConfig({ ...config, design: design || null })}
-                    options={[{ value: NONE, label: t("common.default") }, ...designs.map((d) => ({ value: d.id, label: d.name }))]}
+                    options={[{ value: NONE, label: t("common.default") }, ...shownDesigns.map((d) => ({ value: d.id, label: d.name }))]}
                     className="w-full"
                   />
                 </FormField>

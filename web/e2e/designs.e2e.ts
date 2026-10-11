@@ -15,7 +15,7 @@ test("novy vzhlad, uprava a zmazanie", async ({ page }) => {
 
   // uprava: rozostup bodov a farba pozadia pasov cela
   await page.getByLabel("Rozostup bodov").fill("7");
-  await page.getByRole("textbox", { name: "Pozadie pásov a panelov" }).last().fill("#7a0000");
+  await page.getByRole("textbox", { name: "Pozadie pásov" }).last().fill("#7a0000");
   await expect(page.getByText("Neuložené zmeny")).toBeVisible();
   await page.getByRole("button", { name: "Uložiť" }).click();
   await expect(page.getByText("Vzhľad je uložený a tabule sa prekreslili.")).toBeVisible();

@@ -6,7 +6,7 @@ import { FormDialog } from "@/components/common/form-dialog";
 import { FormField } from "@/components/common/form-field";
 import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import type { LedDesign } from "@/render/design";
+import type { BoardDesign } from "@/render/design";
 import { t } from "@/i18n";
 
 /** Id priecinka z nazvu: male pismena bez diakritiky, cislice a pomlcky. */
@@ -21,7 +21,7 @@ function slug(name: string): string {
 }
 
 interface NewDesignDialogProps {
-  design: LedDesign;
+  design: BoardDesign;
   existing: string[];
   onClose: () => void;
   onCreated: (id: string) => void;

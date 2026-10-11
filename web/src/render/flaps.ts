@@ -1,8 +1,10 @@
 // Listova tabula (ERS, FERS): moduly s listami. INISS posiela kody listov, text listu urcuju zoznamy profilu
 // (z TKatalog a TabTab stanice) - zodpoveda FlapLabels v jadre. Farbu listu urcuje profil (nastavenie simulatora),
-// inak text zacinajuci * je na cervenom liste a ostatne na ciernom.
+// inak text zacinajuci * je na cervenom liste a ostatne na ciernom. Ako listy, ram a plech vyzeraju, urcuje vzhlad.
 import type { BoardDto, BoardFaceDto, BoardProfileDto, FlapModuleDto } from "../api/generated/types.gen";
-import { drawFace, drawFaceClocks, hasFaceClock, type FaceGeometry, type FaceStyle } from "./face";
+import { DEFAULT_FLAPS, faceStyle, type BoardDesign } from "./design";
+import { drawFace, drawFaceClocks, hasFaceClock, type FaceGeometry } from "./face";
+import { drawFrame } from "./surface";
 
 /** Vyska modulu (riadku) v bodoch platna pri mierke 1. */
 export const FLAP_ROW = 34;
@@ -22,15 +24,10 @@ export const FLAP_UNIT = CHAR / 8;
 /** Farba listu (kluce ako FlapColors v jadre). */
 export type FlapColor = "black" | "red" | "yellow" | "white";
 
-/** Farby listu: horna a dolna polovica a text. */
-export const FLAP_COLORS: Record<FlapColor, { top: string; bottom: string; text: string }> = {
-  black: { top: "#262626", bottom: "#1d1d1d", text: "#f4f4f2" },
-  red: { top: "#c83838", bottom: "#ba3333", text: "#ffffff" },
-  yellow: { top: "#f6dc3c", bottom: "#efcf1f", text: "#151515" },
-  white: { top: "#f3f3ef", bottom: "#e3e3de", text: "#1b1b1b" },
-};
+/** Farby listov v poradi pre obsluhu. */
+export const FLAP_COLOR_KEYS: FlapColor[] = ["black", "red", "yellow", "white"];
 
-const isColor = (value: string | undefined): value is FlapColor => value !== undefined && value in FLAP_COLORS;
+const isColor = (value: string | undefined): value is FlapColor => value !== undefined && (FLAP_COLOR_KEYS as string[]).includes(value);
 
 export interface FlapCell {
   /** Kluc bunky (riadok a pozicia) - na zistenie zmeny a animaciu otacania. */
@@ -113,11 +110,11 @@ function moduleChars(profile: BoardProfileDto, module: FlapModuleDto): number {
   return Math.min(MAX_CHARS, Math.max(module.span, longest));
 }
 
-/** Rozlozenie tabule: moduly kazdeho riadku s polohou, textom a farbou listu; okolo modulov miesto pre celo. */
-export function layoutFlaps(board: BoardDto, face: BoardFaceDto | null = null): FlapLayout {
+/** Rozlozenie tabule: moduly kazdeho riadku s polohou, textom a farbou listu; okolo modulov miesto pre celo, okolo neho ram. */
+export function layoutFlaps(board: BoardDto, face: BoardFaceDto | null = null, frame = 0): FlapLayout {
   const margin = face?.margin ?? { left: 0, top: 0, right: 0, bottom: 0 };
-  const left = margin.left * FLAP_UNIT;
-  const top = margin.top * FLAP_UNIT;
+  const left = frame + margin.left * FLAP_UNIT;
+  const top = frame + margin.top * FLAP_UNIT;
   const profile = board.profile;
   const codes = new Map((board.display.flapRows ?? []).map((r) => [r.row, r.codes]));
   const rowCount = Math.max(profile.rows, ...[...codes.keys()].map((r) => r + 1));
@@ -144,7 +141,7 @@ export function layoutFlaps(board: BoardDto, face: BoardFaceDto | null = null): 
     rows.push({ y: top + PAD + row * (FLAP_ROW + ROW_GAP), cells });
   }
   const inner = { w: Math.max(width, 2 * PAD + CHAR), h: 2 * PAD + rowCount * FLAP_ROW + Math.max(0, rowCount - 1) * ROW_GAP };
-  const total = { w: left + inner.w + margin.right * FLAP_UNIT, h: top + inner.h + margin.bottom * FLAP_UNIT };
+  const total = { w: left + inner.w + margin.right * FLAP_UNIT + frame, h: top + inner.h + margin.bottom * FLAP_UNIT + frame };
   const matrix = { x: left + PAD, y: top + PAD, w: inner.w - 2 * PAD, h: inner.h - 2 * PAD };
   return {
     width: total.w,
@@ -152,29 +149,12 @@ export function layoutFlaps(board: BoardDto, face: BoardFaceDto | null = null): 
     rows,
     geometry: {
       unit: FLAP_UNIT,
-      face: { x: 0, y: 0, w: total.w, h: total.h },
+      face: { x: frame, y: frame, w: total.w - 2 * frame, h: total.h - 2 * frame },
       matrix,
       rows: rows.map((r) => ({ x: matrix.x, y: r.y, w: matrix.w, h: FLAP_ROW })),
     },
   };
 }
-
-const COLORS = {
-  frame: "#dcdcd8",
-  row: "#0d0d0d",
-  unknown: "#f2c14e",
-  split: "rgba(0, 0, 0, 0.55)",
-};
-
-/** Potlac cela listovej tabule: tmave texty na svetlom plechu, pasy a panely o odtien tmavsie. */
-const FACE_STYLE: FaceStyle = {
-  font: "Arial, Helvetica, sans-serif",
-  bold: true,
-  colors: { text: "#1d1f22", band: "#c6c7c2", panel: "#c6c7c2", plate: COLORS.frame, accent: "#c83838" },
-  clockFont: "Arial, Helvetica, sans-serif",
-  clockColor: "#f4f4f2",
-  clockBackground: "#1d1d1d",
-};
 
 /** Celo listovej tabule s hodnotami premennych a casom hodin. */
 export interface FlapFace {
@@ -183,34 +163,39 @@ export interface FlapFace {
   time: Date;
 }
 
-/** Pismo listu v danej vyske. */
-const flapFont = (size: number) => `600 ${size}px "Arial Narrow", "Roboto Condensed", "Liberation Sans Narrow", Arial, sans-serif`;
 const FONT_SIZE = Math.round(FLAP_ROW * 0.6);
 
 /**
- * Nakresli tabulu v mierke; flip(kluc) vrati 0-1 pre modul, ktory sa prave otaca (vyska textu), null = stoji.
+ * Nakresli tabulu v mierke podla vzhladu; flip(kluc) vrati 0-1 pre modul, ktory sa prave otaca (vyska textu), null = stoji.
  */
 export function drawFlaps(
   ctx: CanvasRenderingContext2D,
   layout: FlapLayout,
   scale: number,
+  design: BoardDesign,
   flip: (key: string) => number | null = () => null,
   face: FlapFace | null = null,
 ) {
+  const material = design.flaps ?? DEFAULT_FLAPS;
+  const flapFont = (size: number) => `600 ${size}px ${material.font}`;
+  const style = faceStyle(design);
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
-  ctx.fillStyle = COLORS.frame;
-  ctx.fillRect(0, 0, layout.width, layout.height);
-  if (face) drawFace(ctx, face.face, layout.geometry, FACE_STYLE, face.values);
+  ctx.clearRect(0, 0, layout.width, layout.height);
+  drawFrame(ctx, layout.width, layout.height, design.frame, 1);
+  const inner = layout.geometry.face;
+  ctx.fillStyle = design.plate ?? design.background;
+  ctx.fillRect(inner.x, inner.y, inner.w, inner.h);
+  if (face) drawFace(ctx, face.face, layout.geometry, style, face.values);
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
 
   const { matrix } = layout.geometry;
   for (const row of layout.rows) {
-    ctx.fillStyle = COLORS.row;
+    ctx.fillStyle = material.row;
     ctx.fillRect(matrix.x - PAD / 2, row.y - 2, matrix.w + PAD, FLAP_ROW + 4);
     for (const cell of row.cells) {
       const half = FLAP_ROW / 2;
-      const palette = FLAP_COLORS[cell.color];
+      const palette = material.colors[cell.color] ?? DEFAULT_FLAPS.colors[cell.color];
       ctx.fillStyle = palette.top;
       ctx.fillRect(cell.x, row.y, cell.width, half);
       ctx.fillStyle = palette.bottom;
@@ -229,16 +214,18 @@ export function drawFlaps(
         const room = cell.width - (cell.narrow ? 4 : 2 * INNER);
         const measured = ctx.measureText(cell.label).width;
         if (measured > room) ctx.font = flapFont(Math.max(Math.round(FONT_SIZE * 0.4), Math.floor((FONT_SIZE * room) / measured)));
-        ctx.fillStyle = cell.unknown ? COLORS.unknown : palette.text;
+        ctx.fillStyle = cell.unknown ? material.unknown : palette.text;
         ctx.textAlign = cell.narrow ? "center" : "left";
         ctx.fillText(cell.label, cell.narrow ? cell.x + cell.width / 2 : cell.x + INNER, 1);
         ctx.restore();
       }
 
       // stred listu - hrana, kde sa list preklapa
-      ctx.fillStyle = COLORS.split;
+      ctx.fillStyle = material.split;
+      ctx.globalAlpha = 0.55;
       ctx.fillRect(cell.x, row.y + half - 0.5, cell.width, 1);
+      ctx.globalAlpha = 1;
     }
   }
-  if (face && hasFaceClock(face.face)) drawFaceClocks(ctx, face.face, layout.geometry, FACE_STYLE, face.time);
+  if (face && hasFaceClock(face.face)) drawFaceClocks(ctx, face.face, layout.geometry, style, face.time);
 }

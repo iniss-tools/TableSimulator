@@ -3,6 +3,7 @@ import type { BoardFaceDto, FaceElementDto } from "../api/generated/types.gen";
 import {
   anchorBox,
   clockText,
+  dotText,
   faceVariables,
   headerFace,
   NEW_ELEMENT,
@@ -12,10 +13,11 @@ import {
   substitute,
   textHeight,
   textLines,
+  textLook,
   type FaceGeometry,
 } from "./face";
 import { ledLayout } from "./led";
-import { DEFAULT_DESIGN } from "./design";
+import { DEFAULT_DESIGN, faceStyle } from "./design";
 
 const el = (patch: Partial<FaceElementDto>): FaceElementDto => ({ ...NEW_ELEMENT, ...patch });
 
@@ -38,6 +40,7 @@ const face = (elements: FaceElementDto[], patch: Partial<BoardFaceDto> = {}): Bo
   rowGap: null,
   rowGroup: 0,
   groupGap: 0,
+  moduleWidth: 0,
   elements,
   ...patch,
 });
@@ -117,5 +120,26 @@ describe("celo tabule", () => {
     expect(withFace.geometry.matrix).toEqual({ x: (1 + 5) * 2, y: (1 + 3) * 2, w: 20, h: (6 + 4) * 2 });
     expect(withFace.geometry.rows.map((r) => r.y)).toEqual([8, 12, 24]);
     expect(withFace.width).toBe(2 * 4 + (2 + 5 + 10) * 2);
+  });
+
+  test("styl textu: prvok > pomenovany styl vzhladu > texty cela", () => {
+    const style = faceStyle({
+      ...DEFAULT_DESIGN,
+      header: { ...DEFAULT_DESIGN.header, color: "#ffffff", bold: true, styles: { label: { color: "#cccccc", font: "Mono", bold: false } } },
+    });
+    expect(textLook(style, el({ style: "label" }))).toEqual({ font: "Mono", bold: false, color: "#cccccc" });
+    expect(textLook(style, el({ style: "label", bold: true, color: "accent" }))).toEqual({ font: "Mono", bold: true, color: DEFAULT_DESIGN.header.clockColor });
+    expect(textLook(style, el({ style: "title" }))).toEqual({ font: DEFAULT_DESIGN.header.font, bold: true, color: "#ffffff" });
+  });
+
+  test("hodiny bodmi: cislice pevnej sirky, dvojbodka uzsia", () => {
+    const dots = dotText("12:34", 10)!;
+    expect(dots.height).toBe(10);
+    const digit = dotText("1", 10)!.width;
+    const colon = dotText(":", 10)!.width;
+    expect(colon).toBeLessThan(digit);
+    expect(dots.width).toBe(4 * digit + colon);
+    expect(dots.lit.some((v) => v === 1)).toBe(true);
+    expect(dotText("1", 3)).toBeNull();
   });
 });

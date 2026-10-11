@@ -17,6 +17,7 @@ public static partial class RequestMapper
             RowGap = face.RowGap,
             RowGroup = face.RowGroup,
             GroupGap = face.GroupGap,
+            ModuleWidth = face.ModuleWidth,
             Elements = face.Elements.Select(ToElement).ToArray()
         };
     }
@@ -67,6 +68,7 @@ public static partial class RequestMapper
             Size = element.Size,
             Size2 = element.Size2,
             Bold = element.Bold,
+            Style = element.Style.Trim(),
             Color = element.Color.Trim(),
             Fill = element.Fill.Trim(),
             Border = element.Border,
@@ -79,7 +81,8 @@ public static partial class RequestMapper
                 Contracts.Faces.FaceClockFormat.HourMinutePadded => Core.Boards.FaceClockFormat.HourMinutePadded,
                 Contracts.Faces.FaceClockFormat.WithSeconds => Core.Boards.FaceClockFormat.WithSeconds,
                 _ => throw new ArgumentOutOfRangeException(nameof(element), element.Format, null)
-            }
+            },
+            Render = element.Render == Contracts.Faces.FaceRender.Display ? Core.Boards.FaceRender.Display : Core.Boards.FaceRender.Text
         };
     }
 }

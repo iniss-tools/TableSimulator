@@ -4673,6 +4673,7 @@
           "rowGap",
           "rowGroup",
           "groupGap",
+          "moduleWidth",
           "elements"
         ],
         "type": "object",
@@ -4701,6 +4702,10 @@
             "format": "int32"
           },
           "groupGap": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "moduleWidth": {
             "type": "integer",
             "format": "int32"
           },
@@ -5195,11 +5200,62 @@
           }
         }
       },
+      "DesignFlapColorDto": {
+        "required": [
+          "top",
+          "bottom",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "top": {
+            "type": "string"
+          },
+          "bottom": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "DesignFlapsDto": {
+        "required": [
+          "colors",
+          "row",
+          "split",
+          "unknown",
+          "font"
+        ],
+        "type": "object",
+        "properties": {
+          "colors": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DesignFlapColorDto"
+            }
+          },
+          "row": {
+            "type": "string"
+          },
+          "split": {
+            "type": "string"
+          },
+          "unknown": {
+            "type": "string"
+          },
+          "font": {
+            "type": "string"
+          }
+        }
+      },
       "DesignFrameDto": {
         "required": [
           "width",
           "color",
-          "radius"
+          "radius",
+          "style",
+          "badge"
         ],
         "type": "object",
         "properties": {
@@ -5213,8 +5269,22 @@
           "radius": {
             "type": "number",
             "format": "double"
+          },
+          "style": {
+            "$ref": "#/components/schemas/DesignFrameStyle"
+          },
+          "badge": {
+            "type": "string",
+            "default": ""
           }
         }
+      },
+      "DesignFrameStyle": {
+        "enum": [
+          "flat",
+          "metal"
+        ],
+        "default": "flat"
       },
       "DesignHeaderDto": {
         "required": [
@@ -5224,7 +5294,9 @@
           "bold",
           "clockColor",
           "clockBackground",
-          "clockFont"
+          "clockFont",
+          "panel",
+          "styles"
         ],
         "type": "object",
         "properties": {
@@ -5248,6 +5320,21 @@
           },
           "clockFont": {
             "type": "string"
+          },
+          "panel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "styles": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DesignTextStyleDto"
+            }
           }
         }
       },
@@ -5278,12 +5365,59 @@
           }
         }
       },
+      "DesignSeamDto": {
+        "required": [
+          "color",
+          "width"
+        ],
+        "type": "object",
+        "properties": {
+          "color": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "width": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "DesignShape": {
         "enum": [
           "circle",
           "square",
           "rounded"
         ]
+      },
+      "DesignTextStyleDto": {
+        "required": [
+          "color",
+          "font",
+          "bold"
+        ],
+        "type": "object",
+        "properties": {
+          "color": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "font": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bold": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        }
       },
       "DisplayDto": {
         "required": [
@@ -5482,13 +5616,15 @@
           "size",
           "size2",
           "bold",
+          "style",
           "color",
           "fill",
           "border",
           "radius",
           "maxWidth",
           "spacing",
-          "format"
+          "format",
+          "render"
         ],
         "type": "object",
         "properties": {
@@ -5541,6 +5677,9 @@
               "boolean"
             ]
           },
+          "style": {
+            "type": "string"
+          },
           "color": {
             "type": "string"
           },
@@ -5565,6 +5704,9 @@
           },
           "format": {
             "$ref": "#/components/schemas/FaceClockFormat"
+          },
+          "render": {
+            "$ref": "#/components/schemas/FaceRender"
           }
         }
       },
@@ -5605,6 +5747,12 @@
             "default": 0
           }
         }
+      },
+      "FaceRender": {
+        "enum": [
+          "text",
+          "display"
+        ]
       },
       "FaceVAlign": {
         "enum": [
@@ -7608,11 +7756,15 @@
           "colors",
           "glow",
           "background",
+          "plate",
+          "moduleMargin",
           "rowGap",
           "padding",
           "frame",
           "gapColor",
-          "header"
+          "seam",
+          "header",
+          "flaps"
         ],
         "type": "object",
         "properties": {
@@ -7652,6 +7804,16 @@
           "background": {
             "type": "string"
           },
+          "plate": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "moduleMargin": {
+            "type": "number",
+            "format": "double"
+          },
           "rowGap": {
             "type": "number",
             "format": "double"
@@ -7669,8 +7831,21 @@
               "string"
             ]
           },
+          "seam": {
+            "$ref": "#/components/schemas/DesignSeamDto"
+          },
           "header": {
             "$ref": "#/components/schemas/DesignHeaderDto"
+          },
+          "flaps": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DesignFlapsDto"
+              }
+            ]
           }
         }
       },

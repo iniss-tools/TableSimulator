@@ -17,6 +17,7 @@ public static partial class DtoMapper
             RowGap = face.RowGap,
             RowGroup = face.RowGroup,
             GroupGap = face.GroupGap,
+            ModuleWidth = face.ModuleWidth,
             Elements = face.Elements.Select(ToDto).ToArray()
         };
     }
@@ -67,6 +68,7 @@ public static partial class DtoMapper
             Size = element.Size,
             Size2 = element.Size2,
             Bold = element.Bold,
+            Style = element.Style,
             Color = element.Color,
             Fill = element.Fill,
             Border = element.Border,
@@ -79,7 +81,8 @@ public static partial class DtoMapper
                 Core.Boards.FaceClockFormat.HourMinutePadded => Contracts.Faces.FaceClockFormat.HourMinutePadded,
                 Core.Boards.FaceClockFormat.WithSeconds => Contracts.Faces.FaceClockFormat.WithSeconds,
                 _ => throw new ArgumentOutOfRangeException(nameof(element), element.Format, null)
-            }
+            },
+            Render = element.Render == Core.Boards.FaceRender.Display ? Contracts.Faces.FaceRender.Display : Contracts.Faces.FaceRender.Text
         };
     }
 }

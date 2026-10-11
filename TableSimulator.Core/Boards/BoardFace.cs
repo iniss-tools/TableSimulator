@@ -28,6 +28,9 @@ public sealed record BoardFace
     /// <summary>Medzera navyse medzi skupinami riadkov.</summary>
     public int GroupGap { get; init; }
 
+    /// <summary>Sirka modulu v bodoch - na hraniciach modulov su svy (farbu ma vzhlad); 0 = bez svov.</summary>
+    public int ModuleWidth { get; init; }
+
     /// <summary>Prvky cela v poradi kreslenia.</summary>
     public IReadOnlyList<FaceElement> Elements { get; init; } = [];
 }
@@ -86,6 +89,9 @@ public sealed record FaceElement
     /// <summary>Tucne pismo; null = podla vzhladu.</summary>
     public bool? Bold { get; init; }
 
+    /// <summary>Pomenovany styl textu zo vzhladu (<c>title</c>, <c>label</c>, <c>number</c>); prazdny = ostatne texty cela.</summary>
+    public string Style { get; init; } = "";
+
     /// <summary>Farba textu, cislic hodin alebo okraja plochy: <c>#rrggbb</c> alebo nazov farby vzhladu; prazdna = predvolena.</summary>
     public string Color { get; init; } = "";
 
@@ -106,6 +112,9 @@ public sealed record FaceElement
 
     /// <summary>Format hodin.</summary>
     public FaceClockFormat Format { get; init; } = FaceClockFormat.HourMinutePadded;
+
+    /// <summary>Hodiny pismom prehliadaca, alebo bodmi ako matica tabule.</summary>
+    public FaceRender Render { get; init; } = FaceRender.Text;
 }
 
 /// <summary>Druh prvku cela.</summary>
@@ -170,6 +179,16 @@ public enum FaceVAlign
 
     /// <summary>Spodny okraj prvku od spodneho okraja ukotvenia.</summary>
     [JsonStringEnumMemberName("bottom")] Bottom
+}
+
+/// <summary>Ako sa kreslia hodiny cela.</summary>
+public enum FaceRender
+{
+    /// <summary>Pismom prehliadaca.</summary>
+    [JsonStringEnumMemberName("text")] Text,
+
+    /// <summary>Bodmi ako matica tabule (LED, LCD) - samostatny maly modul.</summary>
+    [JsonStringEnumMemberName("display")] Display
 }
 
 /// <summary>Format hodin cela.</summary>

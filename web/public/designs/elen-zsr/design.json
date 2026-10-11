@@ -1,0 +1,34 @@
+{
+  "name": "ELEN – moduly na modrom čele, kovový rám",
+  "renderer": "led-matrix",
+  "pitch": 5,
+  "dot": 0.8,
+  "shape": "circle",
+  "off": "#2e2622",
+  "colors": { "0": "#ffa000", "1": "#ff3b22", "2": "#3dff4a", "3": "#ffb000", "mono": "#ffa000" },
+  "glow": 0.55,
+  "background": "#242424",
+  "plate": "#0e1630",
+  "moduleMargin": 0.5,
+  "rowGap": 3,
+  "padding": 2,
+  "frame": { "width": 8, "color": "#b4b8bd", "radius": 4, "style": "metal", "badge": "ELEN" },
+  "gapColor": null,
+  "seam": { "color": null, "width": 0.5 },
+  "header": {
+    "background": "#18306a",
+    "color": "#ffffff",
+    "font": "Arial, Helvetica, sans-serif",
+    "bold": true,
+    "clockColor": "#ffa000",
+    "clockBackground": "#000000",
+    "clockFont": "Tahoma, Verdana, sans-serif",
+    "panel": "#0e1630",
+    "styles": {
+      "title": { "color": null, "font": null, "bold": true },
+      "label": { "color": "#e6e8ee", "font": null, "bold": true },
+      "number": { "color": null, "font": null, "bold": true }
+    }
+  },
+  "flaps": null
+}

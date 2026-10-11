@@ -6,12 +6,13 @@ import { FormField } from "@/components/common/form-field";
 import { OptionSelect } from "@/components/common/option-select";
 import { FieldDescription } from "@/components/ui/field";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FLAP_COLORS, type FlapColor } from "@/render/flaps";
+import { DEFAULT_FLAPS } from "@/render/design";
+import { FLAP_COLOR_KEYS, type FlapColor } from "@/render/flaps";
 import { t } from "@/i18n";
 
 /** Bez nastavenej farby - podla textu (* = cerveny). */
 const DEFAULT = "";
-const COLORS = Object.keys(FLAP_COLORS) as FlapColor[];
+const COLORS = FLAP_COLOR_KEYS;
 
 export function FlapListsEditor({ flaps, onChange }: { flaps: FlapProfileDto; onChange: (flaps: FlapProfileDto) => void }) {
   const names = Object.keys(flaps.lists).sort((a, b) => a.localeCompare(b));
@@ -65,7 +66,7 @@ export function FlapListsEditor({ flaps, onChange }: { flaps: FlapProfileDto; on
             {entries.map(([code, text]) => {
               const set = colors[code] as FlapColor | undefined;
               const shown = set ?? (text.startsWith("*") ? "red" : "black");
-              const palette = FLAP_COLORS[shown];
+              const palette = DEFAULT_FLAPS.colors[shown];
               return (
                 <TableRow key={code}>
                   <TableCell className="font-mono">{code === " " ? "␠" : code}</TableCell>

@@ -1,0 +1,34 @@
+{
+  "name": "Elektročas LCD – modré moduly na čiernom čele",
+  "renderer": "led-matrix",
+  "pitch": 4,
+  "dot": 0.92,
+  "shape": "square",
+  "off": "#1d45d2",
+  "colors": { "0": "#f1f4ff", "1": "#e8302a", "2": "#f1f4ff", "3": "#f1f4ff", "mono": "#f1f4ff" },
+  "glow": 0.08,
+  "background": "#1a40cc",
+  "plate": "#111214",
+  "moduleMargin": 2,
+  "rowGap": 2,
+  "padding": 3,
+  "frame": { "width": 10, "color": "#1c1d20", "radius": 4, "style": "flat", "badge": "" },
+  "gapColor": null,
+  "seam": { "color": "#0a0f24", "width": 0.6 },
+  "header": {
+    "background": "#1a40cc",
+    "color": "#ffffff",
+    "font": "Arial, Helvetica, sans-serif",
+    "bold": true,
+    "clockColor": "#f1f4ff",
+    "clockBackground": "#0e2a8c",
+    "clockFont": "Tahoma, Verdana, sans-serif",
+    "panel": "#1a40cc",
+    "styles": {
+      "title": { "color": "#f4f4f4", "font": "\"Century Gothic\", \"Trebuchet MS\", Arial, sans-serif", "bold": false },
+      "label": { "color": "#d9dbe0", "font": null, "bold": false },
+      "number": { "color": null, "font": null, "bold": true }
+    }
+  },
+  "flaps": null
+}

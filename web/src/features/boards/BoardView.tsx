@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getFacesOptions, useConnection, type BoardFaceDto, type BoardDto as Board } from "@/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { DEFAULT_DESIGN, defaultDesignId, loadDesign, type LedDesign } from "@/render/design";
+import { DEFAULT_DESIGN, defaultDesignId, designForFamily, loadDesign, type BoardDesign } from "@/render/design";
 import { ElenGlyphSource, loadFontSet, type ElenFontSet, type GlyphSource } from "@/render/fonts";
 import { fallbackGlyphSource } from "@/render/pixel-fonts";
 import { CHAR_WIDTH } from "@/render/chars";
@@ -48,7 +48,7 @@ function snapshotScale(width: number): number {
 const fallbackFor = (b: Board) => fallbackGlyphSource(b.display.family, b.profile.rowHeight, CHAR_WIDTH);
 
 /** Nakresli obsah tabule v case t (ms) - striedanie, blikanie, posun aj hodiny ako v danej chvili. */
-function drawBoard(renderer: LedRenderer, b: Board, d: LedDesign, face: BoardFaceDto | null, glyphs: GlyphSource, scale: number, t: number) {
+function drawBoard(renderer: LedRenderer, b: Board, d: BoardDesign, face: BoardFaceDto | null, glyphs: GlyphSource, scale: number, t: number) {
   const frame = rasterize(b, glyphs, t);
   renderer.render(
     frame,
@@ -80,7 +80,7 @@ interface Props {
   fit?: "width" | "contain";
   className?: string;
   /** Vzhlad namiesto vzhladu tabule (nahlad v editore vzhladov). */
-  design?: LedDesign;
+  design?: BoardDesign;
   /** Celo namiesto cela tabule (nahlad v editore ciel); null = bez cela. */
   face?: BoardFaceDto | null;
   ref?: Ref<BoardViewHandle>;
@@ -101,7 +101,7 @@ function LedBoardView({ board, fit = "width", className, design: override, face:
   const face = faceOverride !== undefined ? faceOverride : resolved;
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const [loaded, setDesign] = useState<LedDesign>(DEFAULT_DESIGN);
+  const [loaded, setDesign] = useState<BoardDesign>(DEFAULT_DESIGN);
   const design = override ?? loaded;
   const [space, setSpace] = useState({ width: 0, height: 0 });
   // co uz je nacitane - prvy raz sa kresli az so spravnym vzhladom a pismom (bez mihnutia nahradnych)
@@ -110,19 +110,21 @@ function LedBoardView({ board, fit = "width", className, design: override, face:
   const [drawn, setDrawn] = useState(false);
   const firstDone = useRef(false);
 
-  const designId = board.design || defaultDesignId(board.display.family, board.manufacturer);
+  const family = board.display.family;
+  const designId = board.design || defaultDesignId(family, board.manufacturer);
   const designKey = `${designId}|${designVersion}`;
   useEffect(() => {
     let live = true;
     void loadDesign(designId, designVersion).then((d) => {
       if (!live) return;
-      setDesign(d);
+      // vzhlad listovej tabule na tabuli bodov (a naopak) - predvoleny
+      setDesign(designForFamily(d, family));
       setLoadedDesign(`${designId}|${designVersion}`);
     });
     return () => {
       live = false;
     };
-  }, [designId, designVersion]);
+  }, [designId, designVersion, family]);
 
   const fontFile = board.profile.fontFile;
   // pismo patri k suboru z profilu - po zmene suboru sa do nacitania noveho kresli nahradnym

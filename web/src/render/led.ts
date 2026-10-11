@@ -1,9 +1,10 @@
 // Vykreslenie bodov tabule ako LED matice podla vzhladu, v okne cela tabule. Prekresluju sa len body, ktore sa
 // zmenili; celo (plochy a texty) sa kresli pri celom prekresleni, jeho hodiny pri kazdom.
 import type { BoardFaceDto } from "../api/generated/types.gen";
-import { faceStyle, type LedDesign } from "./design";
-import { drawFace, drawFaceClocks, hasFaceClock, rowOffset, rowSpacing, type FaceGeometry } from "./face";
+import { faceStyle, type BoardDesign } from "./design";
+import { drawFace, drawFaceClocks, hasFaceClock, rowOffset, rowSpacing, type Box, type DisplayClock, type DotText, type FaceGeometry } from "./face";
 import type { DotFrame } from "./rasterize";
+import { drawFrame } from "./surface";
 
 /** Co okrem bodov ovplyvnuje kreslenie. */
 export interface LedOptions {
@@ -26,7 +27,7 @@ export interface LedOptions {
 }
 
 /** Rozlozenie tabule v CSS px pri mierke 1: celkovy rozmer a geometria cela (od vnutorneho okraja ramu). */
-export function ledLayout(frame: { width: number; height: number }, design: LedDesign, rowHeight: number, face: BoardFaceDto | null) {
+export function ledLayout(frame: { width: number; height: number }, design: BoardDesign, rowHeight: number, face: BoardFaceDto | null) {
   const rows = Math.max(1, Math.ceil(frame.height / Math.max(1, rowHeight)));
   const p = design.pitch;
   const pad = design.padding;
@@ -42,11 +43,11 @@ export function ledLayout(frame: { width: number; height: number }, design: LedD
     matrix,
     rows: Array.from({ length: rows }, (_, r) => ({ x: matrix.x, y: matrix.y + (r * rowHeight + offset(r)) * p, w: matrix.w, h: rowHeight * p })),
   };
-  return { width: 2 * design.frame.width + inner.w, height: 2 * design.frame.width + inner.h, geometry, offset };
+  return { width: 2 * design.frame.width + inner.w, height: 2 * design.frame.width + inner.h, geometry, offset, spacing };
 }
 
 /** Rozmer tabule v CSS px pri mierke 1. */
-export function ledSize(frame: { width: number; height: number }, design: LedDesign, rowHeight: number, face: BoardFaceDto | null = null) {
+export function ledSize(frame: { width: number; height: number }, design: BoardDesign, rowHeight: number, face: BoardFaceDto | null = null) {
   const { width, height } = ledLayout(frame, design, rowHeight, face);
   return { width, height };
 }
@@ -54,7 +55,7 @@ export function ledSize(frame: { width: number; height: number }, design: LedDes
 /** Index spritu: 1 cervena, 2 zelena, 3 zlta, 4 bez farby, 5 jednofarebny. */
 const MONO = 5;
 
-function sprite(size: number, design: LedDesign, color: string, glow: number): HTMLCanvasElement {
+function sprite(size: number, design: BoardDesign, color: string, glow: number): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = Math.max(1, size);
   const ctx = canvas.getContext("2d")!;
@@ -113,17 +114,35 @@ function drawOffRows(ctx: CanvasRenderingContext2D, off: HTMLCanvasElement, xs: 
   }
 }
 
+/**
+ * Moduly pod bodmi: riadky (alebo skupiny riadkov z cela) s okrajom - zvislo od-do v px platna. Vidno ich, ked ma
+ * plech inu farbu nez pozadie, a svy medzi modulmi idu cez ne.
+ */
+function moduleSpans(ys: Int32Array, hs: Int32Array, rowHeight: number, group: number, margin: number): [number, number][] {
+  const rows = Math.ceil(hs.length / Math.max(1, rowHeight));
+  const size = group > 0 ? group : 1;
+  const spans: [number, number][] = [];
+  for (let first = 0; first < rows; first += size) {
+    const top = ys[first * rowHeight];
+    const last = Math.min(hs.length, (first + size) * rowHeight) - 1;
+    spans.push([Math.round(top - margin), Math.round(ys[last] + hs[last] + margin)]);
+  }
+  return spans;
+}
+
 export class LedRenderer {
   private key = "";
   private prev: Uint8Array | null = null;
   private sprites: { off: HTMLCanvasElement | null; lit: Record<number, HTMLCanvasElement> } | null = null;
+  /** Sprity rozsvietenych bodov hodin podla farby (velkost bunky ako matica). */
+  private clockSprites = new Map<string, HTMLCanvasElement>();
 
   constructor(private readonly canvas: HTMLCanvasElement) {}
 
   /**
    * Vykresli tabulu v mierke scale (CSS px × devicePixelRatio).
    */
-  render(frame: DotFrame, design: LedDesign, options: LedOptions, scale: number) {
+  render(frame: DotFrame, design: BoardDesign, options: LedOptions, scale: number) {
     const { rowHeight, face } = options;
     const layout = ledLayout(frame, design, rowHeight, face);
     const g = layout.geometry;
@@ -139,6 +158,7 @@ export class LedRenderer {
     const row = (y: number) => Math.floor(y / Math.max(1, rowHeight));
     const full = key !== this.key || !this.prev || this.prev.length !== frame.color.length;
     const style = faceStyle(design);
+    const plate = design.plate ?? design.background;
 
     // bunky su prichytene na cele pixely a neprekryvaju sa - prekreslenie jednej nezasiahne susednu
     const xs = new Int32Array(frame.width + 1);
@@ -148,10 +168,15 @@ export class LedRenderer {
     const hs = new Int32Array(frame.height);
     for (let y = 0; y < frame.height; y++) hs[y] = Math.max(1, Math.round(originY + (y + 1) * p + layout.offset(row(y)) * p) - ys[y]);
 
+    const spans = moduleSpans(ys, hs, rowHeight, layout.spacing.group, design.moduleMargin * p);
+    const moduleLeft = Math.round(originX - design.padding * p);
+    const moduleWidth = Math.round((frame.width + 2 * design.padding) * p);
+
     if (full) {
       this.key = key;
       this.canvas.width = cw;
       this.canvas.height = ch;
+      this.clockSprites.clear();
       const cell = Math.max(1, Math.round(p));
       const color = (c: string) => design.colors[c] ?? "#fff";
       this.sprites = {
@@ -164,13 +189,14 @@ export class LedRenderer {
           [MONO]: sprite(cell, design, design.colors.mono ?? color("0"), design.glow),
         },
       };
-      // ram, pozadie a vypln medzi riadkami
-      ctx.fillStyle = design.frame.color;
-      ctx.beginPath();
-      ctx.roundRect(0, 0, cw, ch, design.frame.radius * scale);
-      ctx.fill();
-      ctx.fillStyle = design.background;
+      // ram, plech, moduly pod bodmi a vypln medzi riadkami
+      drawFrame(ctx, cw, ch, design.frame, scale);
+      ctx.fillStyle = plate;
       ctx.fillRect(fw, fw, cw - 2 * fw, ch - 2 * fw);
+      if (plate !== design.background) {
+        ctx.fillStyle = design.background;
+        for (const [top, bottom] of spans) ctx.fillRect(moduleLeft, top, moduleWidth, bottom - top);
+      }
       // vypln medzier medzi riadkami - v sirke matice s okrajom, celo vedla nej ju prekryje
       if (design.gapColor) {
         ctx.fillStyle = design.gapColor;
@@ -187,7 +213,11 @@ export class LedRenderer {
       this.prev = new Uint8Array(frame.color.length);
     }
 
-    if (face && hasFaceClock(face)) this.inFace(ctx, fw, scale, () => drawFaceClocks(ctx, face, g, style, options.time));
+    if (face && hasFaceClock(face)) {
+      const alpha = levels[3];
+      const display: DisplayClock = (box, dots, color) => this.drawDots(ctx, design, box, dots, color ?? design.colors["3"] ?? "#fff", g.unit, p, alpha);
+      this.inFace(ctx, fw, scale, () => drawFaceClocks(ctx, face, g, style, options.time, display));
+    }
 
     const sprites = this.sprites!;
     const prev = this.prev!;
@@ -220,6 +250,36 @@ export class LedRenderer {
         }
       }
     }
+
+    // svy medzi modulmi cez moduly - po bodoch, aby ich prekreslene body neprekryli
+    const every = face?.moduleWidth ?? 0;
+    if (design.seam.color && every > 0) {
+      ctx.fillStyle = design.seam.color;
+      const width = Math.max(1, design.seam.width * p);
+      for (let x = every; x < frame.width; x += every)
+        for (const [top, bottom] of spans) ctx.fillRect(Math.round(xs[x] - width / 2), top, Math.round(width), bottom - top);
+    }
+  }
+
+  /** Hodiny bodmi v px pri mierke 1: zhasnute body a rozsvietene farbou color. */
+  private drawDots(ctx: CanvasRenderingContext2D, design: BoardDesign, box: Box, dots: DotText, color: string, unit: number, cellPx: number, alpha: number) {
+    let lit = this.clockSprites.get(color);
+    if (!lit) {
+      lit = sprite(Math.max(1, Math.round(cellPx)), design, color, design.glow);
+      this.clockSprites.set(color, lit);
+    }
+    const off = this.sprites?.off ?? null;
+    for (let y = 0; y < dots.height; y++)
+      for (let x = 0; x < dots.width; x++) {
+        const px = box.x + x * unit;
+        const py = box.y + y * unit;
+        if (off) ctx.drawImage(off, px, py, unit, unit);
+        if (alpha > 0 && dots.lit[y * dots.width + x]) {
+          ctx.globalAlpha = alpha;
+          ctx.drawImage(lit, px, py, unit, unit);
+          ctx.globalAlpha = 1;
+        }
+      }
   }
 
   /** Kreslenie cela v px pri mierke 1 od vnutorneho okraja ramu. */

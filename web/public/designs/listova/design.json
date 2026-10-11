@@ -1,0 +1,41 @@
+{
+  "name": "Listová – sivý plech, kovový rám",
+  "renderer": "flaps",
+  "pitch": 5,
+  "dot": 0.8,
+  "shape": "square",
+  "off": null,
+  "colors": { "0": "#ffffff", "1": "#ff3b22", "2": "#3dff4a", "3": "#ffc21a", "mono": "#ffffff" },
+  "glow": 0,
+  "background": "#c9cac6",
+  "plate": null,
+  "moduleMargin": 1,
+  "rowGap": 1,
+  "padding": 3,
+  "frame": { "width": 12, "color": "#a9adb1", "radius": 3, "style": "metal", "badge": "" },
+  "gapColor": null,
+  "seam": { "color": null, "width": 0.5 },
+  "header": {
+    "background": "#b9bab5",
+    "color": "#1d1f22",
+    "font": "Arial, Helvetica, sans-serif",
+    "bold": true,
+    "clockColor": "#f4f4f2",
+    "clockBackground": "#1d1d1d",
+    "clockFont": "Arial, Helvetica, sans-serif",
+    "panel": null,
+    "styles": null
+  },
+  "flaps": {
+    "colors": {
+      "black": { "top": "#262626", "bottom": "#1d1d1d", "text": "#f4f4f2" },
+      "red": { "top": "#c83838", "bottom": "#ba3333", "text": "#ffffff" },
+      "yellow": { "top": "#f6dc3c", "bottom": "#efcf1f", "text": "#151515" },
+      "white": { "top": "#f3f3ef", "bottom": "#e3e3de", "text": "#1b1b1b" }
+    },
+    "row": "#0d0d0d",
+    "split": "#000000",
+    "unknown": "#f2c14e",
+    "font": "\"Arial Narrow\", \"Roboto Condensed\", \"Liberation Sans Narrow\", Arial, sans-serif"
+  }
+}

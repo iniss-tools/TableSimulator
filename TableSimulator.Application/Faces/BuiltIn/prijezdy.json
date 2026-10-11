@@ -4,7 +4,7 @@
   "margin": { "top": 16 },
   "elements": [
     { "kind": "rect", "anchor": "top", "height": -2, "fill": "band" },
-    { "kind": "text", "anchor": "top", "align": "center", "vAlign": "middle", "y": -1, "size": 10, "text": "PŘÍJEZDY / ARRIVALS" },
-    { "kind": "clock", "anchor": "top", "align": "right", "vAlign": "middle", "x": 4, "y": -1, "size": 9 }
+    { "kind": "text", "anchor": "top", "align": "center", "vAlign": "middle", "y": -1, "size": 10, "style": "title", "text": "PŘÍJEZDY / ARRIVALS" },
+    { "kind": "clock", "anchor": "top", "align": "right", "vAlign": "middle", "x": 4, "y": -1, "size": 9, "render": "display" }
   ]
 }

@@ -45,6 +45,9 @@ public sealed record FaceElementDto
     /// <summary>Tucne pismo; null = podla vzhladu.</summary>
     public bool? Bold { get; init; }
 
+    /// <summary>Pomenovany styl textu zo vzhladu (<c>title</c>, <c>label</c>, <c>number</c>); prazdny = ostatne texty cela.</summary>
+    public string Style { get; init; } = "";
+
     /// <summary>Farba textu, cislic hodin alebo okraja plochy: <c>#rrggbb</c> alebo nazov farby vzhladu; prazdna = predvolena.</summary>
     public string Color { get; init; } = "";
 
@@ -65,4 +68,7 @@ public sealed record FaceElementDto
 
     /// <summary>Format hodin.</summary>
     public FaceClockFormat Format { get; init; } = FaceClockFormat.HourMinutePadded;
+
+    /// <summary>Hodiny pismom prehliadaca, alebo bodmi ako matica tabule.</summary>
+    public FaceRender Render { get; init; } = FaceRender.Text;
 }

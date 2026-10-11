@@ -22,6 +22,7 @@ public sealed partial class SetFaceCommandValidator : AbstractValidator<SetFaceC
             RuleFor(c => c.Face.RowGap).InclusiveBetween(0, 200).WithErrorCode(FaceErrors.Rows).When(c => c.Face.RowGap is not null);
             RuleFor(c => c.Face.RowGroup).InclusiveBetween(0, 256).WithErrorCode(FaceErrors.Rows);
             RuleFor(c => c.Face.GroupGap).InclusiveBetween(0, 200).WithErrorCode(FaceErrors.Rows);
+            RuleFor(c => c.Face.ModuleWidth).InclusiveBetween(0, 4096).WithErrorCode(FaceErrors.Margin);
             RuleFor(c => c.Face.Elements).NotNull().Must(e => e.Count <= FaceErrors.MaxElements).WithErrorCode(FaceErrors.Elements);
             RuleForEach(c => c.Face.Elements).Must(IsValidElement).WithErrorCode(FaceErrors.Element).WithMessage("Face element is not valid.");
         });
@@ -34,7 +35,8 @@ public sealed partial class SetFaceCommandValidator : AbstractValidator<SetFaceC
         && (e.Text?.Length ?? 0) <= 500
         && e.Size is >= 1 and <= 400
         && e.Size2 is >= 0 and <= 400
-        && ColorPattern().IsMatch(e.Color ?? "") && ColorPattern().IsMatch(e.Fill ?? "")
+        && ColorPattern().IsMatch(e.Color ?? "") && ColorPattern().IsMatch(e.Fill ?? "") && StylePattern().IsMatch(e.Style ?? "")
+        && Enum.IsDefined(e.Render)
         && e.Border is >= 0 and <= 50
         && e.Radius is >= 0 and <= 200
         && e.MaxWidth is >= 0 and <= MaxDots
@@ -45,4 +47,8 @@ public sealed partial class SetFaceCommandValidator : AbstractValidator<SetFaceC
     /// <summary>Farba <c>#rrggbb</c>, nazov farby vzhladu alebo nic.</summary>
     [GeneratedRegex("^(|#[0-9a-fA-F]{6}|[a-z][a-zA-Z0-9]{0,29})$", RegexOptions.CultureInvariant)]
     private static partial Regex ColorPattern();
+
+    /// <summary>Nazov stylu textu zo vzhladu alebo nic.</summary>
+    [GeneratedRegex("^(|[a-z][a-zA-Z0-9]{0,29})$", RegexOptions.CultureInvariant)]
+    private static partial Regex StylePattern();
 }

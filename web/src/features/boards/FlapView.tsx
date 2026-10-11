@@ -2,8 +2,9 @@
 // chvilu otacaju.
 import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getFacesOptions, type BoardFaceDto, type BoardDto as Board } from "@/api";
+import { getFacesOptions, useConnection, type BoardFaceDto, type BoardDto as Board } from "@/api";
 import { cn } from "@/lib/utils";
+import { DEFAULT_FLAP_DESIGN, defaultDesignId, designForFamily, loadDesign, type BoardDesign } from "@/render/design";
 import { faceValues, hasFaceClock, resolveFace } from "@/render/face";
 import { drawFlaps, layoutFlaps, type FlapFace } from "@/render/flaps";
 import { boardClock } from "@/render/rasterize";
@@ -21,6 +22,8 @@ interface Props {
   className?: string;
   /** Celo namiesto cela tabule (nahlad); null = bez cela. */
   face?: BoardFaceDto | null;
+  /** Vzhlad namiesto vzhladu tabule (nahlad v editore vzhladov). */
+  design?: BoardDesign;
   ref?: Ref<BoardViewHandle>;
 }
 
@@ -29,7 +32,7 @@ function flapFace(face: BoardFaceDto | null, board: Board, t: number): FlapFace 
   return face ? { face, values: faceValues(board), time: boardClock(board, t) } : null;
 }
 
-export function FlapView({ board, fit = "width", className, face: faceOverride, ref }: Props) {
+export function FlapView({ board, fit = "width", className, face: faceOverride, design: designOverride, ref }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [space, setSpace] = useState({ width: 0, height: 0 });
@@ -37,10 +40,24 @@ export function FlapView({ board, fit = "width", className, face: faceOverride, 
   const { face: faceId, header } = board.profile;
   const resolved = useMemo(() => resolveFace(faceId, header, faces), [faceId, header, faces]);
   const face = faceOverride !== undefined ? faceOverride : resolved;
-  const layout = useMemo(() => layoutFlaps(board, face), [board, face]);
-  const latest = useRef({ board, face });
+
+  // vzhlad listovej tabule; vzhlad bodov na nej neplati (predvoleny listovy)
+  const { designVersion } = useConnection();
+  const [loaded, setLoaded] = useState<BoardDesign>(DEFAULT_FLAP_DESIGN);
+  const designId = board.design || defaultDesignId("flaps");
+  useEffect(() => {
+    let live = true;
+    void loadDesign(designId, designVersion).then((d) => live && setLoaded(designForFamily(d, "flaps")));
+    return () => {
+      live = false;
+    };
+  }, [designId, designVersion]);
+  const design = designOverride ?? loaded;
+
+  const layout = useMemo(() => layoutFlaps(board, face, design.frame.width), [board, face, design]);
+  const latest = useRef({ board, face, design });
   useLayoutEffect(() => {
-    latest.current = { board, face };
+    latest.current = { board, face, design };
   });
 
   useEffect(() => {
@@ -63,12 +80,12 @@ export function FlapView({ board, fit = "width", className, face: faceOverride, 
     ref,
     () => ({
       snapshot: () => {
-        const { board: b, face: f } = latest.current;
-        const snapshot = layoutFlaps(b, f);
+        const { board: b, face: f, design: d } = latest.current;
+        const snapshot = layoutFlaps(b, f, d.frame.width);
         const target = document.createElement("canvas");
         target.width = snapshot.width * 2;
         target.height = snapshot.height * 2;
-        drawFlaps(target.getContext("2d")!, snapshot, 2, undefined, flapFace(f, b, Date.now()));
+        drawFlaps(target.getContext("2d")!, snapshot, 2, d, undefined, flapFace(f, b, Date.now()));
         return new Promise<Blob>((resolve, reject) => target.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("PNG"))), "image/png"));
       },
     }),
@@ -105,6 +122,7 @@ export function FlapView({ board, fit = "width", className, face: faceOverride, 
         ctx,
         layout,
         scale,
+        latest.current.design,
         (key) => {
           const begin = flips.current.get(key);
           if (begin === undefined) return null;
@@ -127,7 +145,7 @@ export function FlapView({ board, fit = "width", className, face: faceOverride, 
       cancelAnimationFrame(raf);
       clearInterval(clock);
     };
-  }, [layout, scale, cssScale, rotation, face]);
+  }, [layout, scale, cssScale, rotation, face, design]);
 
   return (
     <div ref={box} className={cn("w-full leading-0", fit === "contain" && "flex h-full items-center justify-center", className)}>

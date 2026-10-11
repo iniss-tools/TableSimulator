@@ -2,6 +2,8 @@
 // na platno v px pri mierke 1 (volajuci nastavi posun a mierku). Maticu - LED, LCD aj listy - kresli jej renderer do
 // okna cela; geometriu (matica a riadky v px) mu dava on. Polohy a rozmery prvkov su v bodoch, unit = px na bod.
 import type { BoardDto, BoardFaceDto, BoardHeaderDto, FaceClockFormat, FaceElementDto } from "../api/generated/types.gen";
+import type { TextStyle } from "./design";
+import { PixelGlyphSource } from "./pixel-fonts";
 
 export interface Box {
   x: number;
@@ -18,11 +20,12 @@ export interface FaceGeometry {
   rows: Box[];
 }
 
-/** Ako cela vyzeraju: pismo a farby podla nazvov (text, band, panel, plate, accent) zo vzhladu tabule. */
+/** Ako cela vyzeraju: pismo, farby podla nazvov (text, band, panel, plate, accent) a styly textov zo vzhladu tabule. */
 export interface FaceStyle {
   font: string;
   bold: boolean;
   colors: Record<string, string>;
+  styles: Record<string, TextStyle>;
   clockFont: string;
   clockColor: string;
   clockBackground: string;
@@ -56,6 +59,7 @@ export const NEW_ELEMENT: FaceElementDto = {
   size: 8,
   size2: 0,
   bold: null,
+  style: "",
   color: "",
   fill: "",
   border: 0,
@@ -63,6 +67,7 @@ export const NEW_ELEMENT: FaceElementDto = {
   maxWidth: 0,
   spacing: 0,
   format: "HH:mm",
+  render: "text",
 };
 
 /** Celo zo starsej hlavicky tabule - zodpoveda BoardFaces.FromHeader na serveri. */
@@ -76,6 +81,7 @@ export function headerFace(header: BoardHeaderDto): BoardFaceDto {
     rowGap: null,
     rowGroup: 0,
     groupGap: 0,
+    moduleWidth: 0,
     elements: [
       element({ kind: "rect", height: header.height, fill: "band" }),
       ...header.texts.map((t) => element({ x: t.x, y: t.y, size: t.height, text: t.text })),
@@ -196,6 +202,16 @@ function resolveColor(style: FaceStyle, value: string, fallback: string | null):
   return value.startsWith("#") ? value : (style.colors[value] ?? fallback);
 }
 
+/** Pismo, hrubka a farba textu: prvok > pomenovany styl zo vzhladu > ostatne texty cela. */
+export function textLook(style: FaceStyle, element: FaceElementDto): { font: string; bold: boolean; color: string } {
+  const named = element.style ? style.styles[element.style] : undefined;
+  return {
+    font: named?.font || style.font,
+    bold: element.bold ?? named?.bold ?? style.bold,
+    color: resolveColor(style, element.color, named?.color ?? style.colors.text) ?? "#fff",
+  };
+}
+
 function setTextStyle(ctx: CanvasRenderingContext2D, size: number, bold: boolean, font: string, spacing: number) {
   ctx.font = `${bold ? "bold " : ""}${size}px ${font}`;
   ctx.letterSpacing = `${spacing}px`;
@@ -241,18 +257,18 @@ function drawText(ctx: CanvasRenderingContext2D, element: FaceElementDto, g: Fac
   const anchor = anchorBox(g, element);
   if (!anchor) return;
   const lines = textLines(element, values, g.unit);
-  const bold = element.bold ?? style.bold;
+  const look = textLook(style, element);
   const spacing = element.spacing * g.unit;
   const limit = element.maxWidth > 0 ? element.maxWidth * g.unit : Number.POSITIVE_INFINITY;
   const widths = lines.map((line) => {
-    setTextStyle(ctx, line.size, bold, style.font, spacing);
+    setTextStyle(ctx, line.size, look.bold, look.font, spacing);
     return Math.min(limit, ctx.measureText(line.text).width);
   });
   const box = place(anchor, element, Math.max(0, ...widths), textHeight(lines), g.unit);
-  ctx.fillStyle = resolveColor(style, element.color, style.colors.text) ?? "#fff";
+  ctx.fillStyle = look.color;
   let y = box.y;
   lines.forEach((line, i) => {
-    setTextStyle(ctx, line.size, bold, style.font, spacing);
+    setTextStyle(ctx, line.size, look.bold, look.font, spacing);
     const w = widths[i];
     const x = element.align === "right" ? box.x + box.w - w : element.align === "center" ? box.x + (box.w - w) / 2 : box.x;
     if (Number.isFinite(limit)) ctx.fillText(line.text, x, y, limit);
@@ -262,8 +278,35 @@ function drawText(ctx: CanvasRenderingContext2D, element: FaceElementDto, g: Fac
   ctx.letterSpacing = "0px";
 }
 
+/** Text v bodoch: sirka a vyska v bodoch, 1 = bod svieti (po riadkoch). */
+export interface DotText {
+  width: number;
+  height: number;
+  lit: Uint8Array;
+}
+
+/** Cas bodmi: bitmapove pismo len cislic (ako pismo ELEN s cislicami) vysoke najviac rows bodov; null = prilis nizke. */
+export function dotText(text: string, rows: number): DotText | null {
+  const height = Math.max(1, Math.round(rows));
+  const source = PixelGlyphSource.forRow(height);
+  if (!source) return null;
+  const glyphs = [...text].map((ch) => source.glyph(ch.charCodeAt(0), ch, 0x30));
+  const width = glyphs.reduce((sum, glyph) => sum + (glyph?.width ?? 0), 0);
+  const lit = new Uint8Array(width * height);
+  let x0 = 0;
+  for (const glyph of glyphs) {
+    if (!glyph) continue;
+    for (let y = 0; y < height; y++) for (let x = 0; x < glyph.width; x++) if (glyph.isSet(x, y)) lit[y * width + x0 + x] = 1;
+    x0 += glyph.width;
+  }
+  return { width, height, lit };
+}
+
+/** Kreslenie hodin bodmi materialu tabule: plocha cislic (px), body a farba rozsvieteneho bodu (null = predvolena). */
+export type DisplayClock = (box: Box, dots: DotText, color: string | null) => void;
+
 /** Hodiny cela v case time - kreslia sa pri kazdom prekresleni aj s pozadim, ktore prekryje predosly cas. */
-export function drawFaceClocks(ctx: CanvasRenderingContext2D, face: BoardFaceDto, g: FaceGeometry, style: FaceStyle, time: Date) {
+export function drawFaceClocks(ctx: CanvasRenderingContext2D, face: BoardFaceDto, g: FaceGeometry, style: FaceStyle, time: Date, display?: DisplayClock) {
   ctx.save();
   ctx.beginPath();
   ctx.rect(g.face.x, g.face.y, g.face.w, g.face.h);
@@ -276,9 +319,19 @@ export function drawFaceClocks(ctx: CanvasRenderingContext2D, face: BoardFaceDto
     if (!anchor) continue;
     const size = element.size * g.unit;
     const text = clockText(time, element.format);
+    const background = resolveColor(style, element.fill, style.clockBackground);
+    const dots = element.render === "display" && display ? dotText(text, element.size) : null;
+    if (dots && display) {
+      const box = place(anchor, element, dots.width * g.unit, dots.height * g.unit, g.unit);
+      if (background) {
+        ctx.fillStyle = background;
+        ctx.fillRect(box.x - g.unit, box.y - g.unit / 2, box.w + 2 * g.unit, box.h + g.unit);
+      }
+      display(box, dots, resolveColor(style, element.color, null));
+      continue;
+    }
     setTextStyle(ctx, size, true, style.clockFont, element.spacing * g.unit);
     const box = place(anchor, element, ctx.measureText(text).width, size, g.unit);
-    const background = resolveColor(style, element.fill, style.clockBackground);
     if (background) {
       ctx.fillStyle = background;
       ctx.fillRect(box.x - g.unit, box.y - g.unit / 2, box.w + 2 * g.unit, box.h + g.unit);

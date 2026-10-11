@@ -4,10 +4,11 @@
   "margin": { "top": 24 },
   "rowGroup": 3,
   "groupGap": 6,
+  "moduleWidth": 64,
   "elements": [
-    { "kind": "text", "anchor": "top", "x": 6, "vAlign": "middle", "size": 3.6, "spacing": 1, "text": "DEPARTURE" },
-    { "kind": "text", "anchor": "top", "align": "center", "vAlign": "middle", "size": 15, "spacing": 1.5, "bold": false, "text": "ODJEZD" },
-    { "kind": "text", "anchor": "top", "align": "right", "vAlign": "middle", "x": 50, "size": 3.6, "spacing": 1, "text": "ABFAHRT" },
-    { "kind": "clock", "anchor": "top", "align": "right", "vAlign": "middle", "x": 4, "size": 8, "format": "HH:mm:ss" }
+    { "kind": "text", "anchor": "top", "x": 6, "vAlign": "middle", "size": 3.6, "spacing": 1, "style": "label", "text": "DEPARTURE" },
+    { "kind": "text", "anchor": "top", "align": "center", "vAlign": "middle", "size": 15, "spacing": 1.5, "bold": false, "style": "title", "text": "ODJEZD" },
+    { "kind": "text", "anchor": "top", "align": "right", "vAlign": "middle", "x": 56, "size": 3.6, "spacing": 1, "style": "label", "text": "ABFAHRT" },
+    { "kind": "clock", "anchor": "top", "align": "right", "vAlign": "middle", "x": 4, "size": 10, "format": "HH:mm:ss", "render": "display" }
   ]
 }

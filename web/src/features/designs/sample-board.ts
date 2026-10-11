@@ -1,5 +1,5 @@
-// Ukazkova tabula ELEN pre nahlad vzhladu, ked v simulatore este ziadna tabula nie je: hlavicka s hodinami
-// a riadky vo vsetkych farbach pisma (bez farby, cervena, zelena, zlta).
+// Ukazkove tabule pre nahlad vzhladu, ked v simulatore este ziadna tabula nie je: ELEN s celom (nadpis a hodiny)
+// a riadkami vo vsetkych farbach pisma (bez farby, cervena, zelena, zlta) a listova s celom a farebnymi listami.
 import type { BoardDto, ElementDto } from "@/api";
 import { defaultProfile } from "@/lib/boards";
 
@@ -21,11 +21,7 @@ export const SAMPLE_BOARD: BoardDto = {
     width: 200,
     rows: 4,
     rowHeight: 10,
-    header: {
-      height: 14,
-      texts: [{ x: 4, y: 2, height: 10, text: "Odchody / Departures" }],
-      clock: { x: 160, y: 2, height: 10 },
-    },
+    face: "odchody",
   },
   fault: { kind: "none", delayMs: 0, status: 0 },
   autoCreated: false,
@@ -56,4 +52,41 @@ export const SAMPLE_BOARD: BoardDto = {
   secondAddress: null,
   mismatch: null,
   poweredOff: false,
+};
+
+export const SAMPLE_FLAP_BOARD_ID = "sample-flaps";
+
+/** Listova tabula: ciel a druh vlaku zo zoznamov (cervene listy), cas a nastupiste po jednom liste. */
+export const SAMPLE_FLAP_BOARD: BoardDto = {
+  ...SAMPLE_BOARD,
+  id: SAMPLE_FLAP_BOARD_ID,
+  manufacturer: "FERS",
+  profile: {
+    ...defaultProfile("FERS"),
+    width: 7 * 8,
+    rows: 3,
+    face: "odjezdy",
+    flaps: {
+      linesPerRecord: 1,
+      modules: [
+        { line: 0, position: 0, span: 1, list: "Ciel" },
+        { line: 0, position: 1, span: 1, list: "Druh" },
+      ],
+      lists: {
+        Ciel: { A: "BRNO HL.N.", B: "*PRAHA HL.N.", C: "KARLŠTEJN" },
+        Druh: { R: "*R", O: "Os", S: "Sp" },
+      },
+      colors: { Druh: { S: "yellow" } },
+    },
+  },
+  display: {
+    ...SAMPLE_BOARD.display,
+    family: "flaps",
+    rows: [],
+    flapRows: [
+      { row: 0, codes: "AR11342" },
+      { row: 1, codes: "BO11392" },
+      { row: 2, codes: "CS11503" },
+    ],
+  },
 };

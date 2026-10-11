@@ -80,4 +80,42 @@ public sealed class DesignsApiTests
         Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.AreEqual(code, await CodeOf(response));
     }
+
+    [TestMethod]
+    public async Task Material_PlechRamStylyAListy()
+    {
+        await using var server = SimulatorServer.Start();
+        var client = server.Client();
+        var flapColors = new[] { "black", "red", "yellow", "white" }.ToDictionary(c => c, _ => new DesignFlapColorDto("#111111", "#222222", "#ffffff"));
+        var flaps = Design("Listy") with
+        {
+            Renderer = "flaps", Plate = "#c9cac6", Frame = new DesignFrameDto(12, "#a9adb1", 3, DesignFrameStyle.Metal, "ELEN"),
+            Seam = new DesignSeamDto("#0a0f24", 0.6),
+            Header = Design().Header with
+            {
+                Panel = "#123456", Styles = new Dictionary<string, DesignTextStyleDto> { ["label"] = new("#cccccc", null, false) }
+            },
+            Flaps = new DesignFlapsDto(flapColors, "#0d0d0d", "#000000", "#f2c14e", "Arial")
+        };
+
+        Assert.AreEqual(HttpStatusCode.NoContent, (await client.PutAsJsonAsync("/api/designs/listy", flaps)).StatusCode);
+        var text = await File.ReadAllTextAsync(Path.Combine(server.DataFolder, "designs", "listy", "design.json"));
+        StringAssert.Contains(text, "\"renderer\": \"flaps\"");
+        StringAssert.Contains(text, "\"style\": \"metal\"");
+        StringAssert.Contains(text, "\"badge\": \"ELEN\"");
+        StringAssert.Contains(text, "\"plate\": \"#c9cac6\"");
+        StringAssert.Contains(text, "\"split\": \"#000000\"");
+        StringAssert.Contains(text, "\"label\": {");
+        var info = (await client.GetFromJsonAsync<DesignInfoDto[]>("/api/designs"))!.Single(d => d.Id == "listy");
+        Assert.AreEqual("flaps", info.Renderer);
+
+        // listovy vzhlad bez listov a zly nazov stylu
+        var missing = await client.PutAsJsonAsync("/api/designs/bez-listov", flaps with { Flaps = null });
+        Assert.AreEqual("designs.renderer", await CodeOf(missing));
+        var badStyle = await client.PutAsJsonAsync("/api/designs/zly-styl", Design() with
+        {
+            Header = Design().Header with { Styles = new Dictionary<string, DesignTextStyleDto> { ["Zly styl"] = new(null, null, null) } }
+        });
+        Assert.AreEqual("designs.font", await CodeOf(badStyle));
+    }
 }

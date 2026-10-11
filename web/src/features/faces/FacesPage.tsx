@@ -210,6 +210,15 @@ export function FacesPage() {
                   onChange={(e) => change({ groupGap: Math.max(0, int(e.target.value)) })}
                 />
               </FormField>
+              <FormField label={t("faces.moduleWidth")} hint={t("faces.moduleWidth.hint")} className="sm:col-span-2">
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.moduleWidth}
+                  disabled={readOnly}
+                  onChange={(e) => change({ moduleWidth: Math.max(0, int(e.target.value)) })}
+                />
+              </FormField>
             </FieldGroup>
           </Section>
 
