@@ -1,5 +1,6 @@
 // Cela tabul: kopia vstavanej predlohy, uprava a ulozenie, predloha v okne tabule s cislom kolaje, odstranenie
-// pouzivanej predlohy odmietnute, uprava cela tahanim v nahlade s krokmi spat, zamok vo vrstvach a Ctrl+S.
+// pouzivanej predlohy odmietnute, uprava cela tahanim v nahlade s krokmi spat a vodiacimi ciarami, zamok vo vrstvach a Ctrl+S,
+// vyber viacerych prvkov (Ctrl+klik, obdlznik, Ctrl+A), spolocne pole, zarovnanie, presun a odstranenie skupiny.
 import { expect, test } from "@playwright/test";
 import { API_HEADERS, collectErrors, createLine, deleteLine, elenRow, sendToLine } from "./helpers";
 
@@ -113,6 +114,16 @@ test("editor cela v nahlade: vyber, tahanie, sipky, krok spat, zamok a Ctrl+S", 
   await expect(properties.getByLabel("Názov")).toHaveValue("E2E ťahanie");
   await page.getByRole("button", { name: "Zahodiť zmeny" }).click();
 
+  // vodiace ciary: maly posun nadpisu sa prichyti spat na stred a pocas tahania je vidiet ciaru
+  const center = (await title.boundingBox())!;
+  await page.mouse.move(center.x + center.width / 2, center.y + center.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(center.x + center.width / 2 + 4, center.y + center.height / 2, { steps: 4 });
+  await expect(canvas.locator(".bg-pink-500").first()).toBeVisible();
+  await page.mouse.up();
+  await expect(canvas.locator(".bg-pink-500")).toHaveCount(0);
+  await expect(x).toHaveValue("0");
+
   // zamok vo vrstvach: pas sa na platne neda chytit; ulozi sa s predlohou (Ctrl+S)
   const layers = page.getByRole("list", { name: "Vrstvy" });
   await layers.getByRole("listitem").filter({ hasText: "Plocha" }).getByRole("button", { name: "Zamknúť" }).click();
@@ -123,6 +134,96 @@ test("editor cela v nahlade: vyber, tahanie, sipky, krok spat, zamok a Ctrl+S", 
   expect(saved.find((f) => f.id === "e2e-tahanie")!.elements.find((e) => e.kind === "rect")!.locked).toBe(true);
 
   const removed = await page.request.delete("/api/faces/e2e-tahanie", { headers: API_HEADERS });
+  expect(removed.status()).toBe(204);
+  expect(errors).toEqual([]);
+});
+
+test("editor cela: vyber viacerych prvkov, spolocne pole, zarovnanie a skupina", async ({ page }) => {
+  const errors = collectErrors(page);
+  const faces = (await (await page.request.get("/api/faces")).json()) as { id: string }[];
+  const source = faces.find((f) => f.id === "odchody")!;
+  const created = await page.request.put("/api/faces/e2e-vyber", {
+    headers: API_HEADERS,
+    data: { ...source, id: "e2e-vyber", name: "E2E výber", builtIn: false },
+  });
+  expect(created.ok()).toBe(true);
+
+  await page.goto("/#/faces");
+  await page.getByRole("combobox", { name: "Predloha čela" }).click();
+  await page.getByRole("option", { name: "E2E výber" }).click();
+  const canvas = page.getByRole("group", { name: "Prvky čela v náhľade" });
+  const properties = page.getByRole("complementary", { name: "Vlastnosti" });
+  const title = canvas.getByRole("button", { name: "Text: ODCHODY / DEPARTURES" });
+  const clock = canvas.getByRole("button", { name: /^Hodiny/ });
+  const items = canvas.locator("[data-face-element]");
+  await expect(items).toHaveCount(3);
+
+  // Ctrl+klik prida hodiny k nadpisu: rozne druhy, rozne X ako "Rozne"
+  await title.click();
+  await clock.click({ modifiers: ["Control"] });
+  await expect(properties).toContainText("2 prvky");
+  await expect(properties).toContainText("Rôzne druhy");
+  const x = properties.getByLabel("X", { exact: true });
+  const y = properties.getByLabel("Y", { exact: true });
+  await expect(x).toHaveValue("");
+  await expect(x).toHaveAttribute("placeholder", "Rôzne");
+
+  // spolocne pole zmeni oba prvky
+  await y.fill("2");
+  await expect(y).toHaveValue("2");
+  await title.click();
+  await expect(y).toHaveValue("2");
+  await clock.click({ modifiers: ["Shift"] });
+  await expect(properties).toContainText("2 prvky");
+
+  // zarovnanie vlavo: lavy okraj hodin na lavom okraji nadpisu, krok spat ho vrati
+  const before = (await clock.boundingBox())!;
+  await properties.getByRole("button", { name: "Zarovnať vľavo" }).click();
+  await expect.poll(async () => Math.round((await clock.boundingBox())!.x)).toBe(Math.round((await title.boundingBox())!.x));
+  await page.keyboard.press("Control+z");
+  await expect.poll(async () => Math.round((await clock.boundingBox())!.x)).toBe(Math.round(before.x));
+  // rozmiestnenie potrebuje aspon tri prvky
+  await expect(properties.getByRole("button", { name: "Rozmiestniť vodorovne" })).toBeDisabled();
+
+  // obdlznik od laveho dolneho rohu cez celu tabulu vyberie vsetko
+  await canvas.focus();
+  await page.keyboard.press("Escape");
+  const area = (await canvas.boundingBox())!;
+  await page.mouse.move(area.x + 3, area.y + area.height - 3);
+  await page.mouse.down();
+  await page.mouse.move(area.x + area.width / 2, area.y + area.height / 2, { steps: 4 });
+  await page.mouse.move(area.x + area.width - 3, area.y + 3, { steps: 4 });
+  await page.mouse.up();
+  await expect(canvas.locator("[data-face-element][aria-pressed=true]")).toHaveCount(3);
+  await expect(properties).toContainText("3 prvky");
+  await expect(properties.getByRole("button", { name: "Rozmiestniť vodorovne" })).toBeEnabled();
+
+  // tahanie nadpisu posunie celu skupinu (Alt = bez prichytenia)
+  const titleBefore = (await title.boundingBox())!;
+  const clockBefore = (await clock.boundingBox())!;
+  await page.keyboard.down("Alt");
+  await page.mouse.move(titleBefore.x + titleBefore.width / 2, titleBefore.y + titleBefore.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(titleBefore.x + titleBefore.width / 2 - 15, titleBefore.y + titleBefore.height / 2, { steps: 4 });
+  await page.mouse.move(titleBefore.x + titleBefore.width / 2 - 30, titleBefore.y + titleBefore.height / 2, { steps: 4 });
+  await page.mouse.up();
+  await page.keyboard.up("Alt");
+  const titleAfter = (await title.boundingBox())!;
+  const clockAfter = (await clock.boundingBox())!;
+  expect(titleAfter.x - titleBefore.x).toBeLessThan(-20);
+  expect(Math.abs(clockAfter.x - clockBefore.x - (titleAfter.x - titleBefore.x))).toBeLessThan(1.5);
+
+  // Ctrl+A a Delete odstrani vsetky odomknute prvky, krok spat ich vrati
+  await canvas.focus();
+  await page.keyboard.press("Control+a");
+  await expect(properties).toContainText("3 prvky");
+  await page.keyboard.press("Delete");
+  await expect(items).toHaveCount(0);
+  await page.keyboard.press("Control+z");
+  await expect(items).toHaveCount(3);
+  await page.getByRole("button", { name: "Zahodiť zmeny" }).click();
+
+  const removed = await page.request.delete("/api/faces/e2e-vyber", { headers: API_HEADERS });
   expect(removed.status()).toBe(204);
   expect(errors).toEqual([]);
 });

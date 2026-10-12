@@ -1,8 +1,8 @@
 // Editor predloh ciel tabul ako vo Figme: hore nastroje (predloha, kroky spat, pridanie prvku, mierka, ulozenie),
-// vlavo vrstvy, zobrazenie a tabula nahladu, v strede platno s tabulou a vpravo vlastnosti vybraneho prvku (bez vyberu
-// predlohy). Stranka sa neposuva - posuvaju sa len panely. Vstavane predlohy sa daju len skopirovat; vlastne su
-// v databaze servera a tabule ich pouzivaju podla kluca.
-import { useEffect, useMemo, useState } from "react";
+// vlavo vrstvy, zobrazenie a tabula nahladu, v strede platno s tabulou a vpravo vlastnosti vybranych prvkov (bez vyberu
+// predlohy) so zarovnanim. Stranka sa neposuva - posuvaju sa len panely. Vstavane predlohy sa daju len skopirovat;
+// vlastne su v databaze servera a tabule ich pouzivaju podla kluca.
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useBlocker } from "@tanstack/react-router";
 import { CircleAlert, CopyPlus, Plus, Redo, Save, Trash2, Undo, Undo2, ZoomIn, ZoomOut } from "lucide-react";
@@ -31,8 +31,10 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { SAMPLE_BOARD, SAMPLE_BOARD_ID } from "@/features/designs/sample-board";
-import { faceVariables } from "@/render/face";
+import { anchorBox, faceVariables, type Box, type FaceOverlayLayout } from "@/render/face";
 import { t } from "@/i18n";
+import { alignDeltas, type AlignOp } from "./align";
+import { moveElement, stepOrder } from "./edit";
 import { ElementProperties } from "./ElementProperties";
 import { FaceCanvas } from "./FaceCanvas";
 import { FaceProperties } from "./FaceProperties";
@@ -40,10 +42,17 @@ import { ELEMENT_KINDS, KIND_ICONS, newElement, previewBoard, variableLabel } fr
 import { useHistory } from "./history";
 import { LayersPanel } from "./LayersPanel";
 import { NewFaceDialog } from "./NewFaceDialog";
+import { GRID_STEPS, loadView, saveView, type FaceView } from "./view";
 import { typing, zoomStep } from "./zoom";
 
 /** Hodnoty premennych v nahlade, kym ich obsluha nezmeni. */
 const SAMPLE_VALUES: Record<string, string> = { track: "1", platform: "2", station: "STANICA", direction: "SEVER" };
+
+/** Krok mriezky v ponuke: 1 bod, 2 body, 5 bodov…, pri 8 aj bunka znaku LCD. */
+function stepLabel(step: number): string {
+  const count = step === 1 ? t("faces.grid.one") : step < 5 ? t("faces.grid.few", { count: step }) : t("faces.grid.many", { count: step });
+  return step === 8 ? `${count} ${t("faces.grid.lcd")}` : count;
+}
 
 const leave = () => confirmAction({ title: t("settings.leave.title"), description: t("faces.leave.text"), confirmLabel: t("settings.leave.confirm") });
 
@@ -54,22 +63,33 @@ export function FacesPage() {
   // rozpracovana predloha s krokmi spat; null = bez zmien
   const history = useHistory<BoardFaceDto | null>(null);
   const draft = history.value;
-  const [element, setElement] = useState<number | null>(null);
+  // vybrane prvky (indexy v predlohe), posledny je naposledy vybrany
+  const [selection, setSelection] = useState<number[]>([]);
   // prvky skryte len v editore (indexy) - neukladaju sa
   const [hidden, setHidden] = useState<ReadonlySet<number>>(new Set());
   const [creating, setCreating] = useState(false);
   const [preview, setPreview] = useState(SAMPLE_BOARD_ID);
   const [values, setValues] = useState(SAMPLE_VALUES);
-  const [outlines, setOutlines] = useState(true);
+  const [view, setViewState] = useState<FaceView>(loadView);
+  const setView = (patch: Partial<FaceView>) => {
+    const next = { ...view, ...patch };
+    setViewState(next);
+    saveView(next);
+  };
   const [zoom, setZoom] = useState<number | null>(null);
   const [fitScale, setFitScale] = useState(1);
+  // posledne rozlozenie prvkov v nahlade - zarovnanie potrebuje ich plochy (ref, aby kazde prekreslenie neprekreslilo stranku)
+  const layout = useRef<FaceOverlayLayout | null>(null);
+  const onLayout = useCallback((value: FaceOverlayLayout) => {
+    layout.current = value;
+  }, []);
 
   const base = faces?.find((f) => f.id === selected) ?? faces?.[0];
   const form = draft ?? base;
   const dirty = draft !== null && base !== undefined && JSON.stringify(draft) !== JSON.stringify(base);
   const readOnly = form?.builtIn ?? true;
-  // vybrany prvok po kroku spat moze chybat
-  const current = element !== null && form && element < form.elements.length ? element : null;
+  // vybrane prvky po kroku spat mozu chybat
+  const chosen = form ? selection.filter((i) => i < form.elements.length) : [];
 
   const save = useMutation({
     ...setFaceMutation(),
@@ -98,7 +118,7 @@ export function FacesPage() {
     if (form && dirty && !readOnly && !save.isPending) save.mutate({ path: { id: form.id }, body: form });
   };
 
-  // Ctrl+Z / Ctrl+Y (Ctrl+Shift+Z) mimo poli formulara, Ctrl+S kdekolvek
+  // Ctrl+Z / Ctrl+Y (Ctrl+Shift+Z) a Ctrl+A (vsetky viditelne odomknute prvky) mimo poli formulara, Ctrl+S kdekolvek
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
@@ -108,8 +128,10 @@ export function FacesPage() {
         saveNow();
         return;
       }
-      if (readOnly || typing(e.target)) return;
-      if (key === "z" && !e.shiftKey) undo();
+      if (typing(e.target)) return;
+      if (key === "a" && form) setSelection(form.elements.flatMap((el, i) => (el.locked || hidden.has(i) ? [] : [i])));
+      else if (readOnly) return;
+      else if (key === "z" && !e.shiftKey) undo();
       else if (key === "y" || (key === "z" && e.shiftKey)) redo();
       else return;
       e.preventDefault();
@@ -127,7 +149,7 @@ export function FacesPage() {
   const select = async (id: string) => {
     if (dirty && !(await leave())) return;
     history.reset(null);
-    setElement(null);
+    setSelection([]);
     setHidden(new Set());
     save.reset();
     setSelected(id);
@@ -139,7 +161,7 @@ export function FacesPage() {
     try {
       await deleteFace({ path: { id: form.id }, throwOnError: true });
       history.reset(null);
-      setElement(null);
+      setSelection([]);
       setHidden(new Set());
       setSelected(null);
       void queryClient.invalidateQueries({ queryKey: getFacesQueryKey() });
@@ -159,28 +181,67 @@ export function FacesPage() {
     );
 
   const change = (patch: Partial<BoardFaceDto>, transient = false) => history.set({ ...form, ...patch }, transient);
+  const shown = form.elements.flatMap((_, i) => (hidden.has(i) ? [] : [i]));
   const setElements = (elements: FaceElementDto[], transient = false) => change({ elements }, transient);
-  const updateElement = (index: number, changed: FaceElementDto, transient = false) =>
+  /** Zmena prvkov podla indexu; transient = pokracovanie tahania (nie novy krok historie). */
+  const updateMany = (changes: ReadonlyMap<number, FaceElementDto>, transient = false) =>
     setElements(
-      form.elements.map((e, j) => (j === index ? changed : e)),
+      form.elements.map((e, j) => changes.get(j) ?? e),
       transient,
     );
+  /** Rovnaka zmena pre vsetky vybrane prvky (panel vlastnosti). */
+  const patchSelected = (patch: Partial<FaceElementDto>) => updateMany(new Map(chosen.map((i) => [i, { ...form.elements[i], ...patch }])));
   const add = (kind: FaceElementKind) => {
     setElements([...form.elements, newElement(kind)]);
-    setElement(form.elements.length);
+    setSelection([form.elements.length]);
   };
-  const removeElement = (index: number) => {
-    setElements(form.elements.filter((_, j) => j !== index));
-    setElement(current === index ? null : current !== null && current > index ? current - 1 : current);
-    setHidden(new Set([...hidden].filter((i) => i !== index).map((i) => (i > index ? i - 1 : i))));
+  const removeMany = (indices: number[]) => {
+    const gone = new Set(indices);
+    // index po odstraneni prvkov pred nim
+    const shift = (i: number) => i - indices.filter((r) => r < i).length;
+    setElements(form.elements.filter((_, j) => !gone.has(j)));
+    setSelection(chosen.filter((i) => !gone.has(i)).map(shift));
+    setHidden(new Set([...hidden].filter((i) => !gone.has(i)).map(shift)));
   };
   /** Nove poradie kreslenia (povodne indexy) - vyber a skrytie idu s prvkami. */
   const reorder = (order: number[]) => {
     setElements(order.map((i) => form.elements[i]));
-    if (current !== null) setElement(order.indexOf(current));
+    setSelection(chosen.map((i) => order.indexOf(i)));
     setHidden(new Set(order.flatMap((old, i) => (hidden.has(old) ? [i] : []))));
   };
-  const swap = (index: number, other: number) => reorder(form.elements.map((_, i) => (i === index ? other : i === other ? index : i)));
+  const picked = new Set(chosen);
+  const canForward = chosen.some((i) => i < form.elements.length - 1 && !picked.has(i + 1));
+  const canBackward = chosen.some((i) => i > 0 && !picked.has(i - 1));
+  /** Vyber vo vrstvach: len prvok, pridat/odobrat (Ctrl) alebo rozsah od naposledy vybraneho (Shift). */
+  const selectLayer = (index: number, mode: "replace" | "toggle" | "range") => {
+    if (mode === "toggle") setSelection(picked.has(index) ? chosen.filter((i) => i !== index) : [...chosen, index]);
+    else if (mode === "range" && chosen.length) {
+      const from = chosen[chosen.length - 1];
+      const range = Array.from({ length: Math.abs(index - from) + 1 }, (_, k) => (index > from ? from + k : from - k));
+      setSelection([...chosen.filter((i) => !range.includes(i)), ...range]);
+    } else setSelection([index]);
+  };
+  /** Zarovnanie vybranych prvkov podla ich ploch v nahlade (jeden prvok k ukotveniu); skryte prvky ostanu. */
+  const align = (op: AlignOp) => {
+    const current = layout.current;
+    if (!current) return;
+    const { geometry: g, boxes } = current;
+    const points = (b: Box): Box => ({ x: b.x / g.unit, y: b.y / g.unit, w: b.w / g.unit, h: b.h / g.unit });
+    const items = chosen.flatMap((i) => {
+      const box = boxes[shown.indexOf(i)];
+      return shown.includes(i) && box ? [{ index: i, box: points(box) }] : [];
+    });
+    if (items.length === 0) return;
+    const anchor = items.length === 1 ? anchorBox(g, form.elements[items[0].index]) : null;
+    if (items.length === 1 && !anchor) return;
+    const deltas = alignDeltas(
+      items.map((item) => item.box),
+      op,
+      anchor ? points(anchor) : undefined,
+    );
+    const changes = new Map(items.map((item, k) => [item.index, moveElement(form.elements[item.index], deltas[k].dx, deltas[k].dy, 0.01)]));
+    if ([...changes].some(([i, changed]) => changed.x !== form.elements[i].x || changed.y !== form.elements[i].y)) updateMany(changes);
+  };
   const toggleHidden = (index: number) => {
     const next = new Set(hidden);
     if (!next.delete(index)) next.add(index);
@@ -188,7 +249,6 @@ export function FacesPage() {
   };
 
   const variables = faceVariables(form);
-  const shown = form.elements.flatMap((_, i) => (hidden.has(i) ? [] : [i]));
   const scale = zoom ?? fitScale;
 
   return (
@@ -287,18 +347,32 @@ export function FacesPage() {
             <h2 className="text-xs font-medium text-muted-foreground">{t("faces.layers")}</h2>
             <LayersPanel
               elements={form.elements}
-              selected={current}
+              selection={chosen}
               hidden={hidden}
               readOnly={readOnly}
-              onSelect={setElement}
-              onToggleLock={(i) => updateElement(i, { ...form.elements[i], locked: !form.elements[i].locked })}
+              onSelect={selectLayer}
+              onToggleLock={(i) => updateMany(new Map([[i, { ...form.elements[i], locked: !form.elements[i].locked }]]))}
               onToggleHidden={toggleHidden}
               onReorder={reorder}
             />
           </section>
           <section className="flex shrink-0 flex-col gap-2 border-t pt-3">
             <h2 className="text-xs font-medium text-muted-foreground">{t("faces.view")}</h2>
-            <CheckField label={t("faces.outlines")} checked={outlines} onCheckedChange={setOutlines} />
+            <CheckField label={t("faces.outlines")} checked={view.outlines} onCheckedChange={(outlines) => setView({ outlines })} />
+            <div className="flex items-center gap-2">
+              <CheckField label={t("faces.grid")} checked={view.grid} onCheckedChange={(grid) => setView({ grid })} className="w-auto" />
+              <OptionSelect
+                value={view.gridStep}
+                onValueChange={(gridStep) => setView({ gridStep })}
+                ariaLabel={t("faces.grid.step")}
+                size="sm"
+                className="ml-auto w-auto"
+                options={GRID_STEPS.map((step) => ({ value: step, label: stepLabel(step) }))}
+              />
+            </div>
+            <CheckField label={t("faces.snapGrid")} checked={view.snapGrid} onCheckedChange={(snapGrid) => setView({ snapGrid })} />
+            <CheckField label={t("faces.guides")} checked={view.guides} onCheckedChange={(guides) => setView({ guides })} />
+            <p className="text-xs text-muted-foreground">{t("faces.view.hint")}</p>
           </section>
           <section className="flex shrink-0 flex-col gap-2 border-t pt-3">
             <h2 className="text-xs font-medium text-muted-foreground">{t("designs.preview")}</h2>
@@ -326,32 +400,34 @@ export function FacesPage() {
               board={board}
               face={form}
               shown={shown}
-              selected={current}
+              selection={chosen}
               readOnly={readOnly}
-              outlines={outlines}
+              view={view}
               zoom={zoom}
               onZoom={setZoom}
               onFitScale={setFitScale}
-              onSelect={setElement}
-              onChange={updateElement}
-              onRemove={removeElement}
+              onSelect={setSelection}
+              onChange={updateMany}
+              onRemove={removeMany}
+              onLayout={onLayout}
             />
           </div>
           <p className="shrink-0 text-xs text-muted-foreground">{t(readOnly ? "faces.canvas.readOnly" : "faces.canvas.hint")}</p>
         </div>
 
         <aside aria-label={t("faces.properties")} className="min-h-0 overflow-y-auto rounded-xl border bg-card p-3">
-          {current !== null ? (
+          {chosen.length ? (
             <ElementProperties
-              key={current}
-              element={form.elements[current]}
+              key={chosen.join(",")}
+              elements={chosen.map((i) => form.elements[i])}
               readOnly={readOnly}
-              canForward={current < form.elements.length - 1}
-              canBackward={current > 0}
-              onChange={(changed) => updateElement(current, changed)}
-              onForward={() => swap(current, current + 1)}
-              onBackward={() => swap(current, current - 1)}
-              onRemove={() => removeElement(current)}
+              canForward={canForward}
+              canBackward={canBackward}
+              onPatch={patchSelected}
+              onForward={() => reorder(stepOrder(form.elements.length, chosen, 1))}
+              onBackward={() => reorder(stepOrder(form.elements.length, chosen, -1))}
+              onRemove={() => removeMany(chosen)}
+              onAlign={align}
             />
           ) : (
             <FaceProperties face={form} readOnly={readOnly} onChange={(patch) => change(patch)} />
@@ -367,7 +443,7 @@ export function FacesPage() {
           onCreated={(id) => {
             setCreating(false);
             history.reset(null);
-            setElement(null);
+            setSelection([]);
             setHidden(new Set());
             setSelected(id);
           }}

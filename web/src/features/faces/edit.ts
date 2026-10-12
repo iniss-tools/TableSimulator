@@ -80,3 +80,16 @@ export function moveItem<T>(items: readonly T[], from: number, to: number): T[] 
   moved.splice(to, 0, item);
   return moved;
 }
+
+/** Poradie kreslenia po posunuti vybranych prvkov o jedno miesto dopredu (+1) alebo dozadu (-1); vybrane prvky vedla seba idu spolu. */
+export function stepOrder(count: number, selection: readonly number[], direction: 1 | -1): number[] {
+  const order = Array.from({ length: count }, (_, i) => i);
+  const chosen = new Set(selection);
+  const swap = (i: number, j: number) => ([order[i], order[j]] = [order[j], order[i]]);
+  if (direction > 0) {
+    for (let i = count - 2; i >= 0; i--) if (chosen.has(order[i]) && !chosen.has(order[i + 1])) swap(i, i + 1);
+  } else {
+    for (let i = 1; i < count; i++) if (chosen.has(order[i]) && !chosen.has(order[i - 1])) swap(i, i - 1);
+  }
+  return order;
+}

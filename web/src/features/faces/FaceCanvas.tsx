@@ -1,11 +1,13 @@
 // Platno editora ciel: tabula v strede na neutralnom pozadi, prisposobena miestu alebo v pevnej mierke (Ctrl+koliesko),
 // posun platna medzernikom s tahanim, klik mimo prvkov zrusi vyber. Nad tabulou je vrstva s obrysmi prvkov.
-import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import type { BoardDto, BoardFaceDto, FaceElementDto } from "@/api";
 import { BoardView } from "@/features/boards/BoardView";
+import type { FaceOverlayLayout } from "@/render/face";
 import { cn } from "@/lib/utils";
 import { t } from "@/i18n";
 import { FaceCanvasEditor } from "./FaceCanvasEditor";
+import type { FaceView } from "./view";
 import { typing, zoomStep } from "./zoom";
 
 interface Props {
@@ -14,20 +16,24 @@ interface Props {
   face: BoardFaceDto;
   /** Indexy prvkov, ktore sa kreslia (skryte v editore chybaju). */
   shown: number[];
-  selected: number | null;
+  /** Vybrane prvky. */
+  selection: number[];
   readOnly: boolean;
-  outlines: boolean;
+  /** Obrysy, mriezka, prichytavanie a vodiace ciary. */
+  view: FaceView;
   /** Pevna mierka; null = tabula sa prisposobi miestu. */
   zoom: number | null;
   onZoom: (zoom: number | null) => void;
   /** Mierka pri prisposobeni miestu (na ukazanie v percentach). */
   onFitScale: (scale: number) => void;
-  onSelect: (index: number | null) => void;
-  onChange: (index: number, element: FaceElementDto, transient: boolean) => void;
-  onRemove: (index: number) => void;
+  onSelect: (selection: number[]) => void;
+  onChange: (changes: Map<number, FaceElementDto>, transient: boolean) => void;
+  onRemove: (indices: number[]) => void;
+  /** Rozlozenie prvkov po prekresleni (zarovnanie). */
+  onLayout?: (layout: FaceOverlayLayout) => void;
 }
 
-export function FaceCanvas({ board, face, shown, selected, readOnly, outlines, zoom, onZoom, onFitScale, onSelect, onChange, onRemove }: Props) {
+export function FaceCanvas({ board, face, shown, selection, readOnly, view, zoom, onZoom, onFitScale, onSelect, onChange, onRemove, onLayout }: Props) {
   const area = useRef<HTMLDivElement>(null);
   const [space, setSpace] = useState(false);
   const [panning, setPanning] = useState(false);
@@ -35,7 +41,13 @@ export function FaceCanvas({ board, face, shown, selected, readOnly, outlines, z
   // mys nad platnom - len vtedy patri medzernik platnu (inak aktivuje tlacidlo)
   const hover = useRef(false);
   const [scale, setScale] = useState(1);
-  const visible = shown.length === face.elements.length ? face : { ...face, elements: shown.map((i) => face.elements[i]) };
+  // stabilny objekt - nove celo prekresli tabulu a prepocita polohy prvkov
+  const shownKey = shown.join(",");
+  const visible = useMemo(
+    () => (shown.length === face.elements.length ? face : { ...face, elements: shown.map((i) => face.elements[i]) }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- shown sa porovnava podla obsahu
+    [face, shownKey],
+  );
 
   const reportScale = useCallback(
     (value: number) => {
@@ -84,7 +96,12 @@ export function FaceCanvas({ board, face, shown, selected, readOnly, outlines, z
     if (!space || !area.current) return;
     e.stopPropagation();
     e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
+    // ukazovatel, ktory prehliadac nepozna (napr. udalost zo skriptu), sa zachytit neda - tahanie funguje aj bez toho
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // bez zachytenia
+    }
     pan.current = { pointer: e.pointerId, x: e.clientX, y: e.clientY, left: area.current.scrollLeft, top: area.current.scrollTop };
     setPanning(true);
   };
@@ -117,7 +134,7 @@ export function FaceCanvas({ board, face, shown, selected, readOnly, outlines, z
       onPointerCancel={endPan}
       onPointerDown={(e) => {
         // klik na prazdne miesto platna (nie na tabulu) zrusi vyber
-        if (e.target === e.currentTarget || (e.target as HTMLElement).dataset.canvasBackground !== undefined) onSelect(null);
+        if (e.target === e.currentTarget || (e.target as HTMLElement).dataset.canvasBackground !== undefined) onSelect([]);
       }}
     >
       <div data-canvas-background="" className={cn("flex items-center justify-center p-6", zoom === null ? "size-full" : "min-h-full w-max min-w-full")}>
@@ -133,12 +150,13 @@ export function FaceCanvas({ board, face, shown, selected, readOnly, outlines, z
               layout={layout}
               face={face}
               indices={shown}
-              selected={selected}
+              selection={selection}
               readOnly={readOnly || space}
-              outlines={outlines}
+              view={view}
               onSelect={onSelect}
               onChange={onChange}
               onRemove={onRemove}
+              onLayout={onLayout}
             />
           )}
         />

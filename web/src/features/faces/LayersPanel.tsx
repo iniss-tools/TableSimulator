@@ -1,4 +1,5 @@
-// Vrstvy cela (ako vo Figme): prvky od vrchneho (kresli sa posledny) po spodny, vyber, zamok, skrytie v editore
+// Vrstvy cela (ako vo Figme): prvky od vrchneho (kresli sa posledny) po spodny, vyber (Ctrl+klik pridava, Shift+klik
+// vyberie rozsah), zamok, skrytie v editore
 // a zmena poradia tahanim. Vybrany prvok sa posunie do pohladu len v zozname, stranka sa neposuva.
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { Eye, EyeOff, Lock, LockOpen } from "lucide-react";
@@ -9,10 +10,11 @@ import { KIND_ICONS, layerLabel } from "./faces";
 
 interface Props {
   elements: FaceElementDto[];
-  selected: number | null;
+  selection: number[];
   hidden: ReadonlySet<number>;
   readOnly: boolean;
-  onSelect: (index: number) => void;
+  /** Vyber prvku: replace = len on, toggle = pridat alebo odobrat, range = rozsah od posledneho vybraneho. */
+  onSelect: (index: number, mode: "replace" | "toggle" | "range") => void;
   onToggleLock: (index: number) => void;
   onToggleHidden: (index: number) => void;
   /** Nove poradie kreslenia: povodne indexy prvkov. */
@@ -25,7 +27,7 @@ interface Drop {
   after: boolean;
 }
 
-export function LayersPanel({ elements, selected, hidden, readOnly, onSelect, onToggleLock, onToggleHidden, onReorder }: Props) {
+export function LayersPanel({ elements, selection, hidden, readOnly, onSelect, onToggleLock, onToggleHidden, onReorder }: Props) {
   const list = useRef<HTMLUListElement>(null);
   const rows = useRef(new Map<number, HTMLLIElement>());
   const [dragged, setDragged] = useState<number | null>(null);
@@ -33,7 +35,8 @@ export function LayersPanel({ elements, selected, hidden, readOnly, onSelect, on
   // zoznam zhora: vrchny prvok (posledny v poradi kreslenia) prvy
   const shown = elements.map((_, i) => elements.length - 1 - i);
 
-  // vybrany prvok do pohladu - posuva sa len zoznam
+  // naposledy vybrany prvok do pohladu - posuva sa len zoznam
+  const selected = selection.length ? selection[selection.length - 1] : null;
   useEffect(() => {
     const box = list.current;
     const row = selected === null ? undefined : rows.current.get(selected);
@@ -95,19 +98,19 @@ export function LayersPanel({ elements, selected, hidden, readOnly, onSelect, on
             }}
             className={cn(
               "group relative flex h-8 items-center gap-1 rounded-md px-1",
-              selected === index ? "bg-accent text-accent-foreground" : "hover:bg-muted",
+              selection.includes(index) ? "bg-accent text-accent-foreground" : "hover:bg-muted",
               dragged === index && "opacity-50",
               drop?.row === row && (drop.after ? "shadow-[inset_0_-2px_0_var(--color-primary)]" : "shadow-[inset_0_2px_0_var(--color-primary)]"),
             )}
           >
             <button
               type="button"
-              aria-pressed={selected === index}
+              aria-pressed={selection.includes(index)}
               className={cn(
                 "flex min-w-0 flex-1 items-center gap-2 text-left text-sm outline-none focus-visible:underline",
                 isHidden && "text-muted-foreground",
               )}
-              onClick={() => onSelect(index)}
+              onClick={(e) => onSelect(index, e.ctrlKey || e.metaKey ? "toggle" : e.shiftKey ? "range" : "replace")}
             >
               <Icon className="size-3.5 shrink-0 text-muted-foreground" />
               <span className="truncate">{layerLabel(element)}</span>

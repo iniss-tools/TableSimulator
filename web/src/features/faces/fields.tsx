@@ -1,4 +1,5 @@
-// Polia panelov editora ciel: sekcia panelu, cislo v bodoch a farba (predvolena, farba vzhladu alebo vlastna).
+// Polia panelov editora ciel: sekcia panelu, cislo v bodoch a farba (predvolena, farba vzhladu alebo vlastna). Pri viacerych
+// vybranych prvkoch s roznou hodnotou pole ukaze "Rozne" (hodnota undefined) a zmena plati pre vsetky.
 import type { ReactNode } from "react";
 import { FormField } from "@/components/common/form-field";
 import { OptionSelect } from "@/components/common/option-select";
@@ -32,7 +33,8 @@ export function NumberField({
   className,
 }: {
   label: string;
-  value: number;
+  /** undefined = vybrane prvky maju rozne hodnoty. */
+  value: number | undefined;
   onChange: (value: number) => void;
   disabled: boolean;
   step?: number;
@@ -46,9 +48,11 @@ export function NumberField({
         type="number"
         step={step}
         min={min}
-        value={value}
+        value={value ?? ""}
+        placeholder={value === undefined ? t("faces.mixed") : undefined}
         disabled={disabled}
         onChange={(e) => {
+          if (value === undefined && e.target.value === "") return;
           const parsed = Number.parseFloat(e.target.value);
           onChange(Number.isFinite(parsed) ? parsed : 0);
         }}
@@ -67,18 +71,20 @@ export function ColorField({
   className = "col-span-2",
 }: {
   label: string;
-  value: string;
+  /** undefined = vybrane prvky maju rozne farby. */
+  value: string | undefined;
   emptyLabel: string;
   onChange: (value: string) => void;
   disabled: boolean;
   className?: string;
 }) {
-  const custom = value.startsWith("#");
+  const custom = value?.startsWith("#") ?? false;
   return (
     <FormField label={label} className={className}>
       <div className="flex items-center gap-2">
         <OptionSelect
-          value={custom ? CUSTOM : value}
+          value={value === undefined ? null : custom ? CUSTOM : value}
+          placeholder={t("faces.mixed")}
           disabled={disabled}
           onValueChange={(v) => onChange(v === CUSTOM ? "#ffffff" : v)}
           options={[
@@ -93,7 +99,7 @@ export function ColorField({
             type="color"
             aria-label={label}
             className="h-8 w-10 shrink-0 cursor-pointer rounded-md border bg-transparent p-0.5"
-            value={HEX.test(value) ? value : "#ffffff"}
+            value={value && HEX.test(value) ? value : "#ffffff"}
             disabled={disabled}
             onChange={(e) => onChange(e.target.value)}
           />

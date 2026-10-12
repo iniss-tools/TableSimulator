@@ -66,6 +66,10 @@ for (const theme of THEMES) {
     await canvas.getByRole("button", { name: "Text: SMER" }).click();
     await page.evaluate(() => window.scrollTo(0, 0));
     await shot(page, "cela-tabul/editor", theme, { ready: canvas });
+    // viac popisov stlpcov: spolocne polia s "Rozne" a zarovnanie
+    await canvas.getByRole("button", { name: "Text: VLAK" }).click({ modifiers: ["Control"] });
+    await canvas.getByRole("button", { name: "Text: KOĽAJ" }).click({ modifiers: ["Control"] });
+    await shot(page, "cela-tabul/viac-prvkov", theme, { ready: page.getByRole("button", { name: "Rozmiestniť vodorovne" }) });
 
     await open(page, "/", theme);
     const dialog = await openBoard(page, "Nástupište 1");

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { FaceElementDto } from "@/api";
 import { NEW_ELEMENT } from "@/render/face";
-import { FINE, moveElement, moveItem, referencePoint, resizeElement, snap } from "./edit";
+import { FINE, moveElement, moveItem, referencePoint, resizeElement, snap, stepOrder } from "./edit";
 
 const el = (patch: Partial<FaceElementDto>): FaceElementDto => ({ ...NEW_ELEMENT, ...patch });
 
@@ -67,4 +67,13 @@ test("bod merania X a Y podla zarovnania", () => {
 test("presun polozky v zozname", () => {
   expect(moveItem(["a", "b", "c"], 0, 2)).toEqual(["b", "c", "a"]);
   expect(moveItem(["a", "b", "c"], 2, 0)).toEqual(["c", "a", "b"]);
+});
+
+test("vybrane prvky dopredu a dozadu o jedno miesto, susedne spolu", () => {
+  expect(stepOrder(4, [1], 1)).toEqual([0, 2, 1, 3]);
+  expect(stepOrder(4, [0, 1], 1)).toEqual([2, 0, 1, 3]);
+  // vrchny prvok ostane, prvok pod nim sa nepreskoci
+  expect(stepOrder(3, [1, 2], 1)).toEqual([0, 1, 2]);
+  expect(stepOrder(4, [0, 2], -1)).toEqual([0, 2, 1, 3]);
+  expect(stepOrder(4, [3, 1], -1)).toEqual([1, 0, 3, 2]);
 });
