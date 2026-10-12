@@ -99,6 +99,7 @@ export const NEW_ELEMENT: FaceElementDto = {
   render: "text",
   symbol: "arrowUp",
   image: "",
+  locked: false,
 };
 
 /** Sipka doprava v stvorci 1 × 1: driek a hrot (body obrysu). */

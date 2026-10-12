@@ -1,4 +1,5 @@
 // Predlohy ciel tabul na webe: popisy premennych, novy prvok podla druhu, nazvy farieb a tabula na nahlad.
+import { ArrowUpRight, Clock, ImageIcon, Square, Type, type LucideIcon } from "lucide-react";
 import type { BoardDto, BoardProfileDto, FaceElementDto, FaceElementKind } from "@/api";
 import { SAMPLE_BOARD } from "@/features/designs/sample-board";
 import { boardKind } from "@/lib/boards";
@@ -12,6 +13,12 @@ const KNOWN_VARIABLES = ["track", "platform", "station", "direction"];
 export function variableLabel(key: string): string {
   return KNOWN_VARIABLES.includes(key) ? t(`face.var.${key}` as TextKey) : `{${key}}`;
 }
+
+/** Ikona druhu prvku (vrstvy, panel vlastnosti, ponuka Pridat). */
+export const KIND_ICONS: Record<FaceElementKind, LucideIcon> = { rect: Square, text: Type, clock: Clock, symbol: ArrowUpRight, image: ImageIcon };
+
+/** Druhy prvkov v poradi ponuky Pridat. */
+export const ELEMENT_KINDS: FaceElementKind[] = ["rect", "text", "clock", "symbol", "image"];
 
 /** Nazvy farieb vzhladu, ktore sa daju pouzit namiesto #rrggbb. */
 export const FACE_COLOR_TOKENS = ["text", "band", "panel", "plate", "accent"] as const;
@@ -37,6 +44,13 @@ export function elementSummary(element: FaceElementDto): string {
   if (element.kind === "text") return element.text.split("\n")[0];
   if (element.kind === "symbol") return t(`face.symbol.${element.symbol}`);
   return t(`face.anchor.${element.anchor}`);
+}
+
+/** Nazov vo vrstvach: prvy riadok textu, symbol, inak druh prvku. */
+export function layerLabel(element: FaceElementDto): string {
+  if (element.kind === "text") return element.text.split("\n")[0] || t("face.kind.text");
+  if (element.kind === "symbol") return t(`face.symbol.${element.symbol}`);
+  return t(`face.kind.${element.kind}`);
 }
 
 /** Popis prvku pre obsluhu: druh a kratky popis. */

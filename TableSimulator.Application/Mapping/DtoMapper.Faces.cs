@@ -86,7 +86,8 @@ public static partial class DtoMapper
             },
             Render = element.Render == Core.Boards.FaceRender.Display ? Contracts.Faces.FaceRender.Display : Contracts.Faces.FaceRender.Text,
             Symbol = ToDto(element.Symbol),
-            Image = element.Image
+            Image = element.Image,
+            Locked = element.Locked
         };
     }
 

@@ -27,6 +27,10 @@ interface Props {
   design?: BoardDesign;
   /** Vrstva nad tabulou s polohami prvkov cela (editor ciel). */
   overlay?: (layout: FaceOverlayLayout) => ReactNode;
+  /** Pevna mierka namiesto prisposobenia miestu - lupa editora. */
+  scale?: number;
+  /** Mierka, v ktorej sa tabula kresli. */
+  onScale?: (scale: number) => void;
   ref?: Ref<BoardViewHandle>;
 }
 
@@ -35,7 +39,7 @@ function flapFace(face: BoardFaceDto | null, board: Board, t: number): FlapFace 
   return face ? { face, values: faceValues(board), time: boardClock(board, t) } : null;
 }
 
-export function FlapView({ board, fit = "width", className, face: faceOverride, design: designOverride, overlay, ref }: Props) {
+export function FlapView({ board, fit = "width", className, face: faceOverride, design: designOverride, overlay, scale: fixedScale, onScale, ref }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [space, setSpace] = useState({ width: 0, height: 0 });
@@ -81,11 +85,15 @@ export function FlapView({ board, fit = "width", className, face: faceOverride, 
   }, []);
 
   const cssScale =
-    space.width > 0
+    fixedScale ??
+    (space.width > 0
       ? fit === "contain" && space.height > 0
         ? Math.min(space.width / layout.width, space.height / layout.height)
         : space.width / layout.width
-      : 0;
+      : 0);
+  useEffect(() => {
+    if (cssScale > 0) onScale?.(cssScale);
+  }, [cssScale, onScale]);
   const scale = cssScale * (window.devicePixelRatio || 1);
 
   // polohy prvkov cela pre editor; geometria listov uz zacina v rohu platna, hodiny su vzdy pismom
@@ -168,11 +176,14 @@ export function FlapView({ board, fit = "width", className, face: faceOverride, 
   }, [layout, scale, cssScale, rotation, face, design, images]);
 
   return (
-    <div ref={box} className={cn("w-full leading-0", fit === "contain" && "flex h-full items-center justify-center", className)}>
-      <div className="relative max-w-full">
+    <div
+      ref={box}
+      className={cn(fixedScale ? "w-max" : "w-full", "leading-0", fit === "contain" && !fixedScale && "flex h-full items-center justify-center", className)}
+    >
+      <div className={cn("relative", !fixedScale && "max-w-full")}>
         <canvas
           ref={canvas}
-          className="block max-w-full rounded-sm"
+          className={cn("block rounded-sm", !fixedScale && "max-w-full")}
           style={cssScale > 0 ? { width: `${layout.width * cssScale}px`, height: `${layout.height * cssScale}px` } : { visibility: "hidden" }}
         />
         {overlayLayout && overlay && <div className="absolute inset-0">{overlay(overlayLayout)}</div>}

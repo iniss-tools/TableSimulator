@@ -405,6 +405,7 @@ export type FaceElementDto = {
     render: FaceRender;
     symbol: FaceSymbol;
     image: string;
+    locked: boolean;
 };
 
 export type FaceElementKind = 'rect' | 'text' | 'clock' | 'symbol' | 'image';

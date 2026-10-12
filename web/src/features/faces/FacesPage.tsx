@@ -1,27 +1,11 @@
-// Editor predloh ciel tabul: plochy, texty a hodiny okolo matice s nahladom na tabuli simulatora alebo ukazkovej.
-// Prvky sa daju upravovat aj priamo v nahlade (FaceCanvasEditor) - vyber, tahanie, uchyty, kroky spat a znova.
-// Vstavane predlohy sa daju len skopirovat; vlastne su v databaze servera a tabule ich pouzivaju podla kluca.
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+// Editor predloh ciel tabul ako vo Figme: hore nastroje (predloha, kroky spat, pridanie prvku, mierka, ulozenie),
+// vlavo vrstvy, zobrazenie a tabula nahladu, v strede platno s tabulou a vpravo vlastnosti vybraneho prvku (bez vyberu
+// predlohy). Stranka sa neposuva - posuvaju sa len panely. Vstavane predlohy sa daju len skopirovat; vlastne su
+// v databaze servera a tabule ich pouzivaju podla kluca.
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useBlocker } from "@tanstack/react-router";
-import {
-  ArrowUpRight,
-  CircleAlert,
-  Clock,
-  CopyPlus,
-  ImageIcon,
-  Info,
-  Maximize2,
-  Minimize2,
-  Redo,
-  Save,
-  Square,
-  SquareDashed,
-  Trash2,
-  Type,
-  Undo,
-  Undo2,
-} from "lucide-react";
+import { CircleAlert, CopyPlus, Plus, Redo, Save, Trash2, Undo, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { toast } from "sonner";
 import {
   deleteFace,
@@ -36,51 +20,32 @@ import {
   type FaceElementKind,
 } from "@/api";
 import { confirmAction } from "@/components/common/confirm";
-import { FormField } from "@/components/common/form-field";
+import { CheckField, FormField } from "@/components/common/form-field";
 import { OptionSelect } from "@/components/common/option-select";
-import { PageHeader } from "@/components/common/page-header";
-import { StatusBadge } from "@/components/common/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
-import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import { BoardView } from "@/features/boards/BoardView";
 import { SAMPLE_BOARD, SAMPLE_BOARD_ID } from "@/features/designs/sample-board";
-import { cn } from "@/lib/utils";
 import { faceVariables } from "@/render/face";
 import { t } from "@/i18n";
-import { moveItem } from "./edit";
-import { FaceCanvasEditor } from "./FaceCanvasEditor";
-import { FaceElementCard } from "./FaceElementCard";
-import { newElement, previewBoard, variableLabel } from "./faces";
+import { ElementProperties } from "./ElementProperties";
+import { FaceCanvas } from "./FaceCanvas";
+import { FaceProperties } from "./FaceProperties";
+import { ELEMENT_KINDS, KIND_ICONS, newElement, previewBoard, variableLabel } from "./faces";
 import { useHistory } from "./history";
+import { LayersPanel } from "./LayersPanel";
 import { NewFaceDialog } from "./NewFaceDialog";
+import { typing, zoomStep } from "./zoom";
 
 /** Hodnoty premennych v nahlade, kym ich obsluha nezmeni. */
 const SAMPLE_VALUES: Record<string, string> = { track: "1", platform: "2", station: "STANICA", direction: "SEVER" };
 
-function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
-  return (
-    <Card size="sm">
-      <CardHeader className="border-b">
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
-  );
-}
-
-const int = (value: string) => Number.parseInt(value, 10) || 0;
-
-/** Klavesova skratka ide do pola formulara (tam patri jeho vlastne spat), nie do editora. */
-function typing(target: EventTarget | null): boolean {
-  return target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
-}
+const leave = () => confirmAction({ title: t("settings.leave.title"), description: t("faces.leave.text"), confirmLabel: t("settings.leave.confirm") });
 
 export function FacesPage() {
   const live = useSimulatorState();
@@ -90,11 +55,14 @@ export function FacesPage() {
   const history = useHistory<BoardFaceDto | null>(null);
   const draft = history.value;
   const [element, setElement] = useState<number | null>(null);
+  // prvky skryte len v editore (indexy) - neukladaju sa
+  const [hidden, setHidden] = useState<ReadonlySet<number>>(new Set());
   const [creating, setCreating] = useState(false);
   const [preview, setPreview] = useState(SAMPLE_BOARD_ID);
   const [values, setValues] = useState(SAMPLE_VALUES);
   const [outlines, setOutlines] = useState(true);
-  const [wide, setWide] = useState(false);
+  const [zoom, setZoom] = useState<number | null>(null);
+  const [fitScale, setFitScale] = useState(1);
 
   const base = faces?.find((f) => f.id === selected) ?? faces?.[0];
   const form = draft ?? base;
@@ -112,18 +80,35 @@ export function FacesPage() {
   });
 
   useBlocker({
-    shouldBlockFn: async () =>
-      dirty && !(await confirmAction({ title: t("settings.leave.title"), description: t("faces.leave.text"), confirmLabel: t("settings.leave.confirm") })),
+    shouldBlockFn: async () => dirty && !(await leave()),
     enableBeforeUnload: () => dirty,
   });
 
-  // Ctrl+Z / Ctrl+Y (Ctrl+Shift+Z) mimo poli formulara
-  const { undo, redo } = history;
+  // kroky spat a znova menia prvky - skrytie podla indexov by uz nesedelo
+  const { undo: historyUndo, redo: historyRedo } = history;
+  const undo = () => {
+    historyUndo();
+    setHidden(new Set());
+  };
+  const redo = () => {
+    historyRedo();
+    setHidden(new Set());
+  };
+  const saveNow = () => {
+    if (form && dirty && !readOnly && !save.isPending) save.mutate({ path: { id: form.id }, body: form });
+  };
+
+  // Ctrl+Z / Ctrl+Y (Ctrl+Shift+Z) mimo poli formulara, Ctrl+S kdekolvek
   useEffect(() => {
-    if (readOnly) return;
     const onKey = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey) || e.altKey || typing(e.target)) return;
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
       const key = e.key.toLowerCase();
+      if (key === "s") {
+        e.preventDefault();
+        saveNow();
+        return;
+      }
+      if (readOnly || typing(e.target)) return;
       if (key === "z" && !e.shiftKey) undo();
       else if (key === "y" || (key === "z" && e.shiftKey)) redo();
       else return;
@@ -131,7 +116,7 @@ export function FacesPage() {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [readOnly, undo, redo]);
+  });
 
   const liveBoard = live.boards.find((b) => b.id === preview);
   const board = useMemo(() => {
@@ -140,10 +125,10 @@ export function FacesPage() {
   }, [liveBoard, values]);
 
   const select = async (id: string) => {
-    if (dirty && !(await confirmAction({ title: t("settings.leave.title"), description: t("faces.leave.text"), confirmLabel: t("settings.leave.confirm") })))
-      return;
+    if (dirty && !(await leave())) return;
     history.reset(null);
     setElement(null);
+    setHidden(new Set());
     save.reset();
     setSelected(id);
   };
@@ -155,6 +140,7 @@ export function FacesPage() {
       await deleteFace({ path: { id: form.id }, throwOnError: true });
       history.reset(null);
       setElement(null);
+      setHidden(new Set());
       setSelected(null);
       void queryClient.invalidateQueries({ queryKey: getFacesQueryKey() });
     } catch (e) {
@@ -174,6 +160,11 @@ export function FacesPage() {
 
   const change = (patch: Partial<BoardFaceDto>, transient = false) => history.set({ ...form, ...patch }, transient);
   const setElements = (elements: FaceElementDto[], transient = false) => change({ elements }, transient);
+  const updateElement = (index: number, changed: FaceElementDto, transient = false) =>
+    setElements(
+      form.elements.map((e, j) => (j === index ? changed : e)),
+      transient,
+    );
   const add = (kind: FaceElementKind) => {
     setElements([...form.elements, newElement(kind)]);
     setElement(form.elements.length);
@@ -181,123 +172,33 @@ export function FacesPage() {
   const removeElement = (index: number) => {
     setElements(form.elements.filter((_, j) => j !== index));
     setElement(current === index ? null : current !== null && current > index ? current - 1 : current);
+    setHidden(new Set([...hidden].filter((i) => i !== index).map((i) => (i > index ? i - 1 : i))));
   };
-  const moveElement = (from: number, to: number) => {
-    setElements(moveItem(form.elements, from, to));
-    if (current === from) setElement(to);
-    else if (current === to) setElement(from);
+  /** Nove poradie kreslenia (povodne indexy) - vyber a skrytie idu s prvkami. */
+  const reorder = (order: number[]) => {
+    setElements(order.map((i) => form.elements[i]));
+    if (current !== null) setElement(order.indexOf(current));
+    setHidden(new Set(order.flatMap((old, i) => (hidden.has(old) ? [i] : []))));
   };
-  const variables = faceVariables(form);
+  const swap = (index: number, other: number) => reorder(form.elements.map((_, i) => (i === index ? other : i === other ? index : i)));
+  const toggleHidden = (index: number) => {
+    const next = new Set(hidden);
+    if (!next.delete(index)) next.add(index);
+    setHidden(next);
+  };
 
-  const previewCard = (
-    <Card className={cn(wide ? "shadow-md" : "xl:sticky xl:top-16")}>
-      <CardHeader className="border-b">
-        <CardTitle>{t("designs.preview")}</CardTitle>
-        <CardAction className="flex gap-1">
-          {!readOnly && (
-            <>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                title={t("faces.undo")}
-                aria-label={t("faces.undo")}
-                disabled={!history.canUndo}
-                onClick={undo}
-              >
-                <Undo />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                title={t("faces.redo")}
-                aria-label={t("faces.redo")}
-                disabled={!history.canRedo}
-                onClick={redo}
-              >
-                <Redo />
-              </Button>
-            </>
-          )}
-          <Button
-            type="button"
-            variant={outlines ? "secondary" : "ghost"}
-            size="icon-sm"
-            title={t("faces.outlines")}
-            aria-label={t("faces.outlines")}
-            aria-pressed={outlines}
-            onClick={() => setOutlines(!outlines)}
-          >
-            <SquareDashed />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="hidden xl:inline-flex"
-            title={t("faces.wide")}
-            aria-label={t("faces.wide")}
-            aria-pressed={wide}
-            onClick={() => setWide(!wide)}
-          >
-            {wide ? <Minimize2 /> : <Maximize2 />}
-          </Button>
-        </CardAction>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        <OptionSelect
-          value={preview}
-          onValueChange={setPreview}
-          ariaLabel={t("designs.preview.board")}
-          options={[
-            { value: SAMPLE_BOARD_ID, label: t("designs.preview.sample") },
-            ...live.boards.map((b) => ({ value: b.id, label: b.name ? `${b.name} (${b.id})` : b.id })),
-          ]}
-        />
-        {variables.length > 0 && (
-          <div className="grid gap-3 sm:grid-cols-3">
-            {variables.map((key) => (
-              <FormField key={key} label={variableLabel(key)}>
-                <Input value={values[key] ?? ""} onChange={(e) => setValues({ ...values, [key]: e.target.value })} />
-              </FormField>
-            ))}
-          </div>
-        )}
-        <BoardView
-          board={board}
-          face={form}
-          overlay={(layout) => (
-            <FaceCanvasEditor
-              layout={layout}
-              face={form}
-              selected={current}
-              readOnly={readOnly}
-              outlines={outlines}
-              onSelect={setElement}
-              onChange={(i, changed, transient) =>
-                setElements(
-                  form.elements.map((e, j) => (j === i ? changed : e)),
-                  transient,
-                )
-              }
-              onRemove={removeElement}
-            />
-          )}
-        />
-        <p className="text-sm text-muted-foreground">{t(readOnly ? "faces.canvas.readOnly" : "faces.canvas.hint")}</p>
-      </CardContent>
-    </Card>
-  );
+  const variables = faceVariables(form);
+  const shown = form.elements.flatMap((_, i) => (hidden.has(i) ? [] : [i]));
+  const scale = zoom ?? fitScale;
 
   return (
-    <>
-      <PageHeader description={t("faces.hint")}>
+    <div className="flex flex-col gap-3 xl:h-[calc(100dvh-5rem)] xl:min-h-[34rem]">
+      <div className="flex flex-wrap items-center gap-2">
         <OptionSelect
           value={form.id}
           onValueChange={(id) => void select(id)}
           ariaLabel={t("faces.select")}
-          className="min-w-72"
+          className="min-w-64"
           options={faces.map((f) => ({ value: f.id, label: f.name }))}
         />
         <Button variant="outline" onClick={() => setCreating(true)}>
@@ -310,159 +211,153 @@ export function FacesPage() {
             {t("common.delete")}
           </Button>
         )}
-      </PageHeader>
-
-      <div className={cn("grid gap-6", !wide && "xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]")}>
-        {wide && <div className="sticky top-16 z-20 min-w-0">{previewCard}</div>}
-        <div className="flex min-w-0 flex-col gap-4">
-          {form.builtIn && (
-            <Alert>
-              <Info />
-              <AlertDescription>{t("faces.builtIn.hint")}</AlertDescription>
-            </Alert>
-          )}
-          <Section title={t("faces.section.face")}>
-            <FieldGroup className="grid gap-4 sm:grid-cols-2">
-              <FormField label={t("faces.name")}>
-                <Input value={form.name} disabled={readOnly} onChange={(e) => change({ name: e.target.value })} />
-              </FormField>
-              <FormField label={t("faces.id")}>
-                <div className="flex items-center gap-2">
-                  <code className="font-mono text-sm">{form.id}</code>
-                  <StatusBadge tone={form.builtIn ? "off" : "ok"}>{t(form.builtIn ? "settings.designs.builtIn" : "settings.designs.custom")}</StatusBadge>
-                </div>
-              </FormField>
-            </FieldGroup>
-          </Section>
-
-          <Section title={t("faces.section.layout")} description={t("faces.section.layout.hint")}>
-            <FieldGroup className="grid gap-4 sm:grid-cols-4">
-              {(["left", "top", "right", "bottom"] as const).map((side) => (
-                <FormField key={side} label={t(`faces.margin.${side}`)}>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={form.margin[side]}
-                    disabled={readOnly}
-                    onChange={(e) => change({ margin: { ...form.margin, [side]: Math.max(0, int(e.target.value)) } })}
-                  />
-                </FormField>
-              ))}
-              <FormField label={t("faces.rowGap")} hint={t("faces.rowGap.hint")} className="sm:col-span-2">
-                <Input
-                  type="number"
-                  min={0}
-                  placeholder={t("faces.rowGap.design")}
-                  value={form.rowGap ?? ""}
-                  disabled={readOnly}
-                  onChange={(e) => change({ rowGap: e.target.value === "" ? null : Math.max(0, int(e.target.value)) })}
-                />
-              </FormField>
-              <FormField label={t("faces.rowGroup")}>
-                <Input
-                  type="number"
-                  min={0}
-                  value={form.rowGroup}
-                  disabled={readOnly}
-                  onChange={(e) => change({ rowGroup: Math.max(0, int(e.target.value)) })}
-                />
-              </FormField>
-              <FormField label={t("faces.groupGap")}>
-                <Input
-                  type="number"
-                  min={0}
-                  value={form.groupGap}
-                  disabled={readOnly}
-                  onChange={(e) => change({ groupGap: Math.max(0, int(e.target.value)) })}
-                />
-              </FormField>
-              <FormField label={t("faces.moduleWidth")} hint={t("faces.moduleWidth.hint")} className="sm:col-span-2">
-                <Input
-                  type="number"
-                  min={0}
-                  value={form.moduleWidth}
-                  disabled={readOnly}
-                  onChange={(e) => change({ moduleWidth: Math.max(0, int(e.target.value)) })}
-                />
-              </FormField>
-            </FieldGroup>
-          </Section>
-
-          <Section title={t("faces.section.elements")} description={t("faces.section.elements.hint")}>
-            <div className="flex flex-col gap-3">
-              {form.elements.map((item, i) => (
-                <FaceElementCard
-                  key={i}
-                  element={item}
-                  index={i}
-                  count={form.elements.length}
-                  readOnly={readOnly}
-                  selected={current === i}
-                  onSelect={() => setElement(i)}
-                  onChange={(changed) => setElements(form.elements.map((e, j) => (j === i ? changed : e)))}
-                  onMove={(to) => moveElement(i, to)}
-                  onRemove={() => removeElement(i)}
-                />
-              ))}
-              {!readOnly && (
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" onClick={() => add("rect")}>
-                    <Square />
-                    {t("faces.add.rect")}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => add("text")}>
-                    <Type />
-                    {t("faces.add.text")}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => add("clock")}>
-                    <Clock />
-                    {t("faces.add.clock")}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => add("symbol")}>
-                    <ArrowUpRight />
-                    {t("faces.add.symbol")}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => add("image")}>
-                    <ImageIcon />
-                    {t("faces.add.image")}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </Section>
-        </div>
-
-        {!wide && <div className="min-w-0">{previewCard}</div>}
-      </div>
-
-      {!readOnly && (
-        <div className="sticky bottom-0 z-10 -mx-1 mt-6 flex flex-col gap-3 border-t bg-background/95 px-1 py-3 backdrop-blur">
-          {save.error && (
-            <Alert variant="destructive">
-              <CircleAlert />
-              <AlertDescription className="whitespace-pre-line">{errorText(save.error)}</AlertDescription>
-            </Alert>
-          )}
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <span className="mr-auto text-sm text-muted-foreground">{dirty && t("settings.unsaved")}</span>
+        <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-6" />
+        <Button variant="ghost" size="icon" title={t("faces.undo")} aria-label={t("faces.undo")} disabled={readOnly || !history.canUndo} onClick={undo}>
+          <Undo />
+        </Button>
+        <Button variant="ghost" size="icon" title={t("faces.redo")} aria-label={t("faces.redo")} disabled={readOnly || !history.canRedo} onClick={redo}>
+          <Redo />
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button variant="outline" disabled={readOnly} />}>
+            <Plus />
+            {t("faces.add")}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-40">
+            {ELEMENT_KINDS.map((kind) => {
+              const Icon = KIND_ICONS[kind];
+              return (
+                <DropdownMenuItem key={kind} onClick={() => add(kind)}>
+                  <Icon />
+                  {t(`faces.add.${kind}`)}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-6" />
+        <Button variant="ghost" size="icon" title={t("faces.zoom.out")} aria-label={t("faces.zoom.out")} onClick={() => setZoom(zoomStep(scale, -1))}>
+          <ZoomOut />
+        </Button>
+        <Button
+          variant="ghost"
+          className="min-w-16 tabular-nums"
+          title={t("faces.zoom.fit")}
+          aria-label={t("faces.zoom", { percent: Math.round(scale * 100) })}
+          onClick={() => setZoom(null)}
+        >
+          {Math.round(scale * 100)} %
+        </Button>
+        <Button variant="ghost" size="icon" title={t("faces.zoom.in")} aria-label={t("faces.zoom.in")} onClick={() => setZoom(zoomStep(scale, 1))}>
+          <ZoomIn />
+        </Button>
+        {!readOnly && (
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            {dirty && <span className="text-sm text-muted-foreground">{t("settings.unsaved")}</span>}
             <Button
               variant="outline"
               disabled={!dirty || save.isPending}
               onClick={() => {
                 history.reset(null);
+                setHidden(new Set());
                 save.reset();
               }}
             >
               <Undo2 />
               {t("settings.discard")}
             </Button>
-            <Button disabled={!dirty || save.isPending} onClick={() => save.mutate({ path: { id: form.id }, body: form })}>
+            <Button title={t("faces.save")} disabled={!dirty || save.isPending} onClick={saveNow}>
               {save.isPending ? <Spinner /> : <Save />}
               {t("common.save")}
             </Button>
           </div>
-        </div>
+        )}
+      </div>
+
+      {save.error && (
+        <Alert variant="destructive">
+          <CircleAlert />
+          <AlertDescription className="whitespace-pre-line">{errorText(save.error)}</AlertDescription>
+        </Alert>
       )}
+
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-[14rem_minmax(0,1fr)_18rem]">
+        <aside className="flex max-h-[32rem] min-h-0 flex-col gap-4 rounded-xl border bg-card p-3 xl:max-h-none">
+          <section className="flex min-h-0 flex-1 flex-col gap-2">
+            <h2 className="text-xs font-medium text-muted-foreground">{t("faces.layers")}</h2>
+            <LayersPanel
+              elements={form.elements}
+              selected={current}
+              hidden={hidden}
+              readOnly={readOnly}
+              onSelect={setElement}
+              onToggleLock={(i) => updateElement(i, { ...form.elements[i], locked: !form.elements[i].locked })}
+              onToggleHidden={toggleHidden}
+              onReorder={reorder}
+            />
+          </section>
+          <section className="flex shrink-0 flex-col gap-2 border-t pt-3">
+            <h2 className="text-xs font-medium text-muted-foreground">{t("faces.view")}</h2>
+            <CheckField label={t("faces.outlines")} checked={outlines} onCheckedChange={setOutlines} />
+          </section>
+          <section className="flex shrink-0 flex-col gap-2 border-t pt-3">
+            <h2 className="text-xs font-medium text-muted-foreground">{t("designs.preview")}</h2>
+            <OptionSelect
+              value={preview}
+              onValueChange={setPreview}
+              ariaLabel={t("designs.preview.board")}
+              className="w-full"
+              options={[
+                { value: SAMPLE_BOARD_ID, label: t("designs.preview.sample") },
+                ...live.boards.map((b) => ({ value: b.id, label: b.name ? `${b.name} (${b.id})` : b.id })),
+              ]}
+            />
+            {variables.map((key) => (
+              <FormField key={key} label={variableLabel(key)}>
+                <Input value={values[key] ?? ""} onChange={(e) => setValues({ ...values, [key]: e.target.value })} />
+              </FormField>
+            ))}
+          </section>
+        </aside>
+
+        <div className="order-first flex min-h-0 flex-col gap-2 xl:order-none">
+          <div className="h-[min(60vh,32rem)] min-h-0 xl:h-auto xl:flex-1">
+            <FaceCanvas
+              board={board}
+              face={form}
+              shown={shown}
+              selected={current}
+              readOnly={readOnly}
+              outlines={outlines}
+              zoom={zoom}
+              onZoom={setZoom}
+              onFitScale={setFitScale}
+              onSelect={setElement}
+              onChange={updateElement}
+              onRemove={removeElement}
+            />
+          </div>
+          <p className="shrink-0 text-xs text-muted-foreground">{t(readOnly ? "faces.canvas.readOnly" : "faces.canvas.hint")}</p>
+        </div>
+
+        <aside aria-label={t("faces.properties")} className="min-h-0 overflow-y-auto rounded-xl border bg-card p-3">
+          {current !== null ? (
+            <ElementProperties
+              key={current}
+              element={form.elements[current]}
+              readOnly={readOnly}
+              canForward={current < form.elements.length - 1}
+              canBackward={current > 0}
+              onChange={(changed) => updateElement(current, changed)}
+              onForward={() => swap(current, current + 1)}
+              onBackward={() => swap(current, current - 1)}
+              onRemove={() => removeElement(current)}
+            />
+          ) : (
+            <FaceProperties face={form} readOnly={readOnly} onChange={(patch) => change(patch)} />
+          )}
+        </aside>
+      </div>
 
       {creating && (
         <NewFaceDialog
@@ -473,10 +368,11 @@ export function FacesPage() {
             setCreating(false);
             history.reset(null);
             setElement(null);
+            setHidden(new Set());
             setSelected(id);
           }}
         />
       )}
-    </>
+    </div>
   );
 }

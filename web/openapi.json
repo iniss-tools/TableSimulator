@@ -5652,7 +5652,8 @@
           "format",
           "render",
           "symbol",
-          "image"
+          "image",
+          "locked"
         ],
         "type": "object",
         "properties": {
@@ -5741,6 +5742,9 @@
           },
           "image": {
             "type": "string"
+          },
+          "locked": {
+            "type": "boolean"
           }
         }
       },

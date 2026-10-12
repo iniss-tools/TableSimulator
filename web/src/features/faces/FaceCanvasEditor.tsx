@@ -1,5 +1,6 @@
 // Uprava cela priamo v nahlade tabule: vrstva nad platnom s obrysmi prvkov. Klik vyberie prvok, tahanie ho posunie,
 // uchyt na volnom okraji meni rozmer plochy alebo velkost pisma; sipky posuvaju vybrany prvok, Delete ho odstrani.
+// Zamknuty prvok sa na platne neda chytit (vybrat sa da vo vrstvach), skryty sa nekresli a nema obrys.
 import { useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import type { BoardFaceDto, FaceElementDto } from "@/api";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,8 @@ interface Drag {
 interface Props {
   layout: FaceOverlayLayout;
   face: BoardFaceDto;
+  /** Index prvku cela ku kazdej ploche rozlozenia (skryte prvky sa nekreslia, ich plochy chybaju). */
+  indices: number[];
   selected: number | null;
   readOnly: boolean;
   outlines: boolean;
@@ -48,8 +51,13 @@ function dragText(element: FaceElementDto, mode: DragMode): string {
   return `${t("face.size")} ${number(element.size)}`;
 }
 
-export function FaceCanvasEditor({ layout, face, selected, readOnly, outlines, onSelect, onChange, onRemove }: Props) {
+export function FaceCanvasEditor({ layout, face, indices, selected, readOnly, outlines, onSelect, onChange, onRemove }: Props) {
   const { scale, geometry: g, boxes } = layout;
+  /** Plocha prvku podla indexu v celej predlohe; null = skryty alebo bez ukotvenia. */
+  const boxOf = (index: number) => {
+    const at = indices.indexOf(index);
+    return at < 0 ? null : (boxes[at] ?? null);
+  };
   const root = useRef<HTMLDivElement>(null);
   const drag = useRef<Drag | null>(null);
   const [tip, setTip] = useState<{ text: string; index: number } | null>(null);
@@ -68,8 +76,8 @@ export function FaceCanvasEditor({ layout, face, selected, readOnly, outlines, o
     e.preventDefault();
     root.current?.focus({ preventScroll: true });
     onSelect(index);
-    const box = boxes[index];
-    if (readOnly || !box) return;
+    const box = boxOf(index);
+    if (readOnly || !box || face.elements[index]?.locked) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     drag.current = {
       index,
@@ -114,7 +122,7 @@ export function FaceCanvasEditor({ layout, face, selected, readOnly, outlines, o
     }
     if (selected === null || readOnly || drag.current) return;
     const element = face.elements[selected];
-    if (!element) return;
+    if (!element || element.locked) return;
     if (e.key === "Delete" || e.key === "Backspace") {
       e.preventDefault();
       onRemove(selected);
@@ -129,13 +137,13 @@ export function FaceCanvasEditor({ layout, face, selected, readOnly, outlines, o
   };
 
   const current = selected !== null ? face.elements[selected] : undefined;
-  const currentBox = selected !== null ? boxes[selected] : null;
+  const currentBox = selected !== null ? boxOf(selected) : null;
   const anchor = current ? anchorBox(g, current) : null;
   const reference = current && anchor ? referencePoint(current, anchor) : null;
 
   // uchyty na volnych okrajoch vybraneho prvku: plocha a obrazok sirka, vyska a roh, text, hodiny a symbol len roh (velkost)
   const handles: { index: number; mode: Exclude<DragMode, "move">; x: number; y: number; cursor: string }[] = [];
-  if (selected !== null && current && currentBox && !readOnly) {
+  if (selected !== null && current && currentBox && !readOnly && !current.locked) {
     const edges = freeEdges(current);
     const x = edges.left ? currentBox.x : currentBox.x + currentBox.w;
     const y = edges.top ? currentBox.y : currentBox.y + currentBox.h;
@@ -175,26 +183,28 @@ export function FaceCanvasEditor({ layout, face, selected, readOnly, outlines, o
             aria-hidden
           />
         )}
-        {boxes.map((box, i) =>
-          box ? (
+        {boxes.map((box, i) => {
+          const index = indices[i];
+          const element = face.elements[index];
+          return box && element ? (
             <div
-              key={i}
+              key={index}
               role="button"
-              aria-label={elementLabel(face.elements[i])}
-              aria-pressed={selected === i}
-              data-face-element={i}
+              aria-label={elementLabel(element)}
+              aria-pressed={selected === index}
+              data-face-element={index}
               className={cn(
                 "absolute border",
-                readOnly ? "cursor-pointer" : "cursor-move",
-                selected === i
+                element.locked ? "pointer-events-none" : readOnly ? "cursor-pointer" : "cursor-move",
+                selected === index
                   ? "border-sky-500 bg-sky-500/10 ring-1 ring-sky-300/60"
                   : cn("border-dashed hover:border-sky-400 hover:bg-sky-400/5", outlines ? "border-sky-400/45" : "border-transparent"),
               )}
               style={hit(box)}
-              onPointerDown={(e) => begin(e, i, "move")}
+              onPointerDown={(e) => begin(e, index, "move")}
             />
-          ) : null,
-        )}
+          ) : null;
+        })}
       </div>
       {handles.map((h) => (
         <div
@@ -206,10 +216,10 @@ export function FaceCanvasEditor({ layout, face, selected, readOnly, outlines, o
           onPointerDown={(e) => begin(e, h.index, h.mode)}
         />
       ))}
-      {tip && boxes[tip.index] && (
+      {tip && boxOf(tip.index) && (
         <div
           className="pointer-events-none absolute z-20 -translate-y-full rounded bg-popover px-1.5 py-0.5 text-xs leading-normal whitespace-nowrap text-popover-foreground shadow"
-          style={{ left: boxes[tip.index]!.x * scale, top: boxes[tip.index]!.y * scale - 4 }}
+          style={{ left: boxOf(tip.index)!.x * scale, top: boxOf(tip.index)!.y * scale - 4 }}
         >
           {tip.text}
         </div>

@@ -124,6 +124,9 @@ public sealed record FaceElement
     /// sa prenesie exportom aj zalohou; prazdny = bez obrazka.
     /// </summary>
     public string Image { get; init; } = "";
+
+    /// <summary>Zamknuty prvok - v editore sa na tabuli neda vybrat ani posunut (napr. pas na pozadi); kreslenie nemeni.</summary>
+    public bool Locked { get; init; }
 }
 
 /// <summary>Druh prvku cela.</summary>

@@ -87,7 +87,8 @@ public static partial class RequestMapper
             Render = element.Render == Contracts.Faces.FaceRender.Display ? Core.Boards.FaceRender.Display : Core.Boards.FaceRender.Text,
             Symbol = ToSymbol(element.Symbol),
             // obrazok len pri prvku obrazok - inde by bol zbytocnou zatazou predlohy
-            Image = element.Kind == Contracts.Faces.FaceElementKind.Image ? element.Image.Trim() : ""
+            Image = element.Kind == Contracts.Faces.FaceElementKind.Image ? element.Image.Trim() : "",
+            Locked = element.Locked
         };
     }
 

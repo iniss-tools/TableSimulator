@@ -45,7 +45,7 @@ public class FaceSymbolsImagesTests
     {
         var face = Face(
             new FaceElementDto { Kind = ContractKind.Symbol, Symbol = ContractSymbol.ArrowDownLeft, Size = 9, Color = "accent" },
-            new FaceElementDto { Kind = ContractKind.Image, Image = Png, Width = -2, Height = 0 },
+            new FaceElementDto { Kind = ContractKind.Image, Image = Png, Width = -2, Height = 0, Locked = true },
             // obrazok pri inom prvku sa neulozi
             new FaceElementDto { Kind = ContractKind.Text, Text = "SEVER", Image = Png });
 
@@ -57,6 +57,8 @@ public class FaceSymbolsImagesTests
         Assert.AreEqual(Core.Boards.FaceSymbol.ArrowDownLeft, stored.Elements[0].Symbol);
         Assert.AreEqual(ContractSymbol.ArrowDownLeft, back.Elements[0].Symbol);
         Assert.AreEqual(Png, back.Elements[1].Image);
+        Assert.IsTrue(back.Elements[1].Locked, "zamok sa uklada do predlohy");
+        Assert.IsFalse(back.Elements[0].Locked);
         Assert.AreEqual("", back.Elements[2].Image);
         StringAssert.Contains(BoardFaces.Serialize(core), "\"symbol\":\"arrowDownLeft\"");
         foreach (var symbol in Enum.GetValues<ContractSymbol>())

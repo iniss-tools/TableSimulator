@@ -86,6 +86,10 @@ interface Props {
   face?: BoardFaceDto | null;
   /** Vrstva nad tabulou s polohami prvkov cela (editor ciel). */
   overlay?: (layout: FaceOverlayLayout) => ReactNode;
+  /** Pevna mierka (CSS px na px prirodzenej velkosti) namiesto prisposobenia miestu - lupa editora. */
+  scale?: number;
+  /** Mierka, v ktorej sa tabula kresli (aj pri prisposobeni miestu). */
+  onScale?: (scale: number) => void;
   ref?: Ref<BoardViewHandle>;
 }
 
@@ -95,7 +99,7 @@ export function BoardView(props: Props) {
   return family === "flaps" ? <FlapView {...props} /> : <LedBoardView {...props} />;
 }
 
-function LedBoardView({ board, fit = "width", className, design: override, face: faceOverride, overlay, ref }: Props) {
+function LedBoardView({ board, fit = "width", className, design: override, face: faceOverride, overlay, scale: fixedScale, onScale, ref }: Props) {
   const { designVersion } = useConnection();
   const faces = useQuery(getFacesOptions()).data;
   // stabilny objekt - zmena cela prekresli celu tabulu
@@ -168,11 +172,15 @@ function LedBoardView({ board, fit = "width", className, design: override, face:
   const rowHeight = board.profile.rowHeight;
   const natural = ledSize({ width: board.profile.width, height: board.profile.rows * rowHeight }, design, rowHeight, face);
   const cssScale =
-    space.width > 0
+    fixedScale ??
+    (space.width > 0
       ? fit === "contain" && space.height > 0
         ? Math.min(space.width / natural.width, space.height / natural.height)
         : space.width / natural.width
-      : 0;
+      : 0);
+  useEffect(() => {
+    if (cssScale > 0) onScale?.(cssScale);
+  }, [cssScale, onScale]);
 
   // polohy prvkov cela pre editor - od laveho horneho rohu platna (za ramom)
   const editing = overlay !== undefined;
@@ -259,11 +267,14 @@ function LedBoardView({ board, fit = "width", className, design: override, face:
   }, [board, design, face, fontSet, cssScale, ready, images]);
 
   return (
-    <div ref={box} className={cn("w-full leading-0", fit === "contain" && "flex h-full items-center justify-center", className)}>
-      <div className="relative max-w-full">
+    <div
+      ref={box}
+      className={cn(fixedScale ? "w-max" : "w-full", "leading-0", fit === "contain" && !fixedScale && "flex h-full items-center justify-center", className)}
+    >
+      <div className={cn("relative", !fixedScale && "max-w-full")}>
         <canvas
           ref={canvas}
-          className={cn("block max-w-full", !drawn && "invisible")}
+          className={cn("block", !fixedScale && "max-w-full", !drawn && "invisible")}
           style={cssScale > 0 ? { width: `${natural.width * cssScale}px`, height: `${natural.height * cssScale}px` } : { visibility: "hidden" }}
         />
         {!drawn && <Skeleton className="absolute inset-0 rounded-sm" />}

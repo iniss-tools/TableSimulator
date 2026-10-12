@@ -77,4 +77,7 @@ public sealed record FaceElementDto
 
     /// <summary>Obrazok prvku druhu obrazok ako data URL <c>data:image/…;base64,…</c>; prazdny = bez obrazka.</summary>
     public string Image { get; init; } = "";
+
+    /// <summary>Zamknuty prvok - v editore sa na tabuli neda vybrat ani posunut; kreslenie nemeni.</summary>
+    public bool Locked { get; init; }
 }
