@@ -11,9 +11,13 @@ public static class FaceErrors
     public const string Rows = "face.rows";
     public const string Elements = "face.elements";
     public const string Element = "face.element";
+    public const string Image = "face.image";
 
     /// <summary>Najviac prvkov cela.</summary>
     public const int MaxElements = 200;
+
+    /// <summary>Najdlhsi obrazok (data URL) - asi 300 kB suboru.</summary>
+    public const int MaxImage = 400_000;
 
     public static Error BuiltIn(string id) => Error.Problem("face.builtIn", $"Face '{id}' is built in and cannot be changed.");
 

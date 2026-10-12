@@ -1,7 +1,7 @@
 namespace TableSimulator.Contracts.Faces;
 
 /// <summary>
-/// Prvok cela: plocha, text alebo hodiny. Zarovnanie urcuje, od ktoreho okraja ukotvenia sa meria poloha (vlavo od
+/// Prvok cela: plocha, text, hodiny, symbol alebo obrazok. Zarovnanie urcuje, od ktoreho okraja ukotvenia sa meria poloha (vlavo od
 /// laveho, vpravo od praveho, na stred od stredu; zvislo rovnako). Rozmery a polohy v bodoch matice.
 /// </summary>
 public sealed record FaceElementDto
@@ -71,4 +71,10 @@ public sealed record FaceElementDto
 
     /// <summary>Hodiny pismom prehliadaca, alebo bodmi ako matica tabule.</summary>
     public FaceRender Render { get; init; } = FaceRender.Text;
+
+    /// <summary>Symbol prvku druhu symbol (stvorec velkosti <see cref="Size" />).</summary>
+    public FaceSymbol Symbol { get; init; } = FaceSymbol.ArrowUp;
+
+    /// <summary>Obrazok prvku druhu obrazok ako data URL <c>data:image/…;base64,…</c>; prazdny = bez obrazka.</summary>
+    public string Image { get; init; } = "";
 }

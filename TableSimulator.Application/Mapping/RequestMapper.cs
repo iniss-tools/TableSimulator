@@ -47,6 +47,9 @@ public static partial class RequestMapper
             RowHeight = profile.RowHeight,
             FontFile = string.IsNullOrWhiteSpace(profile.FontFile) ? null : profile.FontFile,
             FontMap = profile.FontMap,
+            CharFonts = profile.CharFonts is { Count: > 0 } fonts
+                ? fonts.ToDictionary(f => f.Key.Trim(), f => new CharFont(f.Value.Font?.Trim() ?? "", f.Value.Bold), StringComparer.Ordinal)
+                : null,
             AlternationMs = profile.AlternationMs,
             BlinkOnMs = profile.BlinkOnMs,
             BlinkOffMs = profile.BlinkOffMs,

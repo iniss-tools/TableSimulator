@@ -4,6 +4,7 @@ import type { BoardFaceDto } from "../api/generated/types.gen";
 import { faceStyle, type BoardDesign } from "./design";
 import { drawFace, drawFaceClocks, hasFaceClock, rowOffset, rowSpacing, type Box, type DisplayClock, type DotText, type FaceGeometry } from "./face";
 import type { DotFrame } from "./rasterize";
+import { faceImagesReady } from "./images";
 import { drawFrame } from "./surface";
 
 /** Co okrem bodov ovplyvnuje kreslenie. */
@@ -149,7 +150,7 @@ export class LedRenderer {
     const cw = Math.max(1, Math.round(layout.width * scale));
     const ch = Math.max(1, Math.round(layout.height * scale));
     const levels = [0, level(options.brightness), level(options.brightnessGreen), level(Math.max(options.brightness, options.brightnessGreen))];
-    const key = `${cw}x${ch}|${frame.width}x${frame.height}|${levels.join()}|${options.monochrome}|${options.swapRedGreen}|${JSON.stringify(face)}|${JSON.stringify(options.values)}|${JSON.stringify(design)}`;
+    const key = `${cw}x${ch}|${frame.width}x${frame.height}|${levels.join()}|${options.monochrome}|${options.swapRedGreen}|${JSON.stringify(face)}|${faceImagesReady(face)}|${JSON.stringify(options.values)}|${JSON.stringify(design)}`;
     const ctx = this.canvas.getContext("2d")!;
     const p = design.pitch * scale;
     const fw = design.frame.width * scale;

@@ -11,6 +11,7 @@ import { fallbackGlyphSource } from "@/render/pixel-fonts";
 import { CHAR_WIDTH } from "@/render/chars";
 import { faceBoxes, faceValues, hasFaceClock, measureContext, resolveFace, shiftGeometry, type FaceOverlayLayout } from "@/render/face";
 import { blinkPhase, boardClock, isAnimated, rasterize } from "@/render/rasterize";
+import { loadFaceImages } from "@/render/images";
 import { LedRenderer, ledLayout, ledSize } from "@/render/led";
 import { AmplifierView } from "./AmplifierView";
 import { FlapView } from "./FlapView";
@@ -150,6 +151,16 @@ function LedBoardView({ board, fit = "width", className, design: override, face:
     return () => observer.disconnect();
   }, []);
 
+  // obrazky cela (logo) - po nacitani sa tabula prekresli
+  const [images, setImages] = useState(0);
+  useEffect(() => {
+    let live = true;
+    void loadFaceImages(face).then((loaded) => live && loaded && setImages((n) => n + 1));
+    return () => {
+      live = false;
+    };
+  }, [face]);
+
   // vstupy kreslenia v refe, aby slucka animacie vzdy videla posledne hodnoty
   const inputs = useRef({ board, design, face, source: null as GlyphSource | null, scale: 1 });
   const renderer = useRef<LedRenderer | null>(null);
@@ -245,7 +256,7 @@ function LedBoardView({ board, fit = "width", className, design: override, face:
       cancel?.();
       cancelAnimationFrame(raf);
     };
-  }, [board, design, face, fontSet, cssScale, ready]);
+  }, [board, design, face, fontSet, cssScale, ready, images]);
 
   return (
     <div ref={box} className={cn("w-full leading-0", fit === "contain" && "flex h-full items-center justify-center", className)}>

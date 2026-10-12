@@ -115,6 +115,15 @@ public sealed record FaceElement
 
     /// <summary>Hodiny pismom prehliadaca, alebo bodmi ako matica tabule.</summary>
     public FaceRender Render { get; init; } = FaceRender.Text;
+
+    /// <summary>Symbol prvku druhu symbol (stvorec velkosti <see cref="Size" />).</summary>
+    public FaceSymbol Symbol { get; init; } = FaceSymbol.ArrowUp;
+
+    /// <summary>
+    /// Obrazok prvku druhu obrazok (logo) ako data URL <c>data:image/…;base64,…</c> - predloha ho nesie v sebe, preto
+    /// sa prenesie exportom aj zalohou; prazdny = bez obrazka.
+    /// </summary>
+    public string Image { get; init; } = "";
 }
 
 /// <summary>Druh prvku cela.</summary>
@@ -127,7 +136,47 @@ public enum FaceElementKind
     [JsonStringEnumMemberName("text")] Text,
 
     /// <summary>Hodiny tabule.</summary>
-    [JsonStringEnumMemberName("clock")] Clock
+    [JsonStringEnumMemberName("clock")] Clock,
+
+    /// <summary>Symbol zo vstavanej sady (sipky smerovych tabuliek).</summary>
+    [JsonStringEnumMemberName("symbol")] Symbol,
+
+    /// <summary>Obrazok - logo dopravcu, znacka.</summary>
+    [JsonStringEnumMemberName("image")] Image
+}
+
+/// <summary>Symbol cela - kresli sa vektorom, nie pismom, aby vyzeral rovnako v kazdom prehliadaci.</summary>
+public enum FaceSymbol
+{
+    /// <summary>Sipka hore.</summary>
+    [JsonStringEnumMemberName("arrowUp")] ArrowUp,
+
+    /// <summary>Sipka dole.</summary>
+    [JsonStringEnumMemberName("arrowDown")] ArrowDown,
+
+    /// <summary>Sipka vlavo.</summary>
+    [JsonStringEnumMemberName("arrowLeft")] ArrowLeft,
+
+    /// <summary>Sipka vpravo.</summary>
+    [JsonStringEnumMemberName("arrowRight")] ArrowRight,
+
+    /// <summary>Sipka sikmo hore vlavo.</summary>
+    [JsonStringEnumMemberName("arrowUpLeft")] ArrowUpLeft,
+
+    /// <summary>Sipka sikmo hore vpravo.</summary>
+    [JsonStringEnumMemberName("arrowUpRight")] ArrowUpRight,
+
+    /// <summary>Sipka sikmo dole vlavo.</summary>
+    [JsonStringEnumMemberName("arrowDownLeft")] ArrowDownLeft,
+
+    /// <summary>Sipka sikmo dole vpravo.</summary>
+    [JsonStringEnumMemberName("arrowDownRight")] ArrowDownRight,
+
+    /// <summary>Dve sipky vlavo a vpravo (obojsmerne).</summary>
+    [JsonStringEnumMemberName("arrowsLeftRight")] ArrowsLeftRight,
+
+    /// <summary>Dve sipky hore a dole.</summary>
+    [JsonStringEnumMemberName("arrowsUpDown")] ArrowsUpDown
 }
 
 /// <summary>Ukotvenie prvku cela.</summary>

@@ -65,6 +65,7 @@ export function defaultProfile(manufacturer: string): BoardProfileDto {
     ...size,
     fontFile: null,
     fontMap: null,
+    charFonts: null,
     alternationMs: 2000,
     blinkOnMs: 1000,
     blinkOffMs: 500,

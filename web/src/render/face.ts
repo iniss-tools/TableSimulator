@@ -1,8 +1,9 @@
 // Celo tabule (predloha BoardFaceDto): plochy, texty a hodiny okolo matice. Rozlozenie je ciste (testy), kreslenie ide
 // na platno v px pri mierke 1 (volajuci nastavi posun a mierku). Maticu - LED, LCD aj listy - kresli jej renderer do
 // okna cela; geometriu (matica a riadky v px) mu dava on. Polohy a rozmery prvkov su v bodoch, unit = px na bod.
-import type { BoardDto, BoardFaceDto, BoardHeaderDto, FaceClockFormat, FaceElementDto } from "../api/generated/types.gen";
+import type { BoardDto, BoardFaceDto, BoardHeaderDto, FaceClockFormat, FaceElementDto, FaceSymbol } from "../api/generated/types.gen";
 import type { TextStyle } from "./design";
+import { faceImage } from "./images";
 import { PixelGlyphSource } from "./pixel-fonts";
 
 export interface Box {
@@ -96,7 +97,64 @@ export const NEW_ELEMENT: FaceElementDto = {
   spacing: 0,
   format: "HH:mm",
   render: "text",
+  symbol: "arrowUp",
+  image: "",
 };
+
+/** Sipka doprava v stvorci 1 × 1: driek a hrot (body obrysu). */
+const ARROW: [number, number][] = [
+  [0.05, 0.36],
+  [0.5, 0.36],
+  [0.5, 0.08],
+  [0.95, 0.5],
+  [0.5, 0.92],
+  [0.5, 0.64],
+  [0.05, 0.64],
+];
+
+/** Obojsmerna sipka vlavo a vpravo v stvorci 1 × 1. */
+const DOUBLE_ARROW: [number, number][] = [
+  [0.03, 0.5],
+  [0.33, 0.12],
+  [0.33, 0.36],
+  [0.67, 0.36],
+  [0.67, 0.12],
+  [0.97, 0.5],
+  [0.67, 0.88],
+  [0.67, 0.64],
+  [0.33, 0.64],
+  [0.33, 0.88],
+];
+
+/** Tvar a otocenie (stupne v smere hodinovych ruciciek, os y dole) kazdeho symbolu. */
+const SYMBOLS: Record<FaceSymbol, { shape: [number, number][]; angle: number }> = {
+  arrowRight: { shape: ARROW, angle: 0 },
+  arrowDownRight: { shape: ARROW, angle: 45 },
+  arrowDown: { shape: ARROW, angle: 90 },
+  arrowDownLeft: { shape: ARROW, angle: 135 },
+  arrowLeft: { shape: ARROW, angle: 180 },
+  arrowUpLeft: { shape: ARROW, angle: 225 },
+  arrowUp: { shape: ARROW, angle: 270 },
+  arrowUpRight: { shape: ARROW, angle: 315 },
+  arrowsLeftRight: { shape: DOUBLE_ARROW, angle: 0 },
+  arrowsUpDown: { shape: DOUBLE_ARROW, angle: 90 },
+};
+
+/** Symboly cela v poradi ponuky. */
+export const FACE_SYMBOLS = Object.keys(SYMBOLS) as FaceSymbol[];
+
+/** Obrys symbolu v stvorci 1 × 1 - otoceny okolo stredu, vzdy vnutri stvorca. */
+export function symbolOutline(symbol: FaceSymbol): [number, number][] {
+  const { shape, angle } = SYMBOLS[symbol] ?? SYMBOLS.arrowUp;
+  const a = (angle * Math.PI) / 180;
+  const cos = Math.cos(a);
+  const sin = Math.sin(a);
+  return shape.map(([x, y]) => {
+    const dx = x - 0.5;
+    const dy = y - 0.5;
+    return [0.5 + dx * cos - dy * sin, 0.5 + dx * sin + dy * cos];
+  });
+}
 
 /** Celo zo starsej hlavicky tabule - zodpoveda BoardFaces.FromHeader na serveri. */
 export function headerFace(header: BoardHeaderDto): BoardFaceDto {
@@ -256,6 +314,8 @@ export function drawFace(ctx: CanvasRenderingContext2D, face: BoardFaceDto, g: F
   for (const element of face.elements) {
     if (element.kind === "rect") drawRect(ctx, element, g, style);
     else if (element.kind === "text") drawText(ctx, element, g, style, values);
+    else if (element.kind === "symbol") drawSymbol(ctx, element, g, style);
+    else if (element.kind === "image") drawImage(ctx, element, g);
   }
   ctx.restore();
 }
@@ -295,6 +355,38 @@ function textLayout(ctx: TextMeasure, element: FaceElementDto, g: FaceGeometry, 
   });
   ctx.letterSpacing = "0px";
   return { box: place(anchor, element, Math.max(0, ...widths), textHeight(lines), g.unit), lines, widths, look, spacing, limit };
+}
+
+/** Plocha symbolu: stvorec velkosti pisma; null = ukotvenie neexistuje. */
+export function symbolBox(g: FaceGeometry, element: FaceElementDto): Box | null {
+  const anchor = anchorBox(g, element);
+  return anchor ? place(anchor, element, element.size * g.unit, element.size * g.unit, g.unit) : null;
+}
+
+function drawSymbol(ctx: CanvasRenderingContext2D, element: FaceElementDto, g: FaceGeometry, style: FaceStyle) {
+  const box = symbolBox(g, element);
+  if (!box) return;
+  ctx.fillStyle = resolveColor(style, element.color, style.colors.text) ?? "#fff";
+  ctx.beginPath();
+  symbolOutline(element.symbol).forEach(([x, y], i) => {
+    const px = box.x + x * box.w;
+    const py = box.y + y * box.h;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** Obrazok v ploche prvku (rozmery ako plocha), zmenseny so zachovanim pomeru a na stred. */
+function drawImage(ctx: CanvasRenderingContext2D, element: FaceElementDto, g: FaceGeometry) {
+  const box = rectBox(g, element);
+  const image = faceImage(element.image);
+  if (!box || !image || box.w <= 0 || box.h <= 0) return;
+  const scale = Math.min(box.w / image.naturalWidth, box.h / image.naturalHeight);
+  const w = image.naturalWidth * scale;
+  const h = image.naturalHeight * scale;
+  ctx.drawImage(image, box.x + (box.w - w) / 2, box.y + (box.h - h) / 2, w, h);
 }
 
 function drawText(ctx: CanvasRenderingContext2D, element: FaceElementDto, g: FaceGeometry, style: FaceStyle, values: Record<string, string>) {
@@ -368,13 +460,19 @@ export function faceBoxes(
   time: Date,
   dotted: boolean,
 ): (Box | null)[] {
-  return face.elements.map((element) =>
-    element.kind === "rect"
-      ? rectBox(g, element)
-      : element.kind === "text"
-        ? (textLayout(ctx, element, g, style, values)?.box ?? null)
-        : (clockLayout(ctx, element, g, style, time, dotted)?.box ?? null),
-  );
+  return face.elements.map((element) => {
+    switch (element.kind) {
+      case "rect":
+      case "image":
+        return rectBox(g, element);
+      case "symbol":
+        return symbolBox(g, element);
+      case "text":
+        return textLayout(ctx, element, g, style, values)?.box ?? null;
+      default:
+        return clockLayout(ctx, element, g, style, time, dotted)?.box ?? null;
+    }
+  });
 }
 
 /** Hodiny cela v case time - kreslia sa pri kazdom prekresleni aj s pozadim, ktore prekryje predosly cas. */

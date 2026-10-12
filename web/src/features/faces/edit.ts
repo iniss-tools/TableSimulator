@@ -44,14 +44,14 @@ function resizeSide(size: number, extent: number, delta: number, centered: boole
 }
 
 /**
- * Prvok po potiahnuti uchytu o (dx, dy) bodov. Plocha meni sirku a vysku (box = jej povodny rozmer v bodoch), text
- * a hodiny velkost pisma podla zvisleho posunu rohu (box = povodna vyska bloku textu v bodoch).
+ * Prvok po potiahnuti uchytu o (dx, dy) bodov. Plocha a obrazok menia sirku a vysku (box = povodny rozmer v bodoch),
+ * text, hodiny a symbol velkost podla zvisleho posunu rohu (box = povodna vyska v bodoch).
  */
 export function resizeElement(element: FaceElementDto, mode: Exclude<DragMode, "move">, dx: number, dy: number, box: Box, step = SNAP): FaceElementDto {
   const edges = freeEdges(element);
   const ddx = edges.left ? -dx : dx;
   const ddy = edges.top ? -dy : dy;
-  if (element.kind === "rect") {
+  if (element.kind === "rect" || element.kind === "image") {
     const next = { ...element };
     if (mode !== "y") next.width = resizeSide(element.width, box.w, ddx, element.align === "center", step);
     if (mode !== "x") next.height = resizeSide(element.height, box.h, ddy, element.vAlign === "middle", step);

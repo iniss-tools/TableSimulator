@@ -34,6 +34,7 @@ function board(rows: Board["display"]["rows"], extra: Partial<Board["display"]> 
       rowHeight: 3,
       fontFile: "t.bin",
       fontMap: null,
+      charFonts: null,
       alternationMs: 1000,
       blinkOnMs: 500,
       blinkOffMs: 500,
@@ -207,6 +208,24 @@ describe("znakova tabula", () => {
     // ina znakova tabula (APEL) kod nepozna
     b.manufacturer = "APEL";
     expect(at(rasterize(b, source(), 0), 7, 1)).toBe(0);
+  });
+
+  test("pismo podla cisla: bodove pismo a ztucnenie z profilu, inverzia a blikanie z cisla", () => {
+    const b = chars([{ row: 0, layers: [layer(0, "H", 0x10), layer(1, "\0H", 0x11)] }]);
+    b.profile = { ...b.profile, width: 16, rowHeight: 16, charFonts: { "16": { font: "5x7", bold: false }, "17": { font: "7x14", bold: true } } };
+    const lit = (frame: { width: number; color: Uint8Array }, x0: number) => {
+      let n = 0;
+      for (let y = 0; y < 16; y++) for (let x = x0; x < x0 + 8; x++) if (frame.color[y * frame.width + x] === COLOR_NONE) n++;
+      return n;
+    };
+    const plain = rasterize(b, source(), 0);
+    const mapped = rasterize(b, source(), 1000);
+    // pismo 16 = 5x7 (male H), pismo 17 = 7x14 tucne - vacsie a hrubsie
+    expect(lit(plain, 0)).toBeGreaterThan(0);
+    expect(lit(mapped, 8)).toBeGreaterThan(lit(plain, 0) * 2);
+    // cislo s inverziou (0x51 = 17 + 64) ma to iste pismo, len inverzne
+    b.display = { ...b.display, charRows: [{ row: 0, layers: [layer(0, "\0H", 0x51)] }] };
+    expect(lit(rasterize(b, source(), 0), 8)).toBe(8 * 16 - lit(mapped, 8));
   });
 
   test("velke pismeno druhu vlaku cez celu vysku bunky a tucne", () => {

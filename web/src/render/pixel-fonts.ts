@@ -117,6 +117,12 @@ export class PixelCellGlyphSource implements GlyphSource {
     return font ? new PixelCellGlyphSource(width, height, font) : null;
   }
 
+  /** Zdroj s pomenovanym pismom (napr. 6x10); null = take pismo nie je alebo sa do bunky nezmesti. */
+  static named(width: number, height: number, name: string): PixelCellGlyphSource | null {
+    const font = PIXEL_FONTS.find((f) => f.name === name);
+    return font && font.width < width && font.height <= height ? new PixelCellGlyphSource(width, height, font) : null;
+  }
+
   glyph(_code: number, ch: string): Glyph | null {
     if (this.cache.has(ch)) return this.cache.get(ch)!;
     const { font, width, height } = this;

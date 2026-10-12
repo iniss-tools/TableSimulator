@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { DEFAULT_FLAP_DESIGN, defaultDesignId, designForFamily, faceStyle, loadDesign, type BoardDesign } from "@/render/design";
 import { faceBoxes, faceValues, hasFaceClock, measureContext, resolveFace, type FaceOverlayLayout } from "@/render/face";
 import { drawFlaps, layoutFlaps, type FlapFace } from "@/render/flaps";
+import { loadFaceImages } from "@/render/images";
 import { boardClock } from "@/render/rasterize";
 import type { BoardViewHandle } from "./BoardView";
 
@@ -57,6 +58,15 @@ export function FlapView({ board, fit = "width", className, face: faceOverride, 
   const design = designOverride ?? loaded;
 
   const layout = useMemo(() => layoutFlaps(board, face, design.frame.width), [board, face, design]);
+  // obrazky cela (logo) - po nacitani sa tabula prekresli
+  const [images, setImages] = useState(0);
+  useEffect(() => {
+    let live = true;
+    void loadFaceImages(face).then((loaded) => live && loaded && setImages((n) => n + 1));
+    return () => {
+      live = false;
+    };
+  }, [face]);
   const latest = useRef({ board, face, design });
   useLayoutEffect(() => {
     latest.current = { board, face, design };
@@ -155,7 +165,7 @@ export function FlapView({ board, fit = "width", className, face: faceOverride, 
       cancelAnimationFrame(raf);
       clearInterval(clock);
     };
-  }, [layout, scale, cssScale, rotation, face, design]);
+  }, [layout, scale, cssScale, rotation, face, design, images]);
 
   return (
     <div ref={box} className={cn("w-full leading-0", fit === "contain" && "flex h-full items-center justify-center", className)}>

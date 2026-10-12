@@ -23,15 +23,43 @@ export function newElement(kind: FaceElementKind): FaceElementDto {
       return { ...NEW_ELEMENT, kind, anchor: "top", height: -2, fill: "band" };
     case "clock":
       return { ...NEW_ELEMENT, kind, anchor: "top", align: "right", vAlign: "middle", x: 4, size: 9, render: "display" };
+    case "symbol":
+      return { ...NEW_ELEMENT, kind, anchor: "top", align: "right", vAlign: "middle", x: 4, size: 10, symbol: "arrowUp" };
+    case "image":
+      return { ...NEW_ELEMENT, kind, anchor: "top", x: 2, y: 1, width: 30, height: -1 };
     default:
       return { ...NEW_ELEMENT, kind, anchor: "top", vAlign: "middle", x: 4, size: 6, text: t("faces.element.newText") };
   }
 }
 
-/** Popis prvku pre obsluhu: druh a prvy riadok textu, inak ukotvenie. */
+/** Kratky popis prvku: prvy riadok textu, symbol, inak ukotvenie. */
+export function elementSummary(element: FaceElementDto): string {
+  if (element.kind === "text") return element.text.split("\n")[0];
+  if (element.kind === "symbol") return t(`face.symbol.${element.symbol}`);
+  return t(`face.anchor.${element.anchor}`);
+}
+
+/** Popis prvku pre obsluhu: druh a kratky popis. */
 export function elementLabel(element: FaceElementDto): string {
-  const summary = element.kind === "text" ? element.text.split("\n")[0] : t(`face.anchor.${element.anchor}`);
-  return `${t(`face.kind.${element.kind}`)}: ${summary}`;
+  return `${t(`face.kind.${element.kind}`)}: ${elementSummary(element)}`;
+}
+
+/** Najvacsi subor obrazka cela - server prijme data URL najviac 400 000 znakov. */
+export const MAX_IMAGE_BYTES = 300 * 1024;
+
+/** Formaty obrazkov, ktore cela prijmu. */
+export const IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml"];
+
+/** Obrazok zo suboru ako data URL; chyba s klucom textu (velky alebo nepodporovany subor). */
+export function readImage(file: File): Promise<string> {
+  if (!IMAGE_TYPES.includes(file.type)) return Promise.reject(new Error("face.image.unsupported"));
+  if (file.size > MAX_IMAGE_BYTES) return Promise.reject(new Error("face.image.tooLarge"));
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => (typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("face.image.unsupported")));
+    reader.onerror = () => reject(new Error("face.image.unsupported"));
+    reader.readAsDataURL(file);
+  });
 }
 
 /** Tabula na nahlad cela: ziva tabula s upravenym profilom, inak ukazkova (ELEN) alebo prazdna inej rodiny. */

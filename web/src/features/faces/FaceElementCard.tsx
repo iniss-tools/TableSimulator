@@ -1,6 +1,7 @@
 // Jeden prvok cela v editore: druh, ukotvenie a poloha, podla druhu rozmer a vypln plochy, text alebo hodiny.
 import { useEffect, useRef, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, Clock, Square, Trash2, Type } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpRight, Clock, ImageIcon, ImageUp, Square, Trash2, Type, X } from "lucide-react";
+import { toast } from "sonner";
 import type { FaceAlign, FaceAnchor, FaceClockFormat, FaceElementDto, FaceVAlign } from "@/api";
 import { FormField } from "@/components/common/form-field";
 import { OptionSelect } from "@/components/common/option-select";
@@ -10,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { t, type TextKey } from "@/i18n";
-import { elementLabel, FACE_COLOR_TOKENS } from "./faces";
+import { FACE_SYMBOLS } from "@/render/face";
+import { elementLabel, elementSummary, FACE_COLOR_TOKENS, IMAGE_TYPES, readImage } from "./faces";
 
 const ANCHORS: FaceAnchor[] = ["face", "matrix", "row", "top", "bottom", "left", "right"];
 const ALIGNS: FaceAlign[] = ["left", "center", "right"];
@@ -100,7 +102,7 @@ function ColorSelect({
   );
 }
 
-const KIND_ICONS = { rect: Square, text: Type, clock: Clock };
+const KIND_ICONS = { rect: Square, text: Type, clock: Clock, symbol: ArrowUpRight, image: ImageIcon };
 
 interface Props {
   element: FaceElementDto;
@@ -118,8 +120,9 @@ interface Props {
 export function FaceElementCard({ element, index, count, readOnly, selected, onSelect, onChange, onMove, onRemove }: Props) {
   const set = (patch: Partial<FaceElementDto>) => onChange({ ...element, ...patch });
   const Icon = KIND_ICONS[element.kind];
-  const summary = element.kind === "text" ? element.text.split("\n")[0] : t(`face.anchor.${element.anchor}`);
+  const summary = elementSummary(element);
   const card = useRef<HTMLDivElement>(null);
+  const file = useRef<HTMLInputElement>(null);
 
   // prvok vybrany v nahlade - karta do pohladu
   useEffect(() => {
@@ -211,6 +214,78 @@ export function FaceElementCard({ element, index, count, readOnly, selected, onS
         </FormField>
         <NumberInput label="X" value={element.x} disabled={readOnly} onChange={(x) => set({ x })} />
         <NumberInput label="Y" value={element.y} disabled={readOnly} onChange={(y) => set({ y })} />
+
+        {element.kind === "symbol" && (
+          <>
+            <FormField label={t("face.symbol")} className="sm:col-span-2">
+              <OptionSelect
+                value={element.symbol}
+                disabled={readOnly}
+                onValueChange={(symbol) => set({ symbol })}
+                options={FACE_SYMBOLS.map((s) => ({ value: s, label: t(`face.symbol.${s}`) }))}
+                className="w-full"
+              />
+            </FormField>
+            <NumberInput label={t("face.symbolSize")} value={element.size} min={1} disabled={readOnly} onChange={(size) => set({ size })} />
+            <div className="hidden sm:block" />
+            <div className="sm:col-span-2">
+              <ColorSelect
+                label={t("face.color")}
+                value={element.color}
+                emptyLabel={t("face.color.default")}
+                disabled={readOnly}
+                onChange={(color) => set({ color })}
+              />
+            </div>
+          </>
+        )}
+
+        {element.kind === "image" && (
+          <>
+            <FormField label={t("face.image")} hint={t("face.image.hint")} className="sm:col-span-4">
+              <div className="flex flex-wrap items-center gap-3">
+                {element.image ? (
+                  <img src={element.image} alt="" className="h-12 max-w-40 rounded border bg-muted object-contain p-1" />
+                ) : (
+                  <span className="text-muted-foreground">{t("face.image.empty")}</span>
+                )}
+                {!readOnly && (
+                  <>
+                    <input
+                      ref={file}
+                      type="file"
+                      accept={IMAGE_TYPES.join(",")}
+                      className="hidden"
+                      aria-label={t("face.image.choose")}
+                      onChange={(e) => {
+                        const chosen = e.target.files?.[0];
+                        e.target.value = "";
+                        if (!chosen) return;
+                        readImage(chosen).then(
+                          (image) => set({ image }),
+                          (error: Error) => toast.error(t(error.message as TextKey)),
+                        );
+                      }}
+                    />
+                    <Button type="button" variant="outline" size="sm" onClick={() => file.current?.click()}>
+                      <ImageUp />
+                      {t("face.image.choose")}
+                    </Button>
+                    {element.image && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => set({ image: "" })}>
+                        <X />
+                        {t("face.image.remove")}
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
+            </FormField>
+            <NumberInput label={t("face.width")} value={element.width} disabled={readOnly} onChange={(width) => set({ width })} />
+            <NumberInput label={t("face.height")} value={element.height} disabled={readOnly} onChange={(height) => set({ height })} />
+            <p className="text-sm text-muted-foreground sm:col-span-4">{t("face.size.hint")}</p>
+          </>
+        )}
 
         {element.kind === "rect" && (
           <>

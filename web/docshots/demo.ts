@@ -15,8 +15,10 @@ import type {
   SetVirtualBoardRequest,
   StateDto,
   StationBoardDto,
+  StationFaceColumnDto,
+  StationFaceDto,
 } from "../src/api/generated/types.gen";
-import { apelFrame, cp1250, elenAt, elsvoFrame, fersRow, lcd1Row } from "./frames";
+import { apelFrame, cp1250, elenAt, elsvoFrame, fersRow, lcd1Parts } from "./frames";
 import { writeInissInstall } from "./iniss-install";
 import { writeInissLog } from "./iniss-log";
 import { seedSignage } from "./signage";
@@ -75,6 +77,8 @@ interface DemoBoard {
   manufacturer: string;
   name: string;
   flaps?: FlapProfileDto;
+  /** Co o cele vedia data stanice - simulator z toho zalozi celo ako pri nacitani stanice. */
+  face?: StationFaceDto;
   /** Spravy, ktore tabuli posle INISS. */
   frames: number[][];
 }
@@ -91,12 +95,65 @@ function elenColumns(address: number, row: number, x: number[], texts: string[])
 /** Riadky tabule ELEN zhora (ELEN ich cisluje odspodu). */
 const elenRows = (address: number, x: number[], rows: string[][]) => rows.map((texts, i) => elenColumns(address, rows.length - i, x, texts));
 
+/** Riadok tabule v podchode (LCD1): ciel pismom 17 (tabula ho kresli vacsie a tucne), ostatne pismom 16. */
+const podchodRow = (row: number, train: string, target: string, rest: string) =>
+  lcd1Parts(10, row, [
+    [train, 0x10],
+    [target, 0x11],
+    [rest, 0x10],
+  ]);
+
+/** Stanica ukazkovych dat. */
+const STATION = "Dolné Mesto";
+
+/** Stlpce katalogu: [od, do, obsah FILL_SECTION] - vsetky zarovnane vlavo ako texty, ktore INISS posiela. */
+const columns = (items: [number, number, number][]): StationFaceColumnDto[] =>
+  items.map(([start, end, content]) => ({ line: 0, start, end, align: "left", content }));
+
+/** Data cela z katalogu a Pozice_A ako ich posiela GVDEditor. */
+function face(
+  kind: StationFaceDto["kind"],
+  records: number,
+  rowHeight: number,
+  cols: StationFaceColumnDto[],
+  tracks: string[] = [],
+  platforms: string[] = [],
+): StationFaceDto {
+  return { kind, linesPerRecord: 1, records, width: 0, rowHeight, columns: cols, tracks, platforms, station: STATION };
+}
+
+/** Stlpce tabul v hale (vlak, ciel, cas, kolaj) a na nastupistiach; v podchode a vestibule po 8 bodoch na znak. */
+const HALL_DEPARTURES = columns([
+  [0, 38, 17],
+  [40, 108, 8],
+  [110, 144, 9],
+  [146, 160, 20],
+]);
+const HALL_ARRIVALS = columns([
+  [0, 38, 17],
+  [40, 108, 2],
+  [110, 144, 10],
+  [146, 160, 19],
+]);
+const PLATFORM_COLUMNS = columns([
+  [0, 38, 17],
+  [40, 108, 6],
+  [110, 144, 9],
+]);
+const CHAR_COLUMNS = columns([
+  [0, 72, 17],
+  [72, 216, 8],
+  [216, 256, 9],
+  [280, 288, 20],
+]);
+
 const BOARDS: DemoBoard[] = [
   {
     line: 1,
     address: 1,
     manufacturer: "ELEN",
     name: "Odchody – hala",
+    face: face("departures", 4, 10, HALL_DEPARTURES),
     frames: elenRows(1, HALL, [
       ["Os 4201", "Trnava", "10:15", "1"],
       ["R 612", "Bratislava", "10:32", "2"],
@@ -109,6 +166,7 @@ const BOARDS: DemoBoard[] = [
     address: 2,
     manufacturer: "ELEN",
     name: "Príchody – hala",
+    face: face("arrivals", 3, 10, HALL_ARRIVALS),
     frames: elenRows(2, HALL, [
       ["Os 4202", "Trnava", "10:08", "1"],
       ["R 613", "Bratislava", "10:29", "2"],
@@ -120,6 +178,7 @@ const BOARDS: DemoBoard[] = [
     address: 3,
     manufacturer: "ELEN",
     name: "Nástupište 1",
+    face: face("platform", 2, 10, PLATFORM_COLUMNS, ["1"], ["1"]),
     frames: elenRows(3, PLATFORM, [["Os 4201", "Trnava", "10:15"], ["Galanta, Sered, Trnava"]]),
   },
   {
@@ -127,6 +186,7 @@ const BOARDS: DemoBoard[] = [
     address: 4,
     manufacturer: "ELEN",
     name: "Nástupište 2",
+    face: face("platform", 2, 10, PLATFORM_COLUMNS, ["2"], ["1"]),
     frames: elenRows(4, PLATFORM, [["R 612", "Bratislava", "10:32"], ["Nitra, Leopoldov, Trnava"]]),
   },
   {
@@ -134,10 +194,11 @@ const BOARDS: DemoBoard[] = [
     address: 10,
     manufacturer: "LCD1",
     name: "Podchod – odchody",
+    face: face("underpass", 3, 16, CHAR_COLUMNS, ["1", "2"], ["1"]),
     frames: [
-      lcd1Row(10, 0, "Os 4201  Trnava            10:15   1"),
-      lcd1Row(10, 1, "R  612   Bratislava hl.st. 10:32   2"),
-      lcd1Row(10, 2, "Ex 521   Lipovan           10:47   1"),
+      podchodRow(0, "Os 4201  ", "Trnava            ", "10:15   1"),
+      podchodRow(1, "R  612   ", "Bratislava hl.st. ", "10:32   2"),
+      podchodRow(2, "Ex 521   ", "Lipovan           ", "10:47   1"),
     ],
   },
   {
@@ -146,6 +207,7 @@ const BOARDS: DemoBoard[] = [
     manufacturer: "FERS",
     name: "Odchody – listová",
     flaps: FLAPS,
+    face: face("departures", 4, 10, []),
     frames: [fersRow(20, 0, "AOa151"), fersRow(20, 1, "BRa322"), fersRow(20, 2, "DEa471"), fersRow(20, 3, "CBb050")],
   },
   {
@@ -153,6 +215,7 @@ const BOARDS: DemoBoard[] = [
     address: 0x81,
     manufacturer: "APEL_AN",
     name: "Vestibul – odchody",
+    face: face("departures", 3, 16, CHAR_COLUMNS),
     frames: [
       apelFrame(0x81, [
         [0, cp1250("Os  4201  Trnava            10:15  1")],
@@ -203,7 +266,7 @@ async function connectLine(port: number): Promise<InissLink> {
 /** Zmena grafikonu medzi zaznamami A a B: vlak R 612 ide z inej kolaje (tabula v hale a v podchode). */
 const CHANGED: { line: number; frames: number[][] }[] = [
   { line: 1, frames: [elenColumns(1, 3, HALL, ["R 612", "Bratislava", "10:32", "3"])] },
-  { line: 3, frames: [lcd1Row(10, 1, "R  612   Bratislava hl.st. 10:32   3")] },
+  { line: 3, frames: [podchodRow(1, "R  612   ", "Bratislava hl.st. ", "10:32   3")] },
 ];
 
 /** Chybne spravy pre log komunikacie: sum, zly sucet a 04 v datach (pismo 04 namiesto 44); tabula ich odmietne. */
@@ -249,7 +312,7 @@ export default async function demo() {
         name: b.name,
         flaps: b.flaps ?? null,
         flapRecords: 4,
-        face: null,
+        face: b.face ?? null,
       })),
       logFolder: null,
       xmlTables: [],
@@ -278,6 +341,22 @@ export default async function demo() {
       if (!response.ok()) throw new Error(`Pismo tabule ${b.id}: ${await response.text()}`);
     }
   } else console.warn("Priecinok pisiem ELEN nie je (DOCSHOTS_FONTS) - tabule ukazu nahradne pismo.");
+
+  // podchodova LCD1: ciel prichadza pismom 17 - tabula ho kresli vacsie a tucne (zalozka Pisma v okne tabule)
+  const lcd = ((await (await api.get("/api/state")).json()) as StateDto).boards.find((b) => b.manufacturer === "LCD1")!;
+  const fontsSet = await api.put(`/api/boards/${lcd.line}/${lcd.address}`, {
+    data: {
+      line: lcd.line,
+      address: lcd.address,
+      manufacturer: lcd.manufacturer,
+      name: lcd.name,
+      profile: { ...lcd.profile, charFonts: { "17": { font: "7x14", bold: true } } },
+      design: lcd.design,
+      fault: lcd.fault,
+      secondAddress: lcd.secondAddress,
+    } satisfies SetBoardRequest,
+  });
+  if (!fontsSet.ok()) throw new Error(`Pisma tabule ${lcd.id}: ${await fontsSet.text()}`);
 
   const scenario = await api.post("/api/scenarios", { data: SCENARIO });
   if (!scenario.ok()) throw new Error(`Scenar: ${await scenario.text()}`);

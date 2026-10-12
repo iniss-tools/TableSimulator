@@ -4,7 +4,24 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useBlocker } from "@tanstack/react-router";
-import { CircleAlert, Clock, CopyPlus, Info, Maximize2, Minimize2, Redo, Save, Square, SquareDashed, Trash2, Type, Undo, Undo2 } from "lucide-react";
+import {
+  ArrowUpRight,
+  CircleAlert,
+  Clock,
+  CopyPlus,
+  ImageIcon,
+  Info,
+  Maximize2,
+  Minimize2,
+  Redo,
+  Save,
+  Square,
+  SquareDashed,
+  Trash2,
+  Type,
+  Undo,
+  Undo2,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   deleteFace,
@@ -400,6 +417,14 @@ export function FacesPage() {
                   <Button type="button" variant="outline" onClick={() => add("clock")}>
                     <Clock />
                     {t("faces.add.clock")}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => add("symbol")}>
+                    <ArrowUpRight />
+                    {t("faces.add.symbol")}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => add("image")}>
+                    <ImageIcon />
+                    {t("faces.add.image")}
                   </Button>
                 </div>
               )}

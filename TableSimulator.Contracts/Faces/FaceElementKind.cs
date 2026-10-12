@@ -13,5 +13,11 @@ public enum FaceElementKind
     [JsonStringEnumMemberName("text")] Text,
 
     /// <summary>Hodiny tabule.</summary>
-    [JsonStringEnumMemberName("clock")] Clock
+    [JsonStringEnumMemberName("clock")] Clock,
+
+    /// <summary>Symbol zo vstavanej sady (sipky).</summary>
+    [JsonStringEnumMemberName("symbol")] Symbol,
+
+    /// <summary>Obrazok (logo).</summary>
+    [JsonStringEnumMemberName("image")] Image
 }

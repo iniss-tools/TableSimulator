@@ -18,6 +18,9 @@ public sealed record BoardProfileDto
     /// <summary>Ktore pismo suboru sa pouzije pre rez (<c>face0</c>…) a rozsirene pismo (<c>ext1</c>…); null = podla cisla.</summary>
     public IReadOnlyDictionary<string, int>? FontMap { get; init; }
 
+    /// <summary>Znakova tabula (LCD1, ERP): pismo podla cisla pisma znaku bez bitov 0x40 a 0x80 (kluc <c>16</c>…); null = predvolene.</summary>
+    public IReadOnlyDictionary<string, CharFontDto>? CharFonts { get; init; }
+
     /// <summary>Jedna cast striedania [ms].</summary>
     public int AlternationMs { get; init; } = 2000;
 

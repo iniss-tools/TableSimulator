@@ -1,5 +1,7 @@
+using System.Globalization;
 using FluentValidation;
 using TableSimulator.Contracts.Boards;
+using TableSimulator.Core.Boards;
 
 namespace TableSimulator.Application.Boards;
 
@@ -19,5 +21,14 @@ public sealed class BoardProfileValidator : AbstractValidator<BoardProfileDto>
         RuleFor(p => p.RotationMs).InclusiveBetween(0, 60000).WithErrorCode(BoardErrors.Rotation);
         RuleFor(p => p.Flaps).Must(FlapProfileRules.IsValid).WithErrorCode(BoardErrors.Flaps)
             .WithMessage("Flap modules or lists are out of range.");
+        RuleFor(p => p.CharFonts).Must(IsValidCharFonts).WithErrorCode(BoardErrors.CharFonts)
+            .WithMessage("Character fonts must map font numbers 0-63 to a known dot font.");
     }
+
+    /// <summary>Cisla pisma 0-63 a zname bodove pisma (prazdne = predvolene).</summary>
+    private static bool IsValidCharFonts(IReadOnlyDictionary<string, CharFontDto>? fonts) =>
+        fonts is null
+        || (fonts.Count <= CharFont.MaxNumber + 1
+            && fonts.All(f => int.TryParse(f.Key, NumberStyles.None, CultureInfo.InvariantCulture, out var n) && n <= CharFont.MaxNumber
+                              && f.Value is not null && (string.IsNullOrEmpty(f.Value.Font) || CharFont.Fonts.Contains(f.Value.Font, StringComparer.Ordinal))));
 }

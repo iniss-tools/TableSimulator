@@ -44,7 +44,7 @@ const number = (value: number) => String(Math.round(value * 100) / 100);
 /** Co ukazat pri tahani: poloha, rozmer alebo pismo. */
 function dragText(element: FaceElementDto, mode: DragMode): string {
   if (mode === "move") return `X ${number(element.x)} · Y ${number(element.y)}`;
-  if (element.kind === "rect") return `${t("face.width")} ${number(element.width)} · ${t("face.height")} ${number(element.height)}`;
+  if (element.kind === "rect" || element.kind === "image") return `${t("face.width")} ${number(element.width)} · ${t("face.height")} ${number(element.height)}`;
   return `${t("face.size")} ${number(element.size)}`;
 }
 
@@ -133,14 +133,14 @@ export function FaceCanvasEditor({ layout, face, selected, readOnly, outlines, o
   const anchor = current ? anchorBox(g, current) : null;
   const reference = current && anchor ? referencePoint(current, anchor) : null;
 
-  // uchyty na volnych okrajoch vybraneho prvku: plocha sirka, vyska a roh, text a hodiny len roh (pismo)
+  // uchyty na volnych okrajoch vybraneho prvku: plocha a obrazok sirka, vyska a roh, text, hodiny a symbol len roh (velkost)
   const handles: { index: number; mode: Exclude<DragMode, "move">; x: number; y: number; cursor: string }[] = [];
   if (selected !== null && current && currentBox && !readOnly) {
     const edges = freeEdges(current);
     const x = edges.left ? currentBox.x : currentBox.x + currentBox.w;
     const y = edges.top ? currentBox.y : currentBox.y + currentBox.h;
     const corner = edges.left === edges.top ? "nwse-resize" : "nesw-resize";
-    if (current.kind === "rect") {
+    if (current.kind === "rect" || current.kind === "image") {
       handles.push({ index: selected, mode: "x", x, y: currentBox.y + currentBox.h / 2, cursor: "ew-resize" });
       handles.push({ index: selected, mode: "y", x: currentBox.x + currentBox.w / 2, y, cursor: "ns-resize" });
     }

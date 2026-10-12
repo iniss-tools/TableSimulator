@@ -54,10 +54,11 @@ export function elektrocasFrame(address: number, command: number, params: number
   return [...body, body.reduce((a, b) => a + b, 0) & 0xff];
 }
 
-/** Riadok tabule LCD1 (prikaz 16): riadok zhora od 0, od stlpca 0, jedna vrstva, rovnake pismo kazdeho znaku. */
-export function lcd1Row(address: number, row: number, text: string, font = 0x12): number[] {
-  const chars = cp1250(text);
-  return elektrocasFrame(address, 0x16, [row, 0, 1, 0, ...chars, ...chars.map(() => font)]);
+/** Riadok tabule LCD1 po usekoch textu s vlastnym cislom pisma (INISS ho posiela pri kazdom znaku). */
+export function lcd1Parts(address: number, row: number, parts: [string, number][]): number[] {
+  const chars = parts.flatMap(([text]) => cp1250(text));
+  const fonts = parts.flatMap(([text, font]) => cp1250(text).map(() => font));
+  return elektrocasFrame(address, 0x16, [row, 0, 1, 0, ...chars, ...fonts]);
 }
 
 /** Zapis riadku listovej tabule FERS (prikaz 10): kody listov po poziciach. */

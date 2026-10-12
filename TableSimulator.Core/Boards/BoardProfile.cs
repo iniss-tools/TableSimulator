@@ -26,6 +26,12 @@ public sealed record BoardProfile
     /// </summary>
     public IReadOnlyDictionary<string, int>? FontMap { get; init; }
 
+    /// <summary>
+    /// Znakova tabula (LCD1, ERP): pismo podla cisla pisma znaku bez bitov inverzie a blikania (kluc <c>16</c>…);
+    /// chybajuci kluc = predvolene pismo. null = vsetky znaky predvolenym pismom.
+    /// </summary>
+    public IReadOnlyDictionary<string, CharFont>? CharFonts { get; init; }
+
     /// <summary>Ako dlho sa zobrazuje jedna cast striedania [ms] - ELEN Monitor prepina kazde 2 s.</summary>
     public int AlternationMs { get; init; } = 2000;
 

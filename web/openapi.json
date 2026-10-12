@@ -4793,6 +4793,7 @@
           "rowHeight",
           "fontFile",
           "fontMap",
+          "charFonts",
           "alternationMs",
           "blinkOnMs",
           "blinkOffMs",
@@ -4835,6 +4836,15 @@
             "additionalProperties": {
               "type": "integer",
               "format": "int32"
+            }
+          },
+          "charFonts": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CharFontDto"
             }
           },
           "alternationMs": {
@@ -5640,7 +5650,9 @@
           "maxWidth",
           "spacing",
           "format",
-          "render"
+          "render",
+          "symbol",
+          "image"
         ],
         "type": "object",
         "properties": {
@@ -5723,6 +5735,12 @@
           },
           "render": {
             "$ref": "#/components/schemas/FaceRender"
+          },
+          "symbol": {
+            "$ref": "#/components/schemas/FaceSymbol"
+          },
+          "image": {
+            "type": "string"
           }
         }
       },
@@ -5730,7 +5748,9 @@
         "enum": [
           "rect",
           "text",
-          "clock"
+          "clock",
+          "symbol",
+          "image"
         ]
       },
       "FaceMarginDto": {
@@ -5768,6 +5788,20 @@
         "enum": [
           "text",
           "display"
+        ]
+      },
+      "FaceSymbol": {
+        "enum": [
+          "arrowUp",
+          "arrowDown",
+          "arrowLeft",
+          "arrowRight",
+          "arrowUpLeft",
+          "arrowUpRight",
+          "arrowDownLeft",
+          "arrowDownRight",
+          "arrowsLeftRight",
+          "arrowsUpDown"
         ]
       },
       "FaceVAlign": {
@@ -6217,6 +6251,23 @@
           },
           "newPassword": {
             "type": "string"
+          }
+        }
+      },
+      "CharFontDto": {
+        "required": [
+          "font",
+          "bold"
+        ],
+        "type": "object",
+        "properties": {
+          "font": {
+            "type": "string",
+            "default": ""
+          },
+          "bold": {
+            "type": "boolean",
+            "default": false
           }
         }
       },

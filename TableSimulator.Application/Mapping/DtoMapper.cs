@@ -70,6 +70,7 @@ public static partial class DtoMapper
             RowHeight = profile.RowHeight,
             FontFile = profile.FontFile,
             FontMap = profile.FontMap,
+            CharFonts = profile.CharFonts?.ToDictionary(f => f.Key, f => new CharFontDto(f.Value.Font, f.Value.Bold), StringComparer.Ordinal),
             AlternationMs = profile.AlternationMs,
             BlinkOnMs = profile.BlinkOnMs,
             BlinkOffMs = profile.BlinkOffMs,

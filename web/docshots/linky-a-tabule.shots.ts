@@ -1,5 +1,5 @@
-// Snimky kapitoly Linky a tabule: okno linky, karta a okno tabule, podporovane tabule, listy FERS, vzhlady, poruchy
-// a scenare.
+// Snimky kapitoly Linky a tabule: okno linky, karta a okno tabule (aj pisma LCD1), podporovane tabule, listy FERS,
+// vzhlady, cela tabul (editor s vybranym prvkom, celo v okne tabule), poruchy a scenare.
 import { expect, test, type Page } from "@playwright/test";
 import { API_HEADERS } from "../e2e/helpers";
 import type { BoardDto, BoardFaultDto, StateDto } from "../src/api/generated/types.gen";
@@ -49,6 +49,28 @@ for (const theme of THEMES) {
     await shot(page, "tabule/okno-tabule", theme, { target: dialog, ready: dialog.getByLabel("Názov") });
     await dialog.getByRole("tab", { name: "Profil" }).click();
     await shot(page, "tabule/profil", theme, { target: dialog, ready: dialog.getByLabel("Šírka [body]") });
+    await page.keyboard.press("Escape");
+    const lcd = await openBoard(page, "Podchod – odchody");
+    await lcd.getByRole("tab", { name: "Písma" }).click();
+    await shot(page, "tabule/pisma", theme, { target: lcd, ready: lcd.getByRole("combobox", { name: "Bodové písmo pre číslo 17" }) });
+  });
+
+  test(`cela-tabul (${theme})`, async ({ page }) => {
+    // celo zo stanice na odchodovej tabuli v hale; vybrany popis stlpca ukaze ukotvenie a bod merania
+    await open(page, "/faces", theme);
+    await page.getByRole("combobox", { name: "Predloha čela" }).click();
+    await page.getByRole("option", { name: "Odchodová – Dolné Mesto", exact: true }).click();
+    await page.getByRole("combobox", { name: "Tabuľa náhľadu" }).click();
+    await page.getByRole("option", { name: "Odchody – hala (1-1)" }).click();
+    const canvas = page.getByRole("group", { name: "Prvky čela v náhľade" });
+    await canvas.getByRole("button", { name: "Text: SMER" }).click();
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await shot(page, "cela-tabul/editor", theme, { ready: canvas });
+
+    await open(page, "/", theme);
+    const dialog = await openBoard(page, "Nástupište 1");
+    await dialog.getByRole("tab", { name: "Čelo" }).click();
+    await shot(page, "cela-tabul/okno-tabule", theme, { target: dialog, ready: dialog.getByLabel("Koľaj") });
   });
 
   test(`podporovane-tabule (${theme})`, async ({ page }) => {

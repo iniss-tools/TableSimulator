@@ -22,6 +22,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { boardKind, defaultProfile } from "@/lib/boards";
 import { CHAR_WIDTH } from "@/render/chars";
 import { t } from "@/i18n";
+import { hasCharFonts, usedCharFonts } from "./char-fonts";
+import { CharFontsEditor } from "./CharFontsEditor";
 import { FlapListsEditor } from "./FlapListsEditor";
 import { FaceSection } from "./FaceSection";
 import { baseFontHeight, useFontHeight } from "./font-height";
@@ -66,6 +68,9 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
   const board = !flaps && !amplifier;
   // pisma ELEN, farebnost panelu, pohyblivy text a typy panelov Monitora ma len ELEN; znakova tabula ma sirku v znakoch
   const elen = kind === "elen";
+  // LCD1 a ERP dostavaju pri kazdom znaku cislo pisma - jeho vyznam priradi obsluha
+  const charFonts = kind === "chars" && hasCharFonts(config.manufacturer);
+  const liveBoard = isNew ? undefined : live.boards.find((b) => b.line === config.line && b.address === config.address);
   // vzhlady s kreslenim pre druh tabule (listove pre listove, body pre ostatne); zvoleny ostava vo vybere
   const renderer = flaps ? "flaps" : "led-matrix";
   const shownDesigns = designs.filter((d) => d.renderer === renderer || d.id === config.design);
@@ -103,6 +108,7 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
           <TabsTrigger value="board">{t("board.tab.board")}</TabsTrigger>
           {!amplifier && <TabsTrigger value="profile">{t("board.tab.profile")}</TabsTrigger>}
           {flaps && p.flaps && <TabsTrigger value="lists">{t("board.tab.lists")}</TabsTrigger>}
+          {charFonts && <TabsTrigger value="fonts">{t("board.tab.fonts")}</TabsTrigger>}
           {!amplifier && <TabsTrigger value="face">{t("board.tab.face")}</TabsTrigger>}
           {board && <TabsTrigger value="timing">{t("section.timing")}</TabsTrigger>}
         </TabsList>
@@ -280,15 +286,15 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
           </TabsContent>
         )}
 
+        {charFonts && (
+          <TabsContent value="fonts" className="pt-2">
+            <CharFontsEditor fonts={p.charFonts} rowHeight={p.rowHeight} used={usedCharFonts(liveBoard)} onChange={(fonts) => profile({ charFonts: fonts })} />
+          </TabsContent>
+        )}
+
         {!amplifier && (
           <TabsContent value="face" className="pt-2">
-            <FaceSection
-              profile={p}
-              onChange={profile}
-              manufacturer={config.manufacturer}
-              name={config.name}
-              live={isNew ? undefined : live.boards.find((b) => b.line === config.line && b.address === config.address)}
-            />
+            <FaceSection profile={p} onChange={profile} manufacturer={config.manufacturer} name={config.name} live={liveBoard} />
           </TabsContent>
         )}
 

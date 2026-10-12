@@ -191,6 +191,9 @@ export type BoardProfileDto = {
     fontMap: null | {
         [key: string]: number;
     };
+    charFonts: null | {
+        [key: string]: CharFontDto;
+    };
     alternationMs: number;
     blinkOnMs: number;
     blinkOffMs: number;
@@ -400,9 +403,11 @@ export type FaceElementDto = {
     spacing: number;
     format: FaceClockFormat;
     render: FaceRender;
+    symbol: FaceSymbol;
+    image: string;
 };
 
-export type FaceElementKind = 'rect' | 'text' | 'clock';
+export type FaceElementKind = 'rect' | 'text' | 'clock' | 'symbol' | 'image';
 
 export type FaceMarginDto = {
     left: number;
@@ -412,6 +417,8 @@ export type FaceMarginDto = {
 };
 
 export type FaceRender = 'text' | 'display';
+
+export type FaceSymbol = 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight' | 'arrowUpLeft' | 'arrowUpRight' | 'arrowDownLeft' | 'arrowDownRight' | 'arrowsLeftRight' | 'arrowsUpDown';
 
 export type FaceVAlign = 'top' | 'middle' | 'bottom';
 
@@ -526,6 +533,11 @@ export type HttpsStatusDto = {
 export type ChangePasswordRequest = {
     currentPassword: string;
     newPassword: string;
+};
+
+export type CharFontDto = {
+    font: string;
+    bold: boolean;
 };
 
 export type CharLayerDto = {

@@ -1,9 +1,10 @@
 // Rasterizacia znakovej tabule Elektrocas (LCD, LCD1, ERP) na body: znak = bunka 8 bodov × vyska riadku, riadky
 // zhora od 0. Co tabula v danom okamihu ukazuje (vrstvy striedania, blikanie), urcuje tento subor; ako body
 // vyzeraju, rozhoduje renderer podla vzhladu - rovnako ako pri ELEN.
-import type { BoardDto as Board, CharRowDto as CharRow } from "../api/generated/types.gen";
+import type { BoardDto as Board, CharFontDto, CharRowDto as CharRow } from "../api/generated/types.gen";
 import type { Glyph, GlyphSource } from "./fonts";
 import { COLOR_NONE, type DotFrame } from "./frame";
+import { PixelCellGlyphSource } from "./pixel-fonts";
 
 /** Sirka znaku v bodoch - INISS pocita stlpec ako START / 8. */
 export const CHAR_WIDTH = 8;
@@ -11,6 +12,39 @@ export const CHAR_WIDTH = 8;
 /** Pismo LCD1: 0x40 inverzne, 0x80 blikajuce (vyznam ostatnych bitov urcuje tabula). */
 const INVERSE = 0x40;
 const BLINK = 0x80;
+/** Cislo pisma bez inverzie a blikania - kluc pisma v profile tabule. */
+const FONT_NUMBER = 0x3f;
+
+/** Zdroje pomenovanych bodovych pisiem podla pisma a vysky riadku. */
+const namedSources = new Map<string, PixelCellGlyphSource | null>();
+/** Ztucnene znaky podla povodneho znaku. */
+const boldGlyphs = new WeakMap<Glyph, Glyph>();
+
+function namedSource(font: string, rowHeight: number): PixelCellGlyphSource | null {
+  const key = `${font}|${rowHeight}`;
+  if (!namedSources.has(key)) namedSources.set(key, PixelCellGlyphSource.named(CHAR_WIDTH, rowHeight, font));
+  return namedSources.get(key)!;
+}
+
+/** Znak ztucneny o bod doprava, posledny stlpec bunky ostane medzerou. */
+function bold(glyph: Glyph): Glyph {
+  let thick = boldGlyphs.get(glyph);
+  if (!thick) {
+    thick = { ...glyph, isSet: (x, y) => x < CHAR_WIDTH - 1 && (glyph.isSet(x, y) || (x > 0 && glyph.isSet(x - 1, y))) };
+    boldGlyphs.set(glyph, thick);
+  }
+  return thick;
+}
+
+/**
+ * Znak pismom podla cisla pisma: profil tabule moze cislu priradit bodove pismo a ztucnenie (INISS cislo len posiela,
+ * co znamena, urcuje tabula); bez priradenia predvolene pismo tabule.
+ */
+function charGlyph(source: GlyphSource, fonts: Record<string, CharFontDto> | null | undefined, font: number, code: number, ch: string, rowHeight: number) {
+  const spec = fonts?.[String(font & FONT_NUMBER)];
+  const glyph = ((spec?.font ? namedSource(spec.font, rowHeight) : null) ?? source).glyph(code, ch, 0);
+  return spec?.bold && glyph ? bold(glyph) : glyph;
+}
 
 /** Vyrobcovia LCD Elektrocas - len ich tabule poznaju cervene pole a velke pismena druhu vlaku. */
 const LCD_MANUFACTURERS = ["LCD", "LCD1", "ERP"];
@@ -59,8 +93,8 @@ export function rasterizeChars(board: Board, source: GlyphSource, timeMs: number
       const y = row.row * p.rowHeight;
       if (lcd && code === RED_FIELD) fillCell(frame, font, x, y, p.rowHeight);
       else if (lcd && BIG_LETTERS[code]) drawCell(frame, bigLetter(source, BIG_LETTERS[code], p.rowHeight), font, x, y, p.rowHeight);
-      // pismo prehliadaca s pevnou sirkou (rez 0), pri subore pisiem ELEN jeho prve pismo
-      else drawCell(frame, source.glyph(code, layer.text[col] ?? " ", 0), font, x, y, p.rowHeight);
+      // pismo podla cisla z profilu, inak bodove pismo bunky (pri subore pisiem ELEN jeho prve pismo)
+      else drawCell(frame, charGlyph(source, p.charFonts, font, code, layer.text[col] ?? " ", p.rowHeight), font, x, y, p.rowHeight);
     }
   }
   return frame;

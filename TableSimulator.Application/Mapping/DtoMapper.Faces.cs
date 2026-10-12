@@ -32,6 +32,8 @@ public static partial class DtoMapper
                 Core.Boards.FaceElementKind.Rect => Contracts.Faces.FaceElementKind.Rect,
                 Core.Boards.FaceElementKind.Text => Contracts.Faces.FaceElementKind.Text,
                 Core.Boards.FaceElementKind.Clock => Contracts.Faces.FaceElementKind.Clock,
+                Core.Boards.FaceElementKind.Symbol => Contracts.Faces.FaceElementKind.Symbol,
+                Core.Boards.FaceElementKind.Image => Contracts.Faces.FaceElementKind.Image,
                 _ => throw new ArgumentOutOfRangeException(nameof(element), element.Kind, null)
             },
             Anchor = element.Anchor switch
@@ -82,7 +84,25 @@ public static partial class DtoMapper
                 Core.Boards.FaceClockFormat.WithSeconds => Contracts.Faces.FaceClockFormat.WithSeconds,
                 _ => throw new ArgumentOutOfRangeException(nameof(element), element.Format, null)
             },
-            Render = element.Render == Core.Boards.FaceRender.Display ? Contracts.Faces.FaceRender.Display : Contracts.Faces.FaceRender.Text
+            Render = element.Render == Core.Boards.FaceRender.Display ? Contracts.Faces.FaceRender.Display : Contracts.Faces.FaceRender.Text,
+            Symbol = ToDto(element.Symbol),
+            Image = element.Image
         };
     }
+
+    private static Contracts.Faces.FaceSymbol ToDto(Core.Boards.FaceSymbol symbol) =>
+        symbol switch
+        {
+            Core.Boards.FaceSymbol.ArrowUp => Contracts.Faces.FaceSymbol.ArrowUp,
+            Core.Boards.FaceSymbol.ArrowDown => Contracts.Faces.FaceSymbol.ArrowDown,
+            Core.Boards.FaceSymbol.ArrowLeft => Contracts.Faces.FaceSymbol.ArrowLeft,
+            Core.Boards.FaceSymbol.ArrowRight => Contracts.Faces.FaceSymbol.ArrowRight,
+            Core.Boards.FaceSymbol.ArrowUpLeft => Contracts.Faces.FaceSymbol.ArrowUpLeft,
+            Core.Boards.FaceSymbol.ArrowUpRight => Contracts.Faces.FaceSymbol.ArrowUpRight,
+            Core.Boards.FaceSymbol.ArrowDownLeft => Contracts.Faces.FaceSymbol.ArrowDownLeft,
+            Core.Boards.FaceSymbol.ArrowDownRight => Contracts.Faces.FaceSymbol.ArrowDownRight,
+            Core.Boards.FaceSymbol.ArrowsLeftRight => Contracts.Faces.FaceSymbol.ArrowsLeftRight,
+            Core.Boards.FaceSymbol.ArrowsUpDown => Contracts.Faces.FaceSymbol.ArrowsUpDown,
+            _ => throw new ArgumentOutOfRangeException(nameof(symbol), symbol, null)
+        };
 }
