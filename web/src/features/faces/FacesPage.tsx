@@ -517,7 +517,6 @@ export function FacesPage() {
               onOpen={open}
             />
           </FaceContextMenu>
-          <p className="shrink-0 text-xs text-muted-foreground">{t(readOnly ? "faces.canvas.readOnly" : "faces.canvas.hint")}</p>
         </div>
 
         <aside aria-label={t("faces.properties")} className="min-h-0 overflow-y-auto rounded-xl border bg-card p-3">

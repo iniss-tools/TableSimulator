@@ -1482,9 +1482,6 @@ export const cs: Record<TextKey, string> = {
   "faces.redo": "Znovu (Ctrl+Y)",
   "faces.outlines": "Obrysy prvků",
   "faces.canvas": "Prvky čela v náhledu",
-  "faces.canvas.hint":
-    "Kliknutím vyberete prvek, Ctrl nebo Shift ho přidá k výběru a tažením po prázdném místě vyberete více prvků najednou. Pravé tlačítko myši nabídne další úpravy a klávesa ? ukáže všechny zkratky.",
-  "faces.canvas.readOnly": "Kliknutím vyberete prvek a uvidíte jeho vlastnosti.",
   "face.kind.rect": "Plocha",
   "face.kind.text": "Text",
   "face.kind.clock": "Hodiny",

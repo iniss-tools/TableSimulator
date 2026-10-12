@@ -1479,9 +1479,6 @@ export const sk = {
   "faces.redo": "Znova (Ctrl+Y)",
   "faces.outlines": "Obrysy prvkov",
   "faces.canvas": "Prvky čela v náhľade",
-  "faces.canvas.hint":
-    "Kliknutím vyberiete prvok, Ctrl alebo Shift ho pridá k výberu a ťahaním po prázdnom mieste vyberiete viac prvkov naraz. Pravé tlačidlo myši ponúkne ďalšie úpravy a kláves ? ukáže všetky skratky.",
-  "faces.canvas.readOnly": "Kliknutím vyberiete prvok a uvidíte jeho vlastnosti.",
   "face.kind.rect": "Plocha",
   "face.kind.text": "Text",
   "face.kind.clock": "Hodiny",

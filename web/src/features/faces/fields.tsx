@@ -19,7 +19,10 @@ export function PanelSection({ title, children, className }: { title: ReactNode;
   return (
     <section className={cn("flex flex-col gap-2 border-t pt-3 first:border-t-0 first:pt-0", className)}>
       <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
-      <div className="grid grid-cols-2 gap-x-2 gap-y-3">{children}</div>
+      {/* pole s dlhsim popisom na dva riadky: popis sused a polia ostanu v jednom riadku (popis rastie, text dole) */}
+      <div className="grid grid-cols-2 gap-x-2 gap-y-3 [&>[data-slot=field]>[data-slot=field-label]]:flex-1 [&>[data-slot=field]>[data-slot=field-label]]:items-end">
+        {children}
+      </div>
     </section>
   );
 }

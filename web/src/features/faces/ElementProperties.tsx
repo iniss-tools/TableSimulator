@@ -113,6 +113,7 @@ export function ElementProperties({ elements, readOnly, canForward, canBackward,
   const text = common(elements, "text");
   const bold = common(elements, "bold");
   const Icon = kind ? KIND_ICONS[kind] : Layers;
+  const summary = single ? elementSummary(single) : kind ? t(`face.kind.${kind}`) : t("faces.selection.kinds");
   const file = useRef<HTMLInputElement>(null);
   // hodnoty prvkov na zaciatku tahania za popis - kazdy sa posunie od svojej
   const scrubStart = useRef<number[]>([]);
@@ -146,20 +147,21 @@ export function ElementProperties({ elements, readOnly, canForward, canBackward,
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <Icon className="size-4 shrink-0 text-muted-foreground" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">
+      {/* druh a tlacidla v jednom riadku, popis prvku pod nimi cez celu sirku panela */}
+      <div className="flex flex-col gap-0.5">
+        <div className="flex items-center gap-2">
+          <Icon className="size-4 shrink-0 text-muted-foreground" />
+          <p className="min-w-0 flex-1 truncate text-sm font-medium">
             {single ? t(`face.kind.${single.kind}`) : t(elements.length < 5 ? "faces.selection.few" : "faces.selection.many", { count: elements.length })}
           </p>
-          <p className="truncate text-xs text-muted-foreground">
-            {single ? elementSummary(single) : kind ? t(`face.kind.${kind}`) : t("faces.selection.kinds")}
-          </p>
+          {icon(t(locked ? "faces.element.unlock" : "faces.element.lock"), () => set({ locked: !locked }), locked ? <Lock /> : <LockOpen />)}
+          {icon(t("faces.element.forward"), onForward, <ArrowUpToLine />, !canForward)}
+          {icon(t("faces.element.backward"), onBackward, <ArrowDownToLine />, !canBackward)}
+          {icon(t("common.delete"), onRemove, <Trash2 />)}
         </div>
-        {icon(t(locked ? "faces.element.unlock" : "faces.element.lock"), () => set({ locked: !locked }), locked ? <Lock /> : <LockOpen />)}
-        {icon(t("faces.element.forward"), onForward, <ArrowUpToLine />, !canForward)}
-        {icon(t("faces.element.backward"), onBackward, <ArrowDownToLine />, !canBackward)}
-        {icon(t("common.delete"), onRemove, <Trash2 />)}
+        <p className="truncate text-xs text-muted-foreground" title={summary}>
+          {summary}
+        </p>
       </div>
 
       <PanelSection title={t("faces.section.align")}>

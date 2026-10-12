@@ -21,9 +21,9 @@ export function FaceProperties({ face, readOnly, onChange }: Props) {
     <div className="flex flex-col gap-3">
       <p className="text-xs text-muted-foreground">{t("faces.hint")}</p>
       {face.builtIn && (
-        <Alert>
+        <Alert className="border-amber-500/50 bg-amber-500/10 text-amber-800 dark:text-amber-300">
           <Info />
-          <AlertDescription>{t("faces.builtIn.hint")}</AlertDescription>
+          <AlertDescription className="text-current">{t("faces.builtIn.hint")}</AlertDescription>
         </Alert>
       )}
       <PanelSection title={t("faces.section.face")}>
