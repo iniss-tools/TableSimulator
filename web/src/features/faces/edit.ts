@@ -93,3 +93,12 @@ export function stepOrder(count: number, selection: readonly number[], direction
   }
   return order;
 }
+
+/** Poradie kreslenia s vybranymi prvkami navrchu (kreslia sa posledne) alebo naspodku; ich vzajomne poradie ostane. */
+export function extremeOrder(count: number, selection: readonly number[], front: boolean): number[] {
+  const chosen = new Set(selection);
+  const all = Array.from({ length: count }, (_, i) => i);
+  const picked = all.filter((i) => chosen.has(i));
+  const rest = all.filter((i) => !chosen.has(i));
+  return front ? [...rest, ...picked] : [...picked, ...rest];
+}

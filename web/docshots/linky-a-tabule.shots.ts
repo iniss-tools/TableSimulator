@@ -70,6 +70,10 @@ for (const theme of THEMES) {
     await canvas.getByRole("button", { name: "Text: VLAK" }).click({ modifiers: ["Control"] });
     await canvas.getByRole("button", { name: "Text: KOĽAJ" }).click({ modifiers: ["Control"] });
     await shot(page, "cela-tabul/viac-prvkov", theme, { ready: page.getByRole("button", { name: "Rozmiestniť vodorovne" }) });
+    // ponuka uprav nad vyberom
+    await canvas.getByRole("button", { name: "Text: SMER" }).click({ button: "right" });
+    await shot(page, "cela-tabul/ponuka", theme, { ready: page.getByRole("menuitem", { name: "Duplikovať" }) });
+    await page.keyboard.press("Escape");
 
     await open(page, "/", theme);
     const dialog = await openBoard(page, "Nástupište 1");

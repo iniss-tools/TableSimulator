@@ -31,9 +31,11 @@ interface Props {
   onRemove: (indices: number[]) => void;
   /** Rozlozenie prvkov po prekresleni (zarovnanie). */
   onLayout?: (layout: FaceOverlayLayout) => void;
+  /** Dvojklik na prvok. */
+  onOpen?: (index: number) => void;
 }
 
-export function FaceCanvas({ board, face, shown, selection, readOnly, view, zoom, onZoom, onFitScale, onSelect, onChange, onRemove, onLayout }: Props) {
+export function FaceCanvas({ board, face, shown, selection, readOnly, view, zoom, onZoom, onFitScale, onSelect, onChange, onRemove, onLayout, onOpen }: Props) {
   const area = useRef<HTMLDivElement>(null);
   const [space, setSpace] = useState(false);
   const [panning, setPanning] = useState(false);
@@ -157,6 +159,7 @@ export function FaceCanvas({ board, face, shown, selection, readOnly, view, zoom
               onChange={onChange}
               onRemove={onRemove}
               onLayout={onLayout}
+              onOpen={onOpen}
             />
           )}
         />

@@ -1,11 +1,12 @@
 // Editor predloh ciel tabul ako vo Figme: hore nastroje (predloha, kroky spat, pridanie prvku, mierka, ulozenie),
 // vlavo vrstvy, zobrazenie a tabula nahladu, v strede platno s tabulou a vpravo vlastnosti vybranych prvkov (bez vyberu
-// predlohy) so zarovnanim. Stranka sa neposuva - posuvaju sa len panely. Vstavane predlohy sa daju len skopirovat;
-// vlastne su v databaze servera a tabule ich pouzivaju podla kluca.
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+// predlohy) so zarovnanim. Stranka sa neposuva - posuvaju sa len panely. Prikazy (schranka, poradie, zamok…) idu
+// z klaves aj z kontextovej ponuky platna. Vstavane predlohy sa daju len skopirovat; vlastne su v databaze servera
+// a tabule ich pouzivaju podla kluca.
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useBlocker } from "@tanstack/react-router";
-import { CircleAlert, CopyPlus, Plus, Redo, Save, Trash2, Undo, Undo2, ZoomIn, ZoomOut } from "lucide-react";
+import { CircleAlert, CopyPlus, Keyboard, Plus, Redo, Save, Trash2, Undo, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { toast } from "sonner";
 import {
   deleteFace,
@@ -33,15 +34,19 @@ import { Spinner } from "@/components/ui/spinner";
 import { SAMPLE_BOARD, SAMPLE_BOARD_ID } from "@/features/designs/sample-board";
 import { anchorBox, faceVariables, type Box, type FaceOverlayLayout } from "@/render/face";
 import { t } from "@/i18n";
+import { copyElements, shortcutAction, useClipboard, type FaceAction } from "./actions";
 import { alignDeltas, type AlignOp } from "./align";
-import { moveElement, stepOrder } from "./edit";
-import { ElementProperties } from "./ElementProperties";
+import { DocumentKeys } from "./DocumentKeys";
+import { extremeOrder, moveElement, stepOrder } from "./edit";
+import { ElementProperties, type ElementPatch } from "./ElementProperties";
 import { FaceCanvas } from "./FaceCanvas";
+import { FaceContextMenu } from "./FaceContextMenu";
 import { FaceProperties } from "./FaceProperties";
 import { ELEMENT_KINDS, KIND_ICONS, newElement, previewBoard, variableLabel } from "./faces";
 import { useHistory } from "./history";
 import { LayersPanel } from "./LayersPanel";
 import { NewFaceDialog } from "./NewFaceDialog";
+import { ShortcutsDialog } from "./ShortcutsDialog";
 import { GRID_STEPS, loadView, saveView, type FaceView } from "./view";
 import { typing, zoomStep } from "./zoom";
 
@@ -68,6 +73,8 @@ export function FacesPage() {
   // prvky skryte len v editore (indexy) - neukladaju sa
   const [hidden, setHidden] = useState<ReadonlySet<number>>(new Set());
   const [creating, setCreating] = useState(false);
+  const [help, setHelp] = useState(false);
+  const clipboard = useClipboard();
   const [preview, setPreview] = useState(SAMPLE_BOARD_ID);
   const [values, setValues] = useState(SAMPLE_VALUES);
   const [view, setViewState] = useState<FaceView>(loadView);
@@ -118,28 +125,6 @@ export function FacesPage() {
     if (form && dirty && !readOnly && !save.isPending) save.mutate({ path: { id: form.id }, body: form });
   };
 
-  // Ctrl+Z / Ctrl+Y (Ctrl+Shift+Z) a Ctrl+A (vsetky viditelne odomknute prvky) mimo poli formulara, Ctrl+S kdekolvek
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
-      const key = e.key.toLowerCase();
-      if (key === "s") {
-        e.preventDefault();
-        saveNow();
-        return;
-      }
-      if (typing(e.target)) return;
-      if (key === "a" && form) setSelection(form.elements.flatMap((el, i) => (el.locked || hidden.has(i) ? [] : [i])));
-      else if (readOnly) return;
-      else if (key === "z" && !e.shiftKey) undo();
-      else if (key === "y" || (key === "z" && e.shiftKey)) redo();
-      else return;
-      e.preventDefault();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  });
-
   const liveBoard = live.boards.find((b) => b.id === preview);
   const board = useMemo(() => {
     const source = liveBoard ?? SAMPLE_BOARD;
@@ -189,8 +174,14 @@ export function FacesPage() {
       form.elements.map((e, j) => changes.get(j) ?? e),
       transient,
     );
-  /** Rovnaka zmena pre vsetky vybrane prvky (panel vlastnosti). */
-  const patchSelected = (patch: Partial<FaceElementDto>) => updateMany(new Map(chosen.map((i) => [i, { ...form.elements[i], ...patch }])));
+  /** Zmena vsetkych vybranych prvkov (panel vlastnosti): rovnaka, alebo pre kazdy zvlast. */
+  const patchSelected = (patch: ElementPatch, transient = false) =>
+    updateMany(new Map(chosen.map((i, k) => [i, { ...form.elements[i], ...(typeof patch === "function" ? patch(form.elements[i], k) : patch) }])), transient);
+  /** Nove prvky navrch, vybrane. */
+  const insert = (added: readonly FaceElementDto[]) => {
+    setElements([...form.elements, ...added]);
+    setSelection(added.map((_, k) => form.elements.length + k));
+  };
   const add = (kind: FaceElementKind) => {
     setElements([...form.elements, newElement(kind)]);
     setSelection([form.elements.length]);
@@ -209,12 +200,12 @@ export function FacesPage() {
     setSelection(chosen.map((i) => order.indexOf(i)));
     setHidden(new Set(order.flatMap((old, i) => (hidden.has(old) ? [i] : []))));
   };
-  const picked = new Set(chosen);
-  const canForward = chosen.some((i) => i < form.elements.length - 1 && !picked.has(i + 1));
-  const canBackward = chosen.some((i) => i > 0 && !picked.has(i - 1));
+  const inSelection = new Set(chosen);
+  const canForward = chosen.some((i) => i < form.elements.length - 1 && !inSelection.has(i + 1));
+  const canBackward = chosen.some((i) => i > 0 && !inSelection.has(i - 1));
   /** Vyber vo vrstvach: len prvok, pridat/odobrat (Ctrl) alebo rozsah od naposledy vybraneho (Shift). */
   const selectLayer = (index: number, mode: "replace" | "toggle" | "range") => {
-    if (mode === "toggle") setSelection(picked.has(index) ? chosen.filter((i) => i !== index) : [...chosen, index]);
+    if (mode === "toggle") setSelection(inSelection.has(index) ? chosen.filter((i) => i !== index) : [...chosen, index]);
     else if (mode === "range" && chosen.length) {
       const from = chosen[chosen.length - 1];
       const range = Array.from({ length: Math.abs(index - from) + 1 }, (_, k) => (index > from ? from + k : from - k));
@@ -246,6 +237,104 @@ export function FacesPage() {
     const next = new Set(hidden);
     if (!next.delete(index)) next.add(index);
     setHidden(next);
+  };
+  const allLocked = chosen.length > 0 && chosen.every((i) => form.elements[i].locked);
+  const allHidden = chosen.length > 0 && chosen.every((i) => hidden.has(i));
+
+  /** Prikaz z klaves alebo kontextovej ponuky; false = neda sa pouzit (klavesa ostane prehliadacu). */
+  const run = (action: FaceAction): boolean => {
+    const edit = !readOnly && chosen.length > 0;
+    const picked = chosen.map((i) => form.elements[i]);
+    switch (action) {
+      case "undo":
+        if (readOnly) return false;
+        undo();
+        return true;
+      case "redo":
+        if (readOnly) return false;
+        redo();
+        return true;
+      case "selectAll":
+        setSelection(form.elements.flatMap((e, i) => (e.locked || hidden.has(i) ? [] : [i])));
+        return true;
+      case "copy":
+        if (chosen.length === 0) return false;
+        copyElements(picked);
+        return true;
+      case "cut":
+        if (!edit) return false;
+        copyElements(picked);
+        removeMany(chosen);
+        return true;
+      case "paste":
+        if (readOnly || clipboard.length === 0) return false;
+        insert(clipboard);
+        return true;
+      case "duplicate":
+        if (!edit) return false;
+        insert(picked.map((e) => ({ ...e, locked: false })));
+        return true;
+      case "remove":
+        if (!edit) return false;
+        removeMany(chosen);
+        return true;
+      case "forward":
+      case "front":
+        if (!edit || !canForward) return false;
+        reorder(action === "front" ? extremeOrder(form.elements.length, chosen, true) : stepOrder(form.elements.length, chosen, 1));
+        return true;
+      case "backward":
+      case "back":
+        if (!edit || !canBackward) return false;
+        reorder(action === "back" ? extremeOrder(form.elements.length, chosen, false) : stepOrder(form.elements.length, chosen, -1));
+        return true;
+      case "lock":
+        if (!edit) return false;
+        patchSelected({ locked: !allLocked });
+        return true;
+      case "hide": {
+        if (chosen.length === 0) return false;
+        const next = new Set(hidden);
+        for (const i of chosen) {
+          if (allHidden) next.delete(i);
+          else next.add(i);
+        }
+        setHidden(next);
+        return true;
+      }
+    }
+  };
+
+  // Ctrl+S kdekolvek, ostatne skratky mimo poli formulara, okien a zoznamov vyberu
+  const onKey = (e: KeyboardEvent) => {
+    if (e.defaultPrevented) return;
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && !e.altKey && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      saveNow();
+      return;
+    }
+    if (typing(e.target) || (e.target instanceof Element && e.target.closest('[role="dialog"],[role="alertdialog"],[role="listbox"]'))) return;
+    if (e.key === "?" && !mod) {
+      e.preventDefault();
+      setHelp(true);
+      return;
+    }
+    const action = shortcutAction(e);
+    if (action && run(action)) e.preventDefault();
+  };
+
+  /** Dvojklik na prvok: vyberie ho a text da do pola na upravu. */
+  const open = (index: number) => {
+    setSelection([index]);
+    if (form.elements[index]?.kind !== "text") return;
+    requestAnimationFrame(() => {
+      const field = document.getElementById("face-element-text");
+      if (field instanceof HTMLTextAreaElement) {
+        field.focus();
+        field.select();
+      }
+    });
   };
 
   const variables = faceVariables(form);
@@ -310,6 +399,9 @@ export function FacesPage() {
         </Button>
         <Button variant="ghost" size="icon" title={t("faces.zoom.in")} aria-label={t("faces.zoom.in")} onClick={() => setZoom(zoomStep(scale, 1))}>
           <ZoomIn />
+        </Button>
+        <Button variant="ghost" size="icon" title={t("faces.shortcuts")} aria-label={t("faces.keys.title")} onClick={() => setHelp(true)}>
+          <Keyboard />
         </Button>
         {!readOnly && (
           <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -395,7 +487,19 @@ export function FacesPage() {
         </aside>
 
         <div className="order-first flex min-h-0 flex-col gap-2 xl:order-none">
-          <div className="h-[min(60vh,32rem)] min-h-0 xl:h-auto xl:flex-1">
+          <FaceContextMenu
+            className="h-[min(60vh,32rem)] min-h-0 xl:h-auto xl:flex-1"
+            count={chosen.length}
+            readOnly={readOnly}
+            canPaste={clipboard.length > 0}
+            canForward={canForward}
+            canBackward={canBackward}
+            locked={allLocked}
+            hidden={allHidden}
+            onAction={(action) => {
+              run(action);
+            }}
+          >
             <FaceCanvas
               board={board}
               face={form}
@@ -410,8 +514,9 @@ export function FacesPage() {
               onChange={updateMany}
               onRemove={removeMany}
               onLayout={onLayout}
+              onOpen={open}
             />
-          </div>
+          </FaceContextMenu>
           <p className="shrink-0 text-xs text-muted-foreground">{t(readOnly ? "faces.canvas.readOnly" : "faces.canvas.hint")}</p>
         </div>
 
@@ -424,8 +529,8 @@ export function FacesPage() {
               canForward={canForward}
               canBackward={canBackward}
               onPatch={patchSelected}
-              onForward={() => reorder(stepOrder(form.elements.length, chosen, 1))}
-              onBackward={() => reorder(stepOrder(form.elements.length, chosen, -1))}
+              onForward={() => run("forward")}
+              onBackward={() => run("backward")}
               onRemove={() => removeMany(chosen)}
               onAlign={align}
             />
@@ -435,6 +540,8 @@ export function FacesPage() {
         </aside>
       </div>
 
+      <DocumentKeys onKeyDown={onKey} />
+      <ShortcutsDialog open={help} onClose={() => setHelp(false)} />
       {creating && (
         <NewFaceDialog
           face={form}

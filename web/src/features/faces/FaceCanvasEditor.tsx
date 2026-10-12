@@ -3,7 +3,8 @@
 // prvky, uchyt na volnom okraji (pri jednom prvku) meni rozmer plochy alebo velkost pisma; sipky posuvaju vyber,
 // Delete ho odstrani. Zamknuty prvok sa na platne neda chytit (vybrat sa da vo vrstvach), skryty sa nekresli. Pri
 // tahani sa vyber prichytava k mriezke a k okrajom a stredom inych prvkov a struktury tabule (Alt prichytenie vypne)
-// a vodiace ciary ukazu zarovnanie a vzdialenost k susedovi v bodoch.
+// a vodiace ciary ukazu zarovnanie a vzdialenost k susedovi v bodoch. Drzany Alt bez tahania meria vzdialenosti vyberu
+// od prvku pod mysou (inak od ukotvenia), dvojklik otvori text prvku, prave tlacidlo vyberie prvok pre kontextovu ponuku.
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import type { BoardFaceDto, FaceElementDto } from "@/api";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,7 @@ import { t } from "@/i18n";
 import { intersecting, union } from "./align";
 import { COARSE, FINE, freeEdges, moveElement, referencePoint, resizeElement, SNAP, type DragMode } from "./edit";
 import { elementLabel } from "./faces";
+import { measure } from "./measure";
 import { snapEdge, snapMove, targetsOf, type Gap, type Guide, type SnapOptions, type SnapTargets } from "./snap";
 import type { FaceView } from "./view";
 
@@ -70,6 +72,8 @@ interface Props {
   onRemove: (indices: number[]) => void;
   /** Rozlozenie po kazdom prekresleni (zarovnanie v paneli vlastnosti potrebuje plochy prvkov). */
   onLayout?: (layout: FaceOverlayLayout) => void;
+  /** Dvojklik na prvok (uprava textu). */
+  onOpen?: (index: number) => void;
 }
 
 const number = (value: number) => String(Math.round(value * 100) / 100);
@@ -81,7 +85,7 @@ function dragText(element: FaceElementDto, mode: DragMode): string {
   return `${t("face.size")} ${number(element.size)}`;
 }
 
-export function FaceCanvasEditor({ layout, face, indices, selection, readOnly, view, onSelect, onChange, onRemove, onLayout }: Props) {
+export function FaceCanvasEditor({ layout, face, indices, selection, readOnly, view, onSelect, onChange, onRemove, onLayout, onOpen }: Props) {
   const { scale, geometry: g, boxes } = layout;
   /** Plocha prvku podla indexu v celej predlohe; null = skryty alebo bez ukotvenia. */
   const boxOf = (index: number) => {
@@ -93,11 +97,30 @@ export function FaceCanvasEditor({ layout, face, indices, selection, readOnly, v
   const [marquee, setMarquee] = useState<Marquee | null>(null);
   const [tip, setTip] = useState<{ text: string; index: number } | null>(null);
   const [lines, setLines] = useState<{ guides: Guide[]; gaps: Gap[] } | null>(null);
+  // mys nad platnom: prvok pod nou (null = prazdne miesto); undefined = mys mimo platna
+  const [hover, setHover] = useState<number | null | undefined>(undefined);
+  const [alt, setAlt] = useState(false);
   const points = (b: Box): Box => ({ x: b.x / g.unit, y: b.y / g.unit, w: b.w / g.unit, h: b.h / g.unit });
 
   useEffect(() => {
     onLayout?.(layout);
   }, [layout, onLayout]);
+
+  // drzany Alt = meranie (kym sa netaha)
+  useEffect(() => {
+    const key = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Alt") setAlt(e.type === "keydown");
+    };
+    const blur = () => setAlt(false);
+    window.addEventListener("keydown", key);
+    window.addEventListener("keyup", key);
+    window.addEventListener("blur", blur);
+    return () => {
+      window.removeEventListener("keydown", key);
+      window.removeEventListener("keyup", key);
+      window.removeEventListener("blur", blur);
+    };
+  }, []);
 
   const css = (b: Box): CSSProperties => ({ left: b.x * scale, top: b.y * scale, width: b.w * scale, height: b.h * scale });
   // obrys na chytenie: aspon MIN_HIT px okolo stredu prvku
@@ -147,7 +170,23 @@ export function FaceCanvasEditor({ layout, face, indices, selection, readOnly, v
     };
   };
 
+  /** Vrchny viditelny prvok pod mysou (index v predlohe), null = prazdne miesto. */
+  const under = (e: PointerEvent<HTMLElement>): number | null => {
+    const rect = root.current?.getBoundingClientRect();
+    if (!rect) return null;
+    const x = (e.clientX - rect.left) / scale;
+    const y = (e.clientY - rect.top) / scale;
+    for (let i = boxes.length - 1; i >= 0; i--) {
+      const b = boxes[i];
+      if (b && x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) return indices[i];
+    }
+    return null;
+  };
+
   const move = (e: PointerEvent<HTMLElement>) => {
+    if (e.altKey !== alt) setAlt(e.altKey);
+    const over = under(e);
+    if (over !== hover) setHover(over);
     const m = marquee;
     if (m && m.pointer === e.pointerId && root.current) {
       const rect = root.current.getBoundingClientRect();
@@ -258,6 +297,12 @@ export function FaceCanvasEditor({ layout, face, indices, selection, readOnly, v
   });
   const group = selection.length > 1 && selectedBoxes.length > 0 ? union(selectedBoxes) : null;
 
+  // meranie s Alt: od vyberu k prvku pod mysou, inak k ukotveniu jedneho prvku alebo k ploche cela
+  const target = hover !== undefined && hover !== null && !selection.includes(hover) ? boxOf(hover) : null;
+  const reach = target ?? (hover === undefined ? null : (anchor ?? (selectedBoxes.length > 1 ? g.face : null)));
+  const measured = alt && !tip && !marquee && selectedBoxes.length > 0 && reach ? measure(points(union(selectedBoxes)), points(reach)) : null;
+  const gaps = lines?.gaps ?? measured ?? [];
+
   // uchyty na volnych okrajoch vybraneho prvku: plocha a obrazok sirka, vyska a roh, text, hodiny a symbol len roh (velkost)
   const handles: { index: number; mode: Exclude<DragMode, "move">; x: number; y: number; cursor: string }[] = [];
   if (single !== null && current && currentBox && !readOnly && !current.locked) {
@@ -293,7 +338,15 @@ export function FaceCanvasEditor({ layout, face, indices, selection, readOnly, v
       onPointerMove={move}
       onPointerUp={end}
       onPointerCancel={end}
+      onPointerLeave={() => setHover(undefined)}
       onKeyDown={key}
+      onContextMenu={(e) => {
+        // prave tlacidlo na prvok mimo vyberu vyberie len ten prvok, na prazdne miesto vyber zrusi
+        const target = e.target instanceof HTMLElement ? e.target.dataset.faceElement : undefined;
+        const index = target === undefined ? null : Number(target);
+        if (index === null) onSelect([]);
+        else if (!selection.includes(index)) onSelect([index]);
+      }}
     >
       {/* prvky mimo plochy tabule sa nekreslia - ani ich obrysy */}
       <div data-face-clip="" className="absolute inset-0 overflow-hidden">
@@ -340,6 +393,7 @@ export function FaceCanvasEditor({ layout, face, indices, selection, readOnly, v
               )}
               style={hit(box)}
               onPointerDown={(e) => begin(e, index, "move")}
+              onDoubleClick={() => onOpen?.(index)}
             />
           ) : null;
         })}
@@ -379,7 +433,8 @@ export function FaceCanvasEditor({ layout, face, indices, selection, readOnly, v
           }
         />
       ))}
-      {lines?.gaps.map((gap, i) => {
+      {measured && target && <div aria-hidden className="pointer-events-none absolute z-10 border border-pink-500" style={css(target)} />}
+      {gaps.map((gap, i) => {
         const start = gap.from * g.unit * scale;
         const length = (gap.to - gap.from) * g.unit * scale;
         const at = gap.at * g.unit * scale;

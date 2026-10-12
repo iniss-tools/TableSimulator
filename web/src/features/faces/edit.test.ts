@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { FaceElementDto } from "@/api";
 import { NEW_ELEMENT } from "@/render/face";
-import { FINE, moveElement, moveItem, referencePoint, resizeElement, snap, stepOrder } from "./edit";
+import { FINE, moveElement, moveItem, referencePoint, resizeElement, snap, extremeOrder, stepOrder } from "./edit";
 
 const el = (patch: Partial<FaceElementDto>): FaceElementDto => ({ ...NEW_ELEMENT, ...patch });
 
@@ -76,4 +76,9 @@ test("vybrane prvky dopredu a dozadu o jedno miesto, susedne spolu", () => {
   expect(stepOrder(3, [1, 2], 1)).toEqual([0, 1, 2]);
   expect(stepOrder(4, [0, 2], -1)).toEqual([0, 2, 1, 3]);
   expect(stepOrder(4, [3, 1], -1)).toEqual([1, 0, 3, 2]);
+});
+
+test("vybrane prvky navrch a naspodok", () => {
+  expect(extremeOrder(5, [3, 1], true)).toEqual([0, 2, 4, 1, 3]);
+  expect(extremeOrder(5, [3, 1], false)).toEqual([1, 3, 0, 2, 4]);
 });

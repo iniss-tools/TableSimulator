@@ -80,6 +80,14 @@ function SelectField<T extends string>({
   );
 }
 
+/** Zmena vybranych prvkov: rovnaka pre vsetky, alebo pre kazdy zvlast (tahanie za popis pri roznych hodnotach). */
+export type ElementPatch = Partial<FaceElementDto> | ((element: FaceElementDto, index: number) => Partial<FaceElementDto>);
+
+/** Ciselne polia prvku, ktore sa daju menit tahanim za popis. */
+type NumericKey = "x" | "y" | "width" | "height" | "border" | "radius" | "size" | "size2" | "maxWidth" | "spacing";
+
+const numeric = (key: NumericKey, value: number) => ({ [key]: value }) as Partial<FaceElementDto>;
+
 interface Props {
   /** Vybrane prvky (aspon jeden). */
   elements: FaceElementDto[];
@@ -88,7 +96,7 @@ interface Props {
   canForward: boolean;
   canBackward: boolean;
   /** Zmena plati pre vsetky vybrane prvky. */
-  onPatch: (patch: Partial<FaceElementDto>) => void;
+  onPatch: (patch: ElementPatch, transient?: boolean) => void;
   onForward: () => void;
   onBackward: () => void;
   onRemove: () => void;
@@ -106,6 +114,21 @@ export function ElementProperties({ elements, readOnly, canForward, canBackward,
   const bold = common(elements, "bold");
   const Icon = kind ? KIND_ICONS[kind] : Layers;
   const file = useRef<HTMLInputElement>(null);
+  // hodnoty prvkov na zaciatku tahania za popis - kazdy sa posunie od svojej
+  const scrubStart = useRef<number[]>([]);
+  const num = (key: NumericKey, label: string, min?: number) => (
+    <NumberField
+      label={label}
+      value={common(elements, key)}
+      min={min}
+      disabled={readOnly}
+      onChange={(value, transient) => onPatch(numeric(key, value), transient)}
+      onScrubStart={() => (scrubStart.current = elements.map((e) => e[key]))}
+      onScrub={(delta, transient) =>
+        onPatch((_, i) => numeric(key, Math.max(min ?? -Infinity, Math.round(((scrubStart.current[i] ?? 0) + delta) * 100) / 100)), transient)
+      }
+    />
+  );
   const icon = (title: string, onClick: () => void, children: ReactNode, disabled = false) => (
     <Button type="button" variant="ghost" size="icon-sm" title={title} aria-label={title} disabled={readOnly || disabled} onClick={onClick}>
       {children}
@@ -165,7 +188,7 @@ export function ElementProperties({ elements, readOnly, canForward, canBackward,
             step={1}
             min={1}
             disabled={readOnly}
-            onChange={(row) => set({ row: Math.max(1, Math.round(row)) })}
+            onChange={(row, transient) => set({ row: Math.max(1, Math.round(row)) }, transient)}
           />
         )}
         <SelectField
@@ -182,14 +205,14 @@ export function ElementProperties({ elements, readOnly, canForward, canBackward,
           onChange={(vAlign) => set({ vAlign })}
           options={VALIGNS.map((a) => ({ value: a, label: t(`face.valign.${a}`) }))}
         />
-        <NumberField label="X" value={common(elements, "x")} disabled={readOnly} onChange={(x) => set({ x })} />
-        <NumberField label="Y" value={common(elements, "y")} disabled={readOnly} onChange={(y) => set({ y })} />
+        {num("x", "X")}
+        {num("y", "Y")}
       </PanelSection>
 
       {(kind === "rect" || kind === "image") && (
         <PanelSection title={t("faces.section.size")}>
-          <NumberField label={t("face.width")} value={common(elements, "width")} disabled={readOnly} onChange={(width) => set({ width })} />
-          <NumberField label={t("face.height")} value={common(elements, "height")} disabled={readOnly} onChange={(height) => set({ height })} />
+          {num("width", t("face.width"))}
+          {num("height", t("face.height"))}
           <p className="col-span-2 text-xs text-muted-foreground">{t("face.size.hint")}</p>
         </PanelSection>
       )}
@@ -197,8 +220,8 @@ export function ElementProperties({ elements, readOnly, canForward, canBackward,
       {kind === "rect" && (
         <PanelSection title={t("faces.section.fill")}>
           {color("fill", t("face.fill"), t("face.color.none"))}
-          <NumberField label={t("face.border")} value={common(elements, "border")} min={0} disabled={readOnly} onChange={(border) => set({ border })} />
-          <NumberField label={t("face.radius")} value={common(elements, "radius")} min={0} disabled={readOnly} onChange={(radius) => set({ radius })} />
+          {num("border", t("face.border"), 0)}
+          {num("radius", t("face.radius"), 0)}
           {color("color", t("face.borderColor"), t("face.color.default"))}
         </PanelSection>
       )}
@@ -208,6 +231,7 @@ export function ElementProperties({ elements, readOnly, canForward, canBackward,
           <PanelSection title={t("face.text")}>
             <FormField label={t("face.text")} hint={t("face.text.hint")} className="col-span-2">
               <Textarea
+                id="face-element-text"
                 rows={3}
                 value={text ?? ""}
                 placeholder={text === undefined ? t("faces.mixed") : undefined}
@@ -217,16 +241,10 @@ export function ElementProperties({ elements, readOnly, canForward, canBackward,
             </FormField>
           </PanelSection>
           <PanelSection title={t("faces.section.font")}>
-            <NumberField label={t("face.size")} value={common(elements, "size")} min={1} disabled={readOnly} onChange={(size) => set({ size })} />
-            <NumberField label={t("face.size2")} value={common(elements, "size2")} min={0} disabled={readOnly} onChange={(size2) => set({ size2 })} />
-            <NumberField
-              label={t("face.maxWidth")}
-              value={common(elements, "maxWidth")}
-              min={0}
-              disabled={readOnly}
-              onChange={(maxWidth) => set({ maxWidth })}
-            />
-            <NumberField label={t("face.spacing")} value={common(elements, "spacing")} disabled={readOnly} onChange={(spacing) => set({ spacing })} />
+            {num("size", t("face.size"), 1)}
+            {num("size2", t("face.size2"), 0)}
+            {num("maxWidth", t("face.maxWidth"), 0)}
+            {num("spacing", t("face.spacing"))}
             <SelectField
               label={t("face.style")}
               value={common(elements, "style")}
@@ -252,7 +270,7 @@ export function ElementProperties({ elements, readOnly, canForward, canBackward,
 
       {kind === "clock" && (
         <PanelSection title={t("face.kind.clock")}>
-          <NumberField label={t("face.size")} value={common(elements, "size")} min={1} disabled={readOnly} onChange={(size) => set({ size })} />
+          {num("size", t("face.size"), 1)}
           <SelectField
             label={t("face.format")}
             value={common(elements, "format")}
@@ -283,7 +301,7 @@ export function ElementProperties({ elements, readOnly, canForward, canBackward,
             options={FACE_SYMBOLS.map((s) => ({ value: s, label: t(`face.symbol.${s}`) }))}
             className="col-span-2"
           />
-          <NumberField label={t("face.symbolSize")} value={common(elements, "size")} min={1} disabled={readOnly} onChange={(size) => set({ size })} />
+          {num("size", t("face.symbolSize"), 1)}
           {color("color", t("face.color"), t("face.color.default"))}
         </PanelSection>
       )}

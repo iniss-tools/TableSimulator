@@ -1,6 +1,7 @@
 // Cela tabul: kopia vstavanej predlohy, uprava a ulozenie, predloha v okne tabule s cislom kolaje, odstranenie
 // pouzivanej predlohy odmietnute, uprava cela tahanim v nahlade s krokmi spat a vodiacimi ciarami, zamok vo vrstvach a Ctrl+S,
-// vyber viacerych prvkov (Ctrl+klik, obdlznik, Ctrl+A), spolocne pole, zarovnanie, presun a odstranenie skupiny.
+// vyber viacerych prvkov (Ctrl+klik, obdlznik, Ctrl+A), spolocne pole, zarovnanie, presun a odstranenie skupiny,
+// schranka medzi predlohami, kontextova ponuka, poradie klavesami, tahanie za popis, dvojklik, meranie s Alt a skratky.
 import { expect, test } from "@playwright/test";
 import { API_HEADERS, collectErrors, createLine, deleteLine, elenRow, sendToLine } from "./helpers";
 
@@ -224,6 +225,102 @@ test("editor cela: vyber viacerych prvkov, spolocne pole, zarovnanie a skupina",
   await page.getByRole("button", { name: "Zahodiť zmeny" }).click();
 
   const removed = await page.request.delete("/api/faces/e2e-vyber", { headers: API_HEADERS });
+  expect(removed.status()).toBe(204);
+  expect(errors).toEqual([]);
+});
+
+test("editor cela: schranka, kontextova ponuka, poradie, tahanie za popis, dvojklik, meranie a skratky", async ({ page }) => {
+  const errors = collectErrors(page);
+  const faces = (await (await page.request.get("/api/faces")).json()) as { id: string }[];
+  const source = faces.find((f) => f.id === "odchody")!;
+  const created = await page.request.put("/api/faces/e2e-schranka", {
+    headers: API_HEADERS,
+    data: { ...source, id: "e2e-schranka", name: "E2E schránka", builtIn: false },
+  });
+  expect(created.ok()).toBe(true);
+
+  await page.goto("/#/faces");
+  const canvas = page.getByRole("group", { name: "Prvky čela v náhľade" });
+  const properties = page.getByRole("complementary", { name: "Vlastnosti" });
+  const items = canvas.locator("[data-face-element]");
+  const layers = page.getByRole("list", { name: "Vrstvy" });
+
+  // kopia zo vstavanej predlohy cez kontextovu ponuku (vstavana sa neda menit - vlozit je vypnute)
+  await page.getByRole("combobox", { name: "Predloha čela" }).click();
+  await page.getByRole("option", { name: /^Odchodová – ODCHODY/ }).click();
+  const builtInClock = canvas.getByRole("button", { name: /^Hodiny/ });
+  await builtInClock.click({ button: "right" });
+  await expect(page.getByRole("menuitem", { name: "Vložiť" })).toBeDisabled();
+  await page.getByRole("menuitem", { name: "Kopírovať" }).click();
+
+  // vlozenie do vlastnej predlohy navrch, vybrane
+  await page.getByRole("combobox", { name: "Predloha čela" }).click();
+  await page.getByRole("option", { name: "E2E schránka" }).click();
+  await expect(items).toHaveCount(3);
+  await canvas.focus();
+  await page.keyboard.press("Control+v");
+  await expect(items).toHaveCount(4);
+  await expect(layers.getByRole("listitem").first()).toContainText("Hodiny");
+  await expect(properties).toContainText("Hodiny");
+
+  // Ctrl+D duplikuje, Ctrl+Shift+[ da vyber naspodok, krok spat vrati
+  await page.keyboard.press("Control+d");
+  await expect(items).toHaveCount(5);
+  await page.keyboard.press("Control+Shift+BracketLeft");
+  await expect(layers.getByRole("listitem").last()).toContainText("Hodiny");
+  await page.keyboard.press("Control+z");
+  await expect(layers.getByRole("listitem").first()).toContainText("Hodiny");
+
+  // prave tlacidlo na nadpis ho vyberie (kym je ponuka otvorena, zvysok stranky je pre citacky skryty); vystrihnut a vlozit
+  const title = canvas.getByRole("button", { name: "Text: ODCHODY / DEPARTURES" });
+  await title.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Vystrihnúť" }).click();
+  await expect(page.getByRole("menu")).toBeHidden();
+  await expect(items).toHaveCount(4);
+  await page.keyboard.press("Control+v");
+  await expect(items).toHaveCount(5);
+  await expect(title).toHaveAttribute("aria-pressed", "true");
+
+  // tahanie za popis X zmeni hodnotu o pol bodu na 2 px, cele tahanie je jeden krok
+  const x = properties.getByLabel("X", { exact: true });
+  const start = Number(await x.inputValue());
+  const caption = properties.locator("label").filter({ hasText: /^X$/ });
+  const at = (await caption.boundingBox())!;
+  await page.mouse.move(at.x + 2, at.y + at.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(at.x + 12, at.y + at.height / 2, { steps: 3 });
+  await page.mouse.move(at.x + 22, at.y + at.height / 2, { steps: 3 });
+  await page.mouse.up();
+  await expect(x).toHaveValue(String(start + 5));
+  await expect(x).not.toBeFocused();
+  await page.getByRole("button", { name: "Späť (Ctrl+Z)" }).click();
+  await expect(x).toHaveValue(String(start));
+
+  // dvojklik na text ho da do pola na upravu
+  await title.dblclick();
+  await expect(properties.getByLabel("Text", { exact: true })).toBeFocused();
+
+  // meranie s Alt: od nadpisu k hodinam
+  await canvas.focus();
+  const clock = canvas.getByRole("button", { name: /^Hodiny/ }).first();
+  const box = (await clock.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.keyboard.down("Alt");
+  await page.mouse.move(box.x + box.width / 2 + 1, box.y + box.height / 2);
+  await expect(canvas.locator("span.bg-pink-500").first()).toBeVisible();
+  await page.keyboard.up("Alt");
+  await expect(canvas.locator("span.bg-pink-500")).toHaveCount(0);
+
+  // skratky klavesom ?
+  await page.keyboard.press("Shift+Slash");
+  const dialog = page.getByRole("dialog", { name: "Klávesové skratky" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("Duplikovať");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+
+  await page.getByRole("button", { name: "Zahodiť zmeny" }).click();
+  const removed = await page.request.delete("/api/faces/e2e-schranka", { headers: API_HEADERS });
   expect(removed.status()).toBe(204);
   expect(errors).toEqual([]);
 });
