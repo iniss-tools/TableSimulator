@@ -2447,7 +2447,7 @@
     {
       "name": "list_scenarios",
       "title": "Fault scenarios",
-      "description": "Fault scenarios: timed steps (at [ms], duration [ms]) that simulate a board fault, a board power loss or a line outage, and for a running scenario its start, cycle and active steps.",
+      "description": "Fault scenarios: timed steps (at [ms], duration [ms]) that simulate a board fault, a board power loss or a line outage, and for a running scenario its start, cycle and active steps. After a power loss the board is empty until INISS sends its content again.",
       "inputSchema": {
         "type": "object",
         "properties": {}
