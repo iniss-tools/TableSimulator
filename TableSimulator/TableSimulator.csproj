@@ -12,10 +12,6 @@
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
 	<ItemGroup>
-		<!-- zobrazenie tabule pre klientov s MCP Apps (zdroj ui://tablesimulator/board.html) -->
-		<EmbeddedResource Include="Mcp\board-app.html" LogicalName="TableSimulator.Mcp.board-app.html" />
-	</ItemGroup>
-	<ItemGroup>
 		<!-- ako implicitne usingy Microsoft.NET.Sdk.Web (Web SDK sa nepouziva kvoli wwwroot vo vystupe) -->
 		<Using Include="Microsoft.AspNetCore.Builder" />
 		<Using Include="Microsoft.AspNetCore.Hosting" />
@@ -44,7 +40,7 @@
 	     Zdroje webu su polozky az v cieli - staticku ItemGroup by IDE ukazovalo ako odkazy v koreni projektu. -->
 	<Target Name="CollectWebSource">
 		<ItemGroup>
-			<WebSource Include="$(WebDir)\src\**\*;$(WebDir)\public\**\*;$(WebDir)\index.html;$(WebDir)\package.json;$(WebDir)\bun.lock;$(WebDir)\vite.config.ts;$(WebDir)\tsconfig.json" />
+			<WebSource Include="$(WebDir)\src\**\*;$(WebDir)\public\**\*;$(WebDir)\index.html;$(WebDir)\mcp-app.html;$(WebDir)\vite.mcp.config.ts;$(WebDir)\package.json;$(WebDir)\bun.lock;$(WebDir)\vite.config.ts;$(WebDir)\tsconfig.json" />
 		</ItemGroup>
 	</Target>
 	<Target Name="BuildWeb" DependsOnTargets="CollectWebSource" BeforeTargets="BeforeBuild" Inputs="@(WebSource)" Outputs="$(MSBuildProjectDirectory)\wwwroot\index.html"

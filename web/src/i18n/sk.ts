@@ -715,6 +715,8 @@ export const sk = {
   "audit.action.CreateAccessKey": "Nový prístupový kľúč",
   "audit.action.DeleteAccessKey": "Odstránenie prístupového kľúča",
   "common.loading": "Načítava sa…",
+  "mcpApp.waiting": "Čakám na tabuľu…",
+  "mcpApp.error": "Spojenie so simulátorom zlyhalo: {error}",
   "common.actions": "Akcie",
   "common.search": "Hľadať…",
   "common.confirm": "Potvrdiť",

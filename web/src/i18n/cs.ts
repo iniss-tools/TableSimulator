@@ -717,6 +717,8 @@ export const cs: Record<TextKey, string> = {
   "audit.action.CreateAccessKey": "Nový přístupový klíč",
   "audit.action.DeleteAccessKey": "Odstranění přístupového klíče",
   "common.loading": "Načítá se…",
+  "mcpApp.waiting": "Čekám na tabuli…",
+  "mcpApp.error": "Spojení se simulátorem selhalo: {error}",
   "common.actions": "Akce",
   "common.search": "Hledat…",
   "common.confirm": "Potvrdit",

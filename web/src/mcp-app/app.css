@@ -1,0 +1,11 @@
+/* Aplikacia MCP Apps: len pouzite triedy Tailwindu, priehladne pozadie (farbu ma hostitel) */
+@import "tailwindcss";
+
+html,
+body {
+  margin: 0;
+  background: transparent;
+  color-scheme: dark light;
+  /* bez posuvnika: ten by zuzil sirku, tabula by sa zmensila a znizila a ram by sa menil dookola */
+  overflow: hidden;
+}

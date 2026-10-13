@@ -43,7 +43,7 @@ export function FlapView({ board, fit = "width", className, face: faceOverride, 
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [space, setSpace] = useState({ width: 0, height: 0 });
-  const faces = useQuery(getFacesOptions()).data;
+  const faces = useQuery({ ...getFacesOptions(), enabled: faceOverride === undefined }).data;
   const { face: faceId, header } = board.profile;
   const resolved = useMemo(() => resolveFace(faceId, header, faces), [faceId, header, faces]);
   const face = faceOverride !== undefined ? faceOverride : resolved;
@@ -53,12 +53,13 @@ export function FlapView({ board, fit = "width", className, face: faceOverride, 
   const [loaded, setLoaded] = useState<BoardDesign>(DEFAULT_FLAP_DESIGN);
   const designId = board.design || defaultDesignId("flaps");
   useEffect(() => {
+    if (designOverride !== undefined) return;
     let live = true;
     void loadDesign(designId, designVersion).then((d) => live && setLoaded(designForFamily(d, "flaps")));
     return () => {
       live = false;
     };
-  }, [designId, designVersion]);
+  }, [designId, designVersion, designOverride]);
   const design = designOverride ?? loaded;
 
   const layout = useMemo(() => layoutFlaps(board, face, design.frame.width), [board, face, design]);

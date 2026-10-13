@@ -227,6 +227,12 @@ public sealed class McpToolsServerTests
         var shown = await mcp.Call("show_board", new() { ["id"] = "7-129" });
         var noChange = await mcp.Call("board_view", new() { ["id"] = "7-129", ["afterVersion"] = shown.GetProperty("version").GetInt64(), ["timeoutSeconds"] = 1 });
         Assert.IsFalse(noChange.GetProperty("changed").GetBoolean());
+        // prvy pohlad hned: tabula, vzhlad (APEL = apel-led) a celo bez cakania
+        var first = await mcp.Call("board_view", new() { ["id"] = "7-129", ["waitForChange"] = false });
+        Assert.IsTrue(first.GetProperty("changed").GetBoolean());
+        Assert.AreEqual("7-129", first.GetProperty("board").GetProperty("id").GetString());
+        Assert.AreEqual("led-matrix", first.GetProperty("design").GetProperty("renderer").GetString());
+        Assert.AreEqual(JsonValueKind.Null, first.GetProperty("font").ValueKind);
 
         var fonts = await mcp.Call("list_fonts");
         Assert.AreEqual(0, fonts.GetProperty("files").GetArrayLength());

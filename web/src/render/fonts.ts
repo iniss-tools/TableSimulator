@@ -61,6 +61,11 @@ export function decodeFontSet(dto: FontFileDto): ElenFontSet {
 
 const cache = new Map<string, Promise<ElenFontSet | null>>();
 
+/** Vlozi pismo do pamate bez stahovania - aplikacia MCP ho dostane z nastroja (ramec nesmie na siet). */
+export function primeFontSet(dto: FontFileDto) {
+  cache.set(dto.file, Promise.resolve(decodeFontSet(dto)));
+}
+
 export function loadFontSet(file: string): Promise<ElenFontSet | null> {
   let promise = cache.get(file);
   if (!promise) {

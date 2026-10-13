@@ -101,7 +101,8 @@ export function BoardView(props: Props) {
 
 function LedBoardView({ board, fit = "width", className, design: override, face: faceOverride, overlay, scale: fixedScale, onScale, ref }: Props) {
   const { designVersion } = useConnection();
-  const faces = useQuery(getFacesOptions()).data;
+  // dane celo (editor, aplikacia MCP) predlohy nepotrebuje
+  const faces = useQuery({ ...getFacesOptions(), enabled: faceOverride === undefined }).data;
   // stabilny objekt - zmena cela prekresli celu tabulu
   const { face: faceId, header } = board.profile;
   const resolved = useMemo(() => resolveFace(faceId, header, faces), [faceId, header, faces]);
@@ -121,6 +122,8 @@ function LedBoardView({ board, fit = "width", className, design: override, face:
   const designId = board.design || defaultDesignId(family, board.manufacturer);
   const designKey = `${designId}|${designVersion}`;
   useEffect(() => {
+    // dany vzhlad (editor, aplikacia MCP) sa nestahuje
+    if (override !== undefined) return;
     let live = true;
     void loadDesign(designId, designVersion).then((d) => {
       if (!live) return;
@@ -131,7 +134,7 @@ function LedBoardView({ board, fit = "width", className, design: override, face:
     return () => {
       live = false;
     };
-  }, [designId, designVersion, family]);
+  }, [designId, designVersion, family, override]);
 
   const fontFile = board.profile.fontFile;
   // pismo patri k suboru z profilu - po zmene suboru sa do nacitania noveho kresli nahradnym
