@@ -16,11 +16,11 @@ namespace TableSimulator.Tests.Server;
 [DoNotParallelize]
 public sealed class RecordingComparisonApiTests
 {
-    private static byte[] Row(int address, int row, string text) =>
+    internal static byte[] Row(int address, int row, string text) =>
         ElenFrame.Build(address, 1, [(byte)(0x80 | row), 0x10, 0x80, 0x1B, 0x52, .. Encodings.Win1250.GetBytes(text)]);
 
     /// <summary>Subor zaznamu s riadkami pre tabule linky 3.</summary>
-    private static byte[] Recording(params (double Time, byte[] Bytes)[] frames)
+    internal static byte[] Recording(params (double Time, byte[] Bytes)[] frames)
     {
         var sim = new Simulator();
         sim.SetLine(new LineConfig(3, 4, "TCP://127.0.0.1:47003") { Manufacturer = "ELEN10" });

@@ -1,0 +1,2677 @@
+{
+  "instructions": "TableSimulator emulates passenger information boards (departure and arrival displays) driven by INISS, a railway station information system.\nINISS talks to boards over lines: each line is one connection (TCP, UDP, named pipe or serial port) with a line number, and boards on a line have an address.\nA board id is \"line-address\", e.g. \"1-12\".\nBoard families: elen (LED matrix), chars (LCD character displays), flaps (split-flap displays), amplifier (ELSVO audio amplifier switching).\nLine status \"connected\" means INISS is connected; \"lost\" means INISS disconnected and the line waits for it.",
+  "tools": [
+    {
+      "name": "compare_recordings",
+      "title": "Compare recordings",
+      "description": "Compares what the boards showed in two recordings, e.g. before and after a timetable change. Recordings are replayed without waiting; each board becomes a sequence of states (changes within 1 s are one state) and the sequences of A and B are aligned.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "description": "Name of the first recording (e.g. before the change).",
+            "type": "string"
+          },
+          "b": {
+            "description": "Name of the second recording (e.g. after the change).",
+            "type": "string"
+          },
+          "board": {
+            "description": "Only this board (id \"line-address\").",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "onlyDifferences": {
+            "description": "Leave out boards and steps that are the same in both recordings.",
+            "type": "boolean",
+            "default": true
+          },
+          "maxSteps": {
+            "description": "Maximum number of steps per board (1-500).",
+            "type": "integer",
+            "default": 50
+          }
+        },
+        "required": [
+          "a",
+          "b"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "duration": {
+                "type": "number"
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "created",
+              "duration",
+              "note"
+            ]
+          },
+          "b": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "duration": {
+                "type": "number"
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "created",
+              "duration",
+              "note"
+            ]
+          },
+          "same": {
+            "description": "Boards that showed the same sequence of states in both recordings.",
+            "type": "integer"
+          },
+          "different": {
+            "type": "integer"
+          },
+          "onlyA": {
+            "description": "Boards present only in recording A.",
+            "type": "integer"
+          },
+          "onlyB": {
+            "description": "Boards present only in recording B.",
+            "type": "integer"
+          },
+          "boards": {
+            "description": "Compared boards (without the same ones when onlyDifferences); steps align the states of A and B: same, changed, removed (only in A), added (only in B).",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "result": {
+                  "type": "string",
+                  "enum": [
+                    "same",
+                    "different",
+                    "onlyA",
+                    "onlyB"
+                  ]
+                },
+                "statesA": {
+                  "type": "integer"
+                },
+                "statesB": {
+                  "type": "integer"
+                },
+                "steps": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "same",
+                          "changed",
+                          "removed",
+                          "added"
+                        ]
+                      },
+                      "a": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "time": {
+                            "type": "number"
+                          },
+                          "settled": {
+                            "type": "number"
+                          },
+                          "rows": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "time",
+                          "settled",
+                          "rows"
+                        ]
+                      },
+                      "b": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "time": {
+                            "type": "number"
+                          },
+                          "settled": {
+                            "type": "number"
+                          },
+                          "rows": {
+                            "$ref": "#/properties/boards/items/properties/steps/items/properties/a/properties/rows",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "time",
+                          "settled",
+                          "rows"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "a",
+                      "b"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "result",
+                "statesA",
+                "statesB",
+                "steps"
+              ]
+            }
+          },
+          "truncatedBoards": {
+            "description": "Boards whose steps were cut to maxSteps.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "a",
+          "b",
+          "same",
+          "different",
+          "onlyA",
+          "onlyB",
+          "boards",
+          "truncatedBoards"
+        ]
+      },
+      "annotations": {
+        "title": "Compare recordings",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_board",
+      "title": "Board detail",
+      "description": "One board: what it shows as text rows, brightness and clock set by INISS, simulated fault, message counters and version. raw = true adds the board settings and the raw content with fonts and character codes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Board id \"line-address\", e.g. \"1-12\".",
+            "type": "string"
+          },
+          "raw": {
+            "description": "Include the board settings and the raw content.",
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer"
+          },
+          "address": {
+            "type": "integer"
+          },
+          "secondAddress": {
+            "description": "Second address of a two-sided board; null = only one.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "family": {
+            "description": "elen, chars, flaps, amplifier or unknown.",
+            "type": "string"
+          },
+          "design": {
+            "description": "Look of the board in the web view (design id); null = default for the manufacturer.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "autoCreated": {
+            "description": "Created automatically by the first message to an unknown address.",
+            "type": "boolean"
+          },
+          "poweredOff": {
+            "description": "Simulated power outage: the board is dark and does not answer.",
+            "type": "boolean"
+          },
+          "fault": {
+            "description": "Simulated fault: kind, reply delay [ms] for delay, status bits for status.",
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "noReply",
+                  "nak",
+                  "delay",
+                  "garbage",
+                  "status"
+                ]
+              },
+              "delayMs": {
+                "type": "integer",
+                "default": 0
+              },
+              "status": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "mismatch": {
+            "description": "INISS sends messages meant for another manufacturer; null = fine.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "evidence": {
+                "type": "string"
+              },
+              "suggested": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "evidence",
+              "suggested"
+            ]
+          },
+          "stats": {
+            "description": "Message counters: frames from INISS, acknowledged (acks), rejected (naks), unanswered.",
+            "type": "object",
+            "properties": {
+              "frames": {
+                "type": "integer"
+              },
+              "acks": {
+                "type": "integer"
+              },
+              "naks": {
+                "type": "integer"
+              },
+              "unanswered": {
+                "type": "integer"
+              },
+              "lastFrameAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "frames",
+              "acks",
+              "naks",
+              "unanswered",
+              "lastFrameAt"
+            ]
+          },
+          "brightness": {
+            "description": "Brightness set by INISS [%].",
+            "type": "integer"
+          },
+          "clock": {
+            "description": "Clock time set by INISS; null = not set.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "version": {
+            "description": "Increases with every change of the content or settings; pass it to wait_for_board_change.",
+            "type": "integer"
+          },
+          "rows": {
+            "description": "What the board shows, rows from the top; an empty row is \"\", alternating texts are {a|b}, the moving text of an elen board is the last row \"» text\", split-flap modules are joined with \" | \", an amplifier is \"ON 1\", \"ON 2\" or \"OFF\".",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "profile": {
+            "description": "Board settings (size, fonts, timing); only with raw = true.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "width": {
+                "type": "integer"
+              },
+              "rows": {
+                "type": "integer"
+              },
+              "rowHeight": {
+                "type": "integer"
+              },
+              "fontFile": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "fontMap": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              },
+              "charFonts": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "font": {
+                      "type": "string",
+                      "default": ""
+                    },
+                    "bold": {
+                      "type": "boolean",
+                      "default": false
+                    }
+                  }
+                }
+              },
+              "alternationMs": {
+                "type": "integer"
+              },
+              "blinkOnMs": {
+                "type": "integer"
+              },
+              "blinkOffMs": {
+                "type": "integer"
+              },
+              "scrollSpeed": {
+                "type": "integer"
+              },
+              "monochrome": {
+                "type": "boolean"
+              },
+              "swapRedGreen": {
+                "type": "boolean"
+              },
+              "header": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "height": {
+                    "type": "integer"
+                  },
+                  "texts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "integer"
+                        },
+                        "y": {
+                          "type": "integer"
+                        },
+                        "height": {
+                          "type": "integer"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "height",
+                        "text"
+                      ]
+                    }
+                  },
+                  "clock": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "x": {
+                        "type": "integer"
+                      },
+                      "y": {
+                        "type": "integer"
+                      },
+                      "height": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "height"
+                    ]
+                  }
+                }
+              },
+              "face": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "faceValues": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "movingFont": {
+                "type": "integer"
+              },
+              "autoSize": {
+                "type": "boolean"
+              },
+              "rotationMs": {
+                "type": "integer"
+              },
+              "flaps": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "linesPerRecord": {
+                    "type": "integer"
+                  },
+                  "modules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "line": {
+                          "type": "integer"
+                        },
+                        "position": {
+                          "type": "integer"
+                        },
+                        "span": {
+                          "type": "integer"
+                        },
+                        "list": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "line",
+                        "position",
+                        "span",
+                        "list"
+                      ]
+                    }
+                  },
+                  "lists": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "colors": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/properties/profile/properties/flaps/properties/lists/additionalProperties"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "display": {
+            "description": "Raw content with fonts, character codes and positions; only with raw = true.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "family": {
+                "type": "string"
+              },
+              "brightness": {
+                "type": "integer"
+              },
+              "clock": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "clockSetAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "row": {
+                      "type": "integer"
+                    },
+                    "elements": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "run": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "x": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "font": {
+                                "type": "integer"
+                              },
+                              "codes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer"
+                                }
+                              },
+                              "text": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "x",
+                              "font",
+                              "codes",
+                              "text"
+                            ]
+                          },
+                          "parts": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "x": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ]
+                                  },
+                                  "font": {
+                                    "type": "integer"
+                                  },
+                                  "codes": {
+                                    "$ref": "#/properties/display/properties/rows/items/properties/elements/items/properties/run/properties/codes",
+                                    "items": {}
+                                  },
+                                  "text": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "x",
+                                  "font",
+                                  "codes",
+                                  "text"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "run",
+                          "parts"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "row",
+                    "elements"
+                  ]
+                }
+              },
+              "movingRow": {
+                "type": "integer"
+              },
+              "movingCodes": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "integer"
+                }
+              },
+              "movingText": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "brightnessGreen": {
+                "type": "integer"
+              },
+              "flashOnMs": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "flashOffMs": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "charRows": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "row": {
+                      "type": "integer"
+                    },
+                    "layers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "layer": {
+                            "type": "integer"
+                          },
+                          "codes": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer"
+                            }
+                          },
+                          "fonts": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer"
+                            }
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "layer",
+                          "codes",
+                          "fonts",
+                          "text"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "row",
+                    "layers"
+                  ]
+                }
+              },
+              "flapRows": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "row": {
+                      "type": "integer"
+                    },
+                    "codes": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "row",
+                    "codes"
+                  ]
+                }
+              },
+              "rotatingUntil": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "amplifier": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "band": {
+                    "type": "integer"
+                  },
+                  "state": {
+                    "type": "integer"
+                  },
+                  "onSince": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "switches": {
+                    "type": "integer"
+                  },
+                  "lastCommand": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "band",
+                  "state",
+                  "onSince",
+                  "switches",
+                  "lastCommand"
+                ]
+              }
+            },
+            "required": [
+              "family",
+              "brightness",
+              "clock",
+              "clockSetAt",
+              "rows",
+              "movingRow",
+              "movingCodes",
+              "movingText"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "line",
+          "address",
+          "secondAddress",
+          "manufacturer",
+          "family",
+          "design",
+          "autoCreated",
+          "poweredOff",
+          "fault",
+          "mismatch",
+          "stats",
+          "brightness",
+          "clock",
+          "version",
+          "rows",
+          "profile",
+          "display"
+        ]
+      },
+      "annotations": {
+        "title": "Board detail",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_frames",
+      "title": "Communication log",
+      "description": "Messages exchanged on the lines, oldest first: rx = from INISS to a board, tx = the board's reply. Each message has its decoded meaning (kind and arguments) and the raw bytes in hex. Only the most recent messages are kept in memory.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "description": "Only messages on this line.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          },
+          "address": {
+            "description": "Only messages for this board address (use together with line).",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          },
+          "problemsOnly": {
+            "description": "Only messages that were not processed normally (bad checksum, no board at the address, simulated fault, noise).",
+            "type": "boolean",
+            "default": false
+          },
+          "after": {
+            "description": "Only messages with a sequence number greater than this - pass 'next' from the previous call to read newer messages.",
+            "type": "integer",
+            "default": 0
+          },
+          "limit": {
+            "description": "Maximum number of messages (1-500); when more match, the newest are returned.",
+            "type": "integer",
+            "default": 50
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "frames": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "seq": {
+                  "type": "integer"
+                },
+                "time": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "line": {
+                  "type": "integer"
+                },
+                "direction": {
+                  "type": "string",
+                  "enum": [
+                    "rx",
+                    "tx"
+                  ]
+                },
+                "address": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "hex": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "ok",
+                    "badChecksum",
+                    "noBoard",
+                    "fault",
+                    "noise",
+                    "eotInData"
+                  ]
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "args": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "seq",
+                "time",
+                "line",
+                "direction",
+                "address",
+                "hex",
+                "status",
+                "kind",
+                "args"
+              ]
+            }
+          },
+          "next": {
+            "description": "Sequence number of the newest message in the log; pass it as 'after' to get only newer messages.",
+            "type": "integer"
+          },
+          "truncated": {
+            "description": "More messages matched than the limit; the older ones were left out.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "frames",
+          "next",
+          "truncated"
+        ]
+      },
+      "annotations": {
+        "title": "Communication log",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_recent_reports",
+      "title": "Recent announcements",
+      "description": "The newest announcements from the announcement archive INISS is writing now, newest first.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "description": "Maximum number of entries (1-200).",
+            "type": "integer",
+            "default": 50
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "file": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "time": {
+                  "type": "string",
+                  "format": "time"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "auto": {
+                  "type": "boolean"
+                },
+                "station": {
+                  "type": "string"
+                },
+                "train": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "number": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "date": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "number",
+                    "name",
+                    "date"
+                  ]
+                },
+                "arrivalTrack": {
+                  "type": "string"
+                },
+                "departureTrack": {
+                  "type": "string"
+                },
+                "arrivalDelay": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "departureDelay": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                },
+                "result": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "value"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "time",
+                "kind",
+                "name",
+                "auto",
+                "station",
+                "train",
+                "arrivalTrack",
+                "departureTrack",
+                "arrivalDelay",
+                "departureDelay",
+                "text",
+                "result",
+                "details"
+              ]
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "skipped": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "date",
+          "file",
+          "entries",
+          "total",
+          "skipped"
+        ]
+      },
+      "annotations": {
+        "title": "Recent announcements",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_recording_board",
+      "title": "Board in a recording",
+      "description": "What one board showed during a recording: its states over time (changes within 1 s are one state). With time, only the state shown at that moment.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Name of the recording.",
+            "type": "string"
+          },
+          "board": {
+            "description": "Board id \"line-address\".",
+            "type": "string"
+          },
+          "time": {
+            "description": "Seconds from the start of the recording; only the state shown at that moment.",
+            "type": [
+              "number",
+              "null"
+            ],
+            "default": null
+          },
+          "limit": {
+            "description": "Maximum number of states from the start (1-1000).",
+            "type": "integer",
+            "default": 100
+          }
+        },
+        "required": [
+          "name",
+          "board"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "duration": {
+            "description": "Length of the recording [s].",
+            "type": "number"
+          },
+          "states": {
+            "description": "States of the board: time [s from the start of the recording] when it changed, settled = time of the last change within the state, rows from the top.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "time": {
+                  "type": "number"
+                },
+                "settled": {
+                  "type": "number"
+                },
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "time",
+                "settled",
+                "rows"
+              ]
+            }
+          },
+          "truncated": {
+            "description": "More states than the limit; the later ones were left out.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "duration",
+          "states",
+          "truncated"
+        ]
+      },
+      "annotations": {
+        "title": "Board in a recording",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_report_archive",
+      "title": "Announcement archive",
+      "description": "Daily archive of the announcements INISS made: time, kind, train, tracks, delays, text and result. Read from the INISS log folder set in the simulator.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "description": "Day of the archive (yyyy-MM-dd); without it the newest day is used.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "default": null
+          },
+          "train": {
+            "description": "Only entries of this train (part of the train number).",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "text": {
+            "description": "Only entries containing this text (diacritics ignored).",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "newest": {
+            "description": "Newest entries first.",
+            "type": "boolean",
+            "default": true
+          },
+          "offset": {
+            "description": "How many matching entries to skip (paging).",
+            "type": "integer",
+            "default": 0
+          },
+          "limit": {
+            "description": "Maximum number of entries (1-200).",
+            "type": "integer",
+            "default": 50
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "description": "Day of the archive; null = no archive found.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "availableDays": {
+            "description": "Days with an archive, newest first (at most 31).",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "total": {
+            "description": "Number of entries matching the filter.",
+            "type": "integer"
+          },
+          "skipped": {
+            "description": "Lines of the archive file that could not be read.",
+            "type": "integer"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "time": {
+                  "type": "string",
+                  "format": "time"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "auto": {
+                  "type": "boolean"
+                },
+                "station": {
+                  "type": "string"
+                },
+                "train": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "number": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "date": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "number",
+                    "name",
+                    "date"
+                  ]
+                },
+                "arrivalTrack": {
+                  "type": "string"
+                },
+                "departureTrack": {
+                  "type": "string"
+                },
+                "arrivalDelay": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "departureDelay": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                },
+                "result": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "value"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "time",
+                "kind",
+                "name",
+                "auto",
+                "station",
+                "train",
+                "arrivalTrack",
+                "departureTrack",
+                "arrivalDelay",
+                "departureDelay",
+                "text",
+                "result",
+                "details"
+              ]
+            }
+          }
+        },
+        "required": [
+          "date",
+          "availableDays",
+          "total",
+          "skipped",
+          "entries"
+        ]
+      },
+      "annotations": {
+        "title": "Announcement archive",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_status",
+      "title": "Simulator status",
+      "description": "Overview of the simulator: every line with its connection status, last message time and traffic counters, the number of boards per line, and boards with a problem (simulated fault, power outage, or INISS sending messages meant for another manufacturer).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "number": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "tableClass": {
+                  "description": "INISS table class of the line, selects the protocol (e.g. 4 = ELEN, 1 = Elektrocas LCD, 128 = remote INISS).",
+                  "type": "integer"
+                },
+                "endpoint": {
+                  "description": "Where INISS connects: host:port, pipe name or serial port.",
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "stopped",
+                    "listening",
+                    "connected",
+                    "error",
+                    "lost",
+                    "outage"
+                  ]
+                },
+                "statusDetail": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "statusSince": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "lastReceivedAt": {
+                  "description": "When the last message from INISS arrived; null = none yet.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "boards": {
+                  "description": "Number of boards on the line.",
+                  "type": "integer"
+                },
+                "frames": {
+                  "type": "integer"
+                },
+                "badFrames": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "number",
+                "name",
+                "tableClass",
+                "endpoint",
+                "status",
+                "statusDetail",
+                "statusSince",
+                "lastReceivedAt",
+                "boards",
+                "frames",
+                "badFrames"
+              ]
+            }
+          },
+          "issues": {
+            "description": "Boards with a simulated fault, power outage or manufacturer mismatch; empty when all boards are fine.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "fault": {
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "noReply",
+                    "nak",
+                    "delay",
+                    "garbage",
+                    "status"
+                  ]
+                },
+                "poweredOff": {
+                  "type": "boolean"
+                },
+                "mismatch": {
+                  "description": "INISS sends messages meant for another manufacturer; null = fine.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "evidence": {
+                      "type": "string"
+                    },
+                    "suggested": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "evidence",
+                    "suggested"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "fault",
+                "poweredOff",
+                "mismatch"
+              ]
+            }
+          }
+        },
+        "required": [
+          "lines",
+          "issues"
+        ]
+      },
+      "annotations": {
+        "title": "Simulator status",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_table_archive",
+      "title": "Board archive",
+      "description": "Daily archive in which INISS logs what it sent to the boards: time, station, train, text and the values of the board columns. Read from the INISS log folder set in the simulator.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "description": "Day of the archive (yyyy-MM-dd); without it the newest day is used.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "default": null
+          },
+          "train": {
+            "description": "Only entries of this train (part of the train number).",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "text": {
+            "description": "Only entries containing this text (diacritics ignored).",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "newest": {
+            "description": "Newest entries first.",
+            "type": "boolean",
+            "default": true
+          },
+          "offset": {
+            "description": "How many matching entries to skip (paging).",
+            "type": "integer",
+            "default": 0
+          },
+          "limit": {
+            "description": "Maximum number of entries (1-200).",
+            "type": "integer",
+            "default": 50
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "description": "Day of the archive; null = no archive found.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "availableDays": {
+            "description": "Days with an archive, newest first (at most 31).",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "total": {
+            "description": "Number of entries matching the filter.",
+            "type": "integer"
+          },
+          "skipped": {
+            "description": "Lines of the archive file that could not be read.",
+            "type": "integer"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "time": {
+                  "type": "string",
+                  "format": "time"
+                },
+                "station": {
+                  "type": "string"
+                },
+                "train": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "number": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "date": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "number",
+                    "name",
+                    "date"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                },
+                "tables": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "names": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "columns": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "value"
+                          ]
+                        }
+                      },
+                      "logical": {
+                        "type": "string"
+                      },
+                      "row": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "names",
+                      "columns",
+                      "logical",
+                      "row"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "time",
+                "station",
+                "train",
+                "text",
+                "tables"
+              ]
+            }
+          }
+        },
+        "required": [
+          "date",
+          "availableDays",
+          "total",
+          "skipped",
+          "entries"
+        ]
+      },
+      "annotations": {
+        "title": "Board archive",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_traffic_statistics",
+      "title": "Traffic statistics",
+      "description": "Communication statistics, stored once a minute: totals per line (messages by result, bytes, INISS connections), totals per board (messages, replies, longest gap) and line status changes in the period. The default period is the last hour, at most 31 days.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "description": "Start of the period; default one hour before the end.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "default": null
+          },
+          "to": {
+            "description": "End of the period; default now.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "default": null
+          },
+          "line": {
+            "description": "Only this line.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          },
+          "series": {
+            "description": "Include the counters of each line per interval (the course over time).",
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "bucketMinutes": {
+            "description": "Length of one interval of the series [min].",
+            "type": "integer"
+          },
+          "retentionDays": {
+            "description": "How many days the statistics are kept.",
+            "type": "integer"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "type": "integer"
+                },
+                "ok": {
+                  "description": "Messages from INISS processed normally.",
+                  "type": "integer"
+                },
+                "badChecksum": {
+                  "type": "integer"
+                },
+                "noBoard": {
+                  "description": "Messages for an address without a board.",
+                  "type": "integer"
+                },
+                "noise": {
+                  "description": "Runs of bytes outside messages.",
+                  "type": "integer"
+                },
+                "other": {
+                  "description": "Other invalid messages.",
+                  "type": "integer"
+                },
+                "replies": {
+                  "description": "Board replies without a simulated fault.",
+                  "type": "integer"
+                },
+                "faults": {
+                  "description": "Replies affected by a simulated fault (also omitted ones).",
+                  "type": "integer"
+                },
+                "bytesIn": {
+                  "description": "Bytes from INISS.",
+                  "type": "integer"
+                },
+                "bytesOut": {
+                  "description": "Bytes to INISS.",
+                  "type": "integer"
+                },
+                "connections": {
+                  "description": "INISS connected to the line.",
+                  "type": "integer"
+                },
+                "disconnections": {
+                  "description": "INISS disconnected from the line.",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "line",
+                "ok",
+                "badChecksum",
+                "noBoard",
+                "noise",
+                "other",
+                "replies",
+                "faults",
+                "bytesIn",
+                "bytesOut",
+                "connections",
+                "disconnections"
+              ]
+            }
+          },
+          "boards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "line": {
+                  "type": "integer"
+                },
+                "address": {
+                  "type": "integer"
+                },
+                "frames": {
+                  "description": "Messages for the board.",
+                  "type": "integer"
+                },
+                "acks": {
+                  "description": "Positive replies.",
+                  "type": "integer"
+                },
+                "naks": {
+                  "description": "Negative replies (also simulated faults).",
+                  "type": "integer"
+                },
+                "unanswered": {
+                  "description": "Messages without a reply.",
+                  "type": "integer"
+                },
+                "maxGapMs": {
+                  "description": "Longest gap between two messages for the board [ms]; null = none.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "line",
+                "address",
+                "frames",
+                "acks",
+                "naks",
+                "unanswered",
+                "maxGapMs"
+              ]
+            }
+          },
+          "statusChanges": {
+            "description": "Changes of the line connection status in the period.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "type": "integer"
+                },
+                "time": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "stopped",
+                    "listening",
+                    "connected",
+                    "error",
+                    "lost",
+                    "outage"
+                  ]
+                },
+                "detail": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "line",
+                "time",
+                "status",
+                "detail"
+              ]
+            }
+          },
+          "series": {
+            "description": "Per-interval counters of each line; only with series = true.",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "type": "integer"
+                },
+                "time": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "ok": {
+                  "type": "integer"
+                },
+                "badChecksum": {
+                  "type": "integer"
+                },
+                "noBoard": {
+                  "type": "integer"
+                },
+                "noise": {
+                  "type": "integer"
+                },
+                "other": {
+                  "type": "integer"
+                },
+                "replies": {
+                  "type": "integer"
+                },
+                "faults": {
+                  "type": "integer"
+                },
+                "bytesIn": {
+                  "type": "integer"
+                },
+                "bytesOut": {
+                  "type": "integer"
+                },
+                "connections": {
+                  "type": "integer"
+                },
+                "disconnections": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "line",
+                "time",
+                "ok",
+                "badChecksum",
+                "noBoard",
+                "noise",
+                "other",
+                "replies",
+                "faults",
+                "bytesIn",
+                "bytesOut",
+                "connections",
+                "disconnections"
+              ]
+            }
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "bucketMinutes",
+          "retentionDays",
+          "lines",
+          "boards",
+          "statusChanges",
+          "series"
+        ]
+      },
+      "annotations": {
+        "title": "Traffic statistics",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_boards",
+      "title": "Boards",
+      "description": "Boards with what they show as text rows, their version, simulated fault and power state, and when the last message for them arrived.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "description": "Only boards on this line.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          },
+          "includeText": {
+            "description": "Include the text rows of each board; false gives a shorter list.",
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "boards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "description": "Board id \"line-address\".",
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "line": {
+                  "type": "integer"
+                },
+                "address": {
+                  "type": "integer"
+                },
+                "manufacturer": {
+                  "type": "string"
+                },
+                "family": {
+                  "description": "elen, chars, flaps, amplifier or unknown.",
+                  "type": "string"
+                },
+                "version": {
+                  "description": "Increases with every change of the content or settings; pass it to wait_for_board_change.",
+                  "type": "integer"
+                },
+                "poweredOff": {
+                  "description": "Simulated power outage: the board is dark and does not answer.",
+                  "type": "boolean"
+                },
+                "fault": {
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "noReply",
+                    "nak",
+                    "delay",
+                    "garbage",
+                    "status"
+                  ]
+                },
+                "lastFrameAt": {
+                  "description": "When the last message for this board arrived; null = none yet.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "rows": {
+                  "description": "What the board shows, rows from the top; an empty row is \"\", alternating texts are {a|b}, the moving text of an elen board is the last row \"» text\", split-flap modules are joined with \" | \", an amplifier is \"ON 1\", \"ON 2\" or \"OFF\". Null when the text was not requested.",
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "line",
+                "address",
+                "manufacturer",
+                "family",
+                "version",
+                "poweredOff",
+                "fault",
+                "lastFrameAt",
+                "rows"
+              ]
+            }
+          }
+        },
+        "required": [
+          "boards"
+        ]
+      },
+      "annotations": {
+        "title": "Boards",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_recordings",
+      "title": "Recordings",
+      "description": "Recordings of the communication between INISS and the boards with their length [s], lines, number of messages and note, plus the state of the recorder and of a running replay.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "integer"
+                },
+                "created": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "duration": {
+                  "type": "number"
+                },
+                "lines": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                },
+                "frames": {
+                  "type": "integer"
+                },
+                "note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "size",
+                "created",
+                "duration",
+                "lines",
+                "frames",
+                "note"
+              ]
+            }
+          },
+          "recorder": {
+            "type": "object",
+            "properties": {
+              "recording": {
+                "type": "boolean"
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "started": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "entries": {
+                "type": "integer"
+              },
+              "bytes": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "recording",
+              "name",
+              "started",
+              "entries",
+              "bytes"
+            ]
+          },
+          "replay": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "running",
+                  "paused",
+                  "finished",
+                  "stopped"
+                ]
+              },
+              "position": {
+                "type": "number"
+              },
+              "duration": {
+                "type": "number"
+              },
+              "speed": {
+                "type": "number"
+              },
+              "loop": {
+                "type": "boolean"
+              },
+              "pass": {
+                "type": "integer"
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "name",
+              "state",
+              "position",
+              "duration",
+              "speed",
+              "loop",
+              "pass",
+              "at"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "recorder",
+          "replay"
+        ]
+      },
+      "annotations": {
+        "title": "Recordings",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_scenarios",
+      "title": "Fault scenarios",
+      "description": "Fault scenarios: timed steps (at [ms], duration [ms]) that simulate a board fault, a board power loss or a line outage, and for a running scenario its start, cycle and active steps.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "loop": {
+                  "type": "boolean"
+                },
+                "cycleMs": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "steps": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "atMs": {
+                        "type": "integer"
+                      },
+                      "durationMs": {
+                        "type": "integer"
+                      },
+                      "line": {
+                        "type": "integer"
+                      },
+                      "address": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "action": {
+                        "type": "string",
+                        "enum": [
+                          "fault",
+                          "powerLoss",
+                          "lineOutage"
+                        ]
+                      },
+                      "fault": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "none",
+                              "noReply",
+                              "nak",
+                              "delay",
+                              "garbage",
+                              "status"
+                            ]
+                          },
+                          "delayMs": {
+                            "type": "integer",
+                            "default": 0
+                          },
+                          "status": {
+                            "type": "integer",
+                            "default": 0
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "atMs",
+                      "durationMs",
+                      "line",
+                      "address",
+                      "action",
+                      "fault"
+                    ]
+                  }
+                },
+                "run": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "startedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "lengthMs": {
+                      "type": "integer"
+                    },
+                    "cycle": {
+                      "type": "integer"
+                    },
+                    "activeSteps": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  "required": [
+                    "startedAt",
+                    "lengthMs",
+                    "cycle",
+                    "activeSteps"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "loop",
+                "cycleMs",
+                "steps",
+                "run"
+              ]
+            }
+          }
+        },
+        "required": [
+          "scenarios"
+        ]
+      },
+      "annotations": {
+        "title": "Fault scenarios",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "wait_for_board_change",
+      "title": "Wait for board change",
+      "description": "Waits until a board changes (a new message from INISS or a change of its settings) and returns what it shows then. Pass the version from list_boards or get_board; when the board already has a newer version, it returns at once. changed = false means the timeout expired without a change.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Board id \"line-address\", e.g. \"1-12\".",
+            "type": "string"
+          },
+          "afterVersion": {
+            "description": "Version the caller already knows (from list_boards or get_board).",
+            "type": "integer"
+          },
+          "timeoutSeconds": {
+            "description": "How long to wait at most [s], 1-60.",
+            "type": "integer",
+            "default": 30
+          }
+        },
+        "required": [
+          "id",
+          "afterVersion"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "changed": {
+            "type": "boolean"
+          },
+          "board": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "version": {
+                "type": "integer"
+              },
+              "poweredOff": {
+                "type": "boolean"
+              },
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "version",
+              "poweredOff",
+              "rows"
+            ]
+          }
+        },
+        "required": [
+          "changed",
+          "board"
+        ]
+      },
+      "annotations": {
+        "title": "Wait for board change",
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    }
+  ]
+}

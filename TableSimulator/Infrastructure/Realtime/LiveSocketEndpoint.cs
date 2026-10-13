@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Routing;
 using TableSimulator.Application.Auth;
+using TableSimulator.Infrastructure.Auth;
 
 namespace TableSimulator.Infrastructure.Realtime;
 
@@ -16,7 +17,7 @@ public static class LiveSocketEndpoint
         {
             if (!context.WebSockets.IsWebSocketRequest)
                 return Results.BadRequest();
-            if (!SameOrigin(context))
+            if (!RequestOrigin.IsSame(context.Request))
                 return Results.StatusCode(StatusCodes.Status403Forbidden);
 
             var wantsLog = context.Request.Query["log"] == "1";
@@ -29,11 +30,4 @@ public static class LiveSocketEndpoint
             await hub.ServeAsync(socket, wantsLog, archive, context.RequestAborted);
             return Results.Empty;
         }).RequireAuthorization(Permissions.SimulatorView);
-
-    private static bool SameOrigin(HttpContext context)
-    {
-        var origin = context.Request.Headers.Origin.ToString();
-        return origin.Length == 0
-               || Uri.TryCreate(origin, UriKind.Absolute, out var uri) && string.Equals(uri.Authority, context.Request.Host.Value, StringComparison.OrdinalIgnoreCase);
-    }
 }

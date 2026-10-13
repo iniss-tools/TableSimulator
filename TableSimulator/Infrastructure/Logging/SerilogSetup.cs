@@ -5,6 +5,7 @@ using Serilog.Context;
 using Serilog.Core;
 using Serilog.Events;
 using TableSimulator.Application.Settings;
+using TableSimulator.Infrastructure.Mcp;
 
 namespace TableSimulator.Infrastructure.Logging;
 
@@ -33,6 +34,8 @@ public static class SerilogSetup
             .MinimumLevel.Information()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+            // SDK MCP zapisuje kazde volanie - nastroje su dotazy, tie zapisuje dekorator len pri podrobnom zazname
+            .MinimumLevel.Override("ModelContextProtocol", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .Enrich.WithProperty(UserProperty, "-")
             .WriteTo.Console(outputTemplate: ConsoleTemplate, formatProvider: CultureInfo.InvariantCulture)
@@ -53,7 +56,7 @@ public static class SerilogSetup
     }
 
     /// <summary>
-    /// Poziadavky: uspesne len pri podrobnom zazname (prikazy zapisuju dekoratory), odmietnute volania API ako
+    /// Poziadavky: uspesne len pri podrobnom zazname (prikazy zapisuju dekoratory), odmietnute volania API a MCP ako
     /// upozornenie (chybajuci subor mimo API, napr. favicon.ico, nie), chyby servera ako chyba. Zaznam je pred
     /// prihlasenim, aby zachytil aj poziadavky odmietnute bez prihlasenia alebo bez hlavicky CSRF.
     /// </summary>
@@ -64,7 +67,8 @@ public static class SerilogSetup
             diagnostic.Set(UserProperty, context.User.Identity?.IsAuthenticated == true ? context.User.Identity.Name : "-");
         options.GetLevel = (context, _, exception) =>
             exception is not null || context.Response.StatusCode >= 500 ? LogEventLevel.Error
-            : context.Response.StatusCode >= 400 && context.Request.Path.StartsWithSegments("/api") ? LogEventLevel.Warning
+            : context.Response.StatusCode >= 400 && (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments(McpSetup.Pattern))
+                ? LogEventLevel.Warning
             : LogEventLevel.Debug;
     }
 }

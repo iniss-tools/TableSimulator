@@ -60,6 +60,20 @@ public static partial class DtoMapper
         };
     }
 
+    /// <summary>Stav tabule v zazname (porovnanie, casova os).</summary>
+    public static BoardStateDto ToDto(BoardState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        return new BoardStateDto(state.Time, state.Settled, state.Rows);
+    }
+
+    /// <summary>Co tabula ukazuje ako text; zhasnuta (vypadok napajania) neukazuje nic.</summary>
+    public static BoardTextDto ToTextDto(SimBoard board)
+    {
+        ArgumentNullException.ThrowIfNull(board);
+        return new BoardTextDto(board.Id, board.Version, board.PoweredOff, board.PoweredOff ? [] : BoardText.Rows(board));
+    }
+
     public static BoardProfileDto ToDto(BoardProfile profile)
     {
         ArgumentNullException.ThrowIfNull(profile);

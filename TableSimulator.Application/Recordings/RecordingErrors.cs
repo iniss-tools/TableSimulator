@@ -11,6 +11,7 @@ public static class RecordingErrors
     public const string Speed = "replay.speed";
     public const string Time = "recording.time";
     public const string Buckets = "recording.buckets";
+    public const string Board = "recording.board";
 
     public static Error NoReplay() => Error.Conflict("replay.none", "No recording has been played yet.");
 

@@ -1,6 +1,7 @@
 using FluentValidation;
 using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Abstractions.Results;
+using TableSimulator.Application.Mapping;
 using TableSimulator.Contracts.Recordings;
 using TableSimulator.Core.Recording;
 using RecordingFileFormat = TableSimulator.Core.Recording.RecordingFile;
@@ -79,5 +80,5 @@ public sealed class CompareRecordingsQueryHandler(RecordingService recordings) :
         _ => ComparisonStepKind.Added
     }, ToDto(step.A), ToDto(step.B));
 
-    private static BoardStateDto? ToDto(BoardState? state) => state is null ? null : new BoardStateDto(state.Time, state.Settled, state.Rows);
+    private static BoardStateDto? ToDto(BoardState? state) => state is null ? null : DtoMapper.ToDto(state);
 }

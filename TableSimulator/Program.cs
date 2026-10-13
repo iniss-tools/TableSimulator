@@ -9,6 +9,7 @@ using TableSimulator.Infrastructure.Backup;
 using TableSimulator.Infrastructure.Hosting;
 using TableSimulator.Infrastructure.Https;
 using TableSimulator.Infrastructure.Logging;
+using TableSimulator.Infrastructure.Mcp;
 using TableSimulator.Infrastructure.OpenApi;
 using TableSimulator.Infrastructure.Persistence;
 using TableSimulator.Infrastructure.Realtime;
@@ -53,6 +54,7 @@ try
     builder.Services.AddApplication();
     builder.Services.AddEndpoints(typeof(Program).Assembly);
     builder.Services.AddApiDocument();
+    builder.Services.AddMcp();
 
     var app = builder.Build();
     await DatabaseInitializer.InitializeAsync(app.Services);
@@ -73,6 +75,7 @@ try
     app.UseCsrfHeader();
     app.UseUserLogContext();
     app.MapLiveSocket("/ws");
+    app.MapMcpServer();
     app.MapApiDocument();
     app.MapEndpoints(app.MapGroup("/api"));
     app.MapInissViewFiles();
