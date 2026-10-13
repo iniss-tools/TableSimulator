@@ -662,6 +662,7 @@ export const cs: Record<TextKey, string> = {
   "audit.action.ClearBoard": "Vymazání tabule",
   "audit.action.SetBoardFault": "Porucha tabule",
   "audit.action.ClearLog": "Vymazání záznamu komunikace",
+  "audit.action.SendFrame": "Vložení zprávy na linku",
   "audit.action.ImportStation": "Linky a tabule z GVDEditoru",
   "audit.action.ImportMonitorProject": "Import projektu ELEN Monitoru",
   "audit.action.StartRecording": "Začátek nahrávání",

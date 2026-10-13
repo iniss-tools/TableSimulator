@@ -16,6 +16,14 @@ public static class McpResults
         return result.IsSuccess ? result.Value : throw new McpException(Describe(result.Error));
     }
 
+    /// <summary>Prikaz bez hodnoty: chyba ide modelu ako chyba nastroja.</summary>
+    public static void ThrowIfFailed(this Result result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        if (result.IsFailure)
+            throw new McpException(Describe(result.Error));
+    }
+
     /// <summary>Limit poctu poloziek vysledku 1-<paramref name="max" />; inak chyba nastroja s kodom <paramref name="code" />.</summary>
     public static void CheckLimit(int limit, int max, string code)
     {

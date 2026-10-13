@@ -660,6 +660,7 @@ export const sk = {
   "audit.action.ClearBoard": "Vymazanie tabule",
   "audit.action.SetBoardFault": "Porucha tabule",
   "audit.action.ClearLog": "Vymazanie záznamu komunikácie",
+  "audit.action.SendFrame": "Vloženie správy na linku",
   "audit.action.ImportStation": "Linky a tabule z GVDEditora",
   "audit.action.ImportMonitorProject": "Import projektu ELEN Monitora",
   "audit.action.StartRecording": "Začiatok nahrávania",

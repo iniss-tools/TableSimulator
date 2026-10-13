@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
+using TableSimulator.Contracts.Audit;
 using TableSimulator.Contracts.Boards;
 using TableSimulator.Contracts.Keys;
 using TableSimulator.Contracts.Lines;
@@ -28,11 +29,15 @@ public sealed class McpToolsServerTests
     public TestContext TestContext { get; set; } = null!;
 
     /// <summary>Pripojeny klient a schemy vystupu nastrojov; zaznamenava volane nastroje.</summary>
-    private sealed class Session(McpClient client, Dictionary<string, JsonElement> schemas, Simulator simulator, TestContext test) : IAsyncDisposable
+    private sealed class Session(McpClient client, Dictionary<string, JsonElement> schemas, HashSet<string> writeTools, Simulator simulator, TestContext test)
+        : IAsyncDisposable
     {
         public HashSet<string> Called { get; } = [];
 
         public IReadOnlyCollection<string> Tools => schemas.Keys;
+
+        /// <summary>Nastroje, ktore nie su len na citanie (podla priznaku pre klienta).</summary>
+        public IReadOnlyCollection<string> WriteTools => writeTools;
 
         public Simulator Simulator => simulator;
 
@@ -52,6 +57,7 @@ public sealed class McpToolsServerTests
         {
             var result = await client.CallToolAsync(tool, arguments, cancellationToken: test.CancellationToken);
             Assert.IsTrue(result.IsError, $"{tool} mal skoncit chybou: {Text(result)}");
+            Called.Add(tool);
             return Text(result);
         }
 
@@ -62,9 +68,9 @@ public sealed class McpToolsServerTests
 
     /// <summary>
     /// Server so stanicou: linka 7 (APEL) s tabulou 7-129 "Praha", zaznamy "pred" a "po", archiv tabul a hlaseni, scenar
-    /// poruch; klient s klucom pozorovatela.
+    /// poruch; klient s klucom roly <paramref name="role" />.
     /// </summary>
-    private async Task<(SimulatorServer Server, Session Mcp)> StartWithData()
+    private async Task<(SimulatorServer Server, Session Mcp)> StartWithData(string role = "viewer")
     {
         var server = SimulatorServer.Start();
         var logs = Path.Combine(server.DataFolder, "Logy");
@@ -100,7 +106,7 @@ public sealed class McpToolsServerTests
 
         var scenario = new FaultScenarioRequest("Vypadok", false, null, [new ScenarioStepDto(0, 1000, 7, 129, ScenarioAction.Fault, new BoardFaultDto(FaultKind.NoReply))]);
         Assert.AreEqual(HttpStatusCode.OK, (await admin.PostAsJsonAsync("/api/scenarios", scenario, TestContext.CancellationToken)).StatusCode);
-        var key = await admin.PostAsJsonAsync("/api/keys", new CreateAccessKeyRequest("Agent", AccessKeyKind.Api, "viewer"), TestContext.CancellationToken);
+        var key = await admin.PostAsJsonAsync("/api/keys", new CreateAccessKeyRequest("Agent " + role, AccessKeyKind.Api, role), TestContext.CancellationToken);
         var secret = (await key.Content.ReadFromJsonAsync<AccessKeyCreatedDto>(TestContext.CancellationToken))!.Secret;
 
         var transport = new HttpClientTransport(new HttpClientTransportOptions
@@ -111,7 +117,8 @@ public sealed class McpToolsServerTests
         }, server.CreateClient(), ownsHttpClient: true);
         var client = await McpClient.CreateAsync(transport, cancellationToken: TestContext.CancellationToken);
         var tools = await client.ListToolsAsync(cancellationToken: TestContext.CancellationToken);
-        return (server, new Session(client, tools.ToDictionary(t => t.Name, t => t.ProtocolTool.OutputSchema!.Value), simulator, TestContext));
+        return (server, new Session(client, tools.ToDictionary(t => t.Name, t => t.ProtocolTool.OutputSchema!.Value),
+            tools.Where(t => t.ProtocolTool.Annotations?.ReadOnlyHint != true).Select(t => t.Name).ToHashSet(), simulator, TestContext));
     }
 
     [TestMethod]
@@ -172,8 +179,87 @@ public sealed class McpToolsServerTests
         await mcp.Call("get_traffic_statistics", new() { ["series"] = true });
         Assert.AreEqual("Vypadok", (await mcp.Call("list_scenarios")).GetProperty("scenarios")[0].GetProperty("name").GetString());
 
-        CollectionAssert.AreEquivalent(mcp.Tools.ToArray(), mcp.Called.ToArray(), "kazdy nastroj musi byt v tomto teste");
+        CollectionAssert.AreEquivalent(mcp.Tools.ToArray(), mcp.Called.ToArray(), "kazdy nastroj na citanie musi byt v tomto teste");
+        // pozorovatel nastroje so zapisom nevidi
+        Assert.IsEmpty(mcp.WriteTools);
     }
+
+    [TestMethod]
+    public async Task ZapisoveNastroje_ZmenyAAudit()
+    {
+        var (server, mcp) = await StartWithData("operator");
+        await using var serverScope = server;
+        await using var mcpScope = mcp;
+        var pipe = @"\\.\PIPE\TableSimulatorTest-" + Guid.NewGuid().ToString("N");
+
+        // linka a tabula: nova s povinnymi hodnotami, zmena len zadanych
+        var line = await mcp.Call("set_line", new() { ["number"] = 8, ["tableClass"] = 10, ["endpoint"] = pipe, ["name"] = "Skuska" });
+        Assert.AreEqual(10, line.GetProperty("tableClass").GetInt32());
+        var renamed = await mcp.Call("set_line", new() { ["number"] = 8, ["name"] = "Skuska 2" });
+        Assert.AreEqual("Skuska 2", renamed.GetProperty("name").GetString());
+        StringAssert.Contains(renamed.GetProperty("endpoint").GetString(), "TableSimulatorTest");
+        StringAssert.Contains(await mcp.Error("set_line", new() { ["number"] = 9, ["name"] = "Bez triedy" }), "line.new");
+        var board = await mcp.Call("set_board", new() { ["line"] = 8, ["address"] = 129, ["manufacturer"] = "APEL", ["name"] = "Vestibul" });
+        Assert.AreEqual("8-129", board.GetProperty("id").GetString());
+        var renamedBoard = await mcp.Call("set_board", new() { ["line"] = 8, ["address"] = 129, ["name"] = "Vestibul 2" });
+        Assert.AreEqual("APEL", renamedBoard.GetProperty("manufacturer").GetString());
+        Assert.AreEqual("Vestibul 2", renamedBoard.GetProperty("name").GetString());
+
+        // agent hra INISS; porucha bez odpovede, vymazanie
+        var sent = await mcp.Call("send_frame", new() { ["line"] = 8, ["hex"] = Apel("Brno") });
+        Assert.AreEqual(1, sent.GetProperty("replies").GetArrayLength());
+        Assert.AreEqual("Brno", sent.GetProperty("boards")[0].GetProperty("rows")[0].GetString());
+        var fault = await mcp.Call("set_board_fault", new() { ["id"] = "8-129", ["kind"] = "noReply" });
+        Assert.AreEqual("noReply", fault.GetProperty("fault").GetProperty("kind").GetString());
+        Assert.AreEqual(0, (await mcp.Call("send_frame", new() { ["line"] = 8, ["hex"] = Apel("Praha") })).GetProperty("replies").GetArrayLength());
+        await mcp.Call("set_board_fault", new() { ["id"] = "8-129", ["kind"] = "none" });
+        var cleared = await mcp.Call("clear_board", new() { ["id"] = "8-129" });
+        Assert.IsTrue(cleared.GetProperty("rows").EnumerateArray().All(r => r.GetString()!.Length == 0));
+
+        // scenar: vypadok napajania tabule
+        object[] steps = [new { atMs = 0, durationMs = 60000, line = 8, address = 129, action = "powerLoss", fault = (object?)null }];
+        var scenario = await mcp.Call("save_scenario", new() { ["name"] = "Vypadok tabule", ["steps"] = steps });
+        var id = scenario.GetProperty("id").GetInt32();
+        var saved = await mcp.Call("save_scenario", new() { ["id"] = id, ["name"] = "Vypadok 2", ["steps"] = steps });
+        Assert.AreEqual("Vypadok 2", saved.GetProperty("name").GetString());
+        Assert.AreEqual(JsonValueKind.Object, (await mcp.Call("start_scenario", new() { ["id"] = id })).GetProperty("run").ValueKind);
+        var poweredOff = false;
+        for (var i = 0; i < 30 && !poweredOff; i++)
+        {
+            await Task.Delay(100, TestContext.CancellationToken);
+            poweredOff = (await mcp.Call("get_board", new() { ["id"] = "8-129" })).GetProperty("poweredOff").GetBoolean();
+        }
+
+        Assert.IsTrue(poweredOff, "scenar mal tabulu vypnut");
+        Assert.AreEqual(JsonValueKind.Null, (await mcp.Call("stop_scenario", new() { ["id"] = id })).GetProperty("run").ValueKind);
+
+        // zaznam vlastnej skusky a jeho prehratie
+        Assert.IsTrue((await mcp.Call("start_recording", new() { ["note"] = "Skuska MCP" })).GetProperty("recording").GetBoolean());
+        await mcp.Call("send_frame", new() { ["line"] = 8, ["hex"] = Apel("Zilina") });
+        Assert.IsFalse((await mcp.Call("stop_recording")).GetProperty("recording").GetBoolean());
+        var recording = (await mcp.Call("list_recordings")).GetProperty("items").EnumerateArray().Single(r => r.GetProperty("note").GetString() == "Skuska MCP");
+        await mcp.Call("play_recording", new() { ["name"] = recording.GetProperty("name").GetString(), ["speed"] = 10 });
+        await mcp.Call("stop_replay");
+
+        // stanica z INISSu bez programu INISSu v nastaveni
+        StringAssert.Contains(await mcp.Error("get_iniss_station", new()), "iniss.notConfigured");
+        StringAssert.Contains(await mcp.Error("import_iniss_station", new()), "iniss.notConfigured");
+
+        await mcp.Call("delete_board", new() { ["id"] = "8-129" });
+        await mcp.Call("delete_line", new() { ["number"] = 8 });
+        StringAssert.Contains(await mcp.Error("get_board", new() { ["id"] = "8-129" }), "board.notFound");
+
+        // kazda zmena v audite pod menom kluca
+        var audit = await server.Client().GetFromJsonAsync<AuditPageDto>("/api/audit?limit=200", TestContext.CancellationToken);
+        var actions = audit!.Entries.Where(e => e.User == "key:Agent operator").Select(e => e.Action).ToHashSet();
+        CollectionAssert.IsSubsetOf(new[] { "SetLine", "SetBoard", "SendFrame", "SetBoardFault", "ClearBoard", "CreateFaultScenario", "SetFaultScenario",
+            "StartFaultScenario", "StopFaultScenario", "PlayRecording", "DeleteBoard", "DeleteLine" }, actions.ToArray());
+        CollectionAssert.IsSubsetOf(mcp.WriteTools.ToArray(), mcp.Called.ToArray(), "kazdy nastroj so zapisom musi byt v tomto teste");
+        CollectionAssert.Contains(mcp.Called.ToArray(), "get_iniss_station");
+    }
+
+    /// <summary>Sprava APEL s textom prveho riadku tabule 129 ako hex.</summary>
+    private static string Apel(string text) => Convert.ToHexString(ApelFrame.Build(0x81, new ApelRecord(0, System.Text.Encoding.ASCII.GetBytes(text))));
 
     [TestMethod]
     public async Task Chyby_KodPreModel()

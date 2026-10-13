@@ -32,4 +32,17 @@ public static class FramesTools
         var log = (await handler.Handle(new GetLogQuery(Math.Max(after, 0)), cancellationToken)).ValueOrThrow();
         return McpMapper.ToFrames(log, after, line, address, problemsOnly, limit);
     }
+
+    [McpServerTool(Name = "send_frame", Title = "Send bytes as INISS", ReadOnly = false, Destructive = false, Idempotent = false, OpenWorld = false,
+        UseStructuredContent = true)]
+    [Description("Sends bytes to a line as if INISS sent them: the boards process them (log, statistics, recording) and their replies are returned instead "
+                 + "of being sent. Only on a line INISS is not connected to. The bytes must be whole messages of the line's protocol including checksums; "
+                 + "messages from get_frames show the format. Returns the replies and the boards that changed.")]
+    [Authorize(Policy = Permissions.BoardsControl)]
+    public static async Task<SentFrameDto> SendFrame(
+        ICommandHandler<SendFrameCommand, SentFrameDto> handler,
+        [Description("Line number.")] int line,
+        [Description("Bytes as hexadecimal pairs; spaces and dashes are ignored, e.g. \"10 02 81 00 05 50 72 61 68 61 ...\". At most 4096 bytes.")] string hex,
+        CancellationToken cancellationToken = default) =>
+        (await handler.Handle(new SendFrameCommand(line, hex), cancellationToken)).ValueOrThrow();
 }

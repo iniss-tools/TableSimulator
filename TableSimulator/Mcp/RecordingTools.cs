@@ -5,6 +5,7 @@ using ModelContextProtocol.Server;
 using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Auth;
 using TableSimulator.Application.Recordings;
+using TableSimulator.Application.Replay;
 using TableSimulator.Contracts.Recordings;
 
 namespace TableSimulator.Mcp;
@@ -61,5 +62,48 @@ public static class RecordingTools
         McpResults.CheckLimit(limit, MaxStates, "recording.limit");
         var timeline = (await handler.Handle(new GetRecordingTimelineQuery(name, board), cancellationToken)).ValueOrThrow();
         return McpMapper.ToRecordingBoard(timeline, time, limit);
+    }
+
+    [McpServerTool(Name = "start_recording", Title = "Start recording", ReadOnly = false, Destructive = false, Idempotent = false, OpenWorld = false,
+        UseStructuredContent = true)]
+    [Description("Starts recording the communication of all lines (messages from INISS and replies of the boards) into a new recording; "
+                 + "a running recording is finished first.")]
+    [Authorize(Policy = Permissions.RecordingsManage)]
+    public static async Task<RecorderStatusDto> StartRecording(
+        ICommandHandler<StartRecordingCommand, RecorderStatusDto> handler,
+        [Description("Note shown with the recording, e.g. what is being tested.")] string? note = null,
+        CancellationToken cancellationToken = default) =>
+        (await handler.Handle(new StartRecordingCommand(note), cancellationToken)).ValueOrThrow();
+
+    [McpServerTool(Name = "stop_recording", Title = "Stop recording", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false,
+        UseStructuredContent = true)]
+    [Description("Finishes the running recording and saves it.")]
+    [Authorize(Policy = Permissions.RecordingsManage)]
+    public static async Task<RecorderStatusDto> StopRecording(ICommandHandler<StopRecordingCommand, RecorderStatusDto> handler, CancellationToken cancellationToken) =>
+        (await handler.Handle(new StopRecordingCommand(), cancellationToken)).ValueOrThrow();
+
+    [McpServerTool(Name = "play_recording", Title = "Play recording", ReadOnly = false, Destructive = true, Idempotent = false, OpenWorld = false,
+        UseStructuredContent = true)]
+    [Description("Plays a recording into the simulator: its messages go to the boards of the recorded lines in the original timing as if INISS sent them, "
+                 + "replies of the boards are dropped. From a position other than 0 the boards of those lines are cleared and the earlier messages are "
+                 + "processed at once. Calling it again restarts the replay, e.g. at another position or paused. The replay ends with stop_replay.")]
+    [Authorize(Policy = Permissions.RecordingsManage)]
+    public static async Task<ReplayStatusDto> PlayRecording(
+        ICommandHandler<PlayRecordingCommand, ReplayStatusDto> handler,
+        [Description("Name of the recording.")] string name,
+        [Description("Speed, 1 = real time.")] double speed = 1,
+        [Description("Play again from the start after the end.")] bool loop = false,
+        [Description("Where to start [s from the start of the recording].")] double position = 0,
+        [Description("Only prepare the position and pause.")] bool paused = false,
+        CancellationToken cancellationToken = default) =>
+        (await handler.Handle(new PlayRecordingCommand(name, speed, loop, position, paused), cancellationToken)).ValueOrThrow();
+
+    [McpServerTool(Name = "stop_replay", Title = "Stop replay", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
+    [Description("Stops the replay of a recording; the boards keep what they show.")]
+    [Authorize(Policy = Permissions.RecordingsManage)]
+    public static async Task<DoneResult> StopReplay(ICommandHandler<StopReplayCommand> handler, CancellationToken cancellationToken)
+    {
+        (await handler.Handle(new StopReplayCommand(), cancellationToken)).ThrowIfFailed();
+        return new DoneResult("The replay was stopped.");
     }
 }

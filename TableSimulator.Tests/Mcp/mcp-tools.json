@@ -2,6 +2,694 @@
   "instructions": "TableSimulator emulates passenger information boards (departure and arrival displays) driven by INISS, a railway station information system.\nINISS talks to boards over lines: each line is one connection (TCP, UDP, named pipe or serial port) with a line number, and boards on a line have an address.\nA board id is \"line-address\", e.g. \"1-12\".\nBoard families: elen (LED matrix), chars (LCD character displays), flaps (split-flap displays), amplifier (ELSVO audio amplifier switching).\nLine status \"connected\" means INISS is connected; \"lost\" means INISS disconnected and the line waits for it.",
   "tools": [
     {
+      "name": "clear_board",
+      "title": "Clear board",
+      "description": "Clears what a board shows; INISS fills it again with its next messages.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Board id \"line-address\", e.g. \"1-12\".",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer"
+          },
+          "address": {
+            "type": "integer"
+          },
+          "secondAddress": {
+            "description": "Second address of a two-sided board; null = only one.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "family": {
+            "description": "elen, chars, flaps, amplifier or unknown.",
+            "type": "string"
+          },
+          "design": {
+            "description": "Look of the board in the web view (design id); null = default for the manufacturer.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "autoCreated": {
+            "description": "Created automatically by the first message to an unknown address.",
+            "type": "boolean"
+          },
+          "poweredOff": {
+            "description": "Simulated power outage: the board is dark and does not answer.",
+            "type": "boolean"
+          },
+          "fault": {
+            "description": "Simulated fault: kind, reply delay [ms] for delay, status bits for status.",
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "noReply",
+                  "nak",
+                  "delay",
+                  "garbage",
+                  "status"
+                ]
+              },
+              "delayMs": {
+                "type": "integer",
+                "default": 0
+              },
+              "status": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "mismatch": {
+            "description": "INISS sends messages meant for another manufacturer; null = fine.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "evidence": {
+                "type": "string"
+              },
+              "suggested": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "evidence",
+              "suggested"
+            ]
+          },
+          "stats": {
+            "description": "Message counters: frames from INISS, acknowledged (acks), rejected (naks), unanswered.",
+            "type": "object",
+            "properties": {
+              "frames": {
+                "type": "integer"
+              },
+              "acks": {
+                "type": "integer"
+              },
+              "naks": {
+                "type": "integer"
+              },
+              "unanswered": {
+                "type": "integer"
+              },
+              "lastFrameAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "frames",
+              "acks",
+              "naks",
+              "unanswered",
+              "lastFrameAt"
+            ]
+          },
+          "brightness": {
+            "description": "Brightness set by INISS [%].",
+            "type": "integer"
+          },
+          "clock": {
+            "description": "Clock time set by INISS; null = not set.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "description": "Increases with every change of the content or settings; pass it to wait_for_board_change.",
+            "type": "integer"
+          },
+          "rows": {
+            "description": "What the board shows, rows from the top; an empty row is \"\", alternating texts are {a|b}, the moving text of an elen board is the last row \"» text\", split-flap modules are joined with \" | \", an amplifier is \"ON 1\", \"ON 2\" or \"OFF\".",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "profile": {
+            "description": "Board settings (size, fonts, timing); only with raw = true.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "width": {
+                "type": "integer"
+              },
+              "rows": {
+                "type": "integer"
+              },
+              "rowHeight": {
+                "type": "integer"
+              },
+              "fontFile": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "fontMap": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              },
+              "charFonts": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "font": {
+                      "type": "string",
+                      "default": ""
+                    },
+                    "bold": {
+                      "type": "boolean",
+                      "default": false
+                    }
+                  }
+                }
+              },
+              "alternationMs": {
+                "type": "integer"
+              },
+              "blinkOnMs": {
+                "type": "integer"
+              },
+              "blinkOffMs": {
+                "type": "integer"
+              },
+              "scrollSpeed": {
+                "type": "integer"
+              },
+              "monochrome": {
+                "type": "boolean"
+              },
+              "swapRedGreen": {
+                "type": "boolean"
+              },
+              "header": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "height": {
+                    "type": "integer"
+                  },
+                  "texts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "integer"
+                        },
+                        "y": {
+                          "type": "integer"
+                        },
+                        "height": {
+                          "type": "integer"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "height",
+                        "text"
+                      ]
+                    }
+                  },
+                  "clock": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "x": {
+                        "type": "integer"
+                      },
+                      "y": {
+                        "type": "integer"
+                      },
+                      "height": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "height"
+                    ]
+                  }
+                }
+              },
+              "face": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "faceValues": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "movingFont": {
+                "type": "integer"
+              },
+              "autoSize": {
+                "type": "boolean"
+              },
+              "rotationMs": {
+                "type": "integer"
+              },
+              "flaps": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "linesPerRecord": {
+                    "type": "integer"
+                  },
+                  "modules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "line": {
+                          "type": "integer"
+                        },
+                        "position": {
+                          "type": "integer"
+                        },
+                        "span": {
+                          "type": "integer"
+                        },
+                        "list": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "line",
+                        "position",
+                        "span",
+                        "list"
+                      ]
+                    }
+                  },
+                  "lists": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "colors": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/properties/profile/properties/flaps/properties/lists/additionalProperties"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "display": {
+            "description": "Raw content with fonts, character codes and positions; only with raw = true.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "family": {
+                "type": "string"
+              },
+              "brightness": {
+                "type": "integer"
+              },
+              "clock": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "clockSetAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "row": {
+                      "type": "integer"
+                    },
+                    "elements": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "run": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "x": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "font": {
+                                "type": "integer"
+                              },
+                              "codes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer"
+                                }
+                              },
+                              "text": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "x",
+                              "font",
+                              "codes",
+                              "text"
+                            ]
+                          },
+                          "parts": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "x": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ]
+                                  },
+                                  "font": {
+                                    "type": "integer"
+                                  },
+                                  "codes": {
+                                    "$ref": "#/properties/display/properties/rows/items/properties/elements/items/properties/run/properties/codes",
+                                    "items": {}
+                                  },
+                                  "text": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "x",
+                                  "font",
+                                  "codes",
+                                  "text"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "run",
+                          "parts"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "row",
+                    "elements"
+                  ]
+                }
+              },
+              "movingRow": {
+                "type": "integer"
+              },
+              "movingCodes": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "integer"
+                }
+              },
+              "movingText": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "brightnessGreen": {
+                "type": "integer"
+              },
+              "flashOnMs": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "flashOffMs": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "charRows": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "row": {
+                      "type": "integer"
+                    },
+                    "layers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "layer": {
+                            "type": "integer"
+                          },
+                          "codes": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer"
+                            }
+                          },
+                          "fonts": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer"
+                            }
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "layer",
+                          "codes",
+                          "fonts",
+                          "text"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "row",
+                    "layers"
+                  ]
+                }
+              },
+              "flapRows": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "row": {
+                      "type": "integer"
+                    },
+                    "codes": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "row",
+                    "codes"
+                  ]
+                }
+              },
+              "rotatingUntil": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "amplifier": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "band": {
+                    "type": "integer"
+                  },
+                  "state": {
+                    "type": "integer"
+                  },
+                  "onSince": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "switches": {
+                    "type": "integer"
+                  },
+                  "lastCommand": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "band",
+                  "state",
+                  "onSince",
+                  "switches",
+                  "lastCommand"
+                ]
+              }
+            },
+            "required": [
+              "family",
+              "brightness",
+              "clock",
+              "clockSetAt",
+              "rows",
+              "movingRow",
+              "movingCodes",
+              "movingText"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "line",
+          "address",
+          "secondAddress",
+          "manufacturer",
+          "family",
+          "design",
+          "autoCreated",
+          "poweredOff",
+          "fault",
+          "mismatch",
+          "stats",
+          "brightness",
+          "clock",
+          "version",
+          "rows",
+          "profile",
+          "display"
+        ]
+      },
+      "annotations": {
+        "title": "Clear board",
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
       "name": "compare_recordings",
       "title": "Compare recordings",
       "description": "Compares what the boards showed in two recordings, e.g. before and after a timetable change. Recordings are replayed without waiting; each board becomes a sequence of states (changes within 1 s are one state) and the sequences of A and B are aligned.",
@@ -244,6 +932,78 @@
         "idempotentHint": true,
         "openWorldHint": false,
         "readOnlyHint": true
+      }
+    },
+    {
+      "name": "delete_board",
+      "title": "Delete board",
+      "description": "Deletes a board. With auto-learning on its line the next message for its address creates it again.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Board id \"line-address\", e.g. \"1-12\".",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "done": {
+            "description": "What was done.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "done"
+        ]
+      },
+      "annotations": {
+        "title": "Delete board",
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "delete_line",
+      "title": "Delete line",
+      "description": "Deletes a line together with all its boards.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "description": "Line number.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "number"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "done": {
+            "description": "What was done.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "done"
+        ]
+      },
+      "annotations": {
+        "title": "Delete line",
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
       }
     },
     {
@@ -1066,6 +1826,415 @@
       },
       "annotations": {
         "title": "Communication log",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_iniss_station",
+      "title": "Station in INISS",
+      "description": "Preview of the station from the INISS installation set in the simulator: timetables, lines and their boards, boards INISS has but the simulator does not support, the log folder and the XML boards. Nothing is changed; import_iniss_station loads it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "program": {
+            "type": "string"
+          },
+          "appName": {
+            "type": "string"
+          },
+          "registry": {
+            "type": "boolean"
+          },
+          "grafikons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "section": {
+                  "type": "string"
+                },
+                "number": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "tableClass": {
+                  "type": "integer"
+                },
+                "port": {
+                  "type": "string"
+                },
+                "simulatorPort": {
+                  "type": "integer"
+                },
+                "active": {
+                  "type": "boolean"
+                },
+                "supported": {
+                  "type": "boolean"
+                },
+                "tables": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "address": {
+                        "type": "integer"
+                      },
+                      "grafikon": {
+                        "type": "string"
+                      },
+                      "manufacturer": {
+                        "type": "string"
+                      },
+                      "automatic": {
+                        "type": "boolean"
+                      },
+                      "shown": {
+                        "type": "boolean"
+                      },
+                      "problem": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "severity": {
+                            "type": "string",
+                            "enum": [
+                              "info",
+                              "warning",
+                              "error"
+                            ]
+                          },
+                          "code": {
+                            "type": "string",
+                            "enum": [
+                              "lineOutOfRange",
+                              "lineDuplicate",
+                              "wrongFamily",
+                              "noTables",
+                              "noAutomaticLine",
+                              "noDriver"
+                            ]
+                          },
+                          "args": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "severity",
+                          "code",
+                          "args"
+                        ]
+                      },
+                      "flaps": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "linesPerRecord": {
+                            "type": "integer"
+                          },
+                          "modules": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "line": {
+                                  "type": "integer"
+                                },
+                                "position": {
+                                  "type": "integer"
+                                },
+                                "span": {
+                                  "type": "integer"
+                                },
+                                "list": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "line",
+                                "position",
+                                "span",
+                                "list"
+                              ]
+                            }
+                          },
+                          "lists": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "colors": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "$ref": "#/properties/lines/items/properties/tables/items/properties/flaps/properties/lists/additionalProperties"
+                            }
+                          }
+                        }
+                      },
+                      "flapRecords": {
+                        "type": "integer"
+                      },
+                      "face": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "other",
+                              "departures",
+                              "arrivals",
+                              "platform",
+                              "underpass"
+                            ]
+                          },
+                          "linesPerRecord": {
+                            "type": "integer"
+                          },
+                          "records": {
+                            "type": "integer"
+                          },
+                          "width": {
+                            "type": "integer"
+                          },
+                          "rowHeight": {
+                            "type": "integer"
+                          },
+                          "columns": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "line": {
+                                  "type": "integer"
+                                },
+                                "start": {
+                                  "type": "integer"
+                                },
+                                "end": {
+                                  "type": "integer"
+                                },
+                                "align": {
+                                  "type": "string",
+                                  "enum": [
+                                    "left",
+                                    "center",
+                                    "right"
+                                  ]
+                                },
+                                "content": {
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "line",
+                                "start",
+                                "end",
+                                "align",
+                                "content"
+                              ]
+                            }
+                          },
+                          "tracks": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "platforms": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "station": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "linesPerRecord",
+                          "records",
+                          "width",
+                          "rowHeight",
+                          "columns",
+                          "tracks",
+                          "platforms",
+                          "station"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "address",
+                      "grafikon",
+                      "manufacturer",
+                      "automatic",
+                      "shown",
+                      "problem"
+                    ]
+                  }
+                },
+                "problems": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "severity": {
+                        "type": "string",
+                        "enum": [
+                          "info",
+                          "warning",
+                          "error"
+                        ]
+                      },
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "lineOutOfRange",
+                          "lineDuplicate",
+                          "wrongFamily",
+                          "noTables",
+                          "noAutomaticLine",
+                          "noDriver"
+                        ]
+                      },
+                      "args": {
+                        "$ref": "#/properties/lines/items/properties/tables/items/properties/problem/properties/args",
+                        "items": {}
+                      }
+                    },
+                    "required": [
+                      "severity",
+                      "code",
+                      "args"
+                    ]
+                  }
+                },
+                "amplifiers": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "line": {
+                        "type": "integer"
+                      },
+                      "address": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "shown": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "line",
+                      "address",
+                      "name",
+                      "shown"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "section",
+                "number",
+                "tableClass",
+                "port",
+                "simulatorPort",
+                "active",
+                "supported",
+                "tables",
+                "problems"
+              ]
+            }
+          },
+          "unserved": {
+            "type": "array",
+            "items": {
+              "$ref": "#/properties/lines/items/properties/tables/items"
+            }
+          },
+          "logFolder": {
+            "type": "string"
+          },
+          "logFolderExists": {
+            "type": "boolean"
+          },
+          "xmlTables": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "source"
+              ]
+            }
+          },
+          "unservedAmplifiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/properties/lines/items/properties/amplifiers/items"
+            }
+          }
+        },
+        "required": [
+          "program",
+          "appName",
+          "registry",
+          "grafikons",
+          "lines",
+          "unserved",
+          "logFolder",
+          "logFolderExists",
+          "xmlTables"
+        ]
+      },
+      "annotations": {
+        "title": "Station in INISS",
         "idempotentHint": true,
         "openWorldHint": false,
         "readOnlyHint": true
@@ -2177,6 +3346,96 @@
       }
     },
     {
+      "name": "import_iniss_station",
+      "title": "Import station from INISS",
+      "description": "Loads lines and boards from the INISS installation set in the simulator: missing ones are added, settings of existing lines are replaced, existing boards are kept. New boards get a face (board front) from the station data. INISS itself is not changed.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "faceLanguage": {
+            "description": "Language of the labels on created board faces.",
+            "type": "string",
+            "enum": [
+              "sk",
+              "cs"
+            ],
+            "default": "sk"
+          },
+          "facesForExisting": {
+            "description": "Create faces also for boards that already exist.",
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "linesAdded": {
+            "type": "integer"
+          },
+          "linesUpdated": {
+            "type": "integer"
+          },
+          "boardsAdded": {
+            "type": "integer"
+          },
+          "boardsKept": {
+            "type": "integer"
+          },
+          "unsupportedLines": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "skippedBoards": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "virtualBoardsAdded": {
+            "type": "integer"
+          },
+          "virtualBoardsKept": {
+            "type": "integer"
+          },
+          "logFolder": {
+            "type": "string",
+            "enum": [
+              "none",
+              "added",
+              "watched",
+              "missing",
+              "full"
+            ]
+          },
+          "facesAdded": {
+            "type": "integer"
+          },
+          "facesAssigned": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "linesAdded",
+          "linesUpdated",
+          "boardsAdded",
+          "boardsKept",
+          "unsupportedLines",
+          "skippedBoards"
+        ]
+      },
+      "annotations": {
+        "title": "Import station from INISS",
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
       "name": "list_boards",
       "title": "Boards",
       "description": "Boards with what they show as text rows, their version, simulated fault and power state, and when the last message for them arrived.",
@@ -2595,6 +3854,2463 @@
         "idempotentHint": true,
         "openWorldHint": false,
         "readOnlyHint": true
+      }
+    },
+    {
+      "name": "play_recording",
+      "title": "Play recording",
+      "description": "Plays a recording into the simulator: its messages go to the boards of the recorded lines in the original timing as if INISS sent them, replies of the boards are dropped. From a position other than 0 the boards of those lines are cleared and the earlier messages are processed at once. Calling it again restarts the replay, e.g. at another position or paused. The replay ends with stop_replay.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Name of the recording.",
+            "type": "string"
+          },
+          "speed": {
+            "description": "Speed, 1 = real time.",
+            "type": "number",
+            "default": 1
+          },
+          "loop": {
+            "description": "Play again from the start after the end.",
+            "type": "boolean",
+            "default": false
+          },
+          "position": {
+            "description": "Where to start [s from the start of the recording].",
+            "type": "number",
+            "default": 0
+          },
+          "paused": {
+            "description": "Only prepare the position and pause.",
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "running",
+              "paused",
+              "finished",
+              "stopped"
+            ]
+          },
+          "position": {
+            "type": "number"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "speed": {
+            "type": "number"
+          },
+          "loop": {
+            "type": "boolean"
+          },
+          "pass": {
+            "type": "integer"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name",
+          "state",
+          "position",
+          "duration",
+          "speed",
+          "loop",
+          "pass",
+          "at"
+        ]
+      },
+      "annotations": {
+        "title": "Play recording",
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "save_scenario",
+      "title": "Save fault scenario",
+      "description": "Creates a fault scenario (without id) or replaces an existing one. Each step starts atMs after the start of the cycle and lasts durationMs: fault = the board (line + address) simulates the fault, powerLoss = the board is dark and does not answer, lineOutage = the whole line (address null) is disconnected. Steps may overlap. A one-step scenario is the way to switch a board off or cut a line for a while.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Name of the scenario.",
+            "type": "string"
+          },
+          "steps": {
+            "description": "Steps of the scenario.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "atMs": {
+                  "type": "integer"
+                },
+                "durationMs": {
+                  "type": "integer"
+                },
+                "line": {
+                  "type": "integer"
+                },
+                "address": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "fault",
+                    "powerLoss",
+                    "lineOutage"
+                  ]
+                },
+                "fault": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "noReply",
+                        "nak",
+                        "delay",
+                        "garbage",
+                        "status"
+                      ]
+                    },
+                    "delayMs": {
+                      "type": "integer",
+                      "default": 0
+                    },
+                    "status": {
+                      "type": "integer",
+                      "default": 0
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                }
+              },
+              "required": [
+                "atMs",
+                "durationMs",
+                "line",
+                "address",
+                "action",
+                "fault"
+              ]
+            }
+          },
+          "id": {
+            "description": "Id of the scenario to replace; null = new scenario.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          },
+          "loop": {
+            "description": "Repeat the steps in a loop.",
+            "type": "boolean",
+            "default": false
+          },
+          "cycleMs": {
+            "description": "Length of one cycle [ms]; null = until the end of the last step.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "name",
+          "steps"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "loop": {
+            "type": "boolean"
+          },
+          "cycleMs": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "atMs": {
+                  "type": "integer"
+                },
+                "durationMs": {
+                  "type": "integer"
+                },
+                "line": {
+                  "type": "integer"
+                },
+                "address": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "fault",
+                    "powerLoss",
+                    "lineOutage"
+                  ]
+                },
+                "fault": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "noReply",
+                        "nak",
+                        "delay",
+                        "garbage",
+                        "status"
+                      ]
+                    },
+                    "delayMs": {
+                      "type": "integer",
+                      "default": 0
+                    },
+                    "status": {
+                      "type": "integer",
+                      "default": 0
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                }
+              },
+              "required": [
+                "atMs",
+                "durationMs",
+                "line",
+                "address",
+                "action",
+                "fault"
+              ]
+            }
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "startedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lengthMs": {
+                "type": "integer"
+              },
+              "cycle": {
+                "type": "integer"
+              },
+              "activeSteps": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            },
+            "required": [
+              "startedAt",
+              "lengthMs",
+              "cycle",
+              "activeSteps"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "loop",
+          "cycleMs",
+          "steps",
+          "run"
+        ]
+      },
+      "annotations": {
+        "title": "Save fault scenario",
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "send_frame",
+      "title": "Send bytes as INISS",
+      "description": "Sends bytes to a line as if INISS sent them: the boards process them (log, statistics, recording) and their replies are returned instead of being sent. Only on a line INISS is not connected to. The bytes must be whole messages of the line's protocol including checksums; messages from get_frames show the format. Returns the replies and the boards that changed.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "description": "Line number.",
+            "type": "integer"
+          },
+          "hex": {
+            "description": "Bytes as hexadecimal pairs; spaces and dashes are ignored, e.g. \"10 02 81 00 05 50 72 61 68 61 ...\". At most 4096 bytes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "line",
+          "hex"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "replies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "hex": {
+                  "type": "string"
+                },
+                "delayMs": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "hex",
+                "delayMs"
+              ]
+            }
+          },
+          "boards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "integer"
+                },
+                "poweredOff": {
+                  "type": "boolean"
+                },
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "poweredOff",
+                "rows"
+              ]
+            }
+          }
+        },
+        "required": [
+          "replies",
+          "boards"
+        ]
+      },
+      "annotations": {
+        "title": "Send bytes as INISS",
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "set_board",
+      "title": "Create or change board",
+      "description": "Creates a board on a line or changes an existing one; for an existing board only the given values change. A new board needs a manufacturer and gets the default size of the manufacturer. Look, face and fonts are not changed here.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "description": "Line of the board.",
+            "type": "integer"
+          },
+          "address": {
+            "description": "Address of the board on the line.",
+            "type": "integer"
+          },
+          "manufacturer": {
+            "description": "Manufacturer (e.g. ELEN, ELEN16, LCD, LCD1, ERP, FERS, ERS, APEL, ELSVO); must belong to the class of the line.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "name": {
+            "description": "Name for the operator.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "width": {
+            "description": "Width of the matrix in dots.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          },
+          "rows": {
+            "description": "Number of rows.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          },
+          "rowHeight": {
+            "description": "Height of one row in dots.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          },
+          "secondAddress": {
+            "description": "Second address of a two-sided board; 0 = none.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "line",
+          "address"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer"
+          },
+          "address": {
+            "type": "integer"
+          },
+          "secondAddress": {
+            "description": "Second address of a two-sided board; null = only one.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "family": {
+            "description": "elen, chars, flaps, amplifier or unknown.",
+            "type": "string"
+          },
+          "design": {
+            "description": "Look of the board in the web view (design id); null = default for the manufacturer.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "autoCreated": {
+            "description": "Created automatically by the first message to an unknown address.",
+            "type": "boolean"
+          },
+          "poweredOff": {
+            "description": "Simulated power outage: the board is dark and does not answer.",
+            "type": "boolean"
+          },
+          "fault": {
+            "description": "Simulated fault: kind, reply delay [ms] for delay, status bits for status.",
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "noReply",
+                  "nak",
+                  "delay",
+                  "garbage",
+                  "status"
+                ]
+              },
+              "delayMs": {
+                "type": "integer",
+                "default": 0
+              },
+              "status": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "mismatch": {
+            "description": "INISS sends messages meant for another manufacturer; null = fine.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "evidence": {
+                "type": "string"
+              },
+              "suggested": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "evidence",
+              "suggested"
+            ]
+          },
+          "stats": {
+            "description": "Message counters: frames from INISS, acknowledged (acks), rejected (naks), unanswered.",
+            "type": "object",
+            "properties": {
+              "frames": {
+                "type": "integer"
+              },
+              "acks": {
+                "type": "integer"
+              },
+              "naks": {
+                "type": "integer"
+              },
+              "unanswered": {
+                "type": "integer"
+              },
+              "lastFrameAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "frames",
+              "acks",
+              "naks",
+              "unanswered",
+              "lastFrameAt"
+            ]
+          },
+          "brightness": {
+            "description": "Brightness set by INISS [%].",
+            "type": "integer"
+          },
+          "clock": {
+            "description": "Clock time set by INISS; null = not set.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "description": "Increases with every change of the content or settings; pass it to wait_for_board_change.",
+            "type": "integer"
+          },
+          "rows": {
+            "description": "What the board shows, rows from the top; an empty row is \"\", alternating texts are {a|b}, the moving text of an elen board is the last row \"» text\", split-flap modules are joined with \" | \", an amplifier is \"ON 1\", \"ON 2\" or \"OFF\".",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "profile": {
+            "description": "Board settings (size, fonts, timing); only with raw = true.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "width": {
+                "type": "integer"
+              },
+              "rows": {
+                "type": "integer"
+              },
+              "rowHeight": {
+                "type": "integer"
+              },
+              "fontFile": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "fontMap": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              },
+              "charFonts": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "font": {
+                      "type": "string",
+                      "default": ""
+                    },
+                    "bold": {
+                      "type": "boolean",
+                      "default": false
+                    }
+                  }
+                }
+              },
+              "alternationMs": {
+                "type": "integer"
+              },
+              "blinkOnMs": {
+                "type": "integer"
+              },
+              "blinkOffMs": {
+                "type": "integer"
+              },
+              "scrollSpeed": {
+                "type": "integer"
+              },
+              "monochrome": {
+                "type": "boolean"
+              },
+              "swapRedGreen": {
+                "type": "boolean"
+              },
+              "header": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "height": {
+                    "type": "integer"
+                  },
+                  "texts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "integer"
+                        },
+                        "y": {
+                          "type": "integer"
+                        },
+                        "height": {
+                          "type": "integer"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "height",
+                        "text"
+                      ]
+                    }
+                  },
+                  "clock": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "x": {
+                        "type": "integer"
+                      },
+                      "y": {
+                        "type": "integer"
+                      },
+                      "height": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "height"
+                    ]
+                  }
+                }
+              },
+              "face": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "faceValues": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "movingFont": {
+                "type": "integer"
+              },
+              "autoSize": {
+                "type": "boolean"
+              },
+              "rotationMs": {
+                "type": "integer"
+              },
+              "flaps": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "linesPerRecord": {
+                    "type": "integer"
+                  },
+                  "modules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "line": {
+                          "type": "integer"
+                        },
+                        "position": {
+                          "type": "integer"
+                        },
+                        "span": {
+                          "type": "integer"
+                        },
+                        "list": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "line",
+                        "position",
+                        "span",
+                        "list"
+                      ]
+                    }
+                  },
+                  "lists": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "colors": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/properties/profile/properties/flaps/properties/lists/additionalProperties"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "display": {
+            "description": "Raw content with fonts, character codes and positions; only with raw = true.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "family": {
+                "type": "string"
+              },
+              "brightness": {
+                "type": "integer"
+              },
+              "clock": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "clockSetAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "row": {
+                      "type": "integer"
+                    },
+                    "elements": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "run": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "x": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "font": {
+                                "type": "integer"
+                              },
+                              "codes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer"
+                                }
+                              },
+                              "text": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "x",
+                              "font",
+                              "codes",
+                              "text"
+                            ]
+                          },
+                          "parts": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "x": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ]
+                                  },
+                                  "font": {
+                                    "type": "integer"
+                                  },
+                                  "codes": {
+                                    "$ref": "#/properties/display/properties/rows/items/properties/elements/items/properties/run/properties/codes",
+                                    "items": {}
+                                  },
+                                  "text": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "x",
+                                  "font",
+                                  "codes",
+                                  "text"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "run",
+                          "parts"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "row",
+                    "elements"
+                  ]
+                }
+              },
+              "movingRow": {
+                "type": "integer"
+              },
+              "movingCodes": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "integer"
+                }
+              },
+              "movingText": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "brightnessGreen": {
+                "type": "integer"
+              },
+              "flashOnMs": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "flashOffMs": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "charRows": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "row": {
+                      "type": "integer"
+                    },
+                    "layers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "layer": {
+                            "type": "integer"
+                          },
+                          "codes": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer"
+                            }
+                          },
+                          "fonts": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer"
+                            }
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "layer",
+                          "codes",
+                          "fonts",
+                          "text"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "row",
+                    "layers"
+                  ]
+                }
+              },
+              "flapRows": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "row": {
+                      "type": "integer"
+                    },
+                    "codes": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "row",
+                    "codes"
+                  ]
+                }
+              },
+              "rotatingUntil": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "amplifier": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "band": {
+                    "type": "integer"
+                  },
+                  "state": {
+                    "type": "integer"
+                  },
+                  "onSince": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "switches": {
+                    "type": "integer"
+                  },
+                  "lastCommand": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "band",
+                  "state",
+                  "onSince",
+                  "switches",
+                  "lastCommand"
+                ]
+              }
+            },
+            "required": [
+              "family",
+              "brightness",
+              "clock",
+              "clockSetAt",
+              "rows",
+              "movingRow",
+              "movingCodes",
+              "movingText"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "line",
+          "address",
+          "secondAddress",
+          "manufacturer",
+          "family",
+          "design",
+          "autoCreated",
+          "poweredOff",
+          "fault",
+          "mismatch",
+          "stats",
+          "brightness",
+          "clock",
+          "version",
+          "rows",
+          "profile",
+          "display"
+        ]
+      },
+      "annotations": {
+        "title": "Create or change board",
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "set_board_fault",
+      "title": "Board fault",
+      "description": "Makes a board simulate a fault: noReply (does not answer), nak (rejects messages), delay (answers late), garbage (answers nonsense), status (reports a fault in its status reply, only boards with a status reply); none ends the fault. A running fault scenario may change it again.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Board id \"line-address\", e.g. \"1-12\".",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind of the fault; none = no fault.",
+            "type": "string",
+            "enum": [
+              "none",
+              "noReply",
+              "nak",
+              "delay",
+              "garbage",
+              "status"
+            ]
+          },
+          "delayMs": {
+            "description": "Reply delay for delay [ms].",
+            "type": "integer",
+            "default": 0
+          },
+          "status": {
+            "description": "Status bits for status.",
+            "type": "integer",
+            "default": 0
+          }
+        },
+        "required": [
+          "id",
+          "kind"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer"
+          },
+          "address": {
+            "type": "integer"
+          },
+          "secondAddress": {
+            "description": "Second address of a two-sided board; null = only one.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "family": {
+            "description": "elen, chars, flaps, amplifier or unknown.",
+            "type": "string"
+          },
+          "design": {
+            "description": "Look of the board in the web view (design id); null = default for the manufacturer.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "autoCreated": {
+            "description": "Created automatically by the first message to an unknown address.",
+            "type": "boolean"
+          },
+          "poweredOff": {
+            "description": "Simulated power outage: the board is dark and does not answer.",
+            "type": "boolean"
+          },
+          "fault": {
+            "description": "Simulated fault: kind, reply delay [ms] for delay, status bits for status.",
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "noReply",
+                  "nak",
+                  "delay",
+                  "garbage",
+                  "status"
+                ]
+              },
+              "delayMs": {
+                "type": "integer",
+                "default": 0
+              },
+              "status": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "mismatch": {
+            "description": "INISS sends messages meant for another manufacturer; null = fine.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "evidence": {
+                "type": "string"
+              },
+              "suggested": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "evidence",
+              "suggested"
+            ]
+          },
+          "stats": {
+            "description": "Message counters: frames from INISS, acknowledged (acks), rejected (naks), unanswered.",
+            "type": "object",
+            "properties": {
+              "frames": {
+                "type": "integer"
+              },
+              "acks": {
+                "type": "integer"
+              },
+              "naks": {
+                "type": "integer"
+              },
+              "unanswered": {
+                "type": "integer"
+              },
+              "lastFrameAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "frames",
+              "acks",
+              "naks",
+              "unanswered",
+              "lastFrameAt"
+            ]
+          },
+          "brightness": {
+            "description": "Brightness set by INISS [%].",
+            "type": "integer"
+          },
+          "clock": {
+            "description": "Clock time set by INISS; null = not set.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "description": "Increases with every change of the content or settings; pass it to wait_for_board_change.",
+            "type": "integer"
+          },
+          "rows": {
+            "description": "What the board shows, rows from the top; an empty row is \"\", alternating texts are {a|b}, the moving text of an elen board is the last row \"» text\", split-flap modules are joined with \" | \", an amplifier is \"ON 1\", \"ON 2\" or \"OFF\".",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "profile": {
+            "description": "Board settings (size, fonts, timing); only with raw = true.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "width": {
+                "type": "integer"
+              },
+              "rows": {
+                "type": "integer"
+              },
+              "rowHeight": {
+                "type": "integer"
+              },
+              "fontFile": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "fontMap": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              },
+              "charFonts": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "font": {
+                      "type": "string",
+                      "default": ""
+                    },
+                    "bold": {
+                      "type": "boolean",
+                      "default": false
+                    }
+                  }
+                }
+              },
+              "alternationMs": {
+                "type": "integer"
+              },
+              "blinkOnMs": {
+                "type": "integer"
+              },
+              "blinkOffMs": {
+                "type": "integer"
+              },
+              "scrollSpeed": {
+                "type": "integer"
+              },
+              "monochrome": {
+                "type": "boolean"
+              },
+              "swapRedGreen": {
+                "type": "boolean"
+              },
+              "header": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "height": {
+                    "type": "integer"
+                  },
+                  "texts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "integer"
+                        },
+                        "y": {
+                          "type": "integer"
+                        },
+                        "height": {
+                          "type": "integer"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "height",
+                        "text"
+                      ]
+                    }
+                  },
+                  "clock": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "x": {
+                        "type": "integer"
+                      },
+                      "y": {
+                        "type": "integer"
+                      },
+                      "height": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "height"
+                    ]
+                  }
+                }
+              },
+              "face": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "faceValues": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "movingFont": {
+                "type": "integer"
+              },
+              "autoSize": {
+                "type": "boolean"
+              },
+              "rotationMs": {
+                "type": "integer"
+              },
+              "flaps": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "linesPerRecord": {
+                    "type": "integer"
+                  },
+                  "modules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "line": {
+                          "type": "integer"
+                        },
+                        "position": {
+                          "type": "integer"
+                        },
+                        "span": {
+                          "type": "integer"
+                        },
+                        "list": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "line",
+                        "position",
+                        "span",
+                        "list"
+                      ]
+                    }
+                  },
+                  "lists": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "colors": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/properties/profile/properties/flaps/properties/lists/additionalProperties"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "display": {
+            "description": "Raw content with fonts, character codes and positions; only with raw = true.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "family": {
+                "type": "string"
+              },
+              "brightness": {
+                "type": "integer"
+              },
+              "clock": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "clockSetAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "row": {
+                      "type": "integer"
+                    },
+                    "elements": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "run": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "x": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "font": {
+                                "type": "integer"
+                              },
+                              "codes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer"
+                                }
+                              },
+                              "text": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "x",
+                              "font",
+                              "codes",
+                              "text"
+                            ]
+                          },
+                          "parts": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "x": {
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ]
+                                  },
+                                  "font": {
+                                    "type": "integer"
+                                  },
+                                  "codes": {
+                                    "$ref": "#/properties/display/properties/rows/items/properties/elements/items/properties/run/properties/codes",
+                                    "items": {}
+                                  },
+                                  "text": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "x",
+                                  "font",
+                                  "codes",
+                                  "text"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "run",
+                          "parts"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "row",
+                    "elements"
+                  ]
+                }
+              },
+              "movingRow": {
+                "type": "integer"
+              },
+              "movingCodes": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "integer"
+                }
+              },
+              "movingText": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "brightnessGreen": {
+                "type": "integer"
+              },
+              "flashOnMs": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "flashOffMs": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "charRows": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "row": {
+                      "type": "integer"
+                    },
+                    "layers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "layer": {
+                            "type": "integer"
+                          },
+                          "codes": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer"
+                            }
+                          },
+                          "fonts": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer"
+                            }
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "layer",
+                          "codes",
+                          "fonts",
+                          "text"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "row",
+                    "layers"
+                  ]
+                }
+              },
+              "flapRows": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "row": {
+                      "type": "integer"
+                    },
+                    "codes": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "row",
+                    "codes"
+                  ]
+                }
+              },
+              "rotatingUntil": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "amplifier": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "band": {
+                    "type": "integer"
+                  },
+                  "state": {
+                    "type": "integer"
+                  },
+                  "onSince": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "switches": {
+                    "type": "integer"
+                  },
+                  "lastCommand": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "band",
+                  "state",
+                  "onSince",
+                  "switches",
+                  "lastCommand"
+                ]
+              }
+            },
+            "required": [
+              "family",
+              "brightness",
+              "clock",
+              "clockSetAt",
+              "rows",
+              "movingRow",
+              "movingCodes",
+              "movingText"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "line",
+          "address",
+          "secondAddress",
+          "manufacturer",
+          "family",
+          "design",
+          "autoCreated",
+          "poweredOff",
+          "fault",
+          "mismatch",
+          "stats",
+          "brightness",
+          "clock",
+          "version",
+          "rows",
+          "profile",
+          "display"
+        ]
+      },
+      "annotations": {
+        "title": "Board fault",
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "set_line",
+      "title": "Create or change line",
+      "description": "Creates a line or changes an existing one; for an existing line only the given values change. A new line needs tableClass and endpoint. The line starts listening at once (a port used by another program makes its status error).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "description": "Line number 1-100.",
+            "type": "integer"
+          },
+          "tableClass": {
+            "description": "INISS table class, selects the protocol: 1 Elektrocas LCD, 2 ERS, 3 FERS, 4 ELEN, 5 LCD1/ERP, 10 APEL, 128 remote INISS, 129 ELSVO, 130 ITP.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          },
+          "endpoint": {
+            "description": "Where INISS connects: TCP://0.0.0.0:47001, UDP://..., \\\\.\\PIPE\\name (INISS creates the pipe) or COM3:9600,n,8,1.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "name": {
+            "description": "Name for the operator.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "mode": {
+            "description": "display = boards answer like real ones; monitor = only listen, real boards answer.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "display",
+              "monitor",
+              null
+            ],
+            "default": null
+          },
+          "autoLearn": {
+            "description": "Create a board when a message comes for an unknown address.",
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "default": null
+          },
+          "manufacturer": {
+            "description": "Manufacturer of auto-created boards (e.g. ELEN, ELEN16, LCD1, APEL); default the first one of the class.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "number"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tableClass": {
+            "description": "INISS table class of the line, selects the protocol (e.g. 4 = ELEN, 1 = Elektrocas LCD, 128 = remote INISS).",
+            "type": "integer"
+          },
+          "endpoint": {
+            "description": "Where INISS connects: host:port, pipe name or serial port.",
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "stopped",
+              "listening",
+              "connected",
+              "error",
+              "lost",
+              "outage"
+            ]
+          },
+          "statusDetail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statusSince": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastReceivedAt": {
+            "description": "When the last message from INISS arrived; null = none yet.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "boards": {
+            "description": "Number of boards on the line.",
+            "type": "integer"
+          },
+          "frames": {
+            "type": "integer"
+          },
+          "badFrames": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "number",
+          "name",
+          "tableClass",
+          "endpoint",
+          "status",
+          "statusDetail",
+          "statusSince",
+          "lastReceivedAt",
+          "boards",
+          "frames",
+          "badFrames"
+        ]
+      },
+      "annotations": {
+        "title": "Create or change line",
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "start_recording",
+      "title": "Start recording",
+      "description": "Starts recording the communication of all lines (messages from INISS and replies of the boards) into a new recording; a running recording is finished first.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "description": "Note shown with the recording, e.g. what is being tested.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "recording": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "started": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "entries": {
+            "type": "integer"
+          },
+          "bytes": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recording",
+          "name",
+          "started",
+          "entries",
+          "bytes"
+        ]
+      },
+      "annotations": {
+        "title": "Start recording",
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "start_scenario",
+      "title": "Start fault scenario",
+      "description": "Starts a fault scenario from the beginning of its cycle. More scenarios may run at once; their effects are combined.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Id of the scenario.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "loop": {
+            "type": "boolean"
+          },
+          "cycleMs": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "atMs": {
+                  "type": "integer"
+                },
+                "durationMs": {
+                  "type": "integer"
+                },
+                "line": {
+                  "type": "integer"
+                },
+                "address": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "fault",
+                    "powerLoss",
+                    "lineOutage"
+                  ]
+                },
+                "fault": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "noReply",
+                        "nak",
+                        "delay",
+                        "garbage",
+                        "status"
+                      ]
+                    },
+                    "delayMs": {
+                      "type": "integer",
+                      "default": 0
+                    },
+                    "status": {
+                      "type": "integer",
+                      "default": 0
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                }
+              },
+              "required": [
+                "atMs",
+                "durationMs",
+                "line",
+                "address",
+                "action",
+                "fault"
+              ]
+            }
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "startedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lengthMs": {
+                "type": "integer"
+              },
+              "cycle": {
+                "type": "integer"
+              },
+              "activeSteps": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            },
+            "required": [
+              "startedAt",
+              "lengthMs",
+              "cycle",
+              "activeSteps"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "loop",
+          "cycleMs",
+          "steps",
+          "run"
+        ]
+      },
+      "annotations": {
+        "title": "Start fault scenario",
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "stop_recording",
+      "title": "Stop recording",
+      "description": "Finishes the running recording and saves it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "recording": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "started": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "entries": {
+            "type": "integer"
+          },
+          "bytes": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recording",
+          "name",
+          "started",
+          "entries",
+          "bytes"
+        ]
+      },
+      "annotations": {
+        "title": "Stop recording",
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "stop_replay",
+      "title": "Stop replay",
+      "description": "Stops the replay of a recording; the boards keep what they show.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "done": {
+            "description": "What was done.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "done"
+        ]
+      },
+      "annotations": {
+        "title": "Stop replay",
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "stop_scenario",
+      "title": "Stop fault scenario",
+      "description": "Stops a fault scenario; faults, power and lines return to the state before it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Id of the scenario.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "loop": {
+            "type": "boolean"
+          },
+          "cycleMs": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "atMs": {
+                  "type": "integer"
+                },
+                "durationMs": {
+                  "type": "integer"
+                },
+                "line": {
+                  "type": "integer"
+                },
+                "address": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "fault",
+                    "powerLoss",
+                    "lineOutage"
+                  ]
+                },
+                "fault": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "noReply",
+                        "nak",
+                        "delay",
+                        "garbage",
+                        "status"
+                      ]
+                    },
+                    "delayMs": {
+                      "type": "integer",
+                      "default": 0
+                    },
+                    "status": {
+                      "type": "integer",
+                      "default": 0
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                }
+              },
+              "required": [
+                "atMs",
+                "durationMs",
+                "line",
+                "address",
+                "action",
+                "fault"
+              ]
+            }
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "startedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lengthMs": {
+                "type": "integer"
+              },
+              "cycle": {
+                "type": "integer"
+              },
+              "activeSteps": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            },
+            "required": [
+              "startedAt",
+              "lengthMs",
+              "cycle",
+              "activeSteps"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "loop",
+          "cycleMs",
+          "steps",
+          "run"
+        ]
+      },
+      "annotations": {
+        "title": "Stop fault scenario",
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
       }
     },
     {

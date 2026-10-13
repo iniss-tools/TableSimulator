@@ -3,6 +3,7 @@ using TableSimulator.Application.Abstractions.Results;
 using TableSimulator.Application.Mapping;
 using TableSimulator.Contracts.Boards;
 using TableSimulator.Contracts.Frames;
+using TableSimulator.Contracts.Lines;
 using TableSimulator.Contracts.Recordings;
 using TableSimulator.Contracts.Settings;
 using TableSimulator.Contracts.State;
@@ -208,6 +209,39 @@ public sealed class McpMapperTests
         Assert.IsNull(totals.Boards[1].MaxGapMs);
         Assert.IsNull(totals.Series);
         Assert.HasCount(3, series.Series!);
+    }
+
+    [TestMethod]
+    public void ZmenaLinky_LenZadaneHodnotyNovaPovinne()
+    {
+        var current = State(b => b).Lines[0];
+
+        var renamed = McpRequests.Line(current, 1, null, null, "Hala", null, null, null);
+        var created = McpRequests.Line(null, 9, 10, "TCP://0.0.0.0:47009", null, null, null, null);
+
+        Assert.AreEqual(("Hala", current.TableClass, current.Endpoint, current.AutoLearn, current.Manufacturer),
+            (renamed.Name, renamed.TableClass, renamed.Endpoint, renamed.AutoLearn, renamed.Manufacturer));
+        // nova linka: prvy vyrobca triedy, samoucenie zapnute
+        Assert.AreEqual(("APEL", true, LineMode.Display), (created.Manufacturer, created.AutoLearn, created.Mode));
+        StringAssert.StartsWith(Assert.ThrowsExactly<McpException>(() => McpRequests.Line(null, 9, null, "TCP://0.0.0.0:47009", null, null, null, null)).Message,
+            "line.new");
+    }
+
+    [TestMethod]
+    public void ZmenaTabule_ProfilPodlaVyrobcuADruhaAdresa()
+    {
+        var current = State(b => b).Boards[0] with { SecondAddress = 7 };
+
+        var renamed = McpRequests.Board(current, 1, 1, null, "Hala", null, 4, null, null);
+        var single = McpRequests.Board(current, 1, 1, null, null, null, null, null, 0);
+        var created = McpRequests.Board(null, 5, 0x81, "APEL", "Vestibul", null, null, null, null);
+
+        Assert.AreEqual(("Hala", current.Manufacturer, 4, current.Profile.Width, 7),
+            (renamed.Name, renamed.Manufacturer, renamed.Profile.Rows, renamed.Profile.Width, renamed.SecondAddress));
+        Assert.IsNull(single.SecondAddress);
+        Assert.AreEqual(DtoMapper.ToDto(BoardProfile.DefaultFor("APEL")).Rows, created.Profile.Rows);
+        Assert.AreEqual(FaultKind.None, created.Fault.Kind);
+        StringAssert.StartsWith(Assert.ThrowsExactly<McpException>(() => McpRequests.Board(null, 5, 1, null, null, null, null, null, null)).Message, "board.new");
     }
 
     [TestMethod]

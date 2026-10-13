@@ -72,6 +72,12 @@ public sealed partial class McpToolsTests
                 .Select(a => a.MemberName).ToHashSet();
             foreach (var hint in new[] { nameof(McpServerToolAttribute.ReadOnly), nameof(McpServerToolAttribute.OpenWorld) })
                 Assert.Contains(hint, named, $"{name}: {hint} explicitne");
+            // zmena: klient sa podla Destructive pyta pred volanim - nesmie ostat predvolene
+            if (!tool.ReadOnly)
+            {
+                foreach (var hint in new[] { nameof(McpServerToolAttribute.Destructive), nameof(McpServerToolAttribute.Idempotent) })
+                    Assert.Contains(hint, named, $"{name}: {hint} explicitne pri zmene");
+            }
             foreach (var parameter in method.GetParameters().Where(p => !IsInjected(p)))
                 Assert.IsFalse(string.IsNullOrWhiteSpace(parameter.GetCustomAttribute<DescriptionAttribute>()?.Description), $"{name}: popis parametra {parameter.Name}");
         }
