@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { VirtualLayoutDto as VirtualLayout, VirtualRowDto as VirtualRow } from "../api/generated/types.gen";
-import { cellText, columnColor, columnText, defaultColumn, DEFAULT_TIMING, labelKey, layoutColumns, layoutTitle, virtualColumns } from "./virtual";
+import { cellText, columnColor, columnText, columnTexts, defaultColumn, DEFAULT_TIMING, labelKey, layoutColumns, layoutTitle, virtualColumns } from "./virtual";
 
 const row = (cells: Record<string, string>): VirtualRow => ({ cells: Object.entries(cells).map(([name, text]) => ({ name, text })) });
 
@@ -88,6 +88,27 @@ describe("layoutColumns", () => {
     const columns = layoutColumns(layout([{ ...defaultColumn(["destination", "direction"]), separator: " – " }, defaultColumn(["time"])]), rows);
     expect(columns.map((c) => c.cells.join("+"))).toEqual(["destination+direction", "time"]);
     expect(columnText(row({ destination: "Kosice", direction: "Presov" }), columns[0], 0)).toBe("Kosice – Presov");
+  });
+});
+
+describe("columnTexts", () => {
+  test("bez striedania prazdne", () => {
+    expect(columnTexts(row({ destination: "Kosice" }), defaultColumn(["destination"]))).toEqual([]);
+  });
+
+  test("vsetky faze striedania prvkov s inym poctom casti, blikanie rozsvietene", () => {
+    const column = { cells: ["destination", "direction", "track"], separator: " " };
+    const r = row({ destination: "A#B", direction: "x#y#z", track: "1#" });
+    const texts = columnTexts(r, column);
+    expect(texts).toEqual(["A x 1", "B y 1", "A z 1", "B x 1", "A y 1", "B z 1"]);
+    for (let k = 0; k < 6; k++) expect(texts).toContain(columnText(r, column, k * DEFAULT_TIMING.alternationMs, { ...DEFAULT_TIMING, blinkMs: 1e9 }));
+  });
+
+  test("opakovane a prazdne texty raz", () => {
+    expect(columnTexts(row({ destination: "Sered#Galanta#Sered", direction: "##" }), defaultColumn(["destination", "direction"]))).toEqual([
+      "Sered",
+      "Galanta",
+    ]);
   });
 });
 

@@ -93,6 +93,32 @@ export function labelKey(cells: string[]): string {
   return cells.includes("type") && cells.includes("number") ? "train" : (cells[0] ?? "");
 }
 
+// po kolkych fazach striedania sa texty bunky stlpca uz len opakuju (prvky s inym poctom casti); strop pre istotu
+const MAX_PHASES = 64;
+
+const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+
+/**
+ * Vsetky texty, ktore bunka stlpca pri striedani ukaze (blikajuci prvok rozsvieteny), bez opakovania - najdlhsi urci
+ * sirku stlpca, aby sa stlpce pri striedani nehybali. Prazdne pole, ked sa text bunky nemeni (ziadny prvok s #).
+ */
+export function columnTexts(row: VirtualRow, column: Pick<VirtualColumn, "cells" | "separator">): string[] {
+  const texts = column.cells.map((name) => cellOf(row, name));
+  if (!texts.some((text) => text.includes("#"))) return [];
+  const parts = texts.map((text) => (text.includes("#") ? text.split("#").filter((p) => p !== "") : [text]));
+  let phases = 1;
+  for (const p of parts) if (p.length > 0) phases = Math.min(MAX_PHASES, (phases * p.length) / gcd(phases, p.length));
+  const result = new Set<string>();
+  for (let k = 0; k < phases; k++)
+    result.add(
+      parts
+        .map((p) => (p.length === 0 ? "" : p[k % p.length]))
+        .filter((text) => text !== "")
+        .join(column.separator),
+    );
+  return [...result];
+}
+
 /** Text bunky stlpca v case now - neprazdne prvky oddelene oddelovacom stlpca. */
 export function columnText(row: VirtualRow, column: Pick<VirtualColumn, "cells" | "separator">, now: number, timing: Timing = DEFAULT_TIMING): string {
   return column.cells

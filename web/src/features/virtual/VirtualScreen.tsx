@@ -3,7 +3,7 @@ import { useLayoutEffect, useMemo, useRef, type CSSProperties } from "react";
 import type { VirtualLayoutDto as VirtualLayout, VirtualViewDto as VirtualView } from "@/api";
 import { cn } from "@/lib/utils";
 import { hasText, t } from "@/i18n";
-import { columnColor, columnText, columnWidth, labelKey, layoutColumns, layoutTitle } from "@/render/virtual";
+import { columnColor, columnText, columnTexts, columnWidth, labelKey, layoutColumns, layoutTitle } from "@/render/virtual";
 import styles from "./VirtualScreen.module.css";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -32,6 +32,24 @@ function label(text: string, cells: string[]): string {
   if (text) return text;
   const key = `virtual.cell.${labelKey(cells)}`;
   return hasText(key) ? t(key) : labelKey(cells);
+}
+
+/**
+ * Text bunky. Striedajuci sa text ma vsetky svoje texty skryte pod sebou v jednej mriezke - sirku bunky urci najdlhsi,
+ * takze sa stlpce pri striedani nehybu a useFitWidth netreba merat znova.
+ */
+function CellText({ text, texts }: { text: string; texts: string[] }) {
+  if (texts.length === 0) return text;
+  return (
+    <span className="grid grid-cols-[minmax(0,1fr)]">
+      <span className="col-start-1 row-start-1 truncate">{text}</span>
+      {texts.map((variant, i) => (
+        <span key={i} className="invisible col-start-1 row-start-1 truncate" aria-hidden>
+          {variant}
+        </span>
+      ))}
+    </span>
+  );
 }
 
 interface Props {
@@ -142,7 +160,7 @@ export function VirtualScreen({ view, layout, now, error, preview }: Props) {
                         maxWidth: c.width === "" ? undefined : c.width === "fill" ? "45cqw" : "none",
                       }}
                     >
-                      {columnText(row, c, now, timing)}
+                      <CellText text={columnText(row, c, now, timing)} texts={columnTexts(row, c)} />
                     </td>
                   ))}
                 </tr>
