@@ -136,7 +136,8 @@ public static class BoardTools
 
     private static string BoardId(int line, int address) => string.Create(CultureInfo.InvariantCulture, $"{line}-{address}");
 
-    private static async Task<BoardDetail> Detail(IQueryHandler<GetBoardQuery, BoardDto> board, IQueryHandler<GetBoardTextsQuery, IReadOnlyList<BoardTextDto>> texts,
+    /// <summary>Podrobnosti tabule s textom a pouzitym vzhladom (aj pre show_board).</summary>
+    internal static async Task<BoardDetail> Detail(IQueryHandler<GetBoardQuery, BoardDto> board, IQueryHandler<GetBoardTextsQuery, IReadOnlyList<BoardTextDto>> texts,
         IQueryHandler<GetDesignsQuery, DesignInfoDto[]> designs, string id, bool raw, CancellationToken cancellationToken)
     {
         var dto = (await board.Handle(new GetBoardQuery(id), cancellationToken)).ValueOrThrow();

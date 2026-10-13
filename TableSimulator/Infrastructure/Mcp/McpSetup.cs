@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol;
+using ModelContextProtocol.Extensions.Apps;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using TableSimulator.Application.Server;
@@ -50,12 +51,14 @@ public static class McpSetup
     {
         services.AddMcpServer(options => options.ServerInstructions = McpInstructions.Text)
             .WithHttpTransport()
-            .AddAuthorizationFilters();
+            .AddAuthorizationFilters()
+            .WithResources([typeof(BoardApp)]);
         // ako WithToolsFromAssembly, ale s upravou schem
         foreach (var method in ToolMethods())
         {
-            services.AddSingleton(provider => McpServerTool.Create(method, (object?)null,
-                new McpServerToolCreateOptions { Services = provider, SerializerOptions = ToolJson, SchemaCreateOptions = ToolSchemas }));
+            // _meta.ui nastroja so zobrazenim v klientovi (MCP Apps) podla [McpAppUi]
+            services.AddSingleton(provider => McpApps.ApplyAppUiAttributes(McpServerTool.Create(method, (object?)null,
+                new McpServerToolCreateOptions { Services = provider, SerializerOptions = ToolJson, SchemaCreateOptions = ToolSchemas })));
         }
         services.AddOptions<McpServerOptions>().Configure<IServerHost>((options, host) =>
             options.ServerInfo = new Implementation { Name = "TableSimulator", Version = host.Version });

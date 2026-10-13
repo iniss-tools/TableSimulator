@@ -11,8 +11,9 @@
          CA1863 - cache CompositeFormat pri textoch z Resources nema vykonovy zmysel
          CA1707 - konstanty UPPER_SNAKE (FILE_*, TYPE_*, EWA_EXT) a testy Oblast_CoOveruje
          CA1716, CA1720 - nazvy podla INISS a config.xml (Operator, Char, String, Int) - premenovanie by rozbilo konfiguraciu
-         CA1000, CA1710, CA1711 - konvencie verejneho API kniznic, pre aplikacie a ich spolocnu kniznicu bez uzitku -->
-    <NoWarn>$(NoWarn);CA1863;CA1707;CA1716;CA1720;CA1000;CA1710;CA1711</NoWarn>
+         CA1000, CA1710, CA1711 - konvencie verejneho API kniznic, pre aplikacie a ich spolocnu kniznicu bez uzitku
+         MCPEXP003 - MCP Apps (ModelContextProtocol.Extensions.Apps) su v SDK zatial experimentalne; server MCP ich pouziva zamerne -->
+    <NoWarn>$(NoWarn);CA1863;CA1707;CA1716;CA1720;CA1000;CA1710;CA1711;MCPEXP003</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
     <!-- CA1707 - nazvy testov Oblast_CoOveruje, CA1861 - konstantne polia v DataRow a ocakavanych hodnotach -->

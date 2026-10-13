@@ -43,6 +43,8 @@ public sealed class McpToolsServerTests
 
         public Simulator Simulator => simulator;
 
+        public McpClient Client => client;
+
         public async Task<JsonElement> Call(string tool, Dictionary<string, object?>? arguments = null)
         {
             var result = await client.CallToolAsync(tool, arguments, cancellationToken: test.CancellationToken);
@@ -210,6 +212,21 @@ public sealed class McpToolsServerTests
         StringAssert.EndsWith(content.GetProperty("viewUrl").GetString(), "/#/virtual/5");
         var layoutId = content.GetProperty("layout").GetString();
         Assert.AreEqual(layoutId, (await mcp.Call("get_virtual_layout", new() { ["id"] = layoutId })).GetProperty("id").GetString());
+
+        // MCP Apps: show_board so zobrazenim, board_view len pre aplikaciu, zdroj ui://
+        var tools = await mcp.Client.ListToolsAsync(cancellationToken: TestContext.CancellationToken);
+        var showMeta = tools.Single(t => t.Name == "show_board").ProtocolTool.Meta!;
+        Assert.AreEqual("ui://tablesimulator/board.html", showMeta["ui"]!["resourceUri"]!.GetValue<string>());
+        var viewMeta = tools.Single(t => t.Name == "board_view").ProtocolTool.Meta!;
+        Assert.AreEqual("app", viewMeta["ui"]!["visibility"]![0]!.GetValue<string>());
+        var resources = await mcp.Client.ListResourcesAsync(cancellationToken: TestContext.CancellationToken);
+        var app = resources.Single(r => r.Uri == "ui://tablesimulator/board.html");
+        Assert.AreEqual("text/html;profile=mcp-app", app.MimeType);
+        var html = await mcp.Client.ReadResourceAsync("ui://tablesimulator/board.html", cancellationToken: TestContext.CancellationToken);
+        StringAssert.Contains(((TextResourceContents)html.Contents[0]).Text, "ui/initialize");
+        var shown = await mcp.Call("show_board", new() { ["id"] = "7-129" });
+        var noChange = await mcp.Call("board_view", new() { ["id"] = "7-129", ["afterVersion"] = shown.GetProperty("version").GetInt64(), ["timeoutSeconds"] = 1 });
+        Assert.IsFalse(noChange.GetProperty("changed").GetBoolean());
 
         var fonts = await mcp.Call("list_fonts");
         Assert.AreEqual(0, fonts.GetProperty("files").GetArrayLength());
