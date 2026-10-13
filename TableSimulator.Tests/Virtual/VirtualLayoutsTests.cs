@@ -23,6 +23,17 @@ public sealed class VirtualLayoutsTests
     }
 
     [TestMethod]
+    public void Overenie_PrazdnyNazovANadpisSKodom()
+    {
+        var validator = new SetVirtualLayoutCommandValidator();
+
+        var codes = validator.Validate(new SetVirtualLayoutCommand("moje", new VirtualLayoutDto { Name = " ", Title = null! })).Errors.Select(e => e.ErrorCode).ToList();
+
+        // kazde pravidlo retazca ma svoj kod - web podla neho ukaze text
+        CollectionAssert.AreEquivalent(new[] { VirtualErrors.LayoutName, VirtualErrors.LayoutTitle }, codes);
+    }
+
+    [TestMethod]
     public void Serialize_TamASpat()
     {
         var layout = VirtualLayouts.FindBuiltIn("odchody")! with { Id = "moje", Name = "Moje", ShowDate = true, Clock = VirtualClock.Minutes };

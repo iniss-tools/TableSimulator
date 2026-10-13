@@ -37,27 +37,33 @@ public static class McpRequests
         };
     }
 
-    /// <summary>JSON profilu tabule ako v API (kluce camelCase, enumy podla kontraktov).</summary>
+    /// <summary>JSON ako v API (kluce camelCase, enumy podla kontraktov).</summary>
     private static readonly JsonSerializerOptions ProfileJson = new(JsonSerializerDefaults.Web);
 
     /// <summary>
     /// Profil po ciastocnej zmene <paramref name="patch" /> (JSON merge patch, RFC 7396): zadane kluce sa nahradia, objekty sa
     /// zlucia, null kluc odstrani (= predvolena hodnota).
     /// </summary>
-    public static BoardProfileDto PatchProfile(BoardProfileDto current, JsonElement patch)
+    public static BoardProfileDto PatchProfile(BoardProfileDto current, JsonElement patch) => Patch(current, patch, "board.profile");
+
+    /// <summary>
+    /// <paramref name="current" /> po ciastocnej zmene <paramref name="patch" /> (JSON merge patch, RFC 7396) - kluce ako v API;
+    /// chyba nastroja s kodom <paramref name="code" />.
+    /// </summary>
+    public static T Patch<T>(T current, JsonElement patch, string code) where T : class
     {
         ArgumentNullException.ThrowIfNull(current);
         if (patch.ValueKind != JsonValueKind.Object)
-            throw new McpException("board.profile: The profile change must be a JSON object.");
+            throw new McpException($"{code}: The change must be a JSON object.");
         var target = JsonSerializer.SerializeToNode(current, ProfileJson)!.AsObject();
         Merge(target, JsonNode.Parse(patch.GetRawText())!.AsObject());
         try
         {
-            return target.Deserialize<BoardProfileDto>(ProfileJson) ?? current;
+            return target.Deserialize<T>(ProfileJson) ?? current;
         }
         catch (JsonException e)
         {
-            throw new McpException($"board.profile: The profile is not valid: {e.Message}");
+            throw new McpException($"{code}: The value is not valid: {e.Message}");
         }
     }
 

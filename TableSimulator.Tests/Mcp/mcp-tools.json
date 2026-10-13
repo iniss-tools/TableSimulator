@@ -1084,6 +1084,78 @@
       }
     },
     {
+      "name": "delete_virtual_board",
+      "title": "Delete virtual board",
+      "description": "Deletes a virtual board; devices showing it lose the page.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Number of the virtual board.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "done": {
+            "description": "What was done.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "done"
+        ]
+      },
+      "annotations": {
+        "title": "Delete virtual board",
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "delete_virtual_layout",
+      "title": "Delete virtual board layout",
+      "description": "Deletes a custom layout; a layout used by virtual boards cannot be deleted.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Layout id.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "done": {
+            "description": "What was done.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "done"
+        ]
+      },
+      "annotations": {
+        "title": "Delete virtual board layout",
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
       "name": "get_board",
       "title": "Board detail",
       "description": "One board: what it shows as text rows, brightness and clock set by INISS, simulated fault, message counters and version. raw = true adds the board settings and the raw content with fonts and character codes.",
@@ -3916,6 +3988,347 @@
       }
     },
     {
+      "name": "get_virtual_board",
+      "title": "Virtual board content",
+      "description": "What a virtual board shows now: the records from its XML file as cells, the layout used and a page showing the board.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Number of the virtual board.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "board": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "rowCount": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "rowStart": {
+                "type": "integer"
+              },
+              "separator": {
+                "type": "string"
+              },
+              "template": {
+                "type": "string"
+              },
+              "parameter": {
+                "type": "string"
+              },
+              "layout": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "description",
+              "source",
+              "rowCount",
+              "rowStart",
+              "separator",
+              "template",
+              "parameter",
+              "layout"
+            ]
+          },
+          "source": {
+            "description": "The XML file the board shows; null = not found in the log folders.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "modified": {
+                "type": "string"
+              },
+              "station": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "written": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "validTo": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "rows": {
+                "type": "integer"
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "error": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "path",
+              "modified",
+              "station",
+              "key",
+              "written",
+              "validTo",
+              "rows",
+              "stale",
+              "error"
+            ]
+          },
+          "rows": {
+            "description": "Records shown, cells in the order of the INISS catalog table: name of the XML element (time, type, number, destination...) and text; parts separated by # alternate, a text ending with # blinks.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cells": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "text"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "cells"
+              ]
+            }
+          },
+          "layout": {
+            "description": "Layout used to draw the board.",
+            "type": "string"
+          },
+          "templateError": {
+            "description": "With an XSL template: why the page could not be built (noSource, notFound, template, failed); null = fine or no template.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "viewUrl": {
+            "description": "Page showing only this board; open it in a browser to see it (with login enabled the page needs signing in).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "board",
+          "source",
+          "rows",
+          "layout",
+          "templateError",
+          "viewUrl"
+        ]
+      },
+      "annotations": {
+        "title": "Virtual board content",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_virtual_layout",
+      "title": "Virtual board layout",
+      "description": "Whole layout of virtual boards: title ({name} = board name, {station} = station from the XML), clock, date, column headers, rows to fit, font, colors, columns (XML elements, label, width as fill, 12% or 6em, alignment, color text/accent/muted/delay or #rrggbb, bold, size) and alternation and blinking timing.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Layout id.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "builtIn": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          },
+          "showStation": {
+            "type": "boolean"
+          },
+          "clock": {
+            "type": "string",
+            "enum": [
+              "none",
+              "minutes",
+              "seconds"
+            ]
+          },
+          "showDate": {
+            "type": "boolean"
+          },
+          "columnHeaders": {
+            "type": "boolean"
+          },
+          "rows": {
+            "type": "integer"
+          },
+          "font": {
+            "type": "string"
+          },
+          "colors": {
+            "type": "object",
+            "properties": {
+              "background": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "headBackground": {
+                "type": "string"
+              },
+              "headText": {
+                "type": "string"
+              },
+              "accent": {
+                "type": "string"
+              },
+              "muted": {
+                "type": "string"
+              },
+              "delay": {
+                "type": "string"
+              },
+              "rowLine": {
+                "type": "string"
+              },
+              "rowAlternate": {
+                "type": "string"
+              }
+            }
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cells": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "label": {
+                  "type": "string"
+                },
+                "width": {
+                  "type": "string"
+                },
+                "align": {
+                  "type": "string",
+                  "enum": [
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "color": {
+                  "type": "string"
+                },
+                "bold": {
+                  "type": "boolean"
+                },
+                "size": {
+                  "type": "integer"
+                },
+                "separator": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "alternationMs": {
+            "type": "integer"
+          },
+          "blinkMs": {
+            "type": "integer"
+          },
+          "blinkPhases": {
+            "type": "integer"
+          }
+        }
+      },
+      "annotations": {
+        "title": "Virtual board layout",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
       "name": "import_iniss_station",
       "title": "Import station from INISS",
       "description": "Loads lines and boards from the INISS installation set in the simulator: missing ones are added, settings of existing lines are replaced, existing boards are kept. New boards get a face (board front) from the station data. INISS itself is not changed.",
@@ -4609,6 +5022,212 @@
       },
       "annotations": {
         "title": "Fault scenarios",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_virtual_boards",
+      "title": "Virtual boards",
+      "description": "Virtual boards - screens that show the XML boards INISS writes to its log folder (like INISSView): their definitions, the XML files found, the watched folders, layouts and XSL templates.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "boards": {
+            "description": "Virtual boards: which INISS XML board (source) they show, which records (rowStart, rowCount; null = all), separator, layout or XSL template.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "rowCount": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "rowStart": {
+                  "type": "integer"
+                },
+                "separator": {
+                  "type": "string"
+                },
+                "template": {
+                  "type": "string"
+                },
+                "parameter": {
+                  "type": "string"
+                },
+                "layout": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "description",
+                "source",
+                "rowCount",
+                "rowStart",
+                "separator",
+                "template",
+                "parameter",
+                "layout"
+              ]
+            }
+          },
+          "sources": {
+            "description": "XML boards found in the INISS log folders; stale = INISS no longer refreshes the file (probably not running).",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "modified": {
+                  "type": "string"
+                },
+                "station": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "written": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "validTo": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "rows": {
+                  "type": "integer"
+                },
+                "stale": {
+                  "type": "boolean"
+                },
+                "error": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "path",
+                "modified",
+                "station",
+                "key",
+                "written",
+                "validTo",
+                "rows",
+                "stale",
+                "error"
+              ]
+            }
+          },
+          "folders": {
+            "description": "Watched INISS log folders.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "exists": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "path",
+                "exists"
+              ]
+            }
+          },
+          "layouts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "builtIn": {
+                  "description": "Built-in layout; it cannot be changed, only copied.",
+                  "type": "boolean"
+                },
+                "columns": {
+                  "description": "Number of columns; 0 = columns as in the XML.",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "builtIn",
+                "columns"
+              ]
+            }
+          },
+          "defaultLayout": {
+            "description": "Layout of boards without their own layout.",
+            "type": "string"
+          },
+          "templates": {
+            "description": "XSL templates in the INISSView folder set in the simulator; empty without it.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "boards",
+          "sources",
+          "folders",
+          "layouts",
+          "defaultLayout",
+          "templates"
+        ]
+      },
+      "annotations": {
+        "title": "Virtual boards",
         "idempotentHint": true,
         "openWorldHint": false,
         "readOnlyHint": true
@@ -6005,6 +6624,365 @@
         "title": "Save fault scenario",
         "destructiveHint": false,
         "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "save_virtual_board",
+      "title": "Save virtual board",
+      "description": "Creates a virtual board or changes an existing one by a partial change (JSON merge patch) of its definition: name, description, source (XML file name without extension), rowStart (first record from 1), rowCount (null = all), separator (text instead of # in station and direction; empty = parts alternate), template (XSL template; empty = by layout), parameter (attribute x for the template), layout (empty = default). Only the given keys change; null sets the default. A new board needs at least name and source.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Number of the virtual board (also in its page address #/virtual/<number>).",
+            "type": "integer"
+          },
+          "changes": {
+            "description": "Partial change of the definition (JSON merge patch)."
+          }
+        },
+        "required": [
+          "id",
+          "changes"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "board": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "rowCount": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "rowStart": {
+                "type": "integer"
+              },
+              "separator": {
+                "type": "string"
+              },
+              "template": {
+                "type": "string"
+              },
+              "parameter": {
+                "type": "string"
+              },
+              "layout": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "description",
+              "source",
+              "rowCount",
+              "rowStart",
+              "separator",
+              "template",
+              "parameter",
+              "layout"
+            ]
+          },
+          "source": {
+            "description": "The XML file the board shows; null = not found in the log folders.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "modified": {
+                "type": "string"
+              },
+              "station": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "written": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "validTo": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "rows": {
+                "type": "integer"
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "error": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "path",
+              "modified",
+              "station",
+              "key",
+              "written",
+              "validTo",
+              "rows",
+              "stale",
+              "error"
+            ]
+          },
+          "rows": {
+            "description": "Records shown, cells in the order of the INISS catalog table: name of the XML element (time, type, number, destination...) and text; parts separated by # alternate, a text ending with # blinks.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cells": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "text"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "cells"
+              ]
+            }
+          },
+          "layout": {
+            "description": "Layout used to draw the board.",
+            "type": "string"
+          },
+          "templateError": {
+            "description": "With an XSL template: why the page could not be built (noSource, notFound, template, failed); null = fine or no template.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "viewUrl": {
+            "description": "Page showing only this board; open it in a browser to see it (with login enabled the page needs signing in).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "board",
+          "source",
+          "rows",
+          "layout",
+          "templateError",
+          "viewUrl"
+        ]
+      },
+      "annotations": {
+        "title": "Save virtual board",
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "save_virtual_layout",
+      "title": "Save virtual board layout",
+      "description": "Saves a custom layout: starts from a copy of another layout (copyFrom), else from the existing custom layout with this id, else from defaults, and applies a partial change (JSON merge patch, keys as in get_virtual_layout; arrays like columns are replaced whole). Built-in layouts cannot be changed, only copied. Boards using the layout redraw at once.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Layout id: lowercase letters without diacritics, digits and hyphens.",
+            "type": "string"
+          },
+          "copyFrom": {
+            "description": "Id of a layout to copy.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "changes": {
+            "description": "Partial change of the layout (JSON merge patch).",
+            "default": null
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "builtIn": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          },
+          "showStation": {
+            "type": "boolean"
+          },
+          "clock": {
+            "type": "string",
+            "enum": [
+              "none",
+              "minutes",
+              "seconds"
+            ]
+          },
+          "showDate": {
+            "type": "boolean"
+          },
+          "columnHeaders": {
+            "type": "boolean"
+          },
+          "rows": {
+            "type": "integer"
+          },
+          "font": {
+            "type": "string"
+          },
+          "colors": {
+            "type": "object",
+            "properties": {
+              "background": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "headBackground": {
+                "type": "string"
+              },
+              "headText": {
+                "type": "string"
+              },
+              "accent": {
+                "type": "string"
+              },
+              "muted": {
+                "type": "string"
+              },
+              "delay": {
+                "type": "string"
+              },
+              "rowLine": {
+                "type": "string"
+              },
+              "rowAlternate": {
+                "type": "string"
+              }
+            }
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cells": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "label": {
+                  "type": "string"
+                },
+                "width": {
+                  "type": "string"
+                },
+                "align": {
+                  "type": "string",
+                  "enum": [
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "color": {
+                  "type": "string"
+                },
+                "bold": {
+                  "type": "boolean"
+                },
+                "size": {
+                  "type": "integer"
+                },
+                "separator": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "alternationMs": {
+            "type": "integer"
+          },
+          "blinkMs": {
+            "type": "integer"
+          },
+          "blinkPhases": {
+            "type": "integer"
+          }
+        }
+      },
+      "annotations": {
+        "title": "Save virtual board layout",
+        "destructiveHint": false,
+        "idempotentHint": true,
         "openWorldHint": false,
         "readOnlyHint": false
       }

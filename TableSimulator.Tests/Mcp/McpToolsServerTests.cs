@@ -10,11 +10,13 @@ using TableSimulator.Contracts.Boards;
 using TableSimulator.Contracts.Keys;
 using TableSimulator.Contracts.Lines;
 using TableSimulator.Contracts.Scenarios;
+using TableSimulator.Contracts.Virtual;
 using TableSimulator.Core.Protocols.Apel;
 using TableSimulator.Core.Simulation;
 using TableSimulator.Tests.Server;
 using static TableSimulator.Tests.Archive.ArchiveReaderTests;
 using static TableSimulator.Tests.Server.RecordingComparisonApiTests;
+using static TableSimulator.Tests.Virtual.XmlTableTests;
 
 namespace TableSimulator.Tests.Mcp;
 
@@ -86,7 +88,12 @@ public sealed class McpToolsServerTests
             """<H d="2026-10-03" c="22:00:00" u="hlásenie" n="Príchod" s="Dolné Mesto" t="Os" v="7813" kp="1" zp="0" e="OK"/>"""),
             TestContext.CancellationToken);
 
+        await File.WriteAllBytesAsync(Path.Combine(logs, "DolneMestoO.xml"), Xml(Row("11:35", "7813", "Bratislava#Wien") + Row("11:52", "601")),
+            TestContext.CancellationToken);
+
         var admin = server.Client();
+        var virtualBoard = new SetVirtualBoardRequest { Name = "Odchody", Source = "DolneMestoO", RowStart = 1, Separator = ", " };
+        Assert.AreEqual(HttpStatusCode.NoContent, (await admin.PutAsJsonAsync("/api/virtual/5", virtualBoard, TestContext.CancellationToken)).StatusCode);
         var line = new SetLineRequest { TableClass = 10, Manufacturer = "APEL", Endpoint = @"\\.\PIPE\TableSimulatorTest-" + Guid.NewGuid().ToString("N") };
         Assert.AreEqual(HttpStatusCode.NoContent, (await admin.PutAsJsonAsync("/api/lines/7", line, TestContext.CancellationToken)).StatusCode);
         var simulator = server.Services.GetRequiredService<Simulator>();
@@ -186,6 +193,24 @@ public sealed class McpToolsServerTests
         Assert.AreEqual("led-matrix", design.GetProperty("design").GetProperty("renderer").GetString());
         var faceId = (await mcp.Call("list_faces")).GetProperty("faces")[0].GetProperty("id").GetString();
         Assert.AreEqual(faceId, (await mcp.Call("get_face", new() { ["id"] = faceId })).GetProperty("id").GetString());
+        // virtualne tabule: server prechadza priecinky kazde 2 s
+        var overview = await mcp.Call("list_virtual_boards");
+        Assert.AreEqual(5, overview.GetProperty("boards")[0].GetProperty("id").GetInt32());
+        JsonElement content = default;
+        for (var i = 0; i < 50; i++)
+        {
+            content = await mcp.Call("get_virtual_board", new() { ["id"] = 5 });
+            if (content.GetProperty("source").ValueKind == JsonValueKind.Object)
+                break;
+            await Task.Delay(100, TestContext.CancellationToken);
+        }
+
+        Assert.AreEqual(2, content.GetProperty("rows").GetArrayLength());
+        StringAssert.Contains(content.GetProperty("rows")[0].ToString(), "7813");
+        StringAssert.EndsWith(content.GetProperty("viewUrl").GetString(), "/#/virtual/5");
+        var layoutId = content.GetProperty("layout").GetString();
+        Assert.AreEqual(layoutId, (await mcp.Call("get_virtual_layout", new() { ["id"] = layoutId })).GetProperty("id").GetString());
+
         var fonts = await mcp.Call("list_fonts");
         Assert.AreEqual(0, fonts.GetProperty("files").GetArrayLength());
         CollectionAssert.Contains(fonts.GetProperty("charFonts").EnumerateArray().Select(f => f.GetString()).ToList(), "7x14");
@@ -282,6 +307,21 @@ public sealed class McpToolsServerTests
         await mcp.Call("delete_face", new() { ["id"] = "moje-celo" });
         await mcp.Call("delete_design", new() { ["id"] = "moj-vzhlad" });
 
+        // virtualna tabula: nova, ciastocna zmena, null = predvolena hodnota; rozlozenie z kopie
+        var created = await mcp.Call("save_virtual_board", new() { ["id"] = 6, ["changes"] = new { name = "Podchod", source = "DolneMestoO", rowCount = 1 } });
+        Assert.AreEqual(1, created.GetProperty("board").GetProperty("rowCount").GetInt32());
+        var allRows = await mcp.Call("save_virtual_board", new() { ["id"] = 6, ["changes"] = new Dictionary<string, object?> { ["rowCount"] = null } });
+        Assert.AreEqual(JsonValueKind.Null, allRows.GetProperty("board").GetProperty("rowCount").ValueKind);
+        Assert.AreEqual("Podchod", allRows.GetProperty("board").GetProperty("name").GetString());
+        var layout = await mcp.Call("save_virtual_layout", new() { ["id"] = "moje-odchody", ["copyFrom"] = "odchody", ["changes"] = new { name = "Moje", title = "Odchody vlakov" } });
+        Assert.AreEqual("Odchody vlakov", layout.GetProperty("title").GetString());
+        Assert.IsFalse(layout.GetProperty("builtIn").GetBoolean());
+        StringAssert.Contains(await mcp.Error("save_virtual_layout", new() { ["id"] = "odchody", ["changes"] = new { title = "X" } }), "virtual.layoutBuiltIn");
+        Assert.AreEqual("moje-odchody", (await mcp.Call("save_virtual_board", new() { ["id"] = 6, ["changes"] = new { layout = "moje-odchody" } })).GetProperty("layout").GetString());
+        StringAssert.Contains(await mcp.Error("delete_virtual_layout", new() { ["id"] = "moje-odchody" }), "virtual.layoutInUse");
+        await mcp.Call("delete_virtual_board", new() { ["id"] = 6 });
+        await mcp.Call("delete_virtual_layout", new() { ["id"] = "moje-odchody" });
+
         // stanica z INISSu bez programu INISSu v nastaveni
         StringAssert.Contains(await mcp.Error("get_iniss_station", new()), "iniss.notConfigured");
         StringAssert.Contains(await mcp.Error("import_iniss_station", new()), "iniss.notConfigured");
@@ -294,7 +334,8 @@ public sealed class McpToolsServerTests
         var audit = await server.Client().GetFromJsonAsync<AuditPageDto>("/api/audit?limit=200", TestContext.CancellationToken);
         var actions = audit!.Entries.Where(e => e.User == "key:Agent operator").Select(e => e.Action).ToHashSet();
         CollectionAssert.IsSubsetOf(new[] { "SetLine", "SetBoard", "SendFrame", "SetBoardFault", "ClearBoard", "CreateFaultScenario", "SetFaultScenario",
-            "StartFaultScenario", "StopFaultScenario", "PlayRecording", "SetDesign", "DeleteDesign", "SetFace", "DeleteFace", "DeleteBoard", "DeleteLine" },
+            "StartFaultScenario", "StopFaultScenario", "PlayRecording", "SetDesign", "DeleteDesign", "SetFace", "DeleteFace", "SetVirtualBoard", "SetVirtualLayout", "DeleteVirtualBoard", "DeleteVirtualLayout",
+            "DeleteBoard", "DeleteLine" },
             actions.ToArray());
         CollectionAssert.IsSubsetOf(mcp.WriteTools.ToArray(), mcp.Called.ToArray(), "kazdy nastroj so zapisom musi byt v tomto teste");
         CollectionAssert.Contains(mcp.Called.ToArray(), "get_iniss_station");

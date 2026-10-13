@@ -13,8 +13,10 @@ public sealed partial class SetVirtualLayoutCommandValidator : AbstractValidator
         RuleFor(c => c.Layout).NotNull().WithErrorCode(VirtualErrors.LayoutName);
         When(c => c.Layout is not null, () =>
         {
-            RuleFor(c => c.Layout.Name).Must(n => !string.IsNullOrWhiteSpace(n)).MaximumLength(100).WithErrorCode(VirtualErrors.LayoutName);
-            RuleFor(c => c.Layout.Title).NotNull().MaximumLength(200).WithErrorCode(VirtualErrors.LayoutTitle);
+            // kod chyby patri ku kazdemu pravidlu retazca, nielen k poslednemu
+            RuleFor(c => c.Layout.Name).Must(n => !string.IsNullOrWhiteSpace(n)).WithErrorCode(VirtualErrors.LayoutName).WithMessage("The layout needs a name.")
+                .MaximumLength(100).WithErrorCode(VirtualErrors.LayoutName);
+            RuleFor(c => c.Layout.Title).NotNull().WithErrorCode(VirtualErrors.LayoutTitle).MaximumLength(200).WithErrorCode(VirtualErrors.LayoutTitle);
             RuleFor(c => c.Layout.Rows).InclusiveBetween(1, 40).WithErrorCode(VirtualErrors.LayoutRows);
             RuleFor(c => c.Layout.Font).Must(f => f is null || f.Length <= 100 && f.IndexOfAny([';', '{', '}', '<', '>']) < 0)
                 .WithErrorCode(VirtualErrors.LayoutFont);
