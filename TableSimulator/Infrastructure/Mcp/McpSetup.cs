@@ -1,6 +1,9 @@
+using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.AI;
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -28,12 +31,32 @@ public static class McpSetup
     /// </summary>
     private static readonly JsonSerializerOptions ToolJson = new(McpJsonUtilities.DefaultOptions) { DefaultIgnoreCondition = JsonIgnoreCondition.Never };
 
+    /// <summary>
+    /// Schemy nastrojov: <see cref="TimeOnly" /> a <see cref="DateTime" /> sa zapisu bez casoveho pasma, co formaty
+    /// <c>time</c> a <c>date-time</c> (RFC 3339) nepripustaju - klient by vysledok odmietol, preto bez formatu.
+    /// </summary>
+    private static readonly AIJsonSchemaCreateOptions ToolSchemas = new()
+    {
+        TransformSchemaNode = (context, node) =>
+        {
+            var type = Nullable.GetUnderlyingType(context.TypeInfo.Type) ?? context.TypeInfo.Type;
+            if ((type == typeof(TimeOnly) || type == typeof(DateTime)) && node is JsonObject schema)
+                schema.Remove("format");
+            return node;
+        }
+    };
+
     public static IServiceCollection AddMcp(this IServiceCollection services)
     {
         services.AddMcpServer(options => options.ServerInstructions = McpInstructions.Text)
             .WithHttpTransport()
-            .AddAuthorizationFilters()
-            .WithToolsFromAssembly(typeof(McpSetup).Assembly, ToolJson);
+            .AddAuthorizationFilters();
+        // ako WithToolsFromAssembly, ale s upravou schem
+        foreach (var method in ToolMethods())
+        {
+            services.AddSingleton(provider => McpServerTool.Create(method, (object?)null,
+                new McpServerToolCreateOptions { Services = provider, SerializerOptions = ToolJson, SchemaCreateOptions = ToolSchemas }));
+        }
         services.AddOptions<McpServerOptions>().Configure<IServerHost>((options, host) =>
             options.ServerInfo = new Implementation { Name = "TableSimulator", Version = host.Version });
         services.AddAuthorizationBuilder().AddPolicy(Policy, policy => policy
@@ -41,6 +64,15 @@ public static class McpSetup
             .RequireAuthenticatedUser());
         return services;
     }
+
+    /// <summary>Staticke metody nastrojov z tried <see cref="McpServerToolTypeAttribute" /> v <c>Mcp/</c>.</summary>
+    public static IReadOnlyList<MethodInfo> ToolMethods() =>
+        typeof(McpSetup).Assembly.GetTypes()
+            .Where(t => t.GetCustomAttribute<McpServerToolTypeAttribute>() is not null)
+            .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            .Where(m => m.GetCustomAttribute<McpServerToolAttribute>() is not null)
+            .Select(m => m.IsStatic ? m : throw new InvalidOperationException($"MCP tool {m.DeclaringType?.Name}.{m.Name} must be static."))
+            .ToList();
 
     /// <summary>
     /// Spojenie <see cref="Pattern" />; poziadavka z cudzej stranky (hlavicka Origin s inym serverom) sa odmietne -

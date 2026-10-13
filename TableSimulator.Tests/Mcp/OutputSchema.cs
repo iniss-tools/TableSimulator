@@ -1,13 +1,22 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace TableSimulator.Tests.Mcp;
 
 /// <summary>
 /// Kontrola vysledku nastroja voci jeho scheme vystupu - podmnozina JSON Schema, ktoru generuje SDK: typ (aj s null),
-/// povinne a vnorene vlastnosti, polozky pola, slovnik, enum a odkaz <c>$ref</c> v ramci schemy.
+/// povinne a vnorene vlastnosti, polozky pola, slovnik, enum, format datumu a casu a odkaz <c>$ref</c> v ramci schemy.
 /// </summary>
 internal static class OutputSchema
 {
+    /// <summary>Formaty JSON Schema podla RFC 3339 - cas vzdy s pasmom.</summary>
+    private static readonly Dictionary<string, Regex> Formats = new()
+    {
+        ["date-time"] = new(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$"),
+        ["date"] = new(@"^\d{4}-\d{2}-\d{2}$"),
+        ["time"] = new(@"^\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$")
+    };
+
     public static List<string> Validate(JsonElement value, JsonElement schema)
     {
         var errors = new List<string>();
@@ -31,6 +40,10 @@ internal static class OutputSchema
 
         if (value.ValueKind == JsonValueKind.Null)
             return;
+        // klient (Claude Code) format kontroluje - cas bez pasma v "time" alebo "date-time" odmietne
+        if (value.ValueKind == JsonValueKind.String && schema.TryGetProperty("format", out var format)
+                                                    && Formats.TryGetValue(format.GetString()!, out var pattern) && !pattern.IsMatch(value.GetString()!))
+            errors.Add($"{path}: \"{value.GetString()}\" nie je format {format.GetString()}");
         if (schema.TryGetProperty("enum", out var values) && !values.EnumerateArray().Any(v => v.ValueKind == value.ValueKind && v.ToString() == value.ToString()))
             errors.Add($"{path}: {value} nie je medzi hodnotami enum");
         if (value.ValueKind == JsonValueKind.Object)

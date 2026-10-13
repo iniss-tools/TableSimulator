@@ -402,8 +402,7 @@
             "type": [
               "string",
               "null"
-            ],
-            "format": "date-time"
+            ]
           },
           "version": {
             "description": "Increases with every change of the content or settings; pass it to wait_for_board_change.",
@@ -641,8 +640,7 @@
                 "type": [
                   "string",
                   "null"
-                ],
-                "format": "date-time"
+                ]
               },
               "clockSetAt": {
                 "type": [
@@ -1109,8 +1107,7 @@
               "type": "object",
               "properties": {
                 "time": {
-                  "type": "string",
-                  "format": "time"
+                  "type": "string"
                 },
                 "kind": {
                   "type": "string"
@@ -1411,8 +1408,7 @@
               "type": "object",
               "properties": {
                 "time": {
-                  "type": "string",
-                  "format": "time"
+                  "type": "string"
                 },
                 "kind": {
                   "type": "string"
@@ -1770,8 +1766,7 @@
               "type": "object",
               "properties": {
                 "time": {
-                  "type": "string",
-                  "format": "time"
+                  "type": "string"
                 },
                 "station": {
                   "type": "string"

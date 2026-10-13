@@ -39,12 +39,7 @@ public sealed partial class McpToolsTests
     [GeneratedRegex("^[a-z]+(_[a-z]+)*$")]
     private static partial Regex SnakeCase();
 
-    private static List<MethodInfo> ToolMethods() =>
-        typeof(McpSetup).Assembly.GetTypes()
-            .Where(t => t.GetCustomAttribute<McpServerToolTypeAttribute>() is not null)
-            .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-            .Where(m => m.GetCustomAttribute<McpServerToolAttribute>() is not null)
-            .ToList();
+    private static IReadOnlyList<MethodInfo> ToolMethods() => McpSetup.ToolMethods();
 
     /// <summary>Parameter, ktory dosadi server (handler, cas, zrusenie) - model ho nevidi.</summary>
     private static bool IsInjected(ParameterInfo parameter) =>

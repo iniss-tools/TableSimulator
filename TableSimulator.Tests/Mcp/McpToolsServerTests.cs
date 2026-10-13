@@ -86,6 +86,8 @@ public sealed class McpToolsServerTests
         var simulator = server.Services.GetRequiredService<Simulator>();
         // samoucenie zalozi tabulu 7-129
         simulator.Receive(7, ApelFrame.Build(0x81, new ApelRecord(0, "Praha"u8.ToArray())));
+        // hodiny tabule (DateTime bez pasma) - vo vystupe nesmie mat format date-time
+        simulator.Receive(7, Convert.FromHexString("100281810705301401101020" + "26B01003"));
         foreach (var (name, content) in new[]
                  {
                      ("pred", RecordingComparisonApiTests.Recording((0, Row(3, 1, "Os 1234 Žilina")), (10, Row(3, 1, "Os 1236 Košice")), (12, Row(5, 1, "Pokladňa")))),
@@ -131,6 +133,7 @@ public sealed class McpToolsServerTests
         var board = await mcp.Call("get_board", new() { ["id"] = "7-129", ["raw"] = true });
         Assert.AreEqual("Praha", board.GetProperty("rows")[0].GetString());
         Assert.AreEqual("chars", board.GetProperty("family").GetString());
+        Assert.AreEqual("2026-10-01T14:30:05", board.GetProperty("clock").GetString());
         Assert.AreEqual(JsonValueKind.Object, board.GetProperty("display").ValueKind);
         var version = board.GetProperty("version").GetInt64();
 
