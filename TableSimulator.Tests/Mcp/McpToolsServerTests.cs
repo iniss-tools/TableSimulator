@@ -177,6 +177,18 @@ public sealed class McpToolsServerTests
         await mcp.Call("get_recent_reports");
 
         await mcp.Call("get_traffic_statistics", new() { ["series"] = true });
+
+        // vzhlad: vstavane vzhlady a predlohy, pisma bez priecinka pisiem
+        var designs = (await mcp.Call("list_designs")).GetProperty("designs").EnumerateArray().Select(d => d.GetProperty("id").GetString()).ToList();
+        CollectionAssert.Contains(designs, "elen-led");
+        var design = await mcp.Call("get_design", new() { ["id"] = "elen-led" });
+        Assert.IsTrue(design.GetProperty("builtIn").GetBoolean());
+        Assert.AreEqual("led-matrix", design.GetProperty("design").GetProperty("renderer").GetString());
+        var faceId = (await mcp.Call("list_faces")).GetProperty("faces")[0].GetProperty("id").GetString();
+        Assert.AreEqual(faceId, (await mcp.Call("get_face", new() { ["id"] = faceId })).GetProperty("id").GetString());
+        var fonts = await mcp.Call("list_fonts");
+        Assert.AreEqual(0, fonts.GetProperty("files").GetArrayLength());
+        CollectionAssert.Contains(fonts.GetProperty("charFonts").EnumerateArray().Select(f => f.GetString()).ToList(), "7x14");
         Assert.AreEqual("Vypadok", (await mcp.Call("list_scenarios")).GetProperty("scenarios")[0].GetProperty("name").GetString());
 
         CollectionAssert.AreEquivalent(mcp.Tools.ToArray(), mcp.Called.ToArray(), "kazdy nastroj na citanie musi byt v tomto teste");
@@ -241,6 +253,32 @@ public sealed class McpToolsServerTests
         await mcp.Call("play_recording", new() { ["name"] = recording.GetProperty("name").GetString(), ["speed"] = 10 });
         await mcp.Call("stop_replay");
 
+        // vzhlad tabule: kopia vzhladu a predlohy, ciastocna zmena profilu, pouzita predloha sa neda zmazat
+        var builtInFace = (await mcp.Call("list_faces")).GetProperty("faces").EnumerateArray().First(f => f.GetProperty("builtIn").GetBoolean())
+            .GetProperty("id").GetString();
+        var myDesign = await mcp.Call("save_design", new() { ["id"] = "moj-vzhlad", ["copyFrom"] = "elen-led", ["name"] = "Môj vzhľad" });
+        Assert.IsFalse(myDesign.GetProperty("builtIn").GetBoolean());
+        Assert.AreEqual("Môj vzhľad", myDesign.GetProperty("design").GetProperty("name").GetString());
+        var myFace = await mcp.Call("save_face", new() { ["id"] = "moje-celo", ["copyFrom"] = builtInFace, ["name"] = "Moje čelo" });
+        Assert.IsFalse(myFace.GetProperty("builtIn").GetBoolean());
+        var look = await mcp.Call("set_board_look", new()
+        {
+            ["id"] = "8-129", ["design"] = "moj-vzhlad",
+            ["profile"] = new { face = "moje-celo", faceValues = new { track = "1" }, charFonts = new Dictionary<string, object> { ["17"] = new { font = "7x14", bold = true } } }
+        });
+        Assert.AreEqual("moj-vzhlad", look.GetProperty("design").GetString());
+        Assert.AreEqual("moje-celo", look.GetProperty("profile").GetProperty("face").GetString());
+        Assert.AreEqual("7x14", look.GetProperty("profile").GetProperty("charFonts").GetProperty("17").GetProperty("font").GetString());
+        StringAssert.EndsWith(look.GetProperty("viewUrl").GetString(), "/#/view/8-129");
+        StringAssert.Contains(await mcp.Error("set_board_look", new() { ["id"] = "8-129", ["profile"] = new { charFonts = new Dictionary<string, object> { ["99"] = new { font = "x" } } } }),
+            "board.charFonts");
+        StringAssert.Contains(await mcp.Error("delete_face", new() { ["id"] = "moje-celo" }), "face.inUse");
+        var reset = await mcp.Call("set_board_look", new() { ["id"] = "8-129", ["design"] = "", ["profile"] = new Dictionary<string, object?> { ["face"] = null } });
+        Assert.AreEqual(JsonValueKind.Null, reset.GetProperty("profile").GetProperty("face").ValueKind);
+        Assert.AreEqual(JsonValueKind.Null, reset.GetProperty("design").ValueKind);
+        await mcp.Call("delete_face", new() { ["id"] = "moje-celo" });
+        await mcp.Call("delete_design", new() { ["id"] = "moj-vzhlad" });
+
         // stanica z INISSu bez programu INISSu v nastaveni
         StringAssert.Contains(await mcp.Error("get_iniss_station", new()), "iniss.notConfigured");
         StringAssert.Contains(await mcp.Error("import_iniss_station", new()), "iniss.notConfigured");
@@ -253,7 +291,8 @@ public sealed class McpToolsServerTests
         var audit = await server.Client().GetFromJsonAsync<AuditPageDto>("/api/audit?limit=200", TestContext.CancellationToken);
         var actions = audit!.Entries.Where(e => e.User == "key:Agent operator").Select(e => e.Action).ToHashSet();
         CollectionAssert.IsSubsetOf(new[] { "SetLine", "SetBoard", "SendFrame", "SetBoardFault", "ClearBoard", "CreateFaultScenario", "SetFaultScenario",
-            "StartFaultScenario", "StopFaultScenario", "PlayRecording", "DeleteBoard", "DeleteLine" }, actions.ToArray());
+            "StartFaultScenario", "StopFaultScenario", "PlayRecording", "SetDesign", "DeleteDesign", "SetFace", "DeleteFace", "DeleteBoard", "DeleteLine" },
+            actions.ToArray());
         CollectionAssert.IsSubsetOf(mcp.WriteTools.ToArray(), mcp.Called.ToArray(), "kazdy nastroj so zapisom musi byt v tomto teste");
         CollectionAssert.Contains(mcp.Called.ToArray(), "get_iniss_station");
     }

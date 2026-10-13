@@ -971,6 +971,78 @@
       }
     },
     {
+      "name": "delete_design",
+      "title": "Delete board design",
+      "description": "Deletes a custom design; a built-in design with the same id is used again. Boards using a deleted design get the default one.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Design id.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "done": {
+            "description": "What was done.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "done"
+        ]
+      },
+      "annotations": {
+        "title": "Delete board design",
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "delete_face",
+      "title": "Delete board face",
+      "description": "Deletes a custom face; a face used by boards cannot be deleted.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Face id.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "done": {
+            "description": "What was done.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "done"
+        ]
+      },
+      "annotations": {
+        "title": "Delete board face",
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
       "name": "delete_line",
       "title": "Delete line",
       "description": "Deletes a line together with all its boards.",
@@ -1693,6 +1765,494 @@
       },
       "annotations": {
         "title": "Board detail",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_design",
+      "title": "Board design",
+      "description": "Whole design: pitch and size of dots, shape, colors per ELEN font color (0 none, 1 red, 2 green, 3 yellow, mono), off dots, glow, background, plate, frame, row gaps, module seams, header fonts and colors, flap material. Colors are #rrggbb.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Design id.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "builtIn": {
+            "type": "boolean"
+          },
+          "overrides": {
+            "type": "boolean"
+          },
+          "design": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "renderer": {
+                "type": "string"
+              },
+              "pitch": {
+                "type": "number"
+              },
+              "dot": {
+                "type": "number"
+              },
+              "shape": {
+                "type": "string",
+                "enum": [
+                  "circle",
+                  "square",
+                  "rounded"
+                ]
+              },
+              "off": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "colors": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "glow": {
+                "type": "number"
+              },
+              "background": {
+                "type": "string"
+              },
+              "plate": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "moduleMargin": {
+                "type": "number"
+              },
+              "rowGap": {
+                "type": "number"
+              },
+              "padding": {
+                "type": "number"
+              },
+              "frame": {
+                "type": "object",
+                "properties": {
+                  "width": {
+                    "type": "number"
+                  },
+                  "color": {
+                    "type": "string"
+                  },
+                  "radius": {
+                    "type": "number"
+                  },
+                  "style": {
+                    "type": "string",
+                    "enum": [
+                      "flat",
+                      "metal"
+                    ],
+                    "default": "flat"
+                  },
+                  "badge": {
+                    "type": "string",
+                    "default": ""
+                  }
+                },
+                "required": [
+                  "width",
+                  "color",
+                  "radius"
+                ]
+              },
+              "gapColor": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "seam": {
+                "type": "object",
+                "properties": {
+                  "color": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "width": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "color",
+                  "width"
+                ]
+              },
+              "header": {
+                "type": "object",
+                "properties": {
+                  "background": {
+                    "type": "string"
+                  },
+                  "color": {
+                    "type": "string"
+                  },
+                  "font": {
+                    "type": "string"
+                  },
+                  "bold": {
+                    "type": "boolean"
+                  },
+                  "clockColor": {
+                    "type": "string"
+                  },
+                  "clockBackground": {
+                    "type": "string"
+                  },
+                  "clockFont": {
+                    "type": "string"
+                  },
+                  "panel": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "styles": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "color": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "font": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "bold": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "color",
+                        "font",
+                        "bold"
+                      ]
+                    },
+                    "default": null
+                  }
+                },
+                "required": [
+                  "background",
+                  "color",
+                  "font",
+                  "bold",
+                  "clockColor",
+                  "clockBackground",
+                  "clockFont"
+                ]
+              },
+              "flaps": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "colors": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "top": {
+                          "type": "string"
+                        },
+                        "bottom": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "top",
+                        "bottom",
+                        "text"
+                      ]
+                    }
+                  },
+                  "row": {
+                    "type": "string"
+                  },
+                  "split": {
+                    "type": "string"
+                  },
+                  "unknown": {
+                    "type": "string"
+                  },
+                  "font": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "colors",
+                  "row",
+                  "split",
+                  "unknown",
+                  "font"
+                ]
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "builtIn",
+          "overrides",
+          "design"
+        ]
+      },
+      "annotations": {
+        "title": "Board design",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_face",
+      "title": "Board face",
+      "description": "Whole face: margins around the matrix, row groups, module width and elements. Positions and sizes are in matrix dots, measured from the edge of the anchor (face, matrix or a row) given by the alignment. Texts may contain variables {key} filled from profile.faceValues.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Face id.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "builtIn": {
+            "type": "boolean"
+          },
+          "margin": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "integer",
+                "default": 0
+              },
+              "top": {
+                "type": "integer",
+                "default": 0
+              },
+              "right": {
+                "type": "integer",
+                "default": 0
+              },
+              "bottom": {
+                "type": "integer",
+                "default": 0
+              }
+            }
+          },
+          "rowGap": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "rowGroup": {
+            "type": "integer"
+          },
+          "groupGap": {
+            "type": "integer"
+          },
+          "moduleWidth": {
+            "type": "integer"
+          },
+          "elements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "rect",
+                    "text",
+                    "clock",
+                    "symbol",
+                    "image"
+                  ]
+                },
+                "anchor": {
+                  "type": "string",
+                  "enum": [
+                    "face",
+                    "matrix",
+                    "row",
+                    "top",
+                    "bottom",
+                    "left",
+                    "right"
+                  ]
+                },
+                "row": {
+                  "type": "integer"
+                },
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "width": {
+                  "type": "number"
+                },
+                "height": {
+                  "type": "number"
+                },
+                "align": {
+                  "type": "string",
+                  "enum": [
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "vAlign": {
+                  "type": "string",
+                  "enum": [
+                    "top",
+                    "middle",
+                    "bottom"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "size2": {
+                  "type": "number"
+                },
+                "bold": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "style": {
+                  "type": "string"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "fill": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "number"
+                },
+                "radius": {
+                  "type": "number"
+                },
+                "maxWidth": {
+                  "type": "number"
+                },
+                "spacing": {
+                  "type": "number"
+                },
+                "format": {
+                  "type": "string",
+                  "enum": [
+                    "H:mm",
+                    "HH:mm",
+                    "HH:mm:ss"
+                  ]
+                },
+                "render": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "display"
+                  ]
+                },
+                "symbol": {
+                  "type": "string",
+                  "enum": [
+                    "arrowUp",
+                    "arrowDown",
+                    "arrowLeft",
+                    "arrowRight",
+                    "arrowUpLeft",
+                    "arrowUpRight",
+                    "arrowDownLeft",
+                    "arrowDownRight",
+                    "arrowsLeftRight",
+                    "arrowsUpDown"
+                  ]
+                },
+                "image": {
+                  "type": "string"
+                },
+                "locked": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "annotations": {
+        "title": "Board face",
         "idempotentHint": true,
         "openWorldHint": false,
         "readOnlyHint": true
@@ -3551,6 +4111,194 @@
       }
     },
     {
+      "name": "list_designs",
+      "title": "Board designs",
+      "description": "Designs of boards - how the dots, frame, plate and flaps look (built-in and custom). A custom design with the id of a built-in one overrides it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "designs": {
+            "description": "Designs; renderer led-matrix = dots (LED and LCD), flaps = split-flap boards.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "renderer": {
+                  "type": "string"
+                },
+                "builtIn": {
+                  "type": "boolean"
+                },
+                "overrides": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "renderer",
+                "builtIn"
+              ]
+            }
+          }
+        },
+        "required": [
+          "designs"
+        ]
+      },
+      "annotations": {
+        "title": "Board designs",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_faces",
+      "title": "Board faces",
+      "description": "Faces (board fronts): areas, labels, clocks, symbols and images around the dot matrix, shared by boards via profile.face.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "faces": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "builtIn": {
+                  "description": "Built-in face; it cannot be changed, only copied.",
+                  "type": "boolean"
+                },
+                "elements": {
+                  "description": "Number of elements (areas, texts, clocks, symbols, images).",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "builtIn",
+                "elements"
+              ]
+            }
+          }
+        },
+        "required": [
+          "faces"
+        ]
+      },
+      "annotations": {
+        "title": "Board faces",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_fonts",
+      "title": "Board fonts",
+      "description": "ELEN font files (.bin) in the fonts folder set in the simulator with their fonts, and the dot fonts for LCD1/ERP character boards.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "file": {
+                  "description": "File name for profile.fontFile.",
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "fonts": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "index": {
+                        "description": "Position of the font in the file.",
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "height": {
+                        "description": "Height in dots.",
+                        "type": "integer"
+                      },
+                      "maxWidth": {
+                        "description": "Width of the widest character in dots.",
+                        "type": "integer"
+                      },
+                      "proportional": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "index",
+                      "name",
+                      "height",
+                      "maxWidth",
+                      "proportional"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "file",
+                "name",
+                "fonts"
+              ]
+            }
+          },
+          "charFonts": {
+            "description": "Dot fonts for chars boards (LCD1, ERP) usable in profile.charFonts.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "files",
+          "charFonts"
+        ]
+      },
+      "annotations": {
+        "title": "Board fonts",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
       "name": "list_recordings",
       "title": "Recordings",
       "description": "Recordings of the communication between INISS and the boards with their length [s], lines, number of messages and note, plus the state of the recorder and of a running replay.",
@@ -3942,6 +4690,1068 @@
         "title": "Play recording",
         "destructiveHint": true,
         "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "save_design",
+      "title": "Save board design",
+      "description": "Saves a custom design: the whole design (as from get_design), or a copy of another design (copyFrom), optionally renamed. Saving under the id of a built-in design overrides it; deleting the custom one brings the built-in back. Boards using it redraw at once.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Design id: 1-40 lowercase letters, digits and hyphens.",
+            "type": "string"
+          },
+          "design": {
+            "description": "The whole design; omit it when copying.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "renderer": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "pitch": {
+                "type": "number"
+              },
+              "dot": {
+                "type": "number"
+              },
+              "shape": {
+                "type": "string",
+                "enum": [
+                  "circle",
+                  "square",
+                  "rounded"
+                ]
+              },
+              "off": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "colors": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "glow": {
+                "type": "number"
+              },
+              "background": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "plate": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "moduleMargin": {
+                "type": "number"
+              },
+              "rowGap": {
+                "type": "number"
+              },
+              "padding": {
+                "type": "number"
+              },
+              "frame": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "width": {
+                    "type": "number"
+                  },
+                  "color": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "radius": {
+                    "type": "number"
+                  },
+                  "style": {
+                    "type": "string",
+                    "enum": [
+                      "flat",
+                      "metal"
+                    ],
+                    "default": "flat"
+                  },
+                  "badge": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": ""
+                  }
+                },
+                "required": [
+                  "width",
+                  "color",
+                  "radius"
+                ]
+              },
+              "gapColor": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "seam": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "color": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "width": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "color",
+                  "width"
+                ]
+              },
+              "header": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "background": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "color": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "font": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "bold": {
+                    "type": "boolean"
+                  },
+                  "clockColor": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "clockBackground": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "clockFont": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "panel": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "styles": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "color": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "font": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "bold": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "color",
+                        "font",
+                        "bold"
+                      ]
+                    },
+                    "default": null
+                  }
+                },
+                "required": [
+                  "background",
+                  "color",
+                  "font",
+                  "bold",
+                  "clockColor",
+                  "clockBackground",
+                  "clockFont"
+                ]
+              },
+              "flaps": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "colors": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "top": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "bottom": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "text": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "top",
+                        "bottom",
+                        "text"
+                      ]
+                    }
+                  },
+                  "row": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "split": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "unknown": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "font": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "colors",
+                  "row",
+                  "split",
+                  "unknown",
+                  "font"
+                ]
+              }
+            },
+            "default": null
+          },
+          "copyFrom": {
+            "description": "Id of a design to copy.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "name": {
+            "description": "New name for the operator.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "builtIn": {
+            "type": "boolean"
+          },
+          "overrides": {
+            "type": "boolean"
+          },
+          "design": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "renderer": {
+                "type": "string"
+              },
+              "pitch": {
+                "type": "number"
+              },
+              "dot": {
+                "type": "number"
+              },
+              "shape": {
+                "type": "string",
+                "enum": [
+                  "circle",
+                  "square",
+                  "rounded"
+                ]
+              },
+              "off": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "colors": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "glow": {
+                "type": "number"
+              },
+              "background": {
+                "type": "string"
+              },
+              "plate": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "moduleMargin": {
+                "type": "number"
+              },
+              "rowGap": {
+                "type": "number"
+              },
+              "padding": {
+                "type": "number"
+              },
+              "frame": {
+                "type": "object",
+                "properties": {
+                  "width": {
+                    "type": "number"
+                  },
+                  "color": {
+                    "type": "string"
+                  },
+                  "radius": {
+                    "type": "number"
+                  },
+                  "style": {
+                    "type": "string",
+                    "enum": [
+                      "flat",
+                      "metal"
+                    ],
+                    "default": "flat"
+                  },
+                  "badge": {
+                    "type": "string",
+                    "default": ""
+                  }
+                },
+                "required": [
+                  "width",
+                  "color",
+                  "radius"
+                ]
+              },
+              "gapColor": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "seam": {
+                "type": "object",
+                "properties": {
+                  "color": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "width": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "color",
+                  "width"
+                ]
+              },
+              "header": {
+                "type": "object",
+                "properties": {
+                  "background": {
+                    "type": "string"
+                  },
+                  "color": {
+                    "type": "string"
+                  },
+                  "font": {
+                    "type": "string"
+                  },
+                  "bold": {
+                    "type": "boolean"
+                  },
+                  "clockColor": {
+                    "type": "string"
+                  },
+                  "clockBackground": {
+                    "type": "string"
+                  },
+                  "clockFont": {
+                    "type": "string"
+                  },
+                  "panel": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "styles": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "color": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "font": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "bold": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "color",
+                        "font",
+                        "bold"
+                      ]
+                    },
+                    "default": null
+                  }
+                },
+                "required": [
+                  "background",
+                  "color",
+                  "font",
+                  "bold",
+                  "clockColor",
+                  "clockBackground",
+                  "clockFont"
+                ]
+              },
+              "flaps": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "colors": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "top": {
+                          "type": "string"
+                        },
+                        "bottom": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "top",
+                        "bottom",
+                        "text"
+                      ]
+                    }
+                  },
+                  "row": {
+                    "type": "string"
+                  },
+                  "split": {
+                    "type": "string"
+                  },
+                  "unknown": {
+                    "type": "string"
+                  },
+                  "font": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "colors",
+                  "row",
+                  "split",
+                  "unknown",
+                  "font"
+                ]
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "builtIn",
+          "overrides",
+          "design"
+        ]
+      },
+      "annotations": {
+        "title": "Save board design",
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "save_face",
+      "title": "Save board face",
+      "description": "Saves a custom face: the whole face (as from get_face), or a copy of another face (copyFrom), optionally renamed. Built-in faces cannot be changed, only copied. Boards using the face redraw at once.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Face id: lowercase letters without diacritics, digits and hyphens.",
+            "type": "string"
+          },
+          "face": {
+            "description": "The whole face; omit it when copying.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "builtIn": {
+                "type": "boolean"
+              },
+              "margin": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "left": {
+                    "type": "integer",
+                    "default": 0
+                  },
+                  "top": {
+                    "type": "integer",
+                    "default": 0
+                  },
+                  "right": {
+                    "type": "integer",
+                    "default": 0
+                  },
+                  "bottom": {
+                    "type": "integer",
+                    "default": 0
+                  }
+                }
+              },
+              "rowGap": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "rowGroup": {
+                "type": "integer"
+              },
+              "groupGap": {
+                "type": "integer"
+              },
+              "moduleWidth": {
+                "type": "integer"
+              },
+              "elements": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "rect",
+                        "text",
+                        "clock",
+                        "symbol",
+                        "image"
+                      ]
+                    },
+                    "anchor": {
+                      "type": "string",
+                      "enum": [
+                        "face",
+                        "matrix",
+                        "row",
+                        "top",
+                        "bottom",
+                        "left",
+                        "right"
+                      ]
+                    },
+                    "row": {
+                      "type": "integer"
+                    },
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    },
+                    "width": {
+                      "type": "number"
+                    },
+                    "height": {
+                      "type": "number"
+                    },
+                    "align": {
+                      "type": "string",
+                      "enum": [
+                        "left",
+                        "center",
+                        "right"
+                      ]
+                    },
+                    "vAlign": {
+                      "type": "string",
+                      "enum": [
+                        "top",
+                        "middle",
+                        "bottom"
+                      ]
+                    },
+                    "text": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "size": {
+                      "type": "number"
+                    },
+                    "size2": {
+                      "type": "number"
+                    },
+                    "bold": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "style": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "color": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "fill": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "border": {
+                      "type": "number"
+                    },
+                    "radius": {
+                      "type": "number"
+                    },
+                    "maxWidth": {
+                      "type": "number"
+                    },
+                    "spacing": {
+                      "type": "number"
+                    },
+                    "format": {
+                      "type": "string",
+                      "enum": [
+                        "H:mm",
+                        "HH:mm",
+                        "HH:mm:ss"
+                      ]
+                    },
+                    "render": {
+                      "type": "string",
+                      "enum": [
+                        "text",
+                        "display"
+                      ]
+                    },
+                    "symbol": {
+                      "type": "string",
+                      "enum": [
+                        "arrowUp",
+                        "arrowDown",
+                        "arrowLeft",
+                        "arrowRight",
+                        "arrowUpLeft",
+                        "arrowUpRight",
+                        "arrowDownLeft",
+                        "arrowDownRight",
+                        "arrowsLeftRight",
+                        "arrowsUpDown"
+                      ]
+                    },
+                    "image": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "locked": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            },
+            "default": null
+          },
+          "copyFrom": {
+            "description": "Id of a face to copy.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "name": {
+            "description": "New name for the operator.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "builtIn": {
+            "type": "boolean"
+          },
+          "margin": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "integer",
+                "default": 0
+              },
+              "top": {
+                "type": "integer",
+                "default": 0
+              },
+              "right": {
+                "type": "integer",
+                "default": 0
+              },
+              "bottom": {
+                "type": "integer",
+                "default": 0
+              }
+            }
+          },
+          "rowGap": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "rowGroup": {
+            "type": "integer"
+          },
+          "groupGap": {
+            "type": "integer"
+          },
+          "moduleWidth": {
+            "type": "integer"
+          },
+          "elements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "rect",
+                    "text",
+                    "clock",
+                    "symbol",
+                    "image"
+                  ]
+                },
+                "anchor": {
+                  "type": "string",
+                  "enum": [
+                    "face",
+                    "matrix",
+                    "row",
+                    "top",
+                    "bottom",
+                    "left",
+                    "right"
+                  ]
+                },
+                "row": {
+                  "type": "integer"
+                },
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "width": {
+                  "type": "number"
+                },
+                "height": {
+                  "type": "number"
+                },
+                "align": {
+                  "type": "string",
+                  "enum": [
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "vAlign": {
+                  "type": "string",
+                  "enum": [
+                    "top",
+                    "middle",
+                    "bottom"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "size2": {
+                  "type": "number"
+                },
+                "bold": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "style": {
+                  "type": "string"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "fill": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "number"
+                },
+                "radius": {
+                  "type": "number"
+                },
+                "maxWidth": {
+                  "type": "number"
+                },
+                "spacing": {
+                  "type": "number"
+                },
+                "format": {
+                  "type": "string",
+                  "enum": [
+                    "H:mm",
+                    "HH:mm",
+                    "HH:mm:ss"
+                  ]
+                },
+                "render": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "display"
+                  ]
+                },
+                "symbol": {
+                  "type": "string",
+                  "enum": [
+                    "arrowUp",
+                    "arrowDown",
+                    "arrowLeft",
+                    "arrowRight",
+                    "arrowUpLeft",
+                    "arrowUpRight",
+                    "arrowDownLeft",
+                    "arrowDownRight",
+                    "arrowsLeftRight",
+                    "arrowsUpDown"
+                  ]
+                },
+                "image": {
+                  "type": "string"
+                },
+                "locked": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "annotations": {
+        "title": "Save board face",
+        "destructiveHint": false,
+        "idempotentHint": true,
         "openWorldHint": false,
         "readOnlyHint": false
       }
@@ -5720,6 +7530,271 @@
       },
       "annotations": {
         "title": "Board fault",
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "set_board_look",
+      "title": "Board look",
+      "description": "Changes how one board looks: its design and a partial change of its profile (JSON merge patch - only the given keys change, null removes a key). Useful profile keys: face, faceValues, fontFile, fontMap, charFonts (font number -> {font, bold}), monochrome, swapRedGreen, header, movingFont, alternationMs, blinkOnMs, blinkOffMs, scrollSpeed, rotationMs, flaps. get_board with raw = true shows the current profile. Returns the new profile and a page showing the board.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Board id \"line-address\".",
+            "type": "string"
+          },
+          "design": {
+            "description": "Design id; empty = default design of the manufacturer; omit to keep.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "profile": {
+            "description": "Partial change of the profile (JSON merge patch).",
+            "default": null
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "design": {
+            "description": "Design of the board; null = default for the manufacturer.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "profile": {
+            "type": "object",
+            "properties": {
+              "width": {
+                "type": "integer"
+              },
+              "rows": {
+                "type": "integer"
+              },
+              "rowHeight": {
+                "type": "integer"
+              },
+              "fontFile": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "fontMap": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              },
+              "charFonts": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "font": {
+                      "type": "string",
+                      "default": ""
+                    },
+                    "bold": {
+                      "type": "boolean",
+                      "default": false
+                    }
+                  }
+                }
+              },
+              "alternationMs": {
+                "type": "integer"
+              },
+              "blinkOnMs": {
+                "type": "integer"
+              },
+              "blinkOffMs": {
+                "type": "integer"
+              },
+              "scrollSpeed": {
+                "type": "integer"
+              },
+              "monochrome": {
+                "type": "boolean"
+              },
+              "swapRedGreen": {
+                "type": "boolean"
+              },
+              "header": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "height": {
+                    "type": "integer"
+                  },
+                  "texts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "integer"
+                        },
+                        "y": {
+                          "type": "integer"
+                        },
+                        "height": {
+                          "type": "integer"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "height",
+                        "text"
+                      ]
+                    }
+                  },
+                  "clock": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "x": {
+                        "type": "integer"
+                      },
+                      "y": {
+                        "type": "integer"
+                      },
+                      "height": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "height"
+                    ]
+                  }
+                }
+              },
+              "face": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "faceValues": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "movingFont": {
+                "type": "integer"
+              },
+              "autoSize": {
+                "type": "boolean"
+              },
+              "rotationMs": {
+                "type": "integer"
+              },
+              "flaps": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "linesPerRecord": {
+                    "type": "integer"
+                  },
+                  "modules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "line": {
+                          "type": "integer"
+                        },
+                        "position": {
+                          "type": "integer"
+                        },
+                        "span": {
+                          "type": "integer"
+                        },
+                        "list": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "line",
+                        "position",
+                        "span",
+                        "list"
+                      ]
+                    }
+                  },
+                  "lists": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "colors": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/properties/profile/properties/flaps/properties/lists/additionalProperties"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "viewUrl": {
+            "description": "Page showing only this board; open it in a browser to see the result (with login enabled the page needs signing in).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "design",
+          "profile",
+          "viewUrl"
+        ]
+      },
+      "annotations": {
+        "title": "Board look",
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false,

@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using ModelContextProtocol;
 using TableSimulator.Application.Mapping;
 using TableSimulator.Contracts.Boards;
@@ -34,6 +36,47 @@ public static class McpRequests
             Mirror = current?.Mirror
         };
     }
+
+    /// <summary>JSON profilu tabule ako v API (kluce camelCase, enumy podla kontraktov).</summary>
+    private static readonly JsonSerializerOptions ProfileJson = new(JsonSerializerDefaults.Web);
+
+    /// <summary>
+    /// Profil po ciastocnej zmene <paramref name="patch" /> (JSON merge patch, RFC 7396): zadane kluce sa nahradia, objekty sa
+    /// zlucia, null kluc odstrani (= predvolena hodnota).
+    /// </summary>
+    public static BoardProfileDto PatchProfile(BoardProfileDto current, JsonElement patch)
+    {
+        ArgumentNullException.ThrowIfNull(current);
+        if (patch.ValueKind != JsonValueKind.Object)
+            throw new McpException("board.profile: The profile change must be a JSON object.");
+        var target = JsonSerializer.SerializeToNode(current, ProfileJson)!.AsObject();
+        Merge(target, JsonNode.Parse(patch.GetRawText())!.AsObject());
+        try
+        {
+            return target.Deserialize<BoardProfileDto>(ProfileJson) ?? current;
+        }
+        catch (JsonException e)
+        {
+            throw new McpException($"board.profile: The profile is not valid: {e.Message}");
+        }
+    }
+
+    private static void Merge(JsonObject target, JsonObject patch)
+    {
+        foreach (var (key, value) in patch.ToList())
+        {
+            if (value is null)
+                target.Remove(key);
+            else if (value is JsonObject child && target[key] is JsonObject existing)
+                Merge(existing, child);
+            else
+                target[key] = value.DeepClone();
+        }
+    }
+
+    /// <summary>Adresa stranky webu simulatora <paramref name="route" /> (za <c>#</c>) na serveri, na ktory sa klient pripojil.</summary>
+    public static string ViewUrl(HttpRequest? request, string route) =>
+        request is null ? "#" + route : $"{request.Scheme}://{request.Host}{request.PathBase}/#{route}";
 
     /// <summary>Tabula; <paramref name="secondAddress" /> 0 = bez druhej adresy, null = ponechat.</summary>
     public static SetBoardRequest Board(BoardDto? current, int line, int address, string? manufacturer, string? name, int? width, int? rows, int? rowHeight,

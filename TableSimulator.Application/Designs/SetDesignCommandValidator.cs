@@ -80,6 +80,9 @@ public sealed partial class SetDesignCommandValidator : AbstractValidator<SetDes
 
     private static bool IsColor(string? value) => value is not null && ColorPattern().IsMatch(value);
 
+    /// <summary>Platny kluc vzhladu (meno priecinka).</summary>
+    public static bool IsValidId(string? id) => id is not null && IdPattern().IsMatch(id);
+
     [GeneratedRegex("^[a-z0-9][a-z0-9-]{0,39}$", RegexOptions.CultureInvariant)]
     private static partial Regex IdPattern();
 

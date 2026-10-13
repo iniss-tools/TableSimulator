@@ -44,6 +44,7 @@ public sealed partial class McpToolsTests
     /// <summary>Parameter, ktory dosadi server (handler, cas, zrusenie) - model ho nevidi.</summary>
     private static bool IsInjected(ParameterInfo parameter) =>
         parameter.ParameterType == typeof(CancellationToken) || parameter.ParameterType == typeof(TimeProvider)
+        || parameter.ParameterType == typeof(Microsoft.AspNetCore.Http.IHttpContextAccessor)
         || parameter.ParameterType.IsGenericType && parameter.ParameterType.GetGenericTypeDefinition() is var definition
                                                   && (definition == typeof(IQueryHandler<,>) || definition == typeof(ICommandHandler<>) || definition == typeof(ICommandHandler<,>));
 

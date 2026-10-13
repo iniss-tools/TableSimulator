@@ -245,6 +245,24 @@ public sealed class McpMapperTests
     }
 
     [TestMethod]
+    public void Profil_CiastocnaZmenaNullVratiPredvolene()
+    {
+        var current = new BoardProfileDto { Rows = 3, Face = "hala", FaceValues = new Dictionary<string, string> { ["track"] = "1", ["side"] = "A" } };
+        using var patch = System.Text.Json.JsonDocument.Parse("""{"rows":4,"faceValues":{"track":"2","side":null},"face":null}""");
+
+        var changed = McpRequests.PatchProfile(current, patch.RootElement);
+
+        Assert.AreEqual(4, changed.Rows);
+        Assert.IsNull(changed.Face);
+        CollectionAssert.AreEquivalent(new[] { "track" }, changed.FaceValues!.Keys.ToArray());
+        Assert.AreEqual("2", changed.FaceValues["track"]);
+        // ostatne bez zmeny
+        Assert.AreEqual(current.Width, changed.Width);
+        using var array = System.Text.Json.JsonDocument.Parse("[]");
+        StringAssert.StartsWith(Assert.ThrowsExactly<McpException>(() => McpRequests.PatchProfile(current, array.RootElement)).Message, "board.profile");
+    }
+
+    [TestMethod]
     public void DniArchivu_OdNajnovsiehoNajviac31()
     {
         var days = Enumerable.Range(0, 40).Select(i => new DateOnly(2026, 9, 1).AddDays(i)).ToList();

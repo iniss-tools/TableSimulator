@@ -16,4 +16,8 @@ public static class DesignErrors
         Error.Problem("designs.folderMissing", $"The designs folder does not exist: {folder}");
 
     public static Error NotCustom(string id) => Error.NotFound("designs.notCustom", $"There is no custom design '{id}'.");
+
+    public static Error NotFound(string id) => Error.NotFound("designs.notFound", $"Design '{id}' does not exist.");
+
+    public static Error Unreadable(string id, string message) => Error.Problem("designs.unreadable", $"Design '{id}' cannot be read: {message}");
 }
