@@ -103,7 +103,7 @@ export const DEFAULT_FLAP_DESIGN_ID = "listova";
 /** Vyrobcovia s cervenymi LED tabulami APEL. */
 const APEL_MANUFACTURERS = ["APEL", "APEL_AN"];
 
-/** Predvoleny vzhlad podla vyrobcu a rodiny tabule (znakove tabule Elektrocas vyzeraju ako LCD, APEL cervene LED). */
+/** Predvoleny vzhlad podla vyrobcu a rodiny tabule (znakove tabule Elektrocas vyzeraju ako LCD, APEL cervene LED); dvojca DesignDefaults servera. */
 export function defaultDesignId(family: string, manufacturer = ""): string {
   if (family === "flaps") return DEFAULT_FLAP_DESIGN_ID;
   if (APEL_MANUFACTURERS.includes(manufacturer.toUpperCase())) return "apel-led";

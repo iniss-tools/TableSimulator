@@ -5,8 +5,10 @@ using ModelContextProtocol.Server;
 using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Auth;
 using TableSimulator.Application.Boards;
+using TableSimulator.Application.Designs;
 using TableSimulator.Application.State;
 using TableSimulator.Contracts.Boards;
+using TableSimulator.Contracts.Designs;
 using TableSimulator.Contracts.State;
 
 namespace TableSimulator.Mcp;
@@ -38,11 +40,12 @@ public static class BoardTools
     [Authorize(Policy = Permissions.SimulatorView)]
     public static async Task<BoardDetail> GetBoard(
         IQueryHandler<GetBoardQuery, BoardDto> board,
+        IQueryHandler<GetDesignsQuery, DesignInfoDto[]> designs,
         IQueryHandler<GetBoardTextsQuery, IReadOnlyList<BoardTextDto>> texts,
         [Description(IdDescription)] string id,
         [Description("Include the board settings and the raw content.")] bool raw = false,
         CancellationToken cancellationToken = default) =>
-        await Detail(board, texts, id, raw, cancellationToken);
+        await Detail(board, texts, designs, id, raw, cancellationToken);
 
     [McpServerTool(Name = "wait_for_board_change", Title = "Wait for board change", ReadOnly = true, Idempotent = false, OpenWorld = false, UseStructuredContent = true)]
     [Description("Waits until a board changes (a new message from INISS or a change of its settings) and returns what it shows then. "
@@ -64,6 +67,7 @@ public static class BoardTools
     [Authorize(Policy = Permissions.LinesManage)]
     public static async Task<BoardDetail> SetBoard(
         IQueryHandler<GetBoardQuery, BoardDto> board,
+        IQueryHandler<GetDesignsQuery, DesignInfoDto[]> designs,
         IQueryHandler<GetBoardTextsQuery, IReadOnlyList<BoardTextDto>> texts,
         ICommandHandler<SetBoardCommand> handler,
         [Description("Line of the board.")] int line,
@@ -80,7 +84,7 @@ public static class BoardTools
         var current = await board.Handle(new GetBoardQuery(id), cancellationToken);
         var request = McpRequests.Board(current.IsSuccess ? current.Value : null, line, address, manufacturer, name, width, rows, rowHeight, secondAddress);
         (await handler.Handle(new SetBoardCommand(line, address, request), cancellationToken)).ThrowIfFailed();
-        return await Detail(board, texts, id, false, cancellationToken);
+        return await Detail(board, texts, designs, id, false, cancellationToken);
     }
 
     [McpServerTool(Name = "delete_board", Title = "Delete board", ReadOnly = false, Destructive = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
@@ -102,6 +106,7 @@ public static class BoardTools
     [Authorize(Policy = Permissions.BoardsControl)]
     public static async Task<BoardDetail> SetBoardFault(
         IQueryHandler<GetBoardQuery, BoardDto> board,
+        IQueryHandler<GetDesignsQuery, DesignInfoDto[]> designs,
         IQueryHandler<GetBoardTextsQuery, IReadOnlyList<BoardTextDto>> texts,
         ICommandHandler<SetBoardFaultCommand> handler,
         [Description(IdDescription)] string id,
@@ -111,7 +116,7 @@ public static class BoardTools
         CancellationToken cancellationToken = default)
     {
         (await handler.Handle(new SetBoardFaultCommand(id, new BoardFaultDto(kind, delayMs, status)), cancellationToken)).ThrowIfFailed();
-        return await Detail(board, texts, id, false, cancellationToken);
+        return await Detail(board, texts, designs, id, false, cancellationToken);
     }
 
     [McpServerTool(Name = "clear_board", Title = "Clear board", ReadOnly = false, Destructive = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
@@ -119,22 +124,24 @@ public static class BoardTools
     [Authorize(Policy = Permissions.BoardsControl)]
     public static async Task<BoardDetail> ClearBoard(
         IQueryHandler<GetBoardQuery, BoardDto> board,
+        IQueryHandler<GetDesignsQuery, DesignInfoDto[]> designs,
         IQueryHandler<GetBoardTextsQuery, IReadOnlyList<BoardTextDto>> texts,
         ICommandHandler<ClearBoardCommand> handler,
         [Description(IdDescription)] string id,
         CancellationToken cancellationToken = default)
     {
         (await handler.Handle(new ClearBoardCommand(id), cancellationToken)).ThrowIfFailed();
-        return await Detail(board, texts, id, false, cancellationToken);
+        return await Detail(board, texts, designs, id, false, cancellationToken);
     }
 
     private static string BoardId(int line, int address) => string.Create(CultureInfo.InvariantCulture, $"{line}-{address}");
 
     private static async Task<BoardDetail> Detail(IQueryHandler<GetBoardQuery, BoardDto> board, IQueryHandler<GetBoardTextsQuery, IReadOnlyList<BoardTextDto>> texts,
-        string id, bool raw, CancellationToken cancellationToken)
+        IQueryHandler<GetDesignsQuery, DesignInfoDto[]> designs, string id, bool raw, CancellationToken cancellationToken)
     {
         var dto = (await board.Handle(new GetBoardQuery(id), cancellationToken)).ValueOrThrow();
         var text = (await texts.Handle(new GetBoardTextsQuery(dto.Line), cancellationToken)).ValueOrThrow().FirstOrDefault(t => t.Id == dto.Id);
-        return McpMapper.ToBoardDetail(dto, text, raw);
+        var ids = (await designs.Handle(new GetDesignsQuery(), cancellationToken)).ValueOrThrow().Select(x => x.Id).ToList();
+        return McpMapper.ToBoardDetail(dto, text, raw, ids);
     }
 }

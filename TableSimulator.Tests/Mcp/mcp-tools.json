@@ -47,11 +47,15 @@
             "type": "string"
           },
           "design": {
-            "description": "Look of the board in the web view (design id); null = default for the manufacturer.",
+            "description": "Design set for the board; null = default for the manufacturer.",
             "type": [
               "string",
               "null"
             ]
+          },
+          "designInUse": {
+            "description": "Design actually used: the board's design, or the default design of the manufacturer when none is set or it does not exist.",
+            "type": "string"
           },
           "autoCreated": {
             "description": "Created automatically by the first message to an unknown address.",
@@ -668,6 +672,7 @@
           "manufacturer",
           "family",
           "design",
+          "designInUse",
           "autoCreated",
           "poweredOff",
           "fault",
@@ -1129,11 +1134,15 @@
             "type": "string"
           },
           "design": {
-            "description": "Look of the board in the web view (design id); null = default for the manufacturer.",
+            "description": "Design set for the board; null = default for the manufacturer.",
             "type": [
               "string",
               "null"
             ]
+          },
+          "designInUse": {
+            "description": "Design actually used: the board's design, or the default design of the manufacturer when none is set or it does not exist.",
+            "type": "string"
           },
           "autoCreated": {
             "description": "Created automatically by the first message to an unknown address.",
@@ -1750,6 +1759,7 @@
           "manufacturer",
           "family",
           "design",
+          "designInUse",
           "autoCreated",
           "poweredOff",
           "fault",
@@ -4217,7 +4227,7 @@
     {
       "name": "list_fonts",
       "title": "Board fonts",
-      "description": "ELEN font files (.bin) in the fonts folder set in the simulator with their fonts, and the dot fonts for LCD1/ERP character boards.",
+      "description": "ELEN font files (.bin) in the fonts folder set in the simulator with their fonts, and the dot fonts for LCD1/ERP character boards. The font number INISS sends to an ELEN board is not a position in the file: bits 0-1 are the color, bit 2 blinking, bit 3 tall digits and bits 4-5 the face, which selects the font at that position (e.g. 0x52 = face 1, green). An extended font (bit 0x8000, n in bits 8-11) selects font n. profile.fontMap redirects them: keys face0-face3 and ext1-ext15, values are positions in the file.",
       "inputSchema": {
         "type": "object",
         "properties": {}
@@ -4243,7 +4253,7 @@
                     "type": "object",
                     "properties": {
                       "index": {
-                        "description": "Position of the font in the file.",
+                        "description": "Position of the font in the file: the face (bits 4-5 of the ELEN font number) or the extended font n; profile.fontMap can redirect them.",
                         "type": "integer"
                       },
                       "name": {
@@ -6183,11 +6193,15 @@
             "type": "string"
           },
           "design": {
-            "description": "Look of the board in the web view (design id); null = default for the manufacturer.",
+            "description": "Design set for the board; null = default for the manufacturer.",
             "type": [
               "string",
               "null"
             ]
+          },
+          "designInUse": {
+            "description": "Design actually used: the board's design, or the default design of the manufacturer when none is set or it does not exist.",
+            "type": "string"
           },
           "autoCreated": {
             "description": "Created automatically by the first message to an unknown address.",
@@ -6804,6 +6818,7 @@
           "manufacturer",
           "family",
           "design",
+          "designInUse",
           "autoCreated",
           "poweredOff",
           "fault",
@@ -6894,11 +6909,15 @@
             "type": "string"
           },
           "design": {
-            "description": "Look of the board in the web view (design id); null = default for the manufacturer.",
+            "description": "Design set for the board; null = default for the manufacturer.",
             "type": [
               "string",
               "null"
             ]
+          },
+          "designInUse": {
+            "description": "Design actually used: the board's design, or the default design of the manufacturer when none is set or it does not exist.",
+            "type": "string"
           },
           "autoCreated": {
             "description": "Created automatically by the first message to an unknown address.",
@@ -7515,6 +7534,7 @@
           "manufacturer",
           "family",
           "design",
+          "designInUse",
           "autoCreated",
           "poweredOff",
           "fault",
@@ -7539,7 +7559,7 @@
     {
       "name": "set_board_look",
       "title": "Board look",
-      "description": "Changes how one board looks: its design and a partial change of its profile (JSON merge patch - only the given keys change, null removes a key). Useful profile keys: face, faceValues, fontFile, fontMap, charFonts (font number -> {font, bold}), monochrome, swapRedGreen, header, movingFont, alternationMs, blinkOnMs, blinkOffMs, scrollSpeed, rotationMs, flaps. get_board with raw = true shows the current profile. Returns the new profile and a page showing the board.",
+      "description": "Changes how one board looks: its design and a partial change of its profile (JSON merge patch - only the given keys change, null removes a key). Useful profile keys: face, faceValues, fontFile, fontMap (see list_fonts), charFonts (font number -> {font, bold}), monochrome, swapRedGreen, header, movingFont, alternationMs, blinkOnMs, blinkOffMs, scrollSpeed, rotationMs, flaps. get_board with raw = true shows the current profile. Returns the new profile, the design actually used and a page showing the board.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -7548,12 +7568,17 @@
             "type": "string"
           },
           "design": {
-            "description": "Design id; empty = default design of the manufacturer; omit to keep.",
+            "description": "Design id to use; omit to keep the current one.",
             "type": [
               "string",
               "null"
             ],
             "default": null
+          },
+          "defaultDesign": {
+            "description": "Use the default design of the manufacturer instead of a set one.",
+            "type": "boolean",
+            "default": false
           },
           "profile": {
             "description": "Partial change of the profile (JSON merge patch).",
@@ -7571,11 +7596,15 @@
             "type": "string"
           },
           "design": {
-            "description": "Design of the board; null = default for the manufacturer.",
+            "description": "Design set for the board; null = default for the manufacturer.",
             "type": [
               "string",
               "null"
             ]
+          },
+          "designInUse": {
+            "description": "Design actually used: the board's design, or the default design of the manufacturer when none is set or it does not exist.",
+            "type": "string"
           },
           "profile": {
             "type": "object",
@@ -7789,6 +7818,7 @@
         "required": [
           "id",
           "design",
+          "designInUse",
           "profile",
           "viewUrl"
         ]

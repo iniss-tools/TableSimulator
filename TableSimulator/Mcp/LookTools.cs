@@ -122,7 +122,10 @@ public static class LookTools
     }
 
     [McpServerTool(Name = "list_fonts", Title = "Board fonts", ReadOnly = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
-    [Description("ELEN font files (.bin) in the fonts folder set in the simulator with their fonts, and the dot fonts for LCD1/ERP character boards.")]
+    [Description("ELEN font files (.bin) in the fonts folder set in the simulator with their fonts, and the dot fonts for LCD1/ERP character boards. "
+                 + "The font number INISS sends to an ELEN board is not a position in the file: bits 0-1 are the color, bit 2 blinking, bit 3 tall digits "
+                 + "and bits 4-5 the face, which selects the font at that position (e.g. 0x52 = face 1, green). An extended font (bit 0x8000, n in bits 8-11) "
+                 + "selects font n. profile.fontMap redirects them: keys face0-face3 and ext1-ext15, values are positions in the file.")]
     [Authorize(Policy = Permissions.SimulatorView)]
     public static async Task<FontsResult> ListFonts(
         IQueryHandler<GetFontsQuery, string[]> files,
@@ -143,19 +146,26 @@ public static class LookTools
     [McpServerTool(Name = "set_board_look", Title = "Board look", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false,
         UseStructuredContent = true)]
     [Description("Changes how one board looks: its design and a partial change of its profile (JSON merge patch - only the given keys change, null removes "
-                 + "a key). Useful profile keys: face, faceValues, fontFile, fontMap, charFonts (font number -> {font, bold}), monochrome, swapRedGreen, "
-                 + "header, movingFont, alternationMs, blinkOnMs, blinkOffMs, scrollSpeed, rotationMs, flaps. get_board with raw = true shows the current "
-                 + "profile. Returns the new profile and a page showing the board.")]
+                 + "a key). Useful profile keys: face, faceValues, fontFile, fontMap (see list_fonts), charFonts (font number -> {font, bold}), monochrome, "
+                 + "swapRedGreen, header, movingFont, alternationMs, blinkOnMs, blinkOffMs, scrollSpeed, rotationMs, flaps. get_board with raw = true shows "
+                 + "the current profile. Returns the new profile, the design actually used and a page showing the board.")]
     [Authorize(Policy = Permissions.LinesManage)]
     public static async Task<BoardLookResult> SetBoardLook(
         IQueryHandler<GetBoardQuery, BoardDto> board,
+        IQueryHandler<GetDesignsQuery, DesignInfoDto[]> designs,
         ICommandHandler<SetBoardCommand> handler,
         IHttpContextAccessor http,
         [Description("Board id \"line-address\".")] string id,
-        [Description("Design id; empty = default design of the manufacturer; omit to keep.")] string? design = null,
+        [Description("Design id to use; omit to keep the current one.")] string? design = null,
+        [Description("Use the default design of the manufacturer instead of a set one.")] bool defaultDesign = false,
         [Description("Partial change of the profile (JSON merge patch).")] JsonElement? profile = null,
         CancellationToken cancellationToken = default)
     {
+        if (defaultDesign && design is not null)
+            throw new McpException("designs.input: Pass either design or defaultDesign.");
+        var ids = (await designs.Handle(new GetDesignsQuery(), cancellationToken)).ValueOrThrow().Select(x => x.Id).ToList();
+        if (design is not null && !ids.Contains(design, StringComparer.OrdinalIgnoreCase))
+            throw new McpException($"designs.notFound: Design '{design}' does not exist.");
         var current = (await board.Handle(new GetBoardQuery(id), cancellationToken)).ValueOrThrow();
         var request = new SetBoardRequest
         {
@@ -164,13 +174,14 @@ public static class LookTools
             Manufacturer = current.Manufacturer,
             Name = current.Name,
             Profile = profile is { } patch ? McpRequests.PatchProfile(current.Profile, patch) : current.Profile,
-            Design = design is null ? current.Design : design.Length == 0 ? null : design,
+            Design = defaultDesign ? null : design ?? current.Design,
             Fault = current.Fault,
             SecondAddress = current.SecondAddress
         };
         (await handler.Handle(new SetBoardCommand(current.Line, current.Address, request), cancellationToken)).ThrowIfFailed();
         var saved = (await board.Handle(new GetBoardQuery(id), cancellationToken)).ValueOrThrow();
-        return new BoardLookResult(saved.Id, saved.Design, saved.Profile, McpRequests.ViewUrl(http.HttpContext?.Request, $"/view/{Uri.EscapeDataString(saved.Id)}"));
+        return new BoardLookResult(saved.Id, saved.Design, McpMapper.DesignInUse(saved, ids), saved.Profile,
+            McpRequests.ViewUrl(http.HttpContext?.Request, $"/view/{Uri.EscapeDataString(saved.Id)}"));
     }
 
     private static async Task<BoardFaceDto> FindFace(IQueryHandler<GetFacesQuery, BoardFaceDto[]> handler, string id, CancellationToken cancellationToken) =>

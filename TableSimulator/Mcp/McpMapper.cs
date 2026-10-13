@@ -1,4 +1,5 @@
 using System.Globalization;
+using TableSimulator.Application.Designs;
 using TableSimulator.Contracts.Boards;
 using TableSimulator.Contracts.Frames;
 using TableSimulator.Contracts.Recordings;
@@ -49,12 +50,15 @@ public static class McpMapper
         }).ToArray());
     }
 
-    /// <summary>Podrobnosti tabule; <paramref name="raw" /> = aj profil a obsah s pismami a kodmi znakov.</summary>
-    public static BoardDetail ToBoardDetail(BoardDto board, BoardTextDto? text, bool raw)
+    /// <summary>
+    /// Podrobnosti tabule; <paramref name="raw" /> = aj profil a obsah s pismami a kodmi znakov. Pouzity vzhlad: nastaveny,
+    /// ak je medzi <paramref name="designs" /> (prehliadac neexistujuci nahradi predvolenym), inak predvoleny vyrobcu.
+    /// </summary>
+    public static BoardDetail ToBoardDetail(BoardDto board, BoardTextDto? text, bool raw, IReadOnlyCollection<string> designs)
     {
         ArgumentNullException.ThrowIfNull(board);
         return new BoardDetail(board.Id, board.Name, board.Line, board.Address, board.SecondAddress, board.Manufacturer, board.Display.Family, board.Design,
-            board.AutoCreated, board.PoweredOff, board.Fault, board.Mismatch, board.Stats, board.Display.Brightness, board.Display.Clock,
+            DesignInUse(board, designs), board.AutoCreated, board.PoweredOff, board.Fault, board.Mismatch, board.Stats, board.Display.Brightness, board.Display.Clock,
             text?.Version ?? board.Version, text?.Rows ?? [], raw ? board.Profile : null, raw ? board.Display : null);
     }
 
@@ -106,6 +110,16 @@ public static class McpMapper
             g.Sum(p => p.Frames), g.Sum(p => p.Acks), g.Sum(p => p.Naks), g.Sum(p => p.Unanswered), g.Max(p => p.MaxGapMs))).ToList();
         return new StatisticsResult(statistics.From, statistics.To, statistics.BucketMinutes, statistics.RetentionDays, lines, boards, statistics.StatusChanges,
             series ? statistics.Lines : null);
+    }
+
+    /// <summary>Vzhlad, ktorym prehliadac tabulu kresli.</summary>
+    public static string DesignInUse(BoardDto board, IReadOnlyCollection<string> designs)
+    {
+        ArgumentNullException.ThrowIfNull(board);
+        ArgumentNullException.ThrowIfNull(designs);
+        return board.Design is { Length: > 0 } design && designs.Contains(design, StringComparer.OrdinalIgnoreCase)
+            ? design
+            : DesignDefaults.For(board.Display.Family, board.Manufacturer);
     }
 
     private static bool HasIssue(BoardDto board) => board.Fault.Kind != FaultKind.None || board.PoweredOff || board.Mismatch is not null;

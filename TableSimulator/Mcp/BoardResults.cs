@@ -38,8 +38,10 @@ public sealed record BoardDetail(
     string Manufacturer,
     [property: Description("elen, chars, flaps, amplifier or unknown.")]
     string Family,
-    [property: Description("Look of the board in the web view (design id); null = default for the manufacturer.")]
+    [property: Description("Design set for the board; null = default for the manufacturer.")]
     string? Design,
+    [property: Description("Design actually used: the board's design, or the default design of the manufacturer when none is set or it does not exist.")]
+    string DesignInUse,
     [property: Description("Created automatically by the first message to an unknown address.")]
     bool AutoCreated,
     [property: Description("Simulated power outage: the board is dark and does not answer.")]

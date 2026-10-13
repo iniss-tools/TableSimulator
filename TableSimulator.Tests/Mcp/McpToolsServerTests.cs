@@ -273,7 +273,10 @@ public sealed class McpToolsServerTests
         StringAssert.Contains(await mcp.Error("set_board_look", new() { ["id"] = "8-129", ["profile"] = new { charFonts = new Dictionary<string, object> { ["99"] = new { font = "x" } } } }),
             "board.charFonts");
         StringAssert.Contains(await mcp.Error("delete_face", new() { ["id"] = "moje-celo" }), "face.inUse");
-        var reset = await mcp.Call("set_board_look", new() { ["id"] = "8-129", ["design"] = "", ["profile"] = new Dictionary<string, object?> { ["face"] = null } });
+        Assert.AreEqual("moj-vzhlad", look.GetProperty("designInUse").GetString());
+        StringAssert.Contains(await mcp.Error("set_board_look", new() { ["id"] = "8-129", ["design"] = "neexistuje" }), "designs.notFound");
+        var reset = await mcp.Call("set_board_look", new() { ["id"] = "8-129", ["defaultDesign"] = true, ["profile"] = new Dictionary<string, object?> { ["face"] = null } });
+        Assert.AreEqual("apel-led", reset.GetProperty("designInUse").GetString());
         Assert.AreEqual(JsonValueKind.Null, reset.GetProperty("profile").GetProperty("face").ValueKind);
         Assert.AreEqual(JsonValueKind.Null, reset.GetProperty("design").ValueKind);
         await mcp.Call("delete_face", new() { ["id"] = "moje-celo" });

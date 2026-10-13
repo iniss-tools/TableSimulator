@@ -36,7 +36,7 @@ public sealed record FontFileSummary(
 
 /// <summary>Pismo v subore ELEN.</summary>
 public sealed record FontSummary(
-    [property: Description("Position of the font in the file.")]
+    [property: Description("Position of the font in the file: the face (bits 4-5 of the ELEN font number) or the extended font n; profile.fontMap can redirect them.")]
     int Index,
     string Name,
     [property: Description("Height in dots.")]
@@ -48,8 +48,10 @@ public sealed record FontSummary(
 /// <summary>Vzhlad tabule po zmene.</summary>
 public sealed record BoardLookResult(
     string Id,
-    [property: Description("Design of the board; null = default for the manufacturer.")]
+    [property: Description("Design set for the board; null = default for the manufacturer.")]
     string? Design,
+    [property: Description("Design actually used: the board's design, or the default design of the manufacturer when none is set or it does not exist.")]
+    string DesignInUse,
     BoardProfileDto Profile,
     [property: Description("Page showing only this board; open it in a browser to see the result (with login enabled the page needs signing in).")]
     string ViewUrl);

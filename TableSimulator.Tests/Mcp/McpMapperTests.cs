@@ -131,8 +131,8 @@ public sealed class McpMapperTests
     {
         var board = State(b => b).Boards[0];
 
-        var plain = McpMapper.ToBoardDetail(board, new BoardTextDto(board.Id, 7, false, ["A"]), false);
-        var raw = McpMapper.ToBoardDetail(board, null, true);
+        var plain = McpMapper.ToBoardDetail(board, new BoardTextDto(board.Id, 7, false, ["A"]), false, []);
+        var raw = McpMapper.ToBoardDetail(board, null, true, []);
 
         Assert.IsNull(plain.Profile);
         Assert.IsNull(plain.Display);
@@ -243,6 +243,28 @@ public sealed class McpMapperTests
         Assert.AreEqual(FaultKind.None, created.Fault.Kind);
         StringAssert.StartsWith(Assert.ThrowsExactly<McpException>(() => McpRequests.Board(null, 5, 1, null, null, null, null, null, null)).Message, "board.new");
     }
+
+    [TestMethod]
+    public void Vzhlad_PouzityNastavenyAleboPredvolenyVyrobcu()
+    {
+        var board = State(b => b).Boards[0];
+
+        Assert.AreEqual("elen-led", McpMapper.DesignInUse(board, ["elen-led", "moj"]));
+        Assert.AreEqual("moj", McpMapper.DesignInUse(board with { Design = "moj" }, ["elen-led", "moj"]));
+        // zmazany vzhlad prehliadac nahradi predvolenym
+        Assert.AreEqual("elen-led", McpMapper.DesignInUse(board with { Design = "zmazany" }, ["elen-led"]));
+    }
+
+    /// <summary>Rovnake pripady ako test defaultDesignId vo web/src/render/design.test.ts.</summary>
+    [TestMethod]
+    [DataRow("flaps", "ERS", "listova")]
+    [DataRow("chars", "LCD1", "lcd-dark")]
+    [DataRow("chars", "apel_an", "apel-led")]
+    [DataRow("elen", "APEL", "apel-led")]
+    [DataRow("elen", "ELEN16", "elen-led")]
+    [DataRow("amplifier", "ELSVO", "elen-led")]
+    public void Vzhlad_PredvolenyAkoNaWebe(string family, string manufacturer, string design) =>
+        Assert.AreEqual(design, TableSimulator.Application.Designs.DesignDefaults.For(family, manufacturer));
 
     [TestMethod]
     public void Profil_CiastocnaZmenaNullVratiPredvolene()
