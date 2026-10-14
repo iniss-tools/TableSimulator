@@ -224,6 +224,7 @@ public sealed class McpToolsServerTests
         Assert.AreEqual("text/html;profile=mcp-app", app.MimeType);
         var html = await mcp.Client.ReadResourceAsync("ui://tablesimulator/board.html", cancellationToken: TestContext.CancellationToken);
         StringAssert.Contains(((TextResourceContents)html.Contents[0]).Text, "ui/initialize");
+        StringAssert.Contains(((TextResourceContents)html.Contents[0]).Text, "data-app=\"board\"");
         var shown = await mcp.Call("show_board", new() { ["id"] = "7-129" });
         var noChange = await mcp.Call("board_view", new() { ["id"] = "7-129", ["afterVersion"] = shown.GetProperty("version").GetInt64(), ["timeoutSeconds"] = 1 });
         Assert.IsFalse(noChange.GetProperty("changed").GetBoolean());
@@ -233,6 +234,22 @@ public sealed class McpToolsServerTests
         Assert.AreEqual("7-129", first.GetProperty("board").GetProperty("id").GetString());
         Assert.AreEqual("led-matrix", first.GetProperty("design").GetProperty("renderer").GetString());
         Assert.AreEqual(JsonValueKind.Null, first.GetProperty("font").ValueKind);
+
+        // zivu virtualnu tabulu: rovnaky subor HTML so znackou aplikacie, obsah z virtual_view podla odtlacku
+        Assert.AreEqual("ui://tablesimulator/virtual.html",
+            tools.Single(t => t.Name == "show_virtual_board").ProtocolTool.Meta!["ui"]!["resourceUri"]!.GetValue<string>());
+        Assert.AreEqual("app", tools.Single(t => t.Name == "virtual_view").ProtocolTool.Meta!["ui"]!["visibility"]![0]!.GetValue<string>());
+        Assert.IsTrue(resources.Any(r => r.Uri == "ui://tablesimulator/virtual.html"));
+        var virtualHtml = await mcp.Client.ReadResourceAsync("ui://tablesimulator/virtual.html", cancellationToken: TestContext.CancellationToken);
+        StringAssert.Contains(((TextResourceContents)virtualHtml.Contents[0]).Text, "data-app=\"virtual\"");
+        Assert.AreEqual(2, (await mcp.Call("show_virtual_board", new() { ["id"] = 5 })).GetProperty("rows").GetArrayLength());
+        var firstVirtual = await mcp.Call("virtual_view", new() { ["id"] = 5 });
+        Assert.IsTrue(firstVirtual.GetProperty("changed").GetBoolean());
+        Assert.AreEqual(layoutId, firstVirtual.GetProperty("view").GetProperty("layout").GetProperty("id").GetString());
+        var hash = firstVirtual.GetProperty("hash").GetString();
+        var sameVirtual = await mcp.Call("virtual_view", new() { ["id"] = 5, ["afterHash"] = hash, ["timeoutSeconds"] = 1 });
+        Assert.IsFalse(sameVirtual.GetProperty("changed").GetBoolean());
+        Assert.AreEqual(hash, sameVirtual.GetProperty("hash").GetString());
 
         var fonts = await mcp.Call("list_fonts");
         Assert.AreEqual(0, fonts.GetProperty("files").GetArrayLength());

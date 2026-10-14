@@ -245,6 +245,96 @@ namespace TableSimulator.Persistence.Migrations.Postgres
                     b.ToTable("AccessKeys", (string)null);
                 });
 
+            modelBuilder.Entity("TableSimulator.Application.OAuth.OAuthClient", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.PrimitiveCollection<string[]>("RedirectUris")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OAuthClients", (string)null);
+                });
+
+            modelBuilder.Entity("TableSimulator.Application.OAuth.OAuthGrant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AccessExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AccessHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ClientId")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("ClientName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PreviousRefreshHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("RefreshExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RefreshHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccessHash")
+                        .IsUnique();
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("PreviousRefreshHash");
+
+                    b.HasIndex("RefreshHash")
+                        .IsUnique();
+
+                    b.ToTable("OAuthGrants", (string)null);
+                });
+
             modelBuilder.Entity("TableSimulator.Application.Scenarios.FaultScenarioRecord", b =>
                 {
                     b.Property<int>("Id")
@@ -912,6 +1002,15 @@ namespace TableSimulator.Persistence.Migrations.Postgres
                     b.HasOne("TableSimulator.Persistence.Identity.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TableSimulator.Application.OAuth.OAuthGrant", b =>
+                {
+                    b.HasOne("TableSimulator.Application.OAuth.OAuthClient", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

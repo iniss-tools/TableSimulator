@@ -719,6 +719,7 @@ export const cs: Record<TextKey, string> = {
   "common.loading": "Načítá se…",
   "mcpApp.waiting": "Čekám na tabuli…",
   "mcpApp.error": "Spojení se simulátorem selhalo: {error}",
+  "mcpApp.template": "Tabule se zobrazuje šablonou XSL {template} z INISSView, kterou chat neumí ukázat. Otevřete ji na webu simulátoru.",
   "common.actions": "Akce",
   "common.search": "Hledat…",
   "common.confirm": "Potvrdit",

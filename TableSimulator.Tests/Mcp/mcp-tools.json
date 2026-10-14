@@ -10837,6 +10837,208 @@
       }
     },
     {
+      "name": "show_virtual_board",
+      "title": "Show virtual board",
+      "description": "Shows a virtual board live in the chat in clients with MCP Apps (e.g. VS Code), drawn by its layout; the view refreshes itself when the XML, the definition or the layout changes. Boards with an XSL template are not drawn in the chat. Other clients get the same result as get_virtual_board.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Number of the virtual board.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "board": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "rowCount": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "rowStart": {
+                "type": "integer"
+              },
+              "separator": {
+                "type": "string"
+              },
+              "template": {
+                "type": "string"
+              },
+              "parameter": {
+                "type": "string"
+              },
+              "layout": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "description",
+              "source",
+              "rowCount",
+              "rowStart",
+              "separator",
+              "template",
+              "parameter",
+              "layout"
+            ]
+          },
+          "source": {
+            "description": "The XML file the board shows; null = not found in the log folders.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "modified": {
+                "type": "string"
+              },
+              "station": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "written": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "validTo": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "rows": {
+                "type": "integer"
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "error": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "path",
+              "modified",
+              "station",
+              "key",
+              "written",
+              "validTo",
+              "rows",
+              "stale",
+              "error"
+            ]
+          },
+          "rows": {
+            "description": "Records shown, cells in the order of the INISS catalog table: name of the XML element (time, type, number, destination...) and text; parts separated by # alternate, a text ending with # blinks.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cells": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "text"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "cells"
+              ]
+            }
+          },
+          "layout": {
+            "description": "Layout used to draw the board.",
+            "type": "string"
+          },
+          "templateError": {
+            "description": "With an XSL template: why the page could not be built (noSource, notFound, template, failed); null = fine or no template.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "viewUrl": {
+            "description": "Page showing only this board; open it in a browser to see it (with login enabled the page needs signing in).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "board",
+          "source",
+          "rows",
+          "layout",
+          "templateError",
+          "viewUrl"
+        ]
+      },
+      "annotations": {
+        "title": "Show virtual board",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "_meta": {
+        "ui": {
+          "resourceUri": "ui://tablesimulator/virtual.html"
+        }
+      }
+    },
+    {
       "name": "start_recording",
       "title": "Start recording",
       "description": "Starts recording the communication of all lines (messages from INISS and replies of the boards) into a new recording; a running recording is finished first.",
@@ -11273,6 +11475,375 @@
         "idempotentHint": true,
         "openWorldHint": false,
         "readOnlyHint": false
+      }
+    },
+    {
+      "name": "virtual_view",
+      "title": "Virtual board view data",
+      "description": "Used by the view of show_virtual_board: waits until what the virtual board shows changes and returns it with its layout.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Number of the virtual board.",
+            "type": "integer"
+          },
+          "afterHash": {
+            "description": "Hash of the content the view shows; null = first view.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "timeoutSeconds": {
+            "description": "How long to wait at most [s], 1-60.",
+            "type": "integer",
+            "default": 25
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "changed": {
+            "description": "The content changed; false = the timeout expired.",
+            "type": "boolean"
+          },
+          "hash": {
+            "description": "Hash of the content; pass it as afterHash to wait for the next change.",
+            "type": "string"
+          },
+          "view": {
+            "type": "object",
+            "properties": {
+              "board": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "rowCount": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "rowStart": {
+                    "type": "integer"
+                  },
+                  "separator": {
+                    "type": "string"
+                  },
+                  "template": {
+                    "type": "string"
+                  },
+                  "parameter": {
+                    "type": "string"
+                  },
+                  "layout": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "description",
+                  "source",
+                  "rowCount",
+                  "rowStart",
+                  "separator",
+                  "template",
+                  "parameter",
+                  "layout"
+                ]
+              },
+              "source": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "modified": {
+                    "type": "string"
+                  },
+                  "station": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "written": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "validTo": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "rows": {
+                    "type": "integer"
+                  },
+                  "stale": {
+                    "type": "boolean"
+                  },
+                  "error": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "name",
+                  "path",
+                  "modified",
+                  "station",
+                  "key",
+                  "written",
+                  "validTo",
+                  "rows",
+                  "stale",
+                  "error"
+                ]
+              },
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "cells": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "text"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "cells"
+                  ]
+                }
+              },
+              "layout": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "builtIn": {
+                    "type": "boolean"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "showStation": {
+                    "type": "boolean"
+                  },
+                  "clock": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "minutes",
+                      "seconds"
+                    ]
+                  },
+                  "showDate": {
+                    "type": "boolean"
+                  },
+                  "columnHeaders": {
+                    "type": "boolean"
+                  },
+                  "rows": {
+                    "type": "integer"
+                  },
+                  "font": {
+                    "type": "string"
+                  },
+                  "colors": {
+                    "type": "object",
+                    "properties": {
+                      "background": {
+                        "type": "string"
+                      },
+                      "text": {
+                        "type": "string"
+                      },
+                      "headBackground": {
+                        "type": "string"
+                      },
+                      "headText": {
+                        "type": "string"
+                      },
+                      "accent": {
+                        "type": "string"
+                      },
+                      "muted": {
+                        "type": "string"
+                      },
+                      "delay": {
+                        "type": "string"
+                      },
+                      "rowLine": {
+                        "type": "string"
+                      },
+                      "rowAlternate": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "columns": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "cells": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "label": {
+                          "type": "string"
+                        },
+                        "width": {
+                          "type": "string"
+                        },
+                        "align": {
+                          "type": "string",
+                          "enum": [
+                            "left",
+                            "center",
+                            "right"
+                          ]
+                        },
+                        "color": {
+                          "type": "string"
+                        },
+                        "bold": {
+                          "type": "boolean"
+                        },
+                        "size": {
+                          "type": "integer"
+                        },
+                        "separator": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "alternationMs": {
+                    "type": "integer"
+                  },
+                  "blinkMs": {
+                    "type": "integer"
+                  },
+                  "blinkPhases": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "page": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "html": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "error": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "html",
+                  "error",
+                  "detail"
+                ]
+              }
+            },
+            "required": [
+              "board",
+              "source",
+              "rows",
+              "layout"
+            ]
+          }
+        },
+        "required": [
+          "changed",
+          "hash",
+          "view"
+        ]
+      },
+      "annotations": {
+        "title": "Virtual board view data",
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "_meta": {
+        "ui": {
+          "resourceUri": "ui://tablesimulator/virtual.html",
+          "visibility": [
+            "app"
+          ]
+        }
       }
     },
     {

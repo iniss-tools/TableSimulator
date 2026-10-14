@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 
 // Aplikacia MCP Apps (zobrazenie tabule v klientovi s MCP Apps): jeden subor HTML so vsetkym vlozenym - ramec hostitela
-// nesmie nic stahovat. Server ho vyda ako zdroj ui://tablesimulator/board.html (TableSimulator/Mcp/BoardApp.cs).
+// nesmie nic stahovat. Server ho vyda ako zdroje ui://tablesimulator/board.html a virtual.html (TableSimulator/Mcp/AppPages.cs).
 // Spusta sa po hlavnej zostave webu (bun run build), ktora wwwroot vyprazdni.
 
 /** Vlozi skripty a styly zostavy do HTML a ostatne subory zahodi. */
@@ -29,7 +29,7 @@ function inlineBundle(): Plugin {
         delete bundle[name];
       }
       html.source = source;
-      html.fileName = "board.html";
+      html.fileName = "app.html";
     },
   };
 }

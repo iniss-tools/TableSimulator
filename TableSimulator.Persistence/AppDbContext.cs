@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TableSimulator.Application.Audit;
 using TableSimulator.Application.Faces;
 using TableSimulator.Application.Keys;
+using TableSimulator.Application.OAuth;
 using TableSimulator.Application.Scenarios;
 using TableSimulator.Application.Signage;
 using TableSimulator.Application.Statistics;
@@ -46,6 +47,12 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
 
     /// <summary>Pristupove kluce zariadeni a programov.</summary>
     public DbSet<AccessKey> AccessKeys => Set<AccessKey>();
+
+    /// <summary>Klienti OAuth pre MCP (dynamicka registracia).</summary>
+    public DbSet<OAuthClient> OAuthClients => Set<OAuthClient>();
+
+    /// <summary>Povolenia OAuth pre MCP - pristup klienta za pouzivatela.</summary>
+    public DbSet<OAuthGrant> OAuthGrants => Set<OAuthGrant>();
 
     /// <summary>Spravy informacnych panelov.</summary>
     public DbSet<SignageMessageRecord> SignageMessages => Set<SignageMessageRecord>();
@@ -158,6 +165,30 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
             key.Property(k => k.Hash).HasMaxLength(64);
             key.Property(k => k.CreatedBy).HasMaxLength(64);
             key.HasIndex(k => k.Hash).IsUnique();
+        });
+        builder.Entity<OAuthClient>(client =>
+        {
+            client.ToTable("OAuthClients");
+            client.HasKey(c => c.Id);
+            client.Property(c => c.Id).HasMaxLength(32);
+            client.Property(c => c.Name).HasMaxLength(100);
+        });
+        builder.Entity<OAuthGrant>(grant =>
+        {
+            grant.ToTable("OAuthGrants");
+            grant.HasKey(g => g.Id);
+            grant.Property(g => g.ClientId).HasMaxLength(32);
+            grant.Property(g => g.ClientName).HasMaxLength(100);
+            grant.Property(g => g.UserName).HasMaxLength(64);
+            grant.Property(g => g.Role).HasMaxLength(20);
+            grant.Property(g => g.AccessHash).HasMaxLength(64);
+            grant.Property(g => g.RefreshHash).HasMaxLength(64);
+            grant.Property(g => g.PreviousRefreshHash).HasMaxLength(64);
+            grant.HasIndex(g => g.AccessHash).IsUnique();
+            grant.HasIndex(g => g.RefreshHash).IsUnique();
+            grant.HasIndex(g => g.PreviousRefreshHash);
+            // zrusenie klienta zrusi aj jeho povolenia
+            grant.HasOne<OAuthClient>().WithMany().HasForeignKey(g => g.ClientId).OnDelete(DeleteBehavior.Cascade);
         });
         builder.Entity<VirtualLayoutRecord>(layout =>
         {

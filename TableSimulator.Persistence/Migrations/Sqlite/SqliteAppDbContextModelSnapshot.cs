@@ -233,6 +233,96 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                     b.ToTable("AccessKeys", (string)null);
                 });
 
+            modelBuilder.Entity("TableSimulator.Application.OAuth.OAuthClient", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.PrimitiveCollection<string>("RedirectUris")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OAuthClients", (string)null);
+                });
+
+            modelBuilder.Entity("TableSimulator.Application.OAuth.OAuthGrant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("AccessExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AccessHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ClientId")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ClientName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PreviousRefreshHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("RefreshExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RefreshHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccessHash")
+                        .IsUnique();
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("PreviousRefreshHash");
+
+                    b.HasIndex("RefreshHash")
+                        .IsUnique();
+
+                    b.ToTable("OAuthGrants", (string)null);
+                });
+
             modelBuilder.Entity("TableSimulator.Application.Scenarios.FaultScenarioRecord", b =>
                 {
                     b.Property<int>("Id")
@@ -888,6 +978,15 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                     b.HasOne("TableSimulator.Persistence.Identity.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TableSimulator.Application.OAuth.OAuthGrant", b =>
+                {
+                    b.HasOne("TableSimulator.Application.OAuth.OAuthClient", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

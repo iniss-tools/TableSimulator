@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TableSimulator.Application.Keys;
+using TableSimulator.Application.OAuth;
 
 namespace TableSimulator.Infrastructure.Auth;
 
@@ -46,7 +47,8 @@ public sealed class AccessKeyAuthenticationHandler(
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        if (KeyOf(Request) is not { Length: > 0 } secret)
+        // token OAuth overuje OAuthTokenAuthenticationHandler
+        if (KeyOf(Request) is not { Length: > 0 } secret || OAuthSecrets.IsAccessToken(secret))
             return AuthenticateResult.NoResult();
         var key = await keys.FindByHashAsync(AccessKeys.Hash(secret), Context.RequestAborted).ConfigureAwait(false);
         if (key is null)

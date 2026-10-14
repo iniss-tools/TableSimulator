@@ -135,7 +135,7 @@ public static class VirtualTools
         Layout = board.Layout
     };
 
-    private static VirtualBoardContent Content(VirtualViewDto view, IHttpContextAccessor http) =>
+    internal static VirtualBoardContent Content(VirtualViewDto view, IHttpContextAccessor http) =>
         new(view.Board, view.Source, view.Rows, view.Layout.Id, view.Page?.Error,
             McpRequests.ViewUrl(http.HttpContext?.Request, string.Create(CultureInfo.InvariantCulture, $"/virtual/{view.Board.Id}")));
 

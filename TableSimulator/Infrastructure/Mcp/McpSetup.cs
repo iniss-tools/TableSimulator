@@ -10,6 +10,7 @@ using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using TableSimulator.Application.Server;
 using TableSimulator.Infrastructure.Auth;
+using TableSimulator.Infrastructure.OAuth;
 using TableSimulator.Mcp;
 
 namespace TableSimulator.Infrastructure.Mcp;
@@ -52,7 +53,7 @@ public static class McpSetup
         services.AddMcpServer(options => options.ServerInstructions = McpInstructions.Text)
             .WithHttpTransport()
             .AddAuthorizationFilters()
-            .WithResources([typeof(BoardApp)]);
+            .WithResources([typeof(AppPages)]);
         // ako WithToolsFromAssembly, ale s upravou schem
         foreach (var method in ToolMethods())
         {
@@ -62,8 +63,11 @@ public static class McpSetup
         }
         services.AddOptions<McpServerOptions>().Configure<IServerHost>((options, host) =>
             options.ServerInfo = new Implementation { Name = "TableSimulator", Version = host.Version });
+        // kluc alebo token OAuth; bez nich vyzva 401 s odkazom na opis chraneneho zdroja (klient sa prihlasi cez OAuth)
+        services.AddOAuth();
         services.AddAuthorizationBuilder().AddPolicy(Policy, policy => policy
-            .AddAuthenticationSchemes(AccessKeyAuthenticationHandler.SchemeName)
+            .AddAuthenticationSchemes(AccessKeyAuthenticationHandler.SchemeName, OAuthTokenAuthenticationHandler.SchemeName,
+                OAuthEndpoints.ChallengeScheme)
             .RequireAuthenticatedUser());
         return services;
     }

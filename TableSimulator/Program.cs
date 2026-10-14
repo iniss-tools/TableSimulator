@@ -10,6 +10,7 @@ using TableSimulator.Infrastructure.Hosting;
 using TableSimulator.Infrastructure.Https;
 using TableSimulator.Infrastructure.Logging;
 using TableSimulator.Infrastructure.Mcp;
+using TableSimulator.Infrastructure.OAuth;
 using TableSimulator.Infrastructure.OpenApi;
 using TableSimulator.Infrastructure.Persistence;
 using TableSimulator.Infrastructure.Realtime;
@@ -76,6 +77,7 @@ try
     app.UseUserLogContext();
     app.MapLiveSocket("/ws");
     app.MapMcpServer();
+    app.MapOAuth();
     app.MapApiDocument();
     app.MapEndpoints(app.MapGroup("/api"));
     app.MapInissViewFiles();

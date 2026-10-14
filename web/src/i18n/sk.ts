@@ -717,6 +717,7 @@ export const sk = {
   "common.loading": "Načítava sa…",
   "mcpApp.waiting": "Čakám na tabuľu…",
   "mcpApp.error": "Spojenie so simulátorom zlyhalo: {error}",
+  "mcpApp.template": "Tabuľa sa zobrazuje šablónou XSL {template} z INISSView, ktorú chat nevie ukázať. Otvorte ju na webe simulátora.",
   "common.actions": "Akcie",
   "common.search": "Hľadať…",
   "common.confirm": "Potvrdiť",
