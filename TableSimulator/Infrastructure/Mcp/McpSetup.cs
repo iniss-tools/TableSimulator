@@ -87,6 +87,14 @@ public static class McpSetup
     /// </summary>
     public static IEndpointConventionBuilder MapMcpServer(this IEndpointRouteBuilder app)
     {
+        // bez relacie server prud sprav (GET) ani ukoncenie relacie (DELETE) nema - podla specifikacie 405; bez tejto trasy by
+        // GET zachytila stranka webu a token OAuth odmietla 401 bez odkazu na prihlasenie
+        app.MapMethods(Pattern, [HttpMethods.Get, HttpMethods.Delete], (HttpResponse response) =>
+        {
+            response.Headers.Allow = HttpMethods.Post;
+            return Results.StatusCode(StatusCodes.Status405MethodNotAllowed);
+        }).RequireAuthorization(Policy).ExcludeFromDescription();
+        
         var builder = app.MapMcp(Pattern).RequireAuthorization(Policy).ExcludeFromDescription();
         builder.Add(endpoint =>
         {

@@ -142,6 +142,31 @@ public sealed partial class McpOAuthTests
     }
 
     [TestMethod]
+    public async Task OAuth_TokenPlatiAjPreGetADelete()
+    {
+        await using var server = SimulatorServer.Start();
+        using var browser = server.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        var access = (await Authorize(browser, "viewer")).Tokens.GetProperty("access_token").GetString();
+
+        // VS Code otvara aj prud sprav servera (GET) - 401 by ho poslalo prihlasovat znova
+        using var get = new HttpRequestMessage(HttpMethod.Get, "/mcp");
+        get.Headers.Accept.ParseAdd("text/event-stream");
+        get.Headers.Authorization = new("Bearer", access);
+        using var response = await browser.SendAsync(get, HttpCompletionOption.ResponseHeadersRead, TestContext.CancellationToken);
+
+        using var delete = new HttpRequestMessage(HttpMethod.Delete, "/mcp");
+        delete.Headers.Authorization = new("Bearer", access);
+        using var deleted = await browser.SendAsync(delete, TestContext.CancellationToken);
+        using var anonymous = await browser.GetAsync("/mcp", TestContext.CancellationToken);
+
+        // server bez relacie prud sprav nema (405); bez tokenu vyzva s odkazom na prihlasenie
+        Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.MethodNotAllowed, deleted.StatusCode);
+        Assert.AreEqual(HttpStatusCode.Unauthorized, anonymous.StatusCode);
+        StringAssert.Contains(anonymous.Headers.WwwAuthenticate.ToString(), "resource_metadata=");
+    }
+
+    [TestMethod]
     public async Task OAuth_ZlyOverovaciKodAleboNavratOdmietnuty()
     {
         await using var server = SimulatorServer.Start();
