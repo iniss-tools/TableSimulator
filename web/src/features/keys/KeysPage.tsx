@@ -5,7 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteAccessKey, errorText, getAccessKeysOptions, getAccessKeysQueryKey, queryClient, type AccessKeyCreatedDto, type AccessKeyDto } from "@/api";
 import { confirmAction } from "@/components/common/confirm";
-import { PageHeader } from "@/components/common/page-header";
+import { PageHeader, SectionTitle } from "@/components/common/page-header";
 import { RowActions } from "@/components/common/row-actions";
 import { DataTable } from "@/components/data-table/data-table";
 import { columnsFor } from "@/components/data-table/features";
@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/format";
 import { t, type TextKey } from "@/i18n";
+import { GrantsTable } from "@/features/oauth/GrantsTable";
 import { useRoles } from "@/features/roles/roles";
 import { CreatedKeyDialog, NewKeyDialog } from "./KeyDialogs";
 
@@ -89,6 +90,9 @@ export function KeysPage() {
         </Alert>
       )}
       <DataTable columns={columns} data={rows} getRowId={(k) => k.id} pageSize={null} empty={t("keys.empty")} />
+      <SectionTitle>{t("oauth.grants")}</SectionTitle>
+      <p className="mb-3 max-w-3xl text-sm text-muted-foreground">{t("oauth.grants.hint")}</p>
+      <GrantsTable showUser />
       {creating && (
         <NewKeyDialog
           onClose={(result) => {

@@ -734,6 +734,38 @@ export type MonitorLookDto = {
     displayColor: string;
 };
 
+export type OAuthDecisionRequest = {
+    allow: boolean;
+    role: null | string;
+};
+
+export type OAuthGrantDto = {
+    id: string;
+    clientName: string;
+    userName: string;
+    role: string;
+    roleName: string;
+    createdAt: string;
+    lastUsedAt: null | string;
+};
+
+export type OAuthRedirectDto = {
+    redirectUrl: string;
+};
+
+export type OAuthRequestDto = {
+    id: string;
+    clientName: string;
+    redirectHost: string;
+    roles: Array<OAuthRoleDto>;
+    role: string;
+};
+
+export type OAuthRoleDto = {
+    name: string;
+    displayName: string;
+};
+
 export type PlayRequest = {
     name: string;
     speed: number;
@@ -3108,6 +3140,112 @@ export type GetWebManifestResponses = {
 };
 
 export type GetWebManifestResponse = GetWebManifestResponses[keyof GetWebManifestResponses];
+
+export type GetOAuthRequestData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/oauth/requests/{id}';
+};
+
+export type GetOAuthRequestErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetOAuthRequestError = GetOAuthRequestErrors[keyof GetOAuthRequestErrors];
+
+export type GetOAuthRequestResponses = {
+    /**
+     * OK
+     */
+    200: OAuthRequestDto;
+};
+
+export type GetOAuthRequestResponse = GetOAuthRequestResponses[keyof GetOAuthRequestResponses];
+
+export type DecideOAuthRequestData = {
+    body: OAuthDecisionRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/oauth/requests/{id}';
+};
+
+export type DecideOAuthRequestErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type DecideOAuthRequestError = DecideOAuthRequestErrors[keyof DecideOAuthRequestErrors];
+
+export type DecideOAuthRequestResponses = {
+    /**
+     * OK
+     */
+    200: OAuthRedirectDto;
+};
+
+export type DecideOAuthRequestResponse = DecideOAuthRequestResponses[keyof DecideOAuthRequestResponses];
+
+export type DeleteOAuthGrantData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/oauth/grants/{id}';
+};
+
+export type DeleteOAuthGrantErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type DeleteOAuthGrantError = DeleteOAuthGrantErrors[keyof DeleteOAuthGrantErrors];
+
+export type DeleteOAuthGrantResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteOAuthGrantResponse = DeleteOAuthGrantResponses[keyof DeleteOAuthGrantResponses];
+
+export type GetOAuthGrantsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/oauth/grants';
+};
+
+export type GetOAuthGrantsErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetOAuthGrantsError = GetOAuthGrantsErrors[keyof GetOAuthGrantsErrors];
+
+export type GetOAuthGrantsResponses = {
+    /**
+     * OK
+     */
+    200: Array<OAuthGrantDto>;
+};
+
+export type GetOAuthGrantsResponse = GetOAuthGrantsResponses[keyof GetOAuthGrantsResponses];
 
 export type GetMonitorData = {
     body?: never;

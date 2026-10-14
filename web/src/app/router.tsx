@@ -13,6 +13,7 @@ const AuthPage = lazy(() => import("@/features/auth/AuthPage").then((m) => ({ de
 const BoardKiosk = lazy(() => import("./BoardKiosk").then((m) => ({ default: m.BoardKiosk })));
 const VirtualKiosk = lazy(() => import("@/features/virtual/VirtualKiosk").then((m) => ({ default: m.VirtualKiosk })));
 const PanelKiosk = lazy(() => import("@/features/signage/PanelKiosk").then((m) => ({ default: m.PanelKiosk })));
+const AuthorizePage = lazy(() => import("@/features/oauth/AuthorizePage").then((m) => ({ default: m.AuthorizePage })));
 const ArchivePage = lazy(() => import("@/features/archive/ArchivePage").then((m) => ({ default: m.ArchivePage })));
 
 /** Kym sa nezisti pouzivatel, nic; neprihlaseny dostane prihlasenie (aj na adrese kiosku - po prihlaseni tam ostane). */
@@ -69,6 +70,16 @@ const panelKiosk = createRoute({
   component: function PanelKioskRoute() {
     const { id } = panelKiosk.useParams();
     return <PanelKiosk id={Number(id)} />;
+  },
+});
+
+// povolenie pristupu klientovi MCP (OAuth) - server sem presmeruje z /oauth/authorize; bez menu ako prihlasenie
+const authorize = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/authorize/$id",
+  component: function AuthorizeRoute() {
+    const { id } = authorize.useParams();
+    return <AuthorizePage id={id} />;
   },
 });
 
@@ -162,7 +173,7 @@ const pages = [
   }),
 ] as const;
 
-const routeTree = rootRoute.addChildren([boardKiosk, wall, virtualKiosk, panelKiosk, shell.addChildren(pages)]);
+const routeTree = rootRoute.addChildren([boardKiosk, wall, virtualKiosk, panelKiosk, authorize, shell.addChildren(pages)]);
 
 export const router = createRouter({ routeTree, history: createHashHistory(), defaultNotFoundComponent: NotFound });
 

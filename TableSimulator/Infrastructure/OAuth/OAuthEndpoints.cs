@@ -9,20 +9,24 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Authentication;
 using TableSimulator.Application.Auth;
+using TableSimulator.Application.OAuth;
 using TableSimulator.Infrastructure.Auth;
 using TableSimulator.Infrastructure.Mcp;
 
 namespace TableSimulator.Infrastructure.OAuth;
 
 /// <summary>
-/// SONDA: server OAuth 2.1 pre klientov MCP - opis servera (RFC 8414), dynamicka registracia klienta (RFC 7591), povolenie
-/// s PKCE S256 a tokeny s obnovovanim. Stranka povolenia je zatial HTML zo servera (bez prekladov).
+/// Server OAuth 2.1 pre klientov MCP - opis servera (RFC 8414), dynamicka registracia klienta (RFC 7591), povolenie
+/// s PKCE S256 (rozhoduje pouzivatel na stranke webu <c>#/authorize/{id}</c> cez <c>/api/oauth</c>) a tokeny s obnovovanim.
 /// </summary>
 public static class OAuthEndpoints
 {
     public const string AuthorizePath = "/oauth/authorize";
     public const string TokenPath = "/oauth/token";
     public const string RegisterPath = "/oauth/register";
+
+    /// <summary>Stranka povolenia pri neplatnej ziadosti (neznamy klient, cudzia adresa navratu).</summary>
+    public const string InvalidRequest = "invalid";
 
     /// <summary>Schema vyzvy 401 s odkazom na opis chraneneho zdroja (len vyzva, neprihlasuje).</summary>
     public const string ChallengeScheme = "McpAuth";
@@ -74,7 +78,6 @@ public static class OAuthEndpoints
 
         app.MapPost(RegisterPath, Register).AllowAnonymous().ExcludeFromDescription();
         app.MapGet(AuthorizePath, Authorize).AllowAnonymous().ExcludeFromDescription();
-        app.MapPost(AuthorizePath, Decide).AllowAnonymous().DisableAntiforgery().ExcludeFromDescription();
         app.MapPost(TokenPath, Token).AllowAnonymous().DisableAntiforgery().ExcludeFromDescription();
     }
 
@@ -113,57 +116,23 @@ public static class OAuthEndpoints
         }, statusCode: StatusCodes.Status201Created);
     }
 
-    private static async Task<IResult> Authorize(HttpContext context, OAuthServer server, OAuthPending pending, OAuthUsers users, RoleCatalog roles)
+    /// <summary>
+    /// Overi klienta a adresu navratu a presmeruje na stranku povolenia webu (<c>#/authorize/{id}</c>) - tam sa pouzivatel
+    /// prihlasi a rozhodne. Neznamy klient alebo cudzia adresa navratu = stranka s chybou, nikam inam sa nepresmeruje.
+    /// </summary>
+    private static async Task<IResult> Authorize(HttpContext context, OAuthServer server, OAuthPending pending)
     {
         var query = context.Request.Query;
+        var web = context.Request.PathBase + "/#/authorize/";
         var client = await server.FindClientAsync(query["client_id"], context.RequestAborted);
         string? redirect = query["redirect_uri"];
-        // bez platneho klienta a adresy navratu sa nikam nepresmeruje
         if (client is null || redirect is null || !client.RedirectUris.Any(r => SameRedirect(r, redirect)))
-            return Page("Neplatná žiadosť", "<p>Aplikácia nie je zaregistrovaná alebo žiada návrat na inú adresu. Pripojte ju znova.</p>", 400);
+            return Results.Redirect(web + InvalidRequest);
         string? state = query["state"];
         if (query["response_type"] != "code" || query["code_challenge_method"] != "S256" || string.IsNullOrEmpty(query["code_challenge"]))
-            return Results.Redirect(WithQuery(redirect, ("error", "invalid_request"), ("state", state), ("iss", Issuer(context.Request))));
-
-        var user = await UserOf(context);
-        if (user is null)
-            return Page("Prihlásenie", $"<p>Najprv sa <a href=\"{context.Request.PathBase}/\" target=\"_blank\">prihláste do simulátora</a> a potom túto stránku obnovte.</p>", 401);
-        var (userName, role) = user.Value;
-
-        var request = pending.CreateRequest(client, redirect, query["code_challenge"]!, state, userName);
-        var options = new StringBuilder();
-        foreach (var info in roles.All.Where(r => users.Covers(role, r.Name)))
-            options.Append(CultureInfo.InvariantCulture,
-                $"<option value=\"{Enc(info.Name)}\"{(info.Name == role ? " selected" : "")}>{Enc(RoleName(info))}</option>");
-        var target = Uri.TryCreate(redirect, UriKind.Absolute, out var uri) ? uri.Scheme + "://" + uri.Authority : redirect;
-        return Page("Povoliť prístup", $"""
-            <p>Aplikácia <b>{Enc(client.Name)}</b> žiada prístup k simulátoru cez MCP za používateľa <b>{Enc(userName)}</b>.</p>
-            <p>Po povolení sa vráti na <code>{Enc(target)}</code>.</p>
-            <form method="post" action="{context.Request.PathBase}{AuthorizePath}">
-              <input type="hidden" name="request" value="{Enc(request.Id)}">
-              <label>Rola <select name="role">{options}</select></label>
-              <p><button name="decision" value="allow">Povoliť</button> <button name="decision" value="deny">Zamietnuť</button></p>
-            </form>
-            """, 200);
-    }
-
-    private static async Task<IResult> Decide(HttpContext context, OAuthPending pending, OAuthUsers users, ILogger<OAuthServer> logger)
-    {
-        if (!RequestOrigin.IsSame(context.Request))
-            return Results.StatusCode(StatusCodes.Status403Forbidden);
-        var form = await context.Request.ReadFormAsync(context.RequestAborted);
-        var user = await UserOf(context);
-        var request = pending.TakeRequest(form["request"]);
-        if (request is null || user is null || user.Value.Name != request.UserName)
-            return Page("Neplatná žiadosť", "<p>Žiadosť vypršala. Pripojte aplikáciu znova.</p>", 400);
-        if (form["decision"] != "allow")
-            return Results.Redirect(WithQuery(request.RedirectUri, ("error", "access_denied"), ("state", request.State), ("iss", Issuer(context.Request))));
-        var role = form["role"].ToString();
-        if (!users.Covers(user.Value.Role, role))
-            return Page("Neplatná rola", "<p>Túto rolu nemôžete prideliť.</p>", 400);
-        var code = pending.Approve(request, role);
-        OAuthLog.Approved(logger, request.Client.Name, request.UserName, role);
-        return Results.Redirect(WithQuery(request.RedirectUri, ("code", code), ("state", request.State), ("iss", Issuer(context.Request))));
+            return Results.Redirect(OAuthRedirect.With(redirect, ("error", "invalid_request"), ("state", state), ("iss", Issuer(context.Request))));
+        var request = pending.CreateRequest(client, redirect, query["code_challenge"]!, state, Issuer(context.Request));
+        return Results.Redirect(web + request.Id);
     }
 
     private static async Task<IResult> Token(HttpContext context, OAuthServer server)
@@ -191,14 +160,6 @@ public static class OAuthEndpoints
     }
 
     /// <summary>Prihlaseny pouzivatel (cookie alebo rezim bez prihlasovania); kluc povolenie udelit nemoze.</summary>
-    private static async Task<(string Name, string Role)?> UserOf(HttpContext context)
-    {
-        var result = await context.AuthenticateAsync(AuthSetup.AutoScheme);
-        if (!result.Succeeded || result.Principal.Identity?.Name is not { } name || name.StartsWith(AccessKeyAuthenticationHandler.NamePrefix, StringComparison.Ordinal))
-            return null;
-        return result.Principal.FindFirstValue(ClaimTypes.Role) is { } role ? (name, role) : null;
-    }
-
     /// <summary>Navrat: https, aplikacna schema alebo http na tomto pocitaci (RFC 8252).</summary>
     private static bool IsAllowedRedirect(string value) =>
         Uri.TryCreate(value, UriKind.Absolute, out var uri) && string.IsNullOrEmpty(uri.Fragment) && uri.Scheme switch
@@ -218,36 +179,7 @@ public static class OAuthEndpoints
                && a is { Scheme: "http", IsLoopback: true } && b.Scheme == "http" && a.Host == b.Host && a.PathAndQuery == b.PathAndQuery;
     }
 
-    private static string WithQuery(string uri, params (string Name, string? Value)[] values)
-    {
-        var builder = new StringBuilder(uri);
-        var separator = uri.Contains('?', StringComparison.Ordinal) ? '&' : '?';
-        foreach (var (name, value) in values.Where(v => v.Value is not null))
-        {
-            builder.Append(separator).Append(name).Append('=').Append(Uri.EscapeDataString(value!));
-            separator = '&';
-        }
-        return builder.ToString();
-    }
-
     private static IResult Error(string error, string? description) =>
         Results.Json(new { error, error_description = description }, Json, statusCode: StatusCodes.Status400BadRequest);
 
-    private static IResult Page(string title, string body, int status) => Results.Content($$"""
-        <!doctype html><html lang="sk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{{Enc(title)}} – TableSimulator</title>
-        <style>:root{color-scheme:light dark}body{font-family:system-ui,sans-serif;max-width:32rem;margin:3rem auto;padding:0 1rem}button,select{font:inherit;padding:.3rem .8rem}</style>
-        </head><body><h1>{{Enc(title)}}</h1>{{body}}</body></html>
-        """, "text/html; charset=utf-8", Encoding.UTF8, status);
-
-    /// <summary>SONDA: vstavane roly nemaju nazov v databaze (web ich prekladá) - zatial slovensky natvrdo.</summary>
-    private static string RoleName(RoleInfo role) => role.DisplayName.Length > 0 ? role.DisplayName : role.Name switch
-    {
-        Roles.Admin => "Správca",
-        Roles.Operator => "Operátor",
-        Roles.Viewer => "Pozorovateľ",
-        _ => role.Name
-    };
-
-    private static string Enc(string value) => WebUtility.HtmlEncode(value);
 }

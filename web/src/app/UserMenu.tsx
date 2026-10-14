@@ -1,9 +1,10 @@
 // Pata bocneho panela: kto je prihlaseny a jeho ponuka - jazyk, vzhlad, systemove oznamenia, vlastne heslo, odhlasenie
 // (alebo kluc karty).
 import { useState } from "react";
-import { Bell, ChevronsUpDown, KeyRound, Languages, LogOut, Monitor, Moon, Sun, SunMoon } from "lucide-react";
+import { Bell, Cable, ChevronsUpDown, KeyRound, Languages, LogOut, Monitor, Moon, Sun, SunMoon } from "lucide-react";
 import { toast } from "sonner";
-import { forgetAccessKey, logout, queryClient, type MeDto } from "@/api";
+import { forgetAccessKey, logout, PERMISSIONS, queryClient, useCan, type MeDto } from "@/api";
+import { GrantsDialog } from "@/features/oauth/GrantsDialog";
 import { roleLabel } from "@/features/roles/roles";
 import { PasswordDialog } from "@/features/users/PasswordDialog";
 import {
@@ -46,6 +47,8 @@ export function UserMenu({ me }: { me: MeDto }) {
   const notifications = useNotifications();
   const [password, setPassword] = useState(false);
   const [passwordDone, setPasswordDone] = useState(false);
+  const [grants, setGrants] = useState(false);
+  const can = useCan();
 
   // bez prihlasovania je kazdy na tomto pocitaci spravca; karta s klucom je zariadenie
   const name = me.accessKey ? t("user.device") : me.loginRequired ? me.displayName || me.userName || "" : t("user.local");
@@ -137,24 +140,31 @@ export function UserMenu({ me }: { me: MeDto }) {
                   </DropdownMenuGroup>
                 </>
               ) : (
-                me.loginRequired && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setPassword(true)}>
-                      <KeyRound />
-                      {t("users.ownPassword")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={signOut}>
-                      <LogOut />
-                      {t("auth.logout")}
-                    </DropdownMenuItem>
-                  </>
-                )
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setGrants(true)}>
+                    <Cable />
+                    {t("oauth.grants")}
+                  </DropdownMenuItem>
+                </>
+              )}
+              {!me.accessKey && me.loginRequired && (
+                <>
+                  <DropdownMenuItem onClick={() => setPassword(true)}>
+                    <KeyRound />
+                    {t("users.ownPassword")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={signOut}>
+                    <LogOut />
+                    {t("auth.logout")}
+                  </DropdownMenuItem>
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>
       </SidebarMenu>
+      {grants && <GrantsDialog showUser={can(PERMISSIONS.keys)} onClose={() => setGrants(false)} />}
       {password && (
         <PasswordDialog
           userName={null}

@@ -71,6 +71,7 @@ try
     app.UseDesignFiles();
     app.UseStaticFiles();
     app.UseSerilogRequestLogging(SerilogSetup.ConfigureRequestLogging);
+    app.UseOAuthCors();
     app.UseAuthentication();
     app.UseAuthorization();
     app.UseCsrfHeader();

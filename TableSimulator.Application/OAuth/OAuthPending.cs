@@ -1,9 +1,14 @@
-using TableSimulator.Application.OAuth;
+namespace TableSimulator.Application.OAuth;
 
-namespace TableSimulator.Infrastructure.OAuth;
-
-/// <summary>Ziadost o povolenie cakajuca na rozhodnutie pouzivatela na stranke povolenia.</summary>
-public sealed record OAuthRequest(string Id, OAuthClient Client, string RedirectUri, string CodeChallenge, string? State, string UserName, DateTime ExpiresAt);
+/// <summary>Ziadost klienta o povolenie cakajuca na rozhodnutie pouzivatela na stranke povolenia (<c>#/authorize/{Id}</c>).</summary>
+/// <param name="Id">nahodny identifikator v adrese stranky</param>
+/// <param name="Client">klient</param>
+/// <param name="RedirectUri">adresa navratu z ziadosti (jedna z registrovanych)</param>
+/// <param name="CodeChallenge">vyzva PKCE S256</param>
+/// <param name="State">hodnota klienta, ktoru dostane spat</param>
+/// <param name="Issuer">adresa servera - ide spat ako <c>iss</c> (RFC 9207)</param>
+/// <param name="ExpiresAt">koniec platnosti (UTC)</param>
+public sealed record OAuthRequest(string Id, OAuthClient Client, string RedirectUri, string CodeChallenge, string? State, string Issuer, DateTime ExpiresAt);
 
 /// <summary>Jednorazovy kod po povoleni - klient ho vymeni za tokeny.</summary>
 public sealed record OAuthCode(string ClientId, string RedirectUri, string CodeChallenge, string UserName, string Role, DateTime ExpiresAt);
@@ -23,9 +28,9 @@ public sealed class OAuthPending(TimeProvider time)
 
     private DateTime Now => time.GetUtcNow().UtcDateTime;
 
-    public OAuthRequest CreateRequest(OAuthClient client, string redirectUri, string codeChallenge, string? state, string userName)
+    public OAuthRequest CreateRequest(OAuthClient client, string redirectUri, string codeChallenge, string? state, string issuer)
     {
-        var request = new OAuthRequest(OAuthSecrets.New(""), client, redirectUri, codeChallenge, state, userName, Now + RequestLifetime);
+        var request = new OAuthRequest(OAuthSecrets.New(""), client, redirectUri, codeChallenge, state, issuer, Now + RequestLifetime);
         lock (_lock)
         {
             Expire(_requests, r => r.ExpiresAt);
@@ -34,22 +39,29 @@ public sealed class OAuthPending(TimeProvider time)
         return request;
     }
 
-    /// <summary>Ziadost na rozhodnutie - jednorazovo (rozhodnutie ju odstrani); null = neexistuje alebo vyprsala.</summary>
-    public OAuthRequest? TakeRequest(string? id)
+    /// <summary>Ziadost na zobrazenie; null = neexistuje alebo vyprsala.</summary>
+    public OAuthRequest? FindRequest(string id)
     {
         lock (_lock)
-            return id is not null && _requests.Remove(id, out var request) && request.ExpiresAt >= Now ? request : null;
+            return _requests.TryGetValue(id, out var request) && request.ExpiresAt >= Now ? request : null;
     }
 
-    /// <summary>Povolenie pouzivatela - jednorazovy kod pre klienta.</summary>
-    public string Approve(OAuthRequest request, string role)
+    /// <summary>Ziadost na rozhodnutie - jednorazovo (rozhodnutie ju odstrani); null = neexistuje alebo vyprsala.</summary>
+    public OAuthRequest? TakeRequest(string id)
+    {
+        lock (_lock)
+            return _requests.Remove(id, out var request) && request.ExpiresAt >= Now ? request : null;
+    }
+
+    /// <summary>Povolenie pouzivatela <paramref name="userName" /> s rolou <paramref name="role" /> - jednorazovy kod pre klienta.</summary>
+    public string Approve(OAuthRequest request, string userName, string role)
     {
         ArgumentNullException.ThrowIfNull(request);
         var code = OAuthSecrets.New("");
         lock (_lock)
         {
             Expire(_codes, c => c.ExpiresAt);
-            _codes[code] = new OAuthCode(request.Client.Id, request.RedirectUri, request.CodeChallenge, request.UserName, role, Now + CodeLifetime);
+            _codes[code] = new OAuthCode(request.Client.Id, request.RedirectUri, request.CodeChallenge, userName, role, Now + CodeLifetime);
         }
         return code;
     }

@@ -56,10 +56,15 @@ public static class SerilogSetup
     }
 
     /// <summary>
-    /// Poziadavky: uspesne len pri podrobnom zazname (prikazy zapisuju dekoratory), odmietnute volania API a MCP ako
+    /// Poziadavky: uspesne len pri podrobnom zazname (prikazy zapisuju dekoratory) okrem prihlasenia OAuth, odmietnute volania API, MCP a OAuth ako
     /// upozornenie (chybajuci subor mimo API, napr. favicon.ico, nie), chyby servera ako chyba. Zaznam je pred
     /// prihlasenim, aby zachytil aj poziadavky odmietnute bez prihlasenia alebo bez hlavicky CSRF.
     /// </summary>
+    /// <summary>Server OAuth pre MCP - opisy servera, registracia, povolenie a tokeny.</summary>
+    private static bool IsOAuth(PathString path) =>
+        path.StartsWithSegments("/oauth") || path.StartsWithSegments("/.well-known/oauth-authorization-server")
+        || path.StartsWithSegments("/.well-known/oauth-protected-resource");
+
     public static void ConfigureRequestLogging(RequestLoggingOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -67,8 +72,11 @@ public static class SerilogSetup
             diagnostic.Set(UserProperty, context.User.Identity?.IsAuthenticated == true ? context.User.Identity.Name : "-");
         options.GetLevel = (context, _, exception) =>
             exception is not null || context.Response.StatusCode >= 500 ? LogEventLevel.Error
-            : context.Response.StatusCode >= 400 && (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments(McpSetup.Pattern))
+            : context.Response.StatusCode >= 400 && (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments(McpSetup.Pattern)
+                                                     || IsOAuth(context.Request.Path))
                 ? LogEventLevel.Warning
+            // prihlasenie klienta MCP je zriedkave a bez zaznamu sa neda zistit, kde sa zastavilo
+            : IsOAuth(context.Request.Path) ? LogEventLevel.Information
             : LogEventLevel.Debug;
     }
 }
