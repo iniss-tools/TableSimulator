@@ -4,6 +4,7 @@ using System.Runtime.Versioning;
 using System.Security.Principal;
 using System.ServiceProcess;
 using Microsoft.Extensions.Hosting.WindowsServices;
+using Microsoft.Win32;
 using TableSimulator.Infrastructure.Auth;
 
 namespace TableSimulator.Infrastructure.Hosting;
@@ -25,6 +26,9 @@ public static class WindowsService
 
     private const string Description = "Simulator tabul pre INISS - linky k tabuliam, zobrazenie tabul a virtualne tabule na webe.";
 
+    /// <summary>Priecinok nastaveni v prikazovom riadku sluzby.</summary>
+    private const string DataOption = "--data \"";
+
     /// <summary>Proces bezi ako sluzba Windows.</summary>
     public static bool IsRunning => OperatingSystem.IsWindows() && WindowsServiceHelpers.IsWindowsService();
 
@@ -35,8 +39,46 @@ public static class WindowsService
     /// <summary>Prikazovy riadok sluzby (cesta k programu a parametre).</summary>
     public static string BinaryPath(string program, string dataFolder, int? port)
     {
-        var path = $"\"{program}\" --data \"{Path.TrimEndingDirectorySeparator(dataFolder)}\"";
+        var path = $"\"{program}\" {DataOption}{Path.TrimEndingDirectorySeparator(dataFolder)}\"";
         return port is { } p ? path + string.Create(CultureInfo.InvariantCulture, $" --port {p}") : path;
+    }
+
+    /// <summary>Priecinok nastaveni z prikazoveho riadka sluzby (<see cref="BinaryPath" />); bez <c>--data</c> null.</summary>
+    public static string? DataFolderOf(string binaryPath)
+    {
+        ArgumentNullException.ThrowIfNull(binaryPath);
+        var start = binaryPath.IndexOf(DataOption, StringComparison.Ordinal);
+        if (start < 0)
+            return null;
+        start += DataOption.Length;
+        var end = binaryPath.IndexOf('"', start);
+        return end > start ? binaryPath[start..end] : null;
+    }
+
+    /// <summary>Priecinok nastaveni nainstalovanej sluzby; null, ak sluzba nie je nainstalovana.</summary>
+    public static string? InstalledDataFolder()
+    {
+        if (!OperatingSystem.IsWindows())
+            return null;
+        // ImagePath citaju aj bezni pouzivatelia (sc.exe qc by chcelo len viac prace)
+        using var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{Name}");
+        return key?.GetValue("ImagePath") is string binaryPath ? DataFolderOf(binaryPath) ?? DefaultDataFolder : null;
+    }
+
+    /// <summary>Sluzba bezi alebo sa prave spusta (pri starte Windows s oneskorenim).</summary>
+    public static bool IsStartingOrRunning()
+    {
+        if (!OperatingSystem.IsWindows())
+            return false;
+        try
+        {
+            using var service = new ServiceController(Name);
+            return service.Status is ServiceControllerStatus.Running or ServiceControllerStatus.StartPending or ServiceControllerStatus.ContinuePending;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
     }
 
     /// <summary>Volania <c>sc.exe</c> na zalozenie (alebo zmenu existujucej) a nastavenie sluzby.</summary>

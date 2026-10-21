@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TableSimulator.Application.Settings;
 using TableSimulator.Core.Lines;
@@ -20,6 +22,12 @@ public static partial class DatabaseBootstrap
     /// <summary>Pripona prevedeneho stareho suboru.</summary>
     public const string ImportedSuffix = ".imported";
 
+    /// <summary>Priecinok kopii databazy SQLite pred aktualizaciou servera (v priecinku nastaveni).</summary>
+    public const string BeforeUpdateFolder = "before-update";
+
+    /// <summary>Kolko poslednych kopii pred aktualizaciou ostava.</summary>
+    public const int BeforeUpdateKeep = 5;
+
     /// <summary>Uvedie databazu do poriadku a vrati nastavenie servera.</summary>
     /// <param name="paths">priecinky servera</param>
     /// <param name="database">databaza (SQLite alebo PostgreSQL podla <c>database.json</c>)</param>
@@ -32,6 +40,8 @@ public static partial class DatabaseBootstrap
         ArgumentNullException.ThrowIfNull(logger);
         DatabaseLog.Using(logger, database.Description);
         await using var db = ServerDatabase.Open(database);
+        if (database.Provider == DatabaseProvider.Sqlite && File.Exists(paths.DatabaseFile))
+            await BackupBeforeUpdateAsync(paths, db, DateTimeOffset.Now, logger, cancellationToken).ConfigureAwait(false);
         await ServerDatabase.MigrateAsync(db, cancellationToken).ConfigureAwait(false);
         var settings = new SettingsRepository(db);
         if (settings.Load() is { } stored)
@@ -85,6 +95,33 @@ public static partial class DatabaseBootstrap
         return initial;
     }
 
+    /// <summary>
+    /// Pred migraciou existujucej databazy SQLite na novu verziu servera ju skopiruje do <c>before-update\&lt;cas&gt;</c>
+    /// (ostava poslednych <see cref="BeforeUpdateKeep" /> kopii) - s kopiou sa da vratit starsia verzia servera aj s jej
+    /// udajmi. Nova databaza ani databaza bez cakajucich migracii sa nekopiruje; vrati priecinok kopie alebo null.
+    /// </summary>
+    public static async Task<string?> BackupBeforeUpdateAsync(AppPaths paths, AppDbContext db, DateTimeOffset now, ILogger logger,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(paths);
+        ArgumentNullException.ThrowIfNull(db);
+        var applied = (await db.Database.GetAppliedMigrationsAsync(cancellationToken).ConfigureAwait(false)).ToList();
+        var pending = (await db.Database.GetPendingMigrationsAsync(cancellationToken).ConfigureAwait(false)).ToList();
+        if (applied.Count == 0 || pending.Count == 0)
+            return null;
+
+        var root = Path.Combine(paths.DataFolder, BeforeUpdateFolder);
+        var folder = Path.Combine(root, now.ToLocalTime().ToString("yyyy-MM-dd_HH-mm-ss", CultureInfo.InvariantCulture));
+        Directory.CreateDirectory(folder);
+        ServerDatabase.BackupTo(paths.DatabaseFile, Path.Combine(folder, Path.GetFileName(paths.DatabaseFile)));
+        BackupBeforeUpdate(logger, applied[^1], pending[^1], folder);
+
+        // casova peciatka v nazve sa radi ako text
+        foreach (var old in Directory.GetDirectories(root).OrderDescending(StringComparer.Ordinal).Skip(BeforeUpdateKeep))
+            Directory.Delete(old, true);
+        return folder;
+    }
+
     /// <summary>Linky a tabule noveho simulatora: jedna linka ELEN so samoucenim.</summary>
     public static SimulatorConfig DefaultConfig() => new() { Lines = [new LineConfig(1, 4, LineEndpoint.DefaultFor(1).ToString())] };
 
@@ -113,6 +150,9 @@ public static partial class DatabaseBootstrap
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Linky a tabule prevedene do databazy ({Lines} liniek, {Boards} tabul)")]
     private static partial void ConfigImported(ILogger logger, int lines, int boards);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Databaza sa aktualizuje z {Applied} na {Pending}, povodna je v {Folder}")]
+    private static partial void BackupBeforeUpdate(ILogger logger, string applied, string pending, string folder);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Nova databaza - jedna linka ELEN so samoucenim")]
     private static partial void DefaultLine(ILogger logger);

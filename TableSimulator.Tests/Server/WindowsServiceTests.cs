@@ -66,6 +66,15 @@ public sealed class WindowsServiceTests
     }
 
     [TestMethod]
+    public void PrikazovyRiadokSluzby_PriecinokNastaveni()
+    {
+        // podla neho spustenie v okne pozna priecinok sluzby a len otvori bieziaci server
+        var path = WindowsService.BinaryPath(@"C:\Program Files\Sim\TableSimulator.exe", @"C:\ProgramData\TableSimulator\", 5480);
+        Assert.AreEqual(@"C:\ProgramData\TableSimulator", WindowsService.DataFolderOf(path));
+        Assert.IsNull(WindowsService.DataFolderOf("\"C:\\Program Files\\Sim\\TableSimulator.exe\""));
+    }
+
+    [TestMethod]
     [OSCondition(OperatingSystems.Windows)]
     [SupportedOSPlatform("windows")]
     public void Kluce_PrevodPrePocitacZachovaUdaje()

@@ -94,6 +94,40 @@ public sealed class DatabaseBootstrapTests
     }
 
     [TestMethod]
+    public async Task Aktualizacia_KopiaDatabazyPredMigraciouPoslednychPat()
+    {
+        var paths = Paths();
+        await DatabaseBootstrap.PrepareAsync(paths, DatabaseConnection.Sqlite(paths.DatabaseFile), NullLogger.Instance);
+        await using (var db = ServerDatabase.Open(paths.DatabaseFile))
+        {
+            // aktualna databaza sa nekopiruje
+            Assert.IsNull(await DatabaseBootstrap.BackupBeforeUpdateAsync(paths, db, DateTimeOffset.Now, NullLogger.Instance));
+            // databaza starsej verzie servera - posledna migracia chyba
+            await db.Database.ExecuteSqlRawAsync(
+                """DELETE FROM "__EFMigrationsHistory" WHERE "MigrationId" = (SELECT MAX("MigrationId") FROM "__EFMigrationsHistory")""");
+        }
+
+        var start = new DateTimeOffset(2026, 10, 1, 8, 0, 0, TimeSpan.Zero);
+        string? first;
+        await using (var db = ServerDatabase.Open(paths.DatabaseFile))
+            first = await DatabaseBootstrap.BackupBeforeUpdateAsync(paths, db, start, NullLogger.Instance);
+
+        Assert.IsNotNull(first);
+        var copy = Path.Combine(first, Path.GetFileName(paths.DatabaseFile));
+        await using (var saved = ServerDatabase.Open(copy))
+            Assert.HasCount(1, await saved.Database.GetPendingMigrationsAsync());
+
+        for (var i = 1; i <= DatabaseBootstrap.BeforeUpdateKeep; i++)
+        {
+            await using var db = ServerDatabase.Open(paths.DatabaseFile);
+            await DatabaseBootstrap.BackupBeforeUpdateAsync(paths, db, start.AddMinutes(i), NullLogger.Instance);
+        }
+
+        Assert.HasCount(DatabaseBootstrap.BeforeUpdateKeep, Directory.GetDirectories(Path.Combine(paths.DataFolder, DatabaseBootstrap.BeforeUpdateFolder)));
+        Assert.IsFalse(Directory.Exists(first));
+    }
+
+    [TestMethod]
     public async Task PoskodenySubor_OdlozenyAPredvoleneUdaje()
     {
         var paths = Paths();

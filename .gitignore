@@ -344,3 +344,7 @@ web/tools/pixel-fonts/.bdf/
 # vystup buildu webu - generuje sa pri dotnet build
 TableSimulator/wwwroot/
 *.tsbuildinfo
+
+# Inno Setup output
+Output/
+*-setup.exe

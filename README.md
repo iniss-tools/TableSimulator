@@ -31,6 +31,21 @@ Server otvorí prehliadač na `http://localhost:5470/`. Parametre `--port`, `--n
 prostredia `TABLESIMULATOR_DATA` alebo `TABLESIMULATOR_NO_BROWSER=1` (využívajú ju testy servera). Zrušený `--config`
 server len ohlási – linky a tabule sú v databáze a prenášajú sa exportom a importom.
 
+Nad jedným priečinkom nastavení beží jeden server (zámok `server.lock`, `Infrastructure/Hosting/ServerLock`) – ďalšie
+spustenie server nespustí, len otvorí bežiaci (`RunningServer`). Pred migráciou existujúcej databázy SQLite si server
+odloží jej kópiu do `before-update\<čas>` (`DatabaseBootstrap.BackupBeforeUpdateAsync`).
+
+## Inštalátor
+
+```bash
+dotnet publish TableSimulator/TableSimulator.csproj -c Release        # len win-x64, do prázdneho bin\Release\net10.0\win-x64\publish
+"/c/Program Files/Inno Setup 7/ISCC.exe" TableSimulatorInstaller.iss  # Output\tablesimulator-setup.exe
+```
+
+`TableSimulatorInstaller.iss` stavia na spoločnom základe inštalátorov `ToolsCore/Installer` (`Common.iss`, `DotNet.iss`):
+služba Windows (`--install-service --data %ProgramData%\TableSimulator`), pravidlo Windows Firewall pre program,
+chýbajúci .NET 10 Runtime a ASP.NET Core Runtime. Používateľský opis je v `instalacia.mdx`.
+
 Server zapisuje záznam (Serilog) do konzoly a do denných súborov `logs\tablesimulator-RRRRMMDD.log` v priečinku
 nastavení (14 dní): spojenia liniek s INISSom, vybavené príkazy, prihlásenia, odmietnuté požiadavky a chyby.
 Riadok súboru nesie meno prihláseného používateľa (`-` bez prihlásenia a mimo požiadaviek).

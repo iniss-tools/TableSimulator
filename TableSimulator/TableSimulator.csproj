@@ -6,7 +6,18 @@
 		<RootNamespace>TableSimulator</RootNamespace>
 		<AssemblyName>TableSimulator</AssemblyName>
 		<LangVersion>default</LangVersion>
+		<!-- verzia servera (GET /api/server, zaloha) aj instalatora (TableSimulatorInstaller.iss ju cita z .exe) -->
+		<Version>1.0.0</Version>
+		<ApplicationIcon>app.ico</ApplicationIcon>
 		<WebDir>$(MSBuildProjectDirectory)\..\web</WebDir>
+		<SelfContained>false</SelfContained>
+		<!-- LibraryImport (ConsoleWindow) generuje unsafe kod -->
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+	<!-- Publish pre instalator (dotnet publish -c Release): len win-x64, bez nativnych kniznic pre Linux, macOS a Android
+	     (SQLite, System.IO.Ports). Bezny build a testy ostavaju bez RID. -->
+	<PropertyGroup Condition="'$(_IsPublishing)' == 'true'">
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 	</PropertyGroup>
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -52,5 +63,9 @@
 		<ItemGroup>
 			<Content Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
 		</ItemGroup>
+	</Target>
+	<!-- publish do prazdneho priecinka - subory starsich verzii (aj stary web) by instalator inak zabalil tiez -->
+	<Target Name="CleanPublishDir" BeforeTargets="PrepareForPublish">
+		<RemoveDir Directories="$(PublishDir)" />
 	</Target>
 </Project>

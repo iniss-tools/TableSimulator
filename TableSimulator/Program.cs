@@ -29,6 +29,13 @@ try
     if (commandLine.UninstallService)
         return WindowsService.Uninstall(Console.Out);
     var paths = commandLine.Paths;
+    // Nad jednym priecinkom nastaveni bezi jeden server - dalsie spustenie (odkaz v ponuke Start, ked bezi sluzba) len
+    // otvori bieziaci. Zamok sa berie skor, nez sa siahne na databazu (obnova zalohy, migracie).
+    if (!commandLine.ResetAdmin && RunningServer.BelongsToService(paths.DataFolder))
+        return await RunningServer.OpenAsync(paths.DataFolder, commandLine.NoBrowser, service: true);
+    using var serverLock = commandLine.ResetAdmin ? null : ServerLock.TryAcquire(paths.DataFolder);
+    if (!commandLine.ResetAdmin && serverLock is null)
+        return await RunningServer.OpenAsync(paths.DataFolder, commandLine.NoBrowser, service: false);
     if (commandLine.ObsoleteConfig)
         Log.Warning("Parameter --config je zruseny - linky a tabule su v databaze; subor nahrajte na stranke Linky (Importovat)");
     // nastavenie je v databaze - treba ho skor, nez sa server zostavi (porty, pristup zo siete, prihlasovanie)
@@ -88,9 +95,12 @@ try
         Log.Information("TableSimulator: {Url} {HttpsUrl}(nastavenia: {DataFolder}, prihlasovanie: {Login})", endpoints.LocalUrl,
             endpoints.LocalHttpsUrl is { } https ? https + " " : "", paths.DataFolder,
             settings.Current.LoginRequired ? "zapnute" : "vypnute - len tento pocitac");
+        serverLock?.Publish(endpoints.LocalUrl);
         if (!commandLine.NoBrowser)
             Process.Start(new ProcessStartInfo(endpoints.LocalUrl) { UseShellExecute = true })?.Dispose();
     });
+    // zamok hned po zastaveni servera, nie az na konci procesu - restart sluzby aj testy spustaju dalsi server hned
+    app.Lifetime.ApplicationStopped.Register(() => serverLock?.Dispose());
 
     await app.RunAsync();
     return 0;
@@ -98,6 +108,7 @@ try
 catch (Exception e) when (e is not HostAbortedException)
 {
     Log.Fatal(e, "TableSimulator sa nepodarilo spustit");
+    ConsoleWindow.PauseIfOwned(Console.Out);
     return 1;
 }
 finally
