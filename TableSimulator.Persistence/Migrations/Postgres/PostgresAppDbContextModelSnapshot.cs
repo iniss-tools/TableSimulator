@@ -794,6 +794,9 @@ namespace TableSimulator.Persistence.Migrations.Postgres
                     b.Property<bool>("AllowNetwork")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("CheckUpdates")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("ConnectHost")
                         .IsRequired()
                         .HasMaxLength(200)

@@ -30,6 +30,7 @@ public static class DependencyInjection
         services.AddSingleton<IHttpsCertificates>(sp => sp.GetRequiredService<HttpsCertificates>());
         services.AddSingleton(_ => new Simulator());
         services.AddSingleton<IServerHost, ServerHost>();
+        services.AddSingleton<IServerUpdates, ServerUpdates>();
         services.AddSingleton<TransportManager>();
         services.AddSingleton<SimulatorConfigStore>();
         services.AddSingleton<IServerBackup, ServerBackup>();
@@ -49,6 +50,7 @@ public static class DependencyInjection
         services.AddSingleton<IAlertChannel, WebhookAlertChannel>();
         services.AddSingleton<IAlertChannel, EmailAlertChannel>();
         services.AddHostedService<LineAlertService>();
+        services.AddHostedService<UpdateCheckService>();
         return services;
     }
 }

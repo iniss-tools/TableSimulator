@@ -935,6 +935,17 @@ export type ServerInfoDto = {
     addresses: Array<string>;
 };
 
+export type ServerUpdateDto = {
+    release: boolean;
+    version: string;
+    latest: null | string;
+    page: null | string;
+    installer: null | string;
+    notes: null | string;
+    checkedAt: null | string;
+    error: null | string;
+};
+
 export type SetBoardRequest = {
     line: number;
     address: number;
@@ -1047,6 +1058,7 @@ export type SettingsDto = {
     httpsCertificate: string;
     httpsKey: string;
     httpsPasswordSet: boolean;
+    checkUpdates: boolean;
 };
 
 export type SettingsUpdatedDto = {
@@ -1320,6 +1332,7 @@ export type UpdateSettingsRequest = {
     httpsCertificate: string;
     httpsKey: string;
     httpsPassword: null | string;
+    checkUpdates: boolean;
 };
 
 export type UpdateUserRequest = {
@@ -2484,6 +2497,31 @@ export type TestAlertsResponses = {
 
 export type TestAlertsResponse = TestAlertsResponses[keyof TestAlertsResponses];
 
+export type CheckServerUpdateData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/server/update/check';
+};
+
+export type CheckServerUpdateErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type CheckServerUpdateError = CheckServerUpdateErrors[keyof CheckServerUpdateErrors];
+
+export type CheckServerUpdateResponses = {
+    /**
+     * OK
+     */
+    200: ServerUpdateDto;
+};
+
+export type CheckServerUpdateResponse = CheckServerUpdateResponses[keyof CheckServerUpdateResponses];
+
 export type GetServerInfoData = {
     body?: never;
     path?: never;
@@ -2508,6 +2546,31 @@ export type GetServerInfoResponses = {
 };
 
 export type GetServerInfoResponse = GetServerInfoResponses[keyof GetServerInfoResponses];
+
+export type GetServerUpdateData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/server/update';
+};
+
+export type GetServerUpdateErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetServerUpdateError = GetServerUpdateErrors[keyof GetServerUpdateErrors];
+
+export type GetServerUpdateResponses = {
+    /**
+     * OK
+     */
+    200: ServerUpdateDto;
+};
+
+export type GetServerUpdateResponse = GetServerUpdateResponses[keyof GetServerUpdateResponses];
 
 export type RestartServerData = {
     body?: never;

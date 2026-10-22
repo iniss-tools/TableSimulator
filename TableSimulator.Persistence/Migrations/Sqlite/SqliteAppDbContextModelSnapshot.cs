@@ -770,6 +770,9 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                     b.Property<bool>("AllowNetwork")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("CheckUpdates")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("ConnectHost")
                         .IsRequired()
                         .HasMaxLength(200)

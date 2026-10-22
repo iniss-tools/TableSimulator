@@ -283,7 +283,11 @@ export function SettingsPage() {
           </Section>
 
           <Section id="server" description={t("settings.server.hint")}>
-            <ServerSection databasePath={form.databasePath} />
+            <ServerSection
+              databasePath={form.databasePath}
+              checkUpdates={form.checkUpdates}
+              onCheckUpdatesChange={(value) => change({ checkUpdates: value })}
+            />
           </Section>
 
           <Section id="database" description={t("database.section.hint")}>

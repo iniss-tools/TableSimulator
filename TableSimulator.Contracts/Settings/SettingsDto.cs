@@ -42,4 +42,7 @@ public sealed record SettingsDto(int HttpPort, bool AllowNetwork, string FontsFo
 
     /// <summary>Heslo certifikatu je ulozene (samotne heslo server nevracia).</summary>
     public bool HttpsPasswordSet { get; init; }
+
+    /// <summary>Zistovat novu verziu servera (len server z vydania).</summary>
+    public bool CheckUpdates { get; init; } = true;
 }

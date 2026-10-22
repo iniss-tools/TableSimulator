@@ -5,6 +5,10 @@ a simulátor sa tvári ako tabule na druhom konci linky – odpovedá bajtovým 
 zobrazuje vo webovom prehliadači. Navyše ukazuje XML tabúľ a archívy INISSu ako INISSView, hrá informačné panely
 ako INISSView 2, nahráva a porovnáva komunikáciu a predstiera poruchy.
 
+> Nezávislý projekt, nie je spojený so spoločnosťou CHAPS ani s výrobcami tabúľ a nie je nimi podporovaný. INISS je
+> produkt spoločnosti CHAPS. Projekt neobsahuje žiadnu časť programu INISS ani jeho dáta; protokoly tabúľ a formáty
+> súborov INISSu boli zistené kvôli interoperabilite.
+
 **Používateľská dokumentácia** je v `iniss-tools-docs/docs/tablesimulator/` (sekcia *Simulátor tabúľ*), protokoly
 tabúľ v `iniss-tools-docs/docs/iniss/protokoly/`. Tento súbor je pre vývoj.
 
@@ -229,3 +233,7 @@ Podrobnosti, ktoré používateľská dokumentácia neuvádza:
   Prístupové kľúče `ts_` + 43 znakov, server drží len SHA-256. Kľúče ochrany dát v `keys\` šifruje DPAPI pre počítač.
 - **HTTPS** – vlastná certifikačná autorita (RSA 2048, 10 rokov) v `https\`, certifikát servera najviac 397 dní,
   obnova mesiac pred koncom alebo pri novej adrese; vlastný certifikát server načíta znova do 5 minút po zmene súboru.
+
+## Licencia
+
+GNU General Public License v3.0, pozri [LICENSE](LICENSE).

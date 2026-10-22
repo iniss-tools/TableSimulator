@@ -1,5 +1,5 @@
-// Ram aplikacie: bocny panel, zahlavie s nazvom stranky a stav spojenia, obsah stranky (ak na nu ma pouzivatel pravo),
-// upozornenia na vypadky liniek.
+// Ram aplikacie: bocny panel, zahlavie s nazvom stranky a stav spojenia, nova verzia simulatora, obsah stranky (ak na nu
+// ma pouzivatel pravo), upozornenia na vypadky liniek.
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import { CircleAlert } from "lucide-react";
 import { can, useConnection, useMe, useSimulatorState } from "@/api";
@@ -9,6 +9,7 @@ import { t } from "@/i18n";
 import { AppSidebar } from "./AppSidebar";
 import { useLineAlerts } from "./line-alerts";
 import { navItem } from "./navigation";
+import { UpdateBanner } from "./update-banner";
 
 export function AppShell() {
   // ram sa ukazuje az po zisteni pouzivatela (Root)
@@ -38,6 +39,7 @@ export function AppShell() {
             {t("server.offline")}
           </div>
         )}
+        <UpdateBanner />
         <div className="mx-auto w-full max-w-[1600px] flex-1 p-4">
           {allowed ? <Outlet /> : <p className="text-sm text-muted-foreground">{t("nav.forbidden")}</p>}
         </div>

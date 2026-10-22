@@ -35,7 +35,8 @@ public sealed class UpdateSettingsCommandHandler(ISettingsStore settings, ILiveN
             HttpsCertificate = (request.HttpsCertificate ?? "").Trim().Trim('"'),
             HttpsKey = (request.HttpsKey ?? "").Trim().Trim('"'),
             // heslo sa vracia len ako priznak - bez noveho ostava ulozene
-            HttpsPassword = request.HttpsPassword is null ? current.HttpsPassword : secrets.Protect(request.HttpsPassword)
+            HttpsPassword = request.HttpsPassword is null ? current.HttpsPassword : secrets.Protect(request.HttpsPassword),
+            CheckUpdates = request.CheckUpdates
         };
         // vlastny certifikat musi byt pouzitelny skor, nez sa ulozi - inak by server po restarte HTTPS nemal
         if (updated.HttpsPort > 0 && updated.HttpsCertificate.Length > 0

@@ -30,4 +30,7 @@ public sealed record UpdateSettingsRequest
 
     /// <summary>Heslo certifikatu alebo kluca; null = nechat ulozene, prazdne = zmazat.</summary>
     public string? HttpsPassword { get; init; }
+
+    /// <summary>Zistovat novu verziu servera.</summary>
+    public bool CheckUpdates { get; init; } = true;
 }

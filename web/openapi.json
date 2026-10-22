@@ -1490,6 +1490,36 @@
         }
       }
     },
+    "/api/server/update/check": {
+      "post": {
+        "tags": [
+          "Server"
+        ],
+        "operationId": "CheckServerUpdate",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerUpdateDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/server": {
       "get": {
         "tags": [
@@ -1503,6 +1533,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ServerInfoDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/server/update": {
+      "get": {
+        "tags": [
+          "Server"
+        ],
+        "operationId": "GetServerUpdate",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerUpdateDto"
                 }
               }
             }
@@ -8065,6 +8125,64 @@
           }
         }
       },
+      "ServerUpdateDto": {
+        "required": [
+          "release",
+          "version",
+          "latest",
+          "page",
+          "installer",
+          "notes",
+          "checkedAt",
+          "error"
+        ],
+        "type": "object",
+        "properties": {
+          "release": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "string"
+          },
+          "latest": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "page": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "installer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "checkedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "SetBoardRequest": {
         "required": [
           "line",
@@ -8490,7 +8608,8 @@
           "httpsRedirect",
           "httpsCertificate",
           "httpsKey",
-          "httpsPasswordSet"
+          "httpsPasswordSet",
+          "checkUpdates"
         ],
         "type": "object",
         "properties": {
@@ -8554,6 +8673,9 @@
             "type": "string"
           },
           "httpsPasswordSet": {
+            "type": "boolean"
+          },
+          "checkUpdates": {
             "type": "boolean"
           }
         }
@@ -9625,7 +9747,8 @@
           "httpsRedirect",
           "httpsCertificate",
           "httpsKey",
-          "httpsPassword"
+          "httpsPassword",
+          "checkUpdates"
         ],
         "type": "object",
         "properties": {
@@ -9700,6 +9823,9 @@
               "null",
               "string"
             ]
+          },
+          "checkUpdates": {
+            "type": "boolean"
           }
         }
       },

@@ -40,4 +40,10 @@ internal static partial class ServerLog
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Prechod priecinkov s XML tabul zlyhal")]
     public static partial void XmlTablesFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Je dostupna nova verzia servera {Version}")]
+    public static partial void UpdateAvailable(ILogger logger, string version);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Novu verziu servera sa nepodarilo zistit: {Error}")]
+    public static partial void UpdateCheckFailed(ILogger logger, string error);
 }

@@ -46,4 +46,7 @@ public sealed class SettingsRecord
 
     /// <summary>Heslo certifikatu zasifrovane ochranou dat servera.</summary>
     public string HttpsPassword { get; set; } = "";
+
+    /// <summary>Zistovat novu verziu servera (stlpec pridany s predvolenou hodnotou true).</summary>
+    public bool CheckUpdates { get; set; } = true;
 }

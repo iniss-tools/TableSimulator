@@ -6,8 +6,9 @@
 		<RootNamespace>TableSimulator</RootNamespace>
 		<AssemblyName>TableSimulator</AssemblyName>
 		<LangVersion>default</LangVersion>
-		<!-- verzia servera (GET /api/server, zaloha) aj instalatora (TableSimulatorInstaller.iss ju cita z .exe) -->
-		<Version>1.0.0</Version>
+		<!-- verzia servera (GET /api/server, zaloha) aj instalatora (TableSimulatorInstaller.iss ju cita z .exe);
+		     vydanie ju prepise verziou zo znacky vX.Y (ToolsCore\Build\AppRelease.props) -->
+		<Version>1.0</Version>
 		<ApplicationIcon>app.ico</ApplicationIcon>
 		<WebDir>$(MSBuildProjectDirectory)\..\web</WebDir>
 		<SelfContained>false</SelfContained>
@@ -68,4 +69,6 @@
 	<Target Name="CleanPublishDir" BeforeTargets="PrepareForPublish">
 		<RemoveDir Directories="$(PublishDir)" />
 	</Target>
+	<!-- spolocne vlastnosti vydavanych programov: vyrobca, verzia a index aktualizacii z vydania -->
+	<Import Project="..\..\ToolsCore\Build\AppRelease.props" />
 </Project>

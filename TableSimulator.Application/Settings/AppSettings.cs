@@ -73,4 +73,7 @@ public sealed record AppSettings
 
     /// <summary>Heslo vlastneho certifikatu alebo kluca zasifrovane ochranou dat servera (<see cref="ISecretProtector" />).</summary>
     public string HttpsPassword { get; init; } = "";
+
+    /// <summary>Zistovat novu verziu servera z posledneho vydania na GitHube (len server z vydania).</summary>
+    public bool CheckUpdates { get; init; } = true;
 }

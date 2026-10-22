@@ -205,7 +205,8 @@ public static partial class DtoMapper
             HttpsRedirect = settings.HttpsRedirect,
             HttpsCertificate = settings.HttpsCertificate,
             HttpsKey = settings.HttpsKey,
-            HttpsPasswordSet = settings.HttpsPassword.Length > 0
+            HttpsPasswordSet = settings.HttpsPassword.Length > 0,
+            CheckUpdates = settings.CheckUpdates
         };
     }
 
