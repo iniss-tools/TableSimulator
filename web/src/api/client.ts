@@ -1,9 +1,10 @@
-// Generovany klient API: hlavicky poziadaviek (CSRF, pristupovy kluc), chyby ako ApiError s textom podla kodu
-// a reakcia na 401 (prihlasenie vyprsalo alebo pouzivatela vypli).
+// Generovany klient API: hlavicky poziadaviek (CSRF, pristupovy kluc), chyby ako ApiError s textom podla kodu,
+// reakcia na 401 (prihlasenie vyprsalo alebo pouzivatela vypli) a na odpoved ineho servera na tej istej adrese.
 import { hasText, t } from "../i18n";
 import { authHeaders } from "./auth";
 import { client } from "./generated/client.gen";
 import type { ApiProblem } from "./generated/types.gen";
+import { noteServer } from "./server-identity";
 
 /** Chyba volania API s textom pre obsluhu. */
 export class ApiError extends Error {
@@ -50,6 +51,11 @@ export function problemError(response: Response, body: unknown): ApiError {
 client.interceptors.request.use((request) => {
   for (const [name, value] of Object.entries(authHeaders())) request.headers.set(name, value);
   return request;
+});
+
+client.interceptors.response.use((response) => {
+  noteServer(response);
+  return response;
 });
 
 client.interceptors.error.use((error, response, request) => {

@@ -21,21 +21,25 @@ using TableSimulator.Persistence;
 // parametre: --data <priecinok> (nastavenia a databaza), --port <cislo>, --no-browser, --reset-admin [meno] (nove heslo
 // spravcu a koniec), --install-service / --uninstall-service (sluzba Windows a koniec)
 Log.Logger = SerilogSetup.CreateBootstrapLogger();
+// priecinok nastaveni, nad ktorym tento proces drzi zamok - len tam patri dovod neuspesneho startu
+AppPaths? lockedPaths = null;
 try
 {
     var commandLine = CommandLine.Parse(args, AppContext.BaseDirectory, WindowsService.IsRunning);
     if (commandLine.InstallService)
-        return WindowsService.Install(commandLine, Console.Out);
+        return await WindowsService.InstallAsync(commandLine, Console.Out);
     if (commandLine.UninstallService)
         return WindowsService.Uninstall(Console.Out);
     var paths = commandLine.Paths;
     // Nad jednym priecinkom nastaveni bezi jeden server - dalsie spustenie (odkaz v ponuke Start, ked bezi sluzba) len
     // otvori bieziaci. Zamok sa berie skor, nez sa siahne na databazu (obnova zalohy, migracie).
     if (!commandLine.ResetAdmin && RunningServer.BelongsToService(paths.DataFolder))
-        return await RunningServer.OpenAsync(paths.DataFolder, commandLine.NoBrowser, service: true);
+        return await RunningServer.OpenAsync(paths, commandLine.NoBrowser, service: true);
     using var serverLock = commandLine.ResetAdmin ? null : ServerLock.TryAcquire(paths.DataFolder);
     if (!commandLine.ResetAdmin && serverLock is null)
-        return await RunningServer.OpenAsync(paths.DataFolder, commandLine.NoBrowser, service: false);
+        return await RunningServer.OpenAsync(paths, commandLine.NoBrowser, service: false);
+    if (serverLock is not null)
+        lockedPaths = paths;
     if (commandLine.ObsoleteConfig)
         Log.Warning("Parameter --config je zruseny - linky a tabule su v databaze; subor nahrajte na stranke Linky (Importovat)");
     // nastavenie je v databaze - treba ho skor, nez sa server zostavi (porty, pristup zo siete, prihlasovanie)
@@ -71,6 +75,7 @@ try
     if (endpoints.HttpsEnabled)
         app.Services.GetRequiredService<HttpsCertificates>().Initialize();
 
+    app.UseServerIdentity(paths);
     app.UseExceptionHandler();
     app.UseHttpsForNetwork();
     app.UseWebSockets();
@@ -95,6 +100,7 @@ try
         Log.Information("TableSimulator: {Url} {HttpsUrl}(nastavenia: {DataFolder}, prihlasovanie: {Login})", endpoints.LocalUrl,
             endpoints.LocalHttpsUrl is { } https ? https + " " : "", paths.DataFolder,
             settings.Current.LoginRequired ? "zapnute" : "vypnute - len tento pocitac");
+        StartupError.Clear(paths.DataFolder);
         serverLock?.Publish(endpoints.LocalUrl);
         if (!commandLine.NoBrowser)
             Process.Start(new ProcessStartInfo(endpoints.LocalUrl) { UseShellExecute = true })?.Dispose();
@@ -107,7 +113,13 @@ try
 }
 catch (Exception e) when (e is not HostAbortedException)
 {
-    Log.Fatal(e, "TableSimulator sa nepodarilo spustit");
+    // zaznam servera uz mohol skoncit spolu so serverom (AddSerilog) - dovod ide do konzoly a do logu priecinka nastaveni
+    await Log.CloseAndFlushAsync();
+    Log.Logger = SerilogSetup.CreateFailureLogger(lockedPaths?.LogsFolder);
+    // obsadeny port host zapisal aj s vynimkou ("Hosting failed to start") - tu staci dovod
+    Log.Fatal(StartupError.IsAddressInUse(e) ? null : e, "TableSimulator sa nepodarilo spustit: {Reason}", StartupError.Describe(e));
+    if (lockedPaths is not null)
+        StartupError.Write(lockedPaths.DataFolder, e);
     ConsoleWindow.PauseIfOwned(Console.Out);
     return 1;
 }

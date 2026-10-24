@@ -20,17 +20,24 @@ public sealed class XmlTableWatcherService(XmlTableFolders folders, ISettingsSto
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var timer = new PeriodicTimer(Interval, time);
-        do
+        try
         {
-            try
+            do
             {
-                Poll();
-            }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                ServerLog.XmlTablesFailed(logger, e);
-            }
-        } while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false));
+                try
+                {
+                    Poll();
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    ServerLog.XmlTablesFailed(logger, e);
+                }
+            } while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false));
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // ukoncenie servera - aj po neuspesnom starte, ked host sluzbu nezastavi a len ju pri uvolneni zrusi
+        }
     }
 
     private void Poll()

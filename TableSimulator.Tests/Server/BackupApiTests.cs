@@ -43,6 +43,7 @@ public sealed class BackupApiTests
             Write(Path.Combine(folder, "designs", "moj", "design.json"), """{"name":"zaloha"}""");
             Write(Path.Combine(folder, "media", "obrazok.png"), "png");
             Write(Path.Combine(folder, "recordings", "skuska.tsrec"), "zaznam");
+            var backedUp = (await client.GetFromJsonAsync<StateDto>("/api/state"))!;
 
             var response = await client.GetAsync("/api/backup/file?recordings=true");
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
@@ -68,7 +69,11 @@ public sealed class BackupApiTests
             Assert.AreEqual(HttpStatusCode.OK, restore.StatusCode, await restore.Content.ReadAsStringAsync());
             var info = (await restore.Content.ReadFromJsonAsync<BackupInfoDto>())!;
             Assert.AreEqual((1, 1, 1), (info.Designs, info.Media, info.Recordings!.Value));
-            Assert.IsNotNull((await client.GetFromJsonAsync<BackupStatusDto>("/api/backup"))!.Pending);
+            // odkial zaloha je a co obnovi - obsluha podla toho pozna zamenu (zaloha prazdneho servera)
+            Assert.AreEqual((backedUp.Lines.Length, backedUp.Boards.Length), (info.Lines!.Value, info.Boards!.Value));
+            Assert.AreEqual((Environment.MachineName, folder, false), (info.Machine, info.DataFolder, info.Service));
+            Assert.IsTrue(info.SameServer);
+            Assert.AreEqual(info, (await client.GetFromJsonAsync<BackupStatusDto>("/api/backup"))!.Pending);
         }
 
         await using (var server = SimulatorServer.Open(folder, true))

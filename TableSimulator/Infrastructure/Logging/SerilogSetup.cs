@@ -25,12 +25,27 @@ public static class SerilogSetup
         .WriteTo.Console(outputTemplate: ConsoleTemplate, formatProvider: CultureInfo.InvariantCulture)
         .CreateLogger();
 
+    /// <summary>Zaznam chyby pri starte, ked server ten svoj uz uvolnil; s priecinkom logov aj do denneho suboru.</summary>
+    public static Logger CreateFailureLogger(string? logsFolder)
+    {
+        var configuration = new LoggerConfiguration()
+            .Enrich.WithProperty(UserProperty, "-")
+            .WriteTo.Console(outputTemplate: ConsoleTemplate, formatProvider: CultureInfo.InvariantCulture);
+        if (logsFolder is not null)
+            LogFile(configuration, logsFolder);
+        return configuration.CreateLogger();
+    }
+
+    private static LoggerConfiguration LogFile(LoggerConfiguration configuration, string logsFolder) =>
+        configuration.WriteTo.File(Path.Combine(logsFolder, "tablesimulator-.log"), outputTemplate: FileTemplate,
+            formatProvider: CultureInfo.InvariantCulture, rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14);
+
     /// <summary>Zaznam servera.</summary>
     public static LoggerConfiguration Configure(LoggerConfiguration configuration, AppPaths paths)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(paths);
-        return configuration
+        return LogFile(configuration
             .MinimumLevel.Information()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
@@ -38,9 +53,7 @@ public static class SerilogSetup
             .MinimumLevel.Override("ModelContextProtocol", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .Enrich.WithProperty(UserProperty, "-")
-            .WriteTo.Console(outputTemplate: ConsoleTemplate, formatProvider: CultureInfo.InvariantCulture)
-            .WriteTo.File(Path.Combine(paths.LogsFolder, "tablesimulator-.log"), outputTemplate: FileTemplate,
-                formatProvider: CultureInfo.InvariantCulture, rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14);
+            .WriteTo.Console(outputTemplate: ConsoleTemplate, formatProvider: CultureInfo.InvariantCulture), paths.LogsFolder);
     }
 
     /// <summary>Kazdy zaznam pocas poziadavky nesie meno pouzivatela (za prihlasenim, pred endpointmi).</summary>

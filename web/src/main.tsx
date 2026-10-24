@@ -6,12 +6,13 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
-import { queryClient } from "./api";
+import { toast } from "sonner";
+import { queryClient, takeServerSwitch } from "./api";
 import { router } from "./app/router";
 import { ConfirmHost } from "./components/common/confirm-host";
 import { Toaster } from "./components/ui/sonner";
 import { TooltipProvider } from "./components/ui/tooltip";
-import { getLanguage } from "./i18n";
+import { getLanguage, t } from "./i18n";
 // tema hned pri starte - aj pre kiosk a prihlasenie
 import "./lib/theme";
 import "./index.css";
@@ -30,6 +31,8 @@ addEventListener("vite:preloadError", (event) => {
   event.preventDefault();
   location.reload();
 });
+// na adrese zacal bezat iny server (src/api/server-identity.ts) - Toaster oznamenie ukaze aj po pripojeni
+if (takeServerSwitch()) toast.info(t("server.switched"), { duration: 15_000 });
 // rozhranie v pamati prehliadaca - kiosk sa nacita aj pocas restartu servera (len HTTPS alebo tento pocitac)
 if (import.meta.env.PROD && "serviceWorker" in navigator && isSecureContext) {
   void navigator.serviceWorker.register("/sw.js").catch(() => undefined);

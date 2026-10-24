@@ -18,6 +18,9 @@ test("zaloha a obnova simulatora", async ({ page }) => {
   await page.locator('input[type=file][accept=".zip"]').setInputFiles({ name: "zaloha.zip", mimeType: "application/zip", buffer: zip });
   await page.getByRole("alertdialog").getByRole("button", { name: "Obnoviť zo zálohy…" }).click();
   await expect(page.getByText("Pripravená obnova zálohy")).toBeVisible();
+  // odkial zaloha je - tu z toho isteho servera
+  await expect(page.getByText("(program v okne) na počítači")).toBeVisible();
+  await expect(page.getByText("Záloha je z tohto istého servera.")).toBeVisible();
   await expect(page.getByText("Použije sa, keď server zastavíte a znova spustíte.")).toBeVisible();
 
   await page.getByRole("button", { name: "Zrušiť obnovu" }).click();

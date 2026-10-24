@@ -8,6 +8,7 @@ using TableSimulator.Application.Backup;
 using TableSimulator.Application.Server;
 using TableSimulator.Application.Settings;
 using TableSimulator.Contracts.Backup;
+using TableSimulator.Infrastructure.Hosting;
 using TableSimulator.Infrastructure.Persistence;
 using TableSimulator.Persistence;
 using TableSimulator.Persistence.Settings;
@@ -23,14 +24,22 @@ namespace TableSimulator.Infrastructure.Backup;
 /// <param name="Designs">pocet vlastnych vzhladov</param>
 /// <param name="Media">pocet suborov informacnych panelov</param>
 /// <param name="Recordings">pocet zaznamov komunikacie; null = bez zaznamov</param>
+/// <param name="Lines">pocet liniek v databaze; pri obnove sa zisti znova</param>
+/// <param name="Boards">pocet tabul v databaze; pri obnove sa zisti znova</param>
+/// <param name="Machine">pocitac, na ktorom zaloha vznikla</param>
+/// <param name="DataFolder">priecinok nastaveni zalohovaneho servera</param>
+/// <param name="Service">zalohovany server bezal ako sluzba Windows</param>
 public sealed record BackupManifest(string Format, int Version, DateTimeOffset Created, string ServerVersion, string? Migration, int Designs, int Media,
-    int? Recordings)
+    int? Recordings, int? Lines = null, int? Boards = null, string? Machine = null, string? DataFolder = null, bool? Service = null)
 {
-    public BackupInfoDto ToDto() => new(Created, ServerVersion, Designs, Media, Recordings);
+    /// <summary>Popis zalohy pre server s priecinkom nastaveni <paramref name="dataFolder" />.</summary>
+    public BackupInfoDto ToDto(string dataFolder) => new(Created, ServerVersion, Designs, Media, Recordings, Lines, Boards, Machine, DataFolder, Service,
+        string.Equals(Machine, Environment.MachineName, StringComparison.OrdinalIgnoreCase) && DataFolder is not null && RunningServer.SamePath(DataFolder, dataFolder));
 }
 
 /// <summary>
-/// Zaloha celeho simulatora do ZIP: <c>backup.json</c>, <c>tablesimulator.db</c> (online kopia SQLite po ulozeni
+/// Zaloha celeho simulatora do ZIP: <c>backup.json</c> (aj odkial zaloha je a kolko ma liniek a tabul - obsluha podla
+/// toho pred obnovou pozna, ci ide o spravnu zalohu), <c>tablesimulator.db</c> (online kopia SQLite po ulozeni
 /// liniek a tabul), <c>designs/&lt;id&gt;/…</c> (vlastne vzhlady), <c>media/…</c> (subory informacnych panelov)
 /// a volitelne <c>recordings/*.tsrec</c>. Obnova zalohu skontroluje (format, databaza simulatora, migracie, ktore server
 /// pozna) a rozbali do <c>restore.pending</c> v priecinku nastaveni - pouzije ju <see cref="ApplyPendingAsync" /> pri
@@ -79,6 +88,7 @@ public sealed class ServerBackup(AppPaths paths, DatabaseConnection database, IS
             await SnapshotAsync(copy, cancellationToken).ConfigureAwait(false);
             var applied = (await ServerDatabase.MigrationsAsync(copy, cancellationToken).ConfigureAwait(false)).Applied;
             var migration = applied.Count > 0 ? applied[^1] : null;
+            var (lines, boards) = await CountAsync(copy, cancellationToken).ConfigureAwait(false);
             await Task.Run(() =>
             {
                 using var zip = ZipFile.Open(path, ZipArchiveMode.Create);
@@ -110,7 +120,8 @@ public sealed class ServerBackup(AppPaths paths, DatabaseConnection database, IS
                     }
                 }
 
-                var manifest = new BackupManifest(FormatName, CurrentVersion, now, host.Version, migration, designs, media, recorded);
+                var manifest = new BackupManifest(FormatName, CurrentVersion, now, host.Version, migration, designs, media, recorded, lines, boards,
+                    Environment.MachineName, paths.DataFolder, host.RunningAsService);
                 using var stream = zip.CreateEntry(ManifestEntry).Open();
                 JsonSerializer.Serialize(stream, manifest, Json);
             }, cancellationToken).ConfigureAwait(false);
@@ -190,6 +201,11 @@ public sealed class ServerBackup(AppPaths paths, DatabaseConnection database, IS
                     return Result.Failure<BackupInfoDto>(BackupErrors.Format("the database is not a simulator database"));
                 if (applied.FirstOrDefault(m => !known.Contains(m)) is { } newer)
                     return Result.Failure<BackupInfoDto>(BackupErrors.Newer(newer));
+                // co sa naozaj obnovi - aj pri starsej zalohe bez poctov v popise
+                var (lines, boards) = await CountAsync(Path.Combine(staging, DatabaseEntry), cancellationToken).ConfigureAwait(false);
+                manifest = manifest with { Lines = lines, Boards = boards };
+                await File.WriteAllTextAsync(Path.Combine(staging, ManifestEntry), JsonSerializer.Serialize(manifest, Json), cancellationToken)
+                    .ConfigureAwait(false);
             }
             catch (SqliteException e)
             {
@@ -200,7 +216,7 @@ public sealed class ServerBackup(AppPaths paths, DatabaseConnection database, IS
             if (Directory.Exists(pending))
                 Directory.Delete(pending, true);
             Directory.Move(staging, pending);
-            return Result.Success(manifest.ToDto());
+            return Result.Success(manifest.ToDto(paths.DataFolder));
         }
         finally
         {
@@ -210,7 +226,7 @@ public sealed class ServerBackup(AppPaths paths, DatabaseConnection database, IS
         }
     }
 
-    public BackupInfoDto? PendingRestore() => ReadManifest(PendingFolder(paths))?.ToDto();
+    public BackupInfoDto? PendingRestore() => ReadManifest(PendingFolder(paths))?.ToDto(paths.DataFolder);
 
     public RestoreResultDto? LastRestore()
     {
@@ -307,7 +323,7 @@ public sealed class ServerBackup(AppPaths paths, DatabaseConnection database, IS
 
             Directory.Delete(pending, true);
             BackupLog.Restored(logger, manifest.Created, manifest.ServerVersion, saved);
-            WriteResult(paths, new RestoreResultDto(now, manifest.ToDto(), saved, null));
+            WriteResult(paths, new RestoreResultDto(now, manifest.ToDto(paths.DataFolder), saved, null));
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or SqliteException or Npgsql.NpgsqlException or DbUpdateException)
         {
@@ -322,7 +338,7 @@ public sealed class ServerBackup(AppPaths paths, DatabaseConnection database, IS
             var failed = Path.Combine(paths.DataFolder, $"restore.failed-{stamp}");
             Directory.Move(pending, failed);
             BackupLog.RestoreFailed(logger, e, failed);
-            WriteResult(paths, new RestoreResultDto(now, manifest.ToDto(), failed, e.Message));
+            WriteResult(paths, new RestoreResultDto(now, manifest.ToDto(paths.DataFolder), failed, e.Message));
         }
     }
 
@@ -339,6 +355,13 @@ public sealed class ServerBackup(AppPaths paths, DatabaseConnection database, IS
         await ServerDatabase.MigrateAsync(from).ConfigureAwait(false);
         await using var to = ServerDatabase.Open(database);
         await DatabaseCopier.CopyAsync(from, to).ConfigureAwait(false);
+    }
+
+    /// <summary>Pocet liniek a tabul v databaze SQLite.</summary>
+    private static async Task<(int Lines, int Boards)> CountAsync(string databaseFile, CancellationToken cancellationToken)
+    {
+        await using var db = ServerDatabase.Open(databaseFile);
+        return (await db.Lines.CountAsync(cancellationToken).ConfigureAwait(false), await db.Boards.CountAsync(cancellationToken).ConfigureAwait(false));
     }
 
     /// <summary>Rozbali zalohu; vrati meno neocakavanej polozky (cesta mimo priecinka, neznamy obsah), inak null.</summary>

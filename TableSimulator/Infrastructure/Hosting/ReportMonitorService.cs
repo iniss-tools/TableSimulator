@@ -15,20 +15,27 @@ public sealed class ReportMonitorService(ReportMonitor monitor, ISettingsStore s
     {
         using var timer = new PeriodicTimer(XmlTableWatcherService.Interval, time);
         string? lastError = null;
-        do
+        try
         {
-            try
+            do
             {
-                monitor.Poll(settings.Current.VirtualFolders);
-                lastError = null;
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-            {
-                // subor moze byt chvilu zamknuty - do logu len zmena chyby
-                if (e.Message != lastError)
-                    ServerLog.ReportMonitorFailed(logger, e.Message);
-                lastError = e.Message;
-            }
-        } while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false));
+                try
+                {
+                    monitor.Poll(settings.Current.VirtualFolders);
+                    lastError = null;
+                }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+                {
+                    // subor moze byt chvilu zamknuty - do logu len zmena chyby
+                    if (e.Message != lastError)
+                        ServerLog.ReportMonitorFailed(logger, e.Message);
+                    lastError = e.Message;
+                }
+            } while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false));
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // ukoncenie servera - aj po neuspesnom starte, ked host sluzbu nezastavi a len ju pri uvolneni zrusi
+        }
     }
 }

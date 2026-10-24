@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Runtime.Versioning;
+using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using TableSimulator.Contracts.Server;
@@ -10,8 +11,8 @@ using TableSimulator.Infrastructure.Hosting;
 namespace TableSimulator.Tests.Server;
 
 /// <summary>
-/// Server ako sluzba Windows: parametre instalacie, prikazy sc.exe, kluce ochrany dat citatelne aj uctom sluzby
-/// a restart z weboveho rozhrania (len sluzba).
+/// Server ako sluzba Windows: parametre instalacie, prikazy sc.exe, kluce ochrany dat citatelne aj uctom sluzby,
+/// dovod neuspesneho startu, odtlacok servera a restart z weboveho rozhrania (len sluzba).
 /// </summary>
 [TestClass]
 [DoNotParallelize]
@@ -63,6 +64,78 @@ public sealed class WindowsServiceTests
         Assert.IsTrue(created.Any(c => c[0] == "failure" && c.Contains("restart/5000/restart/10000/restart/60000")));
         Assert.IsTrue(created.Any(c => c is ["failureflag", "TableSimulator", "1"]));
         Assert.AreEqual("config", WindowsService.InstallCommands(path, exists: true)[0][0]);
+        // zastavenu sluzbu spusti odkaz v ponuke Start aj bez prav spravcu - interaktivni pouzivatelia smu len spustit (RP)
+        CollectionAssert.AreEqual(new[] { "sdset", "TableSimulator", WindowsService.Security }, created.Single(c => c[0] == "sdset"));
+        StringAssert.Contains(WindowsService.Security, "(A;;CCLCSWRPLOCRRC;;;IU)");
+        StringAssert.Contains(WindowsService.Security, "(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)");
+    }
+
+    [TestMethod]
+    public void DovodStartu_ObsadenyPortSRadou()
+    {
+        var ipv4 = new IOException("Failed to bind to address http://127.0.0.1:5470: address already in use.",
+            new AddressInUseException("Only one usage of each socket address is normally permitted."));
+        StringAssert.StartsWith(StartupError.Describe(ipv4), "Port 5470 uz pouziva iny program");
+        StringAssert.Contains(StartupError.Describe(ipv4), "--port");
+
+        var ipv6 = new IOException("Failed to bind to address https://[::1]:5471: address already in use.", new AddressInUseException("in use"));
+        StringAssert.StartsWith(StartupError.Describe(ipv6), "Port 5471 ");
+        StringAssert.StartsWith(StartupError.Describe(new AddressInUseException("in use")), "Port webu ");
+
+        // ina chyba - sprava aj s povodnou pricinou
+        Assert.AreEqual("Databaza (zamknuta)", StartupError.Describe(new InvalidOperationException("Databaza", new IOException("zamknuta"))));
+    }
+
+    [TestMethod]
+    public async Task DovodStartu_ZapisCitanieAZmazanie()
+    {
+        var folder = Directory.CreateTempSubdirectory("tsstart").FullName;
+        try
+        {
+            var before = DateTime.UtcNow.AddSeconds(-1);
+            Assert.IsNull(StartupError.ReadSince(folder, before));
+
+            StartupError.Write(folder, new InvalidOperationException("Nejde to"));
+            Assert.AreEqual("Nejde to", StartupError.ReadSince(folder, before));
+            // dovod spred spustenia sluzby neplati
+            Assert.IsNull(StartupError.ReadSince(folder, DateTime.UtcNow.AddMinutes(1)));
+            // cakanie na server skonci hned s dovodom
+            Assert.AreEqual(new ServerStart(null, "Nejde to"), await WindowsService.WaitForServerAsync(folder, before, TimeSpan.FromSeconds(30)));
+
+            StartupError.Clear(folder);
+            Assert.IsNull(StartupError.ReadSince(folder, before));
+        }
+        finally
+        {
+            Directory.Delete(folder, true);
+        }
+    }
+
+    [TestMethod]
+    public async Task CakanieNaServer_AdresaZoZamku()
+    {
+        var folder = Directory.CreateTempSubdirectory("tsstart").FullName;
+        try
+        {
+            using var serverLock = ServerLock.TryAcquire(folder)!;
+            serverLock.Publish("http://localhost:5499/");
+            Assert.AreEqual(new ServerStart("http://localhost:5499/", null), await WindowsService.WaitForServerAsync(folder, DateTime.UtcNow, TimeSpan.FromSeconds(30)));
+        }
+        finally
+        {
+            Directory.Delete(folder, true);
+        }
+    }
+
+    [TestMethod]
+    public void OdtlacokServera_PocitacAPriecinok()
+    {
+        var id = ServerIdentity.Of("PC1", @"C:\ProgramData\TableSimulator");
+        Assert.AreEqual(16, id.Length);
+        // ta ista cesta inak zapisana = ten isty server
+        Assert.AreEqual(id, ServerIdentity.Of("pc1", @"c:\programdata\tablesimulator\"));
+        Assert.AreNotEqual(id, ServerIdentity.Of("PC1", @"C:\Users\Jano\AppData\Roaming\TableSimulator"));
+        Assert.AreNotEqual(id, ServerIdentity.Of("PC2", @"C:\ProgramData\TableSimulator"));
     }
 
     [TestMethod]
@@ -113,9 +186,12 @@ public sealed class WindowsServiceTests
         await using var server = SimulatorServer.Start();
         var client = server.Client();
 
-        var info = await client.GetFromJsonAsync<ServerInfoDto>("/api/server");
+        var response = await client.GetAsync("/api/server");
+        var info = await response.Content.ReadFromJsonAsync<ServerInfoDto>();
         Assert.IsFalse(info!.Service);
         Assert.AreEqual(server.DataFolder, info.DataFolder);
+        // podla odtlacku web pozna, ze na adrese zacal bezat iny server
+        Assert.AreEqual(ServerIdentity.Of(Environment.MachineName, server.DataFolder), response.Headers.GetValues(ServerIdentity.Header).Single());
 
         var restart = await client.PostAsync("/api/server/restart", null);
         Assert.AreEqual(HttpStatusCode.Conflict, restart.StatusCode);

@@ -22,23 +22,30 @@ public sealed class LineAlertService(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var timer = new PeriodicTimer(Interval, time);
-        while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false))
+        try
         {
-            var alerts = settings.Current.Alerts;
-            if (!alerts.Enabled)
+            while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false))
             {
-                _tracker.Reset();
-                continue;
-            }
+                var alerts = settings.Current.Alerts;
+                if (!alerts.Enabled)
+                {
+                    _tracker.Reset();
+                    continue;
+                }
 
-            var lines = simulator.Read(s => s.Lines
-                .Select(l => new AlertLineState(l.Number, l.Name, SimulatorConfigJson.Key(l.Status), l.StatusDetail, l.StatusSince))
-                .ToList());
-            var (outages, recoveries) = _tracker.Update(lines, time.GetUtcNow(), alerts);
-            if (outages.Count > 0)
-                await SendAsync(AlertKind.Outage, outages, alerts, stoppingToken).ConfigureAwait(false);
-            if (recoveries.Count > 0)
-                await SendAsync(AlertKind.Recovery, recoveries, alerts, stoppingToken).ConfigureAwait(false);
+                var lines = simulator.Read(s => s.Lines
+                    .Select(l => new AlertLineState(l.Number, l.Name, SimulatorConfigJson.Key(l.Status), l.StatusDetail, l.StatusSince))
+                    .ToList());
+                var (outages, recoveries) = _tracker.Update(lines, time.GetUtcNow(), alerts);
+                if (outages.Count > 0)
+                    await SendAsync(AlertKind.Outage, outages, alerts, stoppingToken).ConfigureAwait(false);
+                if (recoveries.Count > 0)
+                    await SendAsync(AlertKind.Recovery, recoveries, alerts, stoppingToken).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // ukoncenie servera - aj po neuspesnom starte, ked host sluzbu nezastavi a len ju pri uvolneni zrusi
         }
     }
 

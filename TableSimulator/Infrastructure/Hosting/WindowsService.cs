@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Versioning;
@@ -8,6 +9,11 @@ using Microsoft.Win32;
 using TableSimulator.Infrastructure.Auth;
 
 namespace TableSimulator.Infrastructure.Hosting;
+
+/// <summary>Ako dopadlo spustenie servera sluzby.</summary>
+/// <param name="Url">adresa bieziaceho servera; null = nespustil sa</param>
+/// <param name="Error">dovod; null = server sa nespustil v case a dovod nie je znamy</param>
+public sealed record ServerStart(string? Url, string? Error);
 
 /// <summary>
 /// Server ako sluzba Windows: bezi bez prihlaseneho pouzivatela, startuje so systemom (oneskorene) a po pade alebo
@@ -23,6 +29,25 @@ public static class WindowsService
 
     /// <summary>Kod ukoncenia pri restarte z weboveho rozhrania - Windows sluzbu spusti znova (akcia po zlyhani).</summary>
     public const int RestartExitCode = 3;
+
+    /// <summary>Kod ukoncenia instalacie: sluzba je nainstalovana, ale server sa nespustil (instalator ukaze dovod).</summary>
+    public const int NotStartedExitCode = 4;
+
+    /// <summary>
+    /// Prava k sluzbe (SDDL): predvolene Windows, navyse spustenie (RP) pre interaktivnych pouzivatelov - odkaz v ponuke
+    /// Start zastavenu sluzbu spusti bez prav spravcu. Zastavit a menit ju smie len spravca.
+    /// </summary>
+    public const string Security =
+        "D:(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWRPLOCRRC;;;IU)(A;;CCLCSWLOCRRC;;;SU)";
+
+    /// <summary>Ako dlho sa caka, kym spustena sluzba otvori web.</summary>
+    private static readonly TimeSpan StartTimeout = TimeSpan.FromSeconds(60);
+
+    /// <summary>Ako dlho sa po zastaveni sluzby caka na dovod - proces ho zapise az po hlaseni zastavenia.</summary>
+    private static readonly TimeSpan ReasonWait = TimeSpan.FromSeconds(3);
+
+    /// <summary>Win32 ERROR_SERVICE_ALREADY_RUNNING.</summary>
+    private const int AlreadyRunning = 1056;
 
     private const string Description = "Simulator tabul pre INISS - linky k tabuliam, zobrazenie tabul a virtualne tabule na webe.";
 
@@ -88,11 +113,15 @@ public static class WindowsService
         ["description", Name, Description],
         // po zlyhani (aj pri restarte z webu - kod ukoncenia rozny od 0) ju Windows spusti znova
         ["failure", Name, "reset=", "86400", "actions=", "restart/5000/restart/10000/restart/60000"],
-        ["failureflag", Name, "1"]
+        ["failureflag", Name, "1"],
+        ["sdset", Name, Security]
     ];
 
-    /// <summary>Nainstaluje (alebo zmeni) a spusti sluzbu; vrati kod ukoncenia programu.</summary>
-    public static int Install(CommandLine commandLine, TextWriter output)
+    /// <summary>
+    /// Nainstaluje (alebo zmeni) a spusti sluzbu a pocka, kym server otvori web; vrati kod ukoncenia programu
+    /// (<see cref="NotStartedExitCode" />, ak sa server nespustil).
+    /// </summary>
+    public static async Task<int> InstallAsync(CommandLine commandLine, TextWriter output)
     {
         ArgumentNullException.ThrowIfNull(commandLine);
         ArgumentNullException.ThrowIfNull(output);
@@ -120,11 +149,63 @@ public static class WindowsService
             if (Sc(command, output) != 0)
                 return 1;
 
-        using var service = new ServiceController(Name);
-        service.Start();
-        service.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(30));
-        output.WriteLine($"Sluzba {Name} bezi (nastavenia: {dataFolder}). Spusta sa so systemom; zastavi ju --uninstall-service.");
+        // stav Running hlasi sluzba skor, nez server otvori port - caka sa na adresu v zamku priecinka alebo na dovod zlyhania
+        var since = DateTime.UtcNow;
+        var started = TryStart() is { } error ? new ServerStart(null, error) : await WaitForServerAsync(dataFolder, since, StartTimeout).ConfigureAwait(false);
+        if (started.Url is null)
+        {
+            output.WriteLine($"Sluzba {Name} je nainstalovana, ale server sa nespustil: " +
+                             (started.Error ?? $"ani po {(int)StartTimeout.TotalSeconds} s neotvoril web - pozrite log v {commandLine.Paths.LogsFolder}"));
+            output.WriteLine("Windows ju skusi spustit znova. Inak ju spusti odkaz TableSimulator v ponuke Start.");
+            return NotStartedExitCode;
+        }
+
+        output.WriteLine($"Sluzba {Name} bezi: {started.Url} (nastavenia: {dataFolder}). Spusta sa so systemom; zastavi ju --uninstall-service.");
         return 0;
+    }
+
+    /// <summary>Spusti sluzbu (bez cakania); vrati chybu alebo null. Uz bieziaca sluzba nie je chyba.</summary>
+    public static string? TryStart()
+    {
+        if (!OperatingSystem.IsWindows())
+            return "Sluzba Windows bezi len vo Windows.";
+        try
+        {
+            using var service = new ServiceController(Name);
+            service.Start();
+            return null;
+        }
+        catch (InvalidOperationException e)
+        {
+            return e.InnerException is Win32Exception { NativeErrorCode: AlreadyRunning } ? null : e.InnerException?.Message ?? e.Message;
+        }
+    }
+
+    /// <summary>
+    /// Pocka, kym server sluzby zapise adresu do zamku priecinka nastaveni. Skonci skor, ked server zapise dovod
+    /// zlyhania (<see cref="StartupError" />) alebo sa sluzba zastavi.
+    /// </summary>
+    /// <param name="dataFolder">priecinok nastaveni sluzby</param>
+    /// <param name="sinceUtc">kedy sa sluzba spustila - starsi dovod zlyhania neplati</param>
+    /// <param name="timeout">najdlhsie cakanie</param>
+    public static async Task<ServerStart> WaitForServerAsync(string dataFolder, DateTime sinceUtc, TimeSpan timeout)
+    {
+        var until = DateTime.UtcNow + timeout;
+        DateTime? stoppedAt = null;
+        while (true)
+        {
+            if (await ServerLock.ReadUrlAsync(dataFolder, TimeSpan.Zero).ConfigureAwait(false) is { } url)
+                return new ServerStart(url, null);
+            if (StartupError.ReadSince(dataFolder, sinceUtc) is { } error)
+                return new ServerStart(null, error);
+            if (IsStartingOrRunning())
+                stoppedAt = null;
+            else if ((stoppedAt ??= DateTime.UtcNow) + ReasonWait < DateTime.UtcNow)
+                return new ServerStart(null, "Sluzba sa zastavila.");
+            if (DateTime.UtcNow >= until)
+                return new ServerStart(null, null);
+            await Task.Delay(TimeSpan.FromMilliseconds(250)).ConfigureAwait(false);
+        }
     }
 
     /// <summary>Zastavi a odstrani sluzbu; nastavenia a databaza ostanu.</summary>

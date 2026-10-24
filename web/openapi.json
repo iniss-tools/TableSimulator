@@ -4706,7 +4706,13 @@
           "serverVersion",
           "designs",
           "media",
-          "recordings"
+          "recordings",
+          "lines",
+          "boards",
+          "machine",
+          "dataFolder",
+          "service",
+          "sameServer"
         ],
         "type": "object",
         "properties": {
@@ -4731,6 +4737,41 @@
               "integer"
             ],
             "format": "int32"
+          },
+          "lines": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "boards": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "machine": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dataFolder": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "service": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "sameServer": {
+            "type": "boolean"
           }
         }
       },

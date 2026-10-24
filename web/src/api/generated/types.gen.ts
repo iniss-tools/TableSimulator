@@ -122,6 +122,12 @@ export type BackupInfoDto = {
     designs: number;
     media: number;
     recordings: null | number;
+    lines: null | number;
+    boards: null | number;
+    machine: null | string;
+    dataFolder: null | string;
+    service: null | boolean;
+    sameServer: boolean;
 };
 
 export type BackupStatusDto = {

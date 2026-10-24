@@ -11,21 +11,28 @@ public sealed class AuditRetentionService(IServiceScopeFactory scopes, TimeProvi
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var timer = new PeriodicTimer(Interval, time);
-        do
+        try
         {
-            try
+            do
             {
-                await using var scope = scopes.CreateAsyncScope();
-                var log = scope.ServiceProvider.GetRequiredService<IAuditLog>();
-                var deleted = await log.DeleteOlderThanAsync(time.GetUtcNow().UtcDateTime.AddDays(-AuditEntry.RetentionDays), stoppingToken)
-                    .ConfigureAwait(false);
-                if (deleted > 0)
-                    ServerLog.AuditCleaned(logger, deleted, AuditEntry.RetentionDays);
-            }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                ServerLog.AuditCleanupFailed(logger, e);
-            }
-        } while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false));
+                try
+                {
+                    await using var scope = scopes.CreateAsyncScope();
+                    var log = scope.ServiceProvider.GetRequiredService<IAuditLog>();
+                    var deleted = await log.DeleteOlderThanAsync(time.GetUtcNow().UtcDateTime.AddDays(-AuditEntry.RetentionDays), stoppingToken)
+                        .ConfigureAwait(false);
+                    if (deleted > 0)
+                        ServerLog.AuditCleaned(logger, deleted, AuditEntry.RetentionDays);
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    ServerLog.AuditCleanupFailed(logger, e);
+                }
+            } while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false));
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // ukoncenie servera - aj po neuspesnom starte, ked host sluzbu nezastavi a len ju pri uvolneni zrusi
+        }
     }
 }

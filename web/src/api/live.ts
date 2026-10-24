@@ -177,6 +177,7 @@ function apply(message: LiveMessage) {
 export function openSocket(onFrames?: (frames: FrameDto[]) => void, withLog = false): () => void {
   let socket: WebSocket | null = null;
   let closed = false;
+  let opened = false;
   let retry: ReturnType<typeof setTimeout> | undefined;
 
   const connect = () => {
@@ -184,6 +185,9 @@ export function openSocket(onFrames?: (frames: FrameDto[]) => void, withLog = fa
     socket.onopen = () => {
       if (withLog) return;
       setConnection({ connected: true });
+      // po vypadku aj prihlasenie - dotaz je na kazdej stranke, takze odpoved ukaze, ci na adrese nebezi iny server
+      if (opened) void queryClient.invalidateQueries({ queryKey: getMeQueryKey() });
+      opened = true;
       // co sa zmenilo pocas vypadku
       void queryClient.invalidateQueries({ queryKey: stateKey });
       void queryClient.invalidateQueries({ queryKey: recordingsKey });

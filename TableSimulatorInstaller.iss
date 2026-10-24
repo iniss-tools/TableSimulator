@@ -14,6 +14,8 @@
 #define MyPrivilegesRequired "admin"
 ; WindowsService.Name v serveri
 #define ServiceName "TableSimulator"
+; WindowsService.NotStartedExitCode - sluzba je nainstalovana, ale server sa nespustil
+#define ServiceNotStartedCode 4
 
 #include "..\ToolsCore\Installer\Common.iss"
 
@@ -23,6 +25,7 @@ english.ServiceTask=Run as a Windows service (starts with Windows, also without 
 english.FirewallTask=Allow access from the network in Windows Firewall (domain and private networks)
 english.ServiceInstalling=Installing the Windows service...
 english.ServiceFailed=The Windows service was not installed:%n%n%1
+english.ServiceNotStarted=The Windows service is installed, but the simulator did not start:%n%n%1
 english.OpenInBrowser=Open %1 in the browser
 english.DeleteData=Delete the simulator data as well?%n%n%1%n%nThe folder contains the database, recordings, panel media, certificates and logs.
 czech.ServerGroup=Server:
@@ -30,6 +33,7 @@ czech.ServiceTask=Spouštět jako službu Windows (startuje se systémem, i bez 
 czech.FirewallTask=Povolit přístup ze sítě ve Windows Firewall (doménová a soukromá síť)
 czech.ServiceInstalling=Instaluje se služba Windows...
 czech.ServiceFailed=Služba Windows se nenainstalovala:%n%n%1
+czech.ServiceNotStarted=Služba Windows je nainstalovaná, ale simulátor se nespustil:%n%n%1
 czech.OpenInBrowser=Otevřít %1 v prohlížeči
 czech.DeleteData=Smazat i data simulátoru?%n%n%1%n%nSložka obsahuje databázi, záznamy, média panelů, certifikáty a logy.
 slovak.ServerGroup=Server:
@@ -37,6 +41,7 @@ slovak.ServiceTask=Spúšťať ako službu Windows (štartuje so systémom, aj b
 slovak.FirewallTask=Povoliť prístup zo siete vo Windows Firewall (doménová a súkromná sieť)
 slovak.ServiceInstalling=Inštaluje sa služba Windows...
 slovak.ServiceFailed=Služba Windows sa nenainštalovala:%n%n%1
+slovak.ServiceNotStarted=Služba Windows je nainštalovaná, ale simulátor sa nespustil:%n%n%1
 slovak.OpenInBrowser=Otvoriť %1 v prehliadači
 slovak.DeleteData=Zmazať aj údaje simulátora?%n%n%1%n%nPriečinok obsahuje databázu, záznamy, médiá panelov, certifikáty a logy.
 
@@ -135,7 +140,8 @@ begin
     Result := Result + Output.StdErr[I] + #13#10;
 end;
 
-// --install-service sluzbu zalozi alebo zmeni (iny priecinok programu) a spusti, --uninstall-service ju odstrani.
+// --install-service sluzbu zalozi alebo zmeni (iny priecinok programu), spusti a pocka na server (pri zlyhani vypise dovod),
+// --uninstall-service ju odstrani.
 procedure RunServer(const Params: String; const ReportError: Boolean);
 var
   ResultCode: Integer;
@@ -154,7 +160,9 @@ begin
   end;
 
   Log(Params + ': ' + IntToStr(ResultCode) + #13#10 + Text);
-  if ReportError and (ResultCode <> 0) then
+  if ReportError and (ResultCode = {#ServiceNotStartedCode}) then
+    SuppressibleMsgBox(FmtMessage(CustomMessage('ServiceNotStarted'), [Trim(Text)]), mbError, MB_OK, IDOK)
+  else if ReportError and (ResultCode <> 0) then
     SuppressibleMsgBox(FmtMessage(CustomMessage('ServiceFailed'), [Trim(Text)]), mbError, MB_OK, IDOK);
 end;
 

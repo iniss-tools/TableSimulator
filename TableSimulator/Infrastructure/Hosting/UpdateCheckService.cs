@@ -13,12 +13,19 @@ public sealed class UpdateCheckService(IServerUpdates updates, ISettingsStore se
     {
         if (!updates.Status.Release)
             return;
-        await Task.Delay(FirstCheck, time, stoppingToken).ConfigureAwait(false);
         using var timer = new PeriodicTimer(Interval, time);
-        do
+        try
         {
-            if (settings.Current.CheckUpdates)
-                await updates.CheckAsync(stoppingToken).ConfigureAwait(false);
-        } while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false));
+            await Task.Delay(FirstCheck, time, stoppingToken).ConfigureAwait(false);
+            do
+            {
+                if (settings.Current.CheckUpdates)
+                    await updates.CheckAsync(stoppingToken).ConfigureAwait(false);
+            } while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false));
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // ukoncenie servera - aj po neuspesnom starte, ked host sluzbu nezastavi a len ju pri uvolneni zrusi
+        }
     }
 }

@@ -1,5 +1,6 @@
 // Zaloha celeho simulatora (databaza, vlastne vzhlady, subory panelov, volitelne zaznamy) a obnova, ktora sa pouzije
-// pri najblizsom starte servera - pri sluzbe Windows hned po restarte z webu.
+// pri najblizsom starte servera - pri sluzbe Windows hned po restarte z webu. Pripravena obnova ukaze, odkial zaloha je
+// a kolko ma liniek a tabul, aby sa nezamenila (napr. zaloha prazdneho servera namiesto povodneho).
 import { useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArchiveRestore, CircleAlert, CircleCheck, Download, RotateCw, TriangleAlert, X } from "lucide-react";
@@ -80,11 +81,25 @@ export function BackupSection() {
               {t("backup.pending.text", {
                 created: new Date(pending.created).toLocaleString(locale()),
                 version: pending.serverVersion,
+                lines: pending.lines ?? "?",
+                boards: pending.boards ?? "?",
                 designs: pending.designs,
                 media: pending.media,
               })}{" "}
               {pending.recordings !== null && t("backup.pending.recordings", { count: pending.recordings })}
             </p>
+            {pending.dataFolder !== null && (
+              <p className="mt-1">
+                {t("backup.pending.source", {
+                  folder: pending.dataFolder,
+                  mode: t(pending.service ? "backup.mode.service" : "backup.mode.window"),
+                  machine: pending.machine ?? "?",
+                })}
+              </p>
+            )}
+            {pending.sameServer && (
+              <p className="mt-1 font-medium">{t("backup.pending.same", { created: new Date(pending.created).toLocaleString(locale()) })}</p>
+            )}
             <p className="mt-1">{t(status.service ? "backup.pending.service" : "backup.pending.manual")}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {status.service && (
