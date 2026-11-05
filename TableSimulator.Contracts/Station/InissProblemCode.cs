@@ -22,5 +22,7 @@ public enum InissProblemCode
     [JsonStringEnumMemberName("noAutomaticLine")] NoAutomaticLine,
 
     /// <summary>Linku tabule neobsluhuje ziadna sekcia Driver (parameter: cislo linky).</summary>
-    [JsonStringEnumMemberName("noDriver")] NoDriver
+    [JsonStringEnumMemberName("noDriver")] NoDriver,
+    /// <summary>INISS2: linka tabule nie je v komunikacnych linkach servera (parameter: kluc linky).</summary>
+    [JsonStringEnumMemberName("unknownLine")] UnknownLine
 }

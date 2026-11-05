@@ -1,19 +1,22 @@
 // Nacitanie liniek a tabul z instalacie INISSu nastavenej v Nastaveniach: nahlad (linky, tabule, zistenia) a import.
 import { useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleAlert, FolderOpen, Info, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import {
   ApiError,
   errorText,
   getInissStationOptions,
+  getInissStationQueryKey,
   importInissStationMutation,
+  redirectInissLinesMutation,
   type InissAmplifierDto,
   type InissLineDto,
   type InissProblemDto,
   type InissTableDto,
   type StationImportedDto,
 } from "@/api";
+import { confirmAction } from "@/components/common/confirm";
 import { CheckField } from "@/components/common/form-field";
 import { StatusBadge } from "@/components/common/status-badge";
 import { DataTable } from "@/components/data-table/data-table";
@@ -83,6 +86,14 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
   const query = useQuery({ ...getInissStationOptions(), staleTime: 0, gcTime: 0, retry: false });
   const station = query.data;
   const [facesForExisting, setFacesForExisting] = useState(false);
+  const client = useQueryClient();
+  const redirect = useMutation({
+    ...redirectInissLinesMutation(),
+    onSuccess: (result, variables) => {
+      client.setQueryData(getInissStationQueryKey(), result);
+      toast.success(t(variables.body.redirect ? "iniss.redirect.done" : "iniss.redirect.undone"), { duration: 10_000 });
+    },
+  });
   const load = useMutation({
     ...importInissStationMutation(),
     onSuccess: (result) => {
@@ -102,7 +113,10 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
         cell: ({ row }) => (
           <div className="flex flex-col">
             <code className="font-mono text-xs">{row.original.port}</code>
-            <span className="text-xs text-muted-foreground">{t("iniss.simulatorPort", { port: row.original.simulatorPort })}</span>
+            {row.original.originalPort && <span className="text-xs text-muted-foreground">{t("iniss.originalPort", { port: row.original.originalPort })}</span>}
+            <span className="text-xs text-muted-foreground">
+              {t("iniss.simulatorPort", { transport: row.original.transport.toUpperCase(), port: row.original.simulatorPort })}
+            </span>
           </div>
         ),
       }),
@@ -138,6 +152,18 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
     [],
   );
 
+  const redirected = station?.lines.some((l) => l.originalPort) ?? false;
+  const canRedirect = station?.iniss2 === true && station.lines.some((l) => l.active && l.supported && l.canRedirect);
+
+  async function toggleRedirect() {
+    const confirmed = await confirmAction(
+      redirected
+        ? { title: t("iniss.redirect.undoConfirm"), description: t("iniss.redirect.undoDescription"), confirmLabel: t("iniss.redirect.undo") }
+        : { title: t("iniss.redirect.confirm"), description: t("iniss.redirect.description"), confirmLabel: t("iniss.redirect") },
+    );
+    if (confirmed) redirect.mutate({ body: { redirect: !redirected } });
+  }
+
   const notConfigured = query.error instanceof ApiError && query.error.code === "iniss.notConfigured";
   const nothing = station !== undefined && !station.lines.some((l) => l.active && l.supported) && station.xmlTables.length === 0;
 
@@ -146,7 +172,7 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
       <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>{t("iniss.title")}</DialogTitle>
-          <DialogDescription>{t("iniss.hint")}</DialogDescription>
+          <DialogDescription>{t(station?.iniss2 ? "iniss.hint.iniss2" : "iniss.hint")}</DialogDescription>
         </DialogHeader>
         <div className="-mx-4 flex min-h-0 flex-col gap-4 overflow-y-auto px-4 text-sm">
           {query.isPending && <Skeleton className="h-40 w-full" />}
@@ -171,7 +197,9 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
                   <code className="font-mono text-xs break-all">{station.program}</code>
                 </dd>
                 <dt className="text-muted-foreground">{t("iniss.config")}</dt>
-                <dd>{t(station.registry ? "iniss.config.registry" : "iniss.config.ini", { name: station.appName })}</dd>
+                <dd>
+                  {t(station.iniss2 ? "iniss.config.iniss2" : station.registry ? "iniss.config.registry" : "iniss.config.ini", { name: station.appName })}
+                </dd>
                 <dt className="text-muted-foreground">{t("iniss.grafikons")}</dt>
                 <dd>{station.grafikons.length ? station.grafikons.join(", ") : "–"}</dd>
                 <dt className="text-muted-foreground">{t("iniss.virtual")}</dt>
@@ -225,15 +253,21 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
               />
             </>
           )}
-          {load.error && (
+          {(load.error ?? redirect.error) && (
             <Alert variant="destructive">
               <CircleAlert />
-              <AlertDescription className="whitespace-pre-line">{errorText(load.error)}</AlertDescription>
+              <AlertDescription className="whitespace-pre-line">{errorText(load.error ?? redirect.error)}</AlertDescription>
             </Alert>
           )}
         </div>
         <DialogFooter>
           <DialogClose render={<Button type="button" variant="outline" />}>{t("common.cancel")}</DialogClose>
+          {canRedirect && (
+            <Button type="button" variant="outline" disabled={redirect.isPending} onClick={() => void toggleRedirect()}>
+              {redirect.isPending && <Spinner />}
+              {t(redirected ? "iniss.redirect.undo" : "iniss.redirect")}
+            </Button>
+          )}
           <Button
             type="button"
             disabled={!station || nothing || load.isPending}

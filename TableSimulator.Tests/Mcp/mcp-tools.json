@@ -3755,7 +3755,8 @@
                               "wrongFamily",
                               "noTables",
                               "noAutomaticLine",
-                              "noDriver"
+                              "noDriver",
+                              "unknownLine"
                             ]
                           },
                           "args": {
@@ -3953,7 +3954,8 @@
                           "wrongFamily",
                           "noTables",
                           "noAutomaticLine",
-                          "noDriver"
+                          "noDriver",
+                          "unknownLine"
                         ]
                       },
                       "args": {
@@ -3993,6 +3995,22 @@
                       "shown"
                     ]
                   }
+                },
+                "transport": {
+                  "type": "string",
+                  "enum": [
+                    "tcp",
+                    "udp"
+                  ]
+                },
+                "canRedirect": {
+                  "type": "boolean"
+                },
+                "originalPort": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "required": [
@@ -4043,6 +4061,9 @@
             "items": {
               "$ref": "#/properties/lines/items/properties/amplifiers/items"
             }
+          },
+          "iniss2": {
+            "type": "boolean"
           }
         },
         "required": [

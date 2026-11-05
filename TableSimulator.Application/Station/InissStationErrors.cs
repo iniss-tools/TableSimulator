@@ -13,4 +13,9 @@ public static class InissStationErrors
     public static Error DataNotFound(string folder) => Error.NotFound("iniss.dataNotFound", $"The INISS data folder does not exist: {folder}");
 
     public static Error Unreadable(string message) => Error.Problem("iniss.unreadable", $"The INISS installation cannot be read: {message}");
+
+    /// <summary>Presmerovanie zmenou CommLines.xml patri len serveru INISS2.</summary>
+    public static readonly Error NotIniss2 = Error.Problem("iniss.notIniss2", "The INISS program in the settings is not an INISS2 server.");
+
+    public static Error Unwritable(string message) => Error.Problem("iniss.unwritable", $"The INISS2 lines cannot be written: {message}");
 }

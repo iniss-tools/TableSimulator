@@ -2,6 +2,7 @@ using TableSimulator.Contracts.Boards;
 using TableSimulator.Contracts.Lines;
 using TableSimulator.Contracts.Station;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Lines;
 using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Application.Mapping;
@@ -118,7 +119,10 @@ public static partial class RequestMapper
         ArgumentNullException.ThrowIfNull(request);
         return new StationImport
         {
-            Lines = request.Lines.Select(l => new StationLine(l.Number, l.TableClass, l.Port) { Name = l.Name }).ToList(),
+            Lines = request.Lines.Select(l => new StationLine(l.Number, l.TableClass, l.Port)
+            {
+                Name = l.Name, Transport = l.Transport == StationLineTransport.Udp ? LineTransport.Udp : LineTransport.Tcp
+            }).ToList(),
             Boards = request.Boards.Select(b => new StationBoard(b.Line, b.Address, b.Manufacturer)
             {
                 Name = b.Name, Flaps = b.Flaps is { } f ? ToFlaps(f) : null, FlapRecords = b.FlapRecords,

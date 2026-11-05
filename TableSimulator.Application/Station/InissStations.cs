@@ -9,6 +9,7 @@ using TableSimulator.Core.Simulation;
 using ToolsCore.Iniss.Grafikon;
 using ToolsCore.Iniss.Registry;
 using ToolsCore.Iniss.Tables;
+using ToolsCore.Iniss2;
 
 namespace TableSimulator.Application.Station;
 
@@ -35,6 +36,9 @@ public static class InissStations
         if (!File.Exists(program))
             return Result.Failure<InissStationDto>(InissStationErrors.ProgramNotFound(program));
         var installationDir = Path.GetDirectoryName(Path.GetFullPath(program))!;
+        if (Iniss2Installation.Find(installationDir) is { } iniss2)
+            return Iniss2Stations.Read(program, iniss2);
+
         var dataDir = Path.Combine(installationDir, GvdFileConsts.DirData);
         if (!Directory.Exists(dataDir))
             return Result.Failure<InissStationDto>(InissStationErrors.DataNotFound(dataDir));
@@ -104,6 +108,15 @@ public static class InissStations
         });
     }
 
+    /// <summary>Instalacia INISS2 podla nastavenia; null = program nie je server INISS2.</summary>
+    public static Iniss2Installation? Iniss2Of(AppSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        var program = settings.InissProgram.Trim();
+
+        return program.Length > 0 && File.Exists(program) ? Iniss2Installation.Find(Path.GetDirectoryName(Path.GetFullPath(program))!) : null;
+    }
+
     /// <summary>
     /// Linky a tabule na zalozenie v simulatore: aktivne linky s cislom a ich tabule so znamym vyrobcom (s datami
     /// pre celo), priecinok logov a tabule s exportom do XML.
@@ -117,7 +130,7 @@ public static class InissStations
         {
             if (!line.Active || line.Number is not { } number)
                 continue;
-            lines.Add(new StationLineDto(number, line.TableClass, line.SimulatorPort, line.Section));
+            lines.Add(new StationLineDto(number, line.TableClass, line.SimulatorPort, line.Section) { Transport = line.Transport });
             boards.AddRange(line.Tables.Where(t => t.Manufacturer.Length > 0 && t.Address is >= 0 and <= 255)
                 .Select(t => new StationBoardDto(number, t.Address, t.Manufacturer, t.Name) { Flaps = t.Flaps, FlapRecords = t.FlapRecords, Face = t.Face }));
             boards.AddRange(line.Amplifiers.Select(a => new StationBoardDto(number, a.Address, AmplifierManufacturer, a.Name)));

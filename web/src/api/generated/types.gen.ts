@@ -582,9 +582,12 @@ export type InissLineDto = {
     tables: Array<InissTableDto>;
     problems: Array<InissProblemDto>;
     amplifiers: Array<InissAmplifierDto>;
+    transport: StationLineTransport;
+    canRedirect: boolean;
+    originalPort: null | string;
 };
 
-export type InissProblemCode = 'lineOutOfRange' | 'lineDuplicate' | 'wrongFamily' | 'noTables' | 'noAutomaticLine' | 'noDriver';
+export type InissProblemCode = 'lineOutOfRange' | 'lineDuplicate' | 'wrongFamily' | 'noTables' | 'noAutomaticLine' | 'noDriver' | 'unknownLine';
 
 export type InissProblemDto = {
     severity: InissProblemSeverity;
@@ -593,6 +596,10 @@ export type InissProblemDto = {
 };
 
 export type InissProblemSeverity = 'info' | 'warning' | 'error';
+
+export type InissRedirectRequest = {
+    redirect: boolean;
+};
 
 export type InissStationDto = {
     program: string;
@@ -605,6 +612,7 @@ export type InissStationDto = {
     logFolderExists: boolean;
     xmlTables: Array<StationXmlTableDto>;
     unservedAmplifiers: Array<InissAmplifierDto>;
+    iniss2: boolean;
 };
 
 export type InissStationImportRequest = {
@@ -1259,7 +1267,10 @@ export type StationLineDto = {
     tableClass: number;
     port: number;
     name: string;
+    transport: StationLineTransport;
 };
+
+export type StationLineTransport = 'tcp' | 'udp';
 
 export type StationLogFolder = 'none' | 'added' | 'watched' | 'missing' | 'full';
 
@@ -1932,6 +1943,31 @@ export type ImportStationResponses = {
 };
 
 export type ImportStationResponse = ImportStationResponses[keyof ImportStationResponses];
+
+export type RedirectInissLinesData = {
+    body: InissRedirectRequest;
+    path?: never;
+    query?: never;
+    url: '/api/station/iniss/redirect';
+};
+
+export type RedirectInissLinesErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type RedirectInissLinesError = RedirectInissLinesErrors[keyof RedirectInissLinesErrors];
+
+export type RedirectInissLinesResponses = {
+    /**
+     * OK
+     */
+    200: InissStationDto;
+};
+
+export type RedirectInissLinesResponse = RedirectInissLinesResponses[keyof RedirectInissLinesResponses];
 
 export type GetStateData = {
     body?: never;

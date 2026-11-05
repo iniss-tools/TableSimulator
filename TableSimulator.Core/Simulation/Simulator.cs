@@ -194,14 +194,14 @@ public sealed class Simulator
                     continue;
                 }
 
-                var endpoint = new LineEndpoint(LineTransport.Tcp, "0.0.0.0", station.Port);
+                var endpoint = new LineEndpoint(station.Transport, "0.0.0.0", station.Port);
                 // vyrobca samoucenia podla prvej tabule linky, ktoru simulator zobrazi
                 var manufacturer = import.Boards.Where(b => b.Line == station.Number).Select(b => b.Manufacturer)
                     .FirstOrDefault(m => manufacturers.Contains(m, StringComparer.OrdinalIgnoreCase)) ?? manufacturers[0];
                 if (_lines.TryGetValue(station.Number, out var old))
                 {
-                    // linka uz pocuva - pri TCP ostane jej adresa, zmeni sa len port
-                    if (old.Endpoint.Transport == LineTransport.Tcp)
+                    // linka uz pocuva - pri rovnakom spojeni ostane jej adresa, zmeni sa len port
+                    if (old.Endpoint.Transport == station.Transport)
                         endpoint = old.Endpoint with { Port = station.Port };
                     if (old.TableClass == station.TableClass && old.Endpoint == endpoint)
                         continue;

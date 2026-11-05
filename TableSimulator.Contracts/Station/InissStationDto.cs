@@ -23,4 +23,7 @@ public sealed record InissStationDto(
 {
     /// <summary>Spinacie jednotky ELSVO s cislom linky, ktoru konfiguracia INISSu nema.</summary>
     public IReadOnlyList<InissAmplifierDto> UnservedAmplifiers { get; init; } = [];
+
+    /// <summary>Instalacia je server INISS2 - linky ma v CommLines.xml, nie v sekciach Driver.</summary>
+    public bool Iniss2 { get; init; }
 }

@@ -653,6 +653,46 @@
         }
       }
     },
+    "/api/station/iniss/redirect": {
+      "post": {
+        "tags": [
+          "Station"
+        ],
+        "operationId": "RedirectInissLines",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InissRedirectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InissStationDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/state": {
       "get": {
         "tags": [
@@ -6633,7 +6673,10 @@
           "supported",
           "tables",
           "problems",
-          "amplifiers"
+          "amplifiers",
+          "transport",
+          "canRedirect",
+          "originalPort"
         ],
         "type": "object",
         "properties": {
@@ -6681,6 +6724,18 @@
             "items": {
               "$ref": "#/components/schemas/InissAmplifierDto"
             }
+          },
+          "transport": {
+            "$ref": "#/components/schemas/StationLineTransport"
+          },
+          "canRedirect": {
+            "type": "boolean"
+          },
+          "originalPort": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -6691,7 +6746,8 @@
           "wrongFamily",
           "noTables",
           "noAutomaticLine",
-          "noDriver"
+          "noDriver",
+          "unknownLine"
         ]
       },
       "InissProblemDto": {
@@ -6723,6 +6779,17 @@
           "error"
         ]
       },
+      "InissRedirectRequest": {
+        "required": [
+          "redirect"
+        ],
+        "type": "object",
+        "properties": {
+          "redirect": {
+            "type": "boolean"
+          }
+        }
+      },
       "InissStationDto": {
         "required": [
           "program",
@@ -6734,7 +6801,8 @@
           "logFolder",
           "logFolderExists",
           "xmlTables",
-          "unservedAmplifiers"
+          "unservedAmplifiers",
+          "iniss2"
         ],
         "type": "object",
         "properties": {
@@ -6782,6 +6850,9 @@
             "items": {
               "$ref": "#/components/schemas/InissAmplifierDto"
             }
+          },
+          "iniss2": {
+            "type": "boolean"
           }
         }
       },
@@ -9508,7 +9579,8 @@
           "number",
           "tableClass",
           "port",
-          "name"
+          "name",
+          "transport"
         ],
         "type": "object",
         "properties": {
@@ -9527,8 +9599,17 @@
           "name": {
             "type": "string",
             "default": ""
+          },
+          "transport": {
+            "$ref": "#/components/schemas/StationLineTransport"
           }
         }
+      },
+      "StationLineTransport": {
+        "enum": [
+          "tcp",
+          "udp"
+        ]
       },
       "StationLogFolder": {
         "enum": [
