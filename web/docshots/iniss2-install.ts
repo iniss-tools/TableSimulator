@@ -52,6 +52,7 @@ const FILES: Record<string, string> = {
   [join("Data", "Config.xml")]: `${HEADER}<INISSCFG GTNPort="1090" />\r\n`,
   [join("Data", "CommLines.xml")]: COMM_LINES,
   [join("Data", "DirList.xml")]: `${HEADER}<DL><g n="2030"><i s="5400010" d="01 Lipovec" /></g></DL>\r\n`,
+  [join("Data", STATION, "SR70.TXT")]: "5400010\r\n",
   [join("Data", STATION, "Tables.xml")]: TABLES,
   [join("Data", STATION, "TCatalog.xml")]: CATALOG,
   [join("Data", STATION, "PositionsDef.xml")]: `${HEADER}<POZICE><pos k="1" n="1" tabkolej="1" tabnast="I" /></POZICE>\r\n`,

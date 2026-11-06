@@ -67,6 +67,8 @@ public sealed class Iniss2StationsTests
         Write("Config.xml", """<INISSCFG GTNPort="1090" />""");
         Write("CommLines.xml", CommLines);
         Write("DirList.xml", """<DL><g n="2030"><i s="5400010" d="01 Lipovec" /><i s="5400020" d="02 Horany" /></g></DL>""");
+        Write(@"2030\01 Lipovec\SR70.TXT", "5400010\r\n");
+        Write(@"2030\02 Horany\SR70.TXT", "5400020\r\n");
         Write(@"2030\01 Lipovec\TCatalog.xml", Catalog);
         Write(@"2030\01 Lipovec\PositionsDef.xml", """
             <POZICE>
