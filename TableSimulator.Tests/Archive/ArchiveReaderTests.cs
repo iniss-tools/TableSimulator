@@ -51,6 +51,26 @@ public sealed class ArchiveReaderTests
     }
 
     [TestMethod]
+    public void ReadTables_Iniss2_PrazdnyRiadokAInformacnyTextBezLogickejTabule()
+    {
+        var content = Tables(
+            "",
+            """<T d="2026-11-05" c="19:09:59.2799978+01:00" s="Dolné Mesto" ch="false"><tx>Výluka</tx><t><n r="1">Nástupiště 1</n><n r="0">AKIS</n></t></T>""",
+            """<T d="2026-11-05" c="19:10:04.3240992+01:00" s="Dolné Mesto" t="Os" v="3111"><t><n>Lipovec</n><c n="Druh" s="Os" /><c n="Sektor" /></t></T>""");
+
+        Assert.AreEqual(0, content.Skipped);
+        var info = content.Tables[0];
+        Assert.AreEqual(new TimeOnly(19, 9, 59), info.Time);
+        Assert.AreEqual("Výluka", info.Text);
+        Assert.IsNull(info.Train);
+        CollectionAssert.AreEqual(new[] { "Nástupiště 1", "AKIS" }, info.Tables.Single().Names.ToArray());
+
+        var train = content.Tables[1];
+        Assert.AreEqual("3111", train.Train?.Number);
+        Assert.AreEqual(new TableArchiveColumn("Sektor", ""), train.Tables.Single().Columns[1]);
+    }
+
+    [TestMethod]
     public void ReadTables_NeuplnyPoslednyRiadok_PreskociAZarata()
     {
         var content = Tables(TrainLine, """<T d="2026-10-04" c="14:04:00" s="Dolné Mesto" t="R" v="601"><t><n>NAST1""");

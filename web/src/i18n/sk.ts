@@ -420,6 +420,8 @@ export const sk = {
   "archive.detail.vylo": "Pôvodná výluka",
   "archive.detail.od": "Odklon",
   "archive.detail.k": "Skrátené hlásenie",
+  "archive.detail.f": "Príznaky",
+  "archive.detail.kl": "Klient",
   "archive.detail.zcp": "Meškanie príchodu (ZPOZDENIPRIJ)",
   "archive.detail.zco": "Meškanie odchodu (ZPOZDENIODJ)",
   "error.archive.notFound": "Archív za tento deň neexistuje.",

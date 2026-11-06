@@ -422,6 +422,8 @@ export const cs: Record<TextKey, string> = {
   "archive.detail.vylo": "Původní výluka",
   "archive.detail.od": "Odklon",
   "archive.detail.k": "Zkrácené hlášení",
+  "archive.detail.f": "Příznaky",
+  "archive.detail.kl": "Klient",
   "archive.detail.zcp": "Zpoždění příjezdu (ZPOZDENIPRIJ)",
   "archive.detail.zco": "Zpoždění odjezdu (ZPOZDENIODJ)",
   "error.archive.notFound": "Archiv za tento den neexistuje.",
