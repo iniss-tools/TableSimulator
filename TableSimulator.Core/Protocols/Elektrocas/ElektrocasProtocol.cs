@@ -349,13 +349,16 @@ internal sealed class ElektrocasProtocol : ILineProtocol
         };
     }
 
-    /// <summary>Zapise znaky; riadok mimo tabule je chybna suradnica (pri samouceni sa tabula zvacsi).</summary>
+    /// <summary>
+    /// Zapise znaky; riadok mimo tabule je chybna suradnica (pri samouceni sa tabula zvacsi). Tabula s celom si pri samouceni
+    /// sirku drzi a dlhsi text sa oreze az pri kresleni - informacny riadok INISS2 je dlhsi nez tabula a celo by sa zmensilo.
+    /// </summary>
     private static int Write(SimBoard board, CharDisplay display, int row, int column, int layer, ReadOnlySpan<byte> codes, ReadOnlySpan<byte> fonts)
     {
         var profile = board.Profile;
         if (profile.AutoSize)
         {
-            var width = Math.Max(profile.Width, (column + codes.Length) * 8);
+            var width = profile.Face is null ? Math.Max(profile.Width, (column + codes.Length) * 8) : profile.Width;
             if (row + 1 > profile.Rows || width > profile.Width)
                 board.Profile = profile with { Rows = Math.Max(profile.Rows, row + 1), Width = width };
         }

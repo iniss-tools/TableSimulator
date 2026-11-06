@@ -29,8 +29,24 @@ public sealed class Iniss2StationsTests
     private const string Catalog = """
         <CATALOG>
           <t k="Web" n="Web" cls="INTERNET" />
-          <t k="Nastupistna" n="Nastupistna" cls="LCD1" />
-          <t k="Tyflo" n="Tyflo" cls="ERP" />
+          <t k="Nastupistna" n="Nastupistna" cls="LCD1">
+            <div k="Cil" inf="CilNazev" align="LEFT"><pos c1="0" c2="17" /></div>
+            <div k="Odjezd" inf="CasOdjezdu" align="CENTER"><pos c1="17" c2="22" /></div>
+            <div k="Zpozdeni" inf="ZpozdeniOdjezd" align="RIGHT"><pos r="1" c1="17" c2="20" /></div>
+            <div k="Napis" inf="Free" align="RIGHT"><pos r="1" c1="20" c2="23" /></div>
+            <div k="Smer" inf="PoNazev" align="LEFT"><pos r="2" c1="5" c2="22" /></div>
+            <div k="Stav" inf="ZobrazenoNast" align="LEFT"><pos r="-1" c1="0" c2="40" /></div>
+          </t>
+          <t k="Info" n="Info" cls="LCD1"><div k="Text" inf="TextLine1" align="LEFT"><pos c1="0" c2="123" /></div></t>
+          <t k="Odchodova" n="Odchodova" cls="LCD1">
+            <div k="Cas" inf="CasOdjezdu" align="LEFT"><pos c1="0" c2="5" /></div>
+            <div k="Kolaj" inf="KolejOdjezd" align="RIGHT"><pos c1="5" c2="10" /></div>
+          </t>
+          <t k="Tyflo" n="Tyflo" cls="ERP">
+            <div k="Druh" inf="TypVlaku" align="LEFT"><pos r="-1" c1="0" c2="20" /></div>
+            <div k="Napis" inf="Free" align="LEFT"><pos c1="0" c2="230" /></div>
+            <div k="Text" inf="TextLine1" align="LEFT"><pos c1="0" c2="230" /></div>
+          </t>
           <t k="Elen" n="Elen" cls="ELEN16" />
         </CATALOG>
         """;
@@ -52,14 +68,22 @@ public sealed class Iniss2StationsTests
         Write("CommLines.xml", CommLines);
         Write("DirList.xml", """<DL><g n="2030"><i s="5400010" d="01 Lipovec" /><i s="5400020" d="02 Horany" /></g></DL>""");
         Write(@"2030\01 Lipovec\TCatalog.xml", Catalog);
+        Write(@"2030\01 Lipovec\PositionsDef.xml", """
+            <POZICE>
+              <pos k="1" n="1" tabkolej="4" tabnast="II" />
+              <pos k="2" n="2" tabkolej="4a" tabnast="II" />
+            </POZICE>
+            """);
         Write(@"2030\02 Horany\TCatalog.xml", Catalog);
         Write(@"2030\01 Lipovec\Tables.xml", """
             <TABLES>
               <t k="Odjezdy Internet" n="Lipovec" save="5400010O.xml"><part ck="Web" t="DEPARTURE" rec="10" /></t>
               <t k="Nastupiste 1" n="Nastupiste 1" lin="Tabule" addr="2">
                 <part ck="Web" t="INFO" rec="1" />
-                <part ck="Nastupistna" t="PLATFORM" rec="1" />
+                <part ck="Nastupistna" t="PLATFORM" rec="1"><pos k="1" /><pos k="2" /><pos k="X" /></part>
+                <part ck="Info" t="INFO" rec="1" />
               </t>
+              <t k="Odchody hala" n="Odchody hala" lin="Tabule" addr="3"><part ck="Odchodova" t="DEPARTURE" rec="5" /></t>
               <t k="AKIS" n="AKIS" lin="Tabule" addr="52"><part ck="Tyflo" t="PLATFORM" rec="1" /></t>
               <t k="Neznama linka" n="Neznama linka" lin="Zmazana" addr="9"><part ck="Nastupistna" t="PLATFORM" rec="1" /></t>
               <t k="Elen na ITP" n="Elen" lin="Tabule" addr="7"><part ck="Elen" t="PLATFORM" rec="1" /></t>
@@ -131,13 +155,84 @@ public sealed class Iniss2StationsTests
     {
         var tables = Read().Lines[0].Tables;
 
-        Assert.HasCount(3, tables, "tabula s rovnakou adresou v druhej stanici sa nezdvoji");
+        Assert.HasCount(4, tables, "tabula s rovnakou adresou v druhej stanici sa nezdvoji");
         Assert.AreEqual("Nastupiste 1", tables[0].Name);
         Assert.AreEqual(2, tables[0].Address);
         Assert.AreEqual("LCD1", tables[0].Manufacturer);
         Assert.IsTrue(tables[0].Shown);
-        Assert.AreEqual("ERP", tables[1].Manufacturer);
-        Assert.AreEqual("2030", tables[1].Grafikon);
+        Assert.AreEqual("LCD1", tables[1].Manufacturer);
+        Assert.AreEqual("ERP", tables[2].Manufacturer);
+        Assert.AreEqual("2030", tables[2].Grafikon);
+    }
+
+    [TestMethod]
+    public void Face_PlatformBoardFromItsParts()
+    {
+        var face = Read().Lines[0].Tables[0].Face!;
+
+        Assert.AreEqual(StationBoardKind.Platform, face.Kind);
+        Assert.AreEqual(4, face.Records * face.LinesPerRecord, "tri riadky predlohy a riadok informacneho textu");
+        Assert.AreEqual(23 * 8, face.Width, "stlpce su v znakoch, informacny text sirku nemeni");
+        Assert.AreEqual(16, face.RowHeight);
+        Assert.AreEqual("Lipovec", face.Station, "bez poradia pred nazvom priecinka");
+        CollectionAssert.AreEqual(new[] { "4", "4a" }, face.Tracks.ToArray(), "kolaj X stanica nepozna");
+        CollectionAssert.AreEqual(new[] { "II" }, face.Platforms.ToArray());
+    }
+
+    [TestMethod]
+    public void Face_ColumnsUseContentOfIniss3AndPoints()
+    {
+        var columns = Read().Lines[0].Tables[0].Face!.Columns;
+
+        Assert.AreEqual(new StationFaceColumnDto(0, 136, 176, Contracts.Faces.FaceAlign.Center, 9), columns[1], "cas odchodu");
+        Assert.AreEqual(new StationFaceColumnDto(1, 136, 160, Contracts.Faces.FaceAlign.Right, 12), columns[2], "meskanie odchodu");
+        Assert.AreEqual(2, columns[^1].Line);
+        Assert.IsFalse(columns.Any(c => c.Start == 0 && c.End == 320), "skryty udaj");
+    }
+
+    [TestMethod]
+    public void Face_DepartureBoardCountsRecords()
+    {
+        var face = Read().Lines[0].Tables[1].Face!;
+
+        Assert.AreEqual(StationBoardKind.Departures, face.Kind);
+        Assert.AreEqual(5, face.Records * face.LinesPerRecord);
+        Assert.AreEqual(80, face.Width);
+    }
+
+    [TestMethod]
+    public void Face_TextOnlyBoardKeepsDefaultWidthAndItsRows()
+    {
+        var face = Read().Lines[0].Tables[2].Face!;
+
+        Assert.AreEqual(320, face.Width, "sirka z predvolenej tabule");
+        Assert.AreEqual(1, face.Records * face.LinesPerRecord);
+        Assert.IsEmpty(face.Columns);
+    }
+
+    [TestMethod]
+    public void Face_BuildsBoardFaces()
+    {
+        var tables = Read().Lines[0].Tables;
+
+        var platform = StationFaces.Build(tables[0].Face!, false, StationFaceLanguage.Cs);
+        var departures = StationFaces.Build(tables[1].Face!, false, StationFaceLanguage.Cs);
+
+        Assert.AreEqual("4", platform?.Values[StationFaces.TrackKey], "z kolaji 4 a 4a ostava spolocny zaciatok");
+        Assert.AreEqual("Lipovec", platform?.Values[StationFaces.StationKey]);
+        Assert.IsTrue(departures?.Face.Elements.Any(e => e.Text.StartsWith("ODJEZD", StringComparison.Ordinal)), "popis stlpca");
+    }
+
+    [TestMethod]
+    public void Import_UsesSizeFromCatalog()
+    {
+        var simulator = new Simulator();
+
+        simulator.ImportStation(RequestMapper.ToImport(InissStations.ToRequest(Read())));
+
+        var board = simulator.Read(s => s.Boards.Single(b => b.Line == 1 && b.Address == 2));
+        Assert.AreEqual(23 * 8, board.Profile.Width);
+        Assert.AreEqual(4, board.Profile.Rows);
     }
 
     [TestMethod]
@@ -145,7 +240,7 @@ public sealed class Iniss2StationsTests
     {
         var station = Read();
 
-        Assert.IsFalse(station.Lines[0].Tables[2].Shown);
+        Assert.IsFalse(station.Lines[0].Tables[3].Shown);
         var family = station.Lines[0].Problems.Single();
         Assert.AreEqual(InissProblemCode.WrongFamily, family.Code);
         CollectionAssert.AreEqual(new[] { "Elen na ITP", "ELEN16", "130" }, family.Args.ToArray());
@@ -191,7 +286,7 @@ public sealed class Iniss2StationsTests
         Assert.Contains(2, result.UnsupportedLines);
         Assert.AreEqual(new LineEndpoint(LineTransport.Udp, "0.0.0.0", 47001), simulator.Read(s => s.FindLine(1)!.Endpoint));
         Assert.AreEqual(new LineEndpoint(LineTransport.Tcp, "0.0.0.0", 47003), simulator.Read(s => s.FindLine(3)!.Endpoint));
-        Assert.AreEqual(2, simulator.Read(s => s.Boards.Count(b => b.Line == 1)), "tabula ELEN sa na linke ITP nezobrazi");
+        Assert.AreEqual(3, simulator.Read(s => s.Boards.Count(b => b.Line == 1)), "tabula ELEN sa na linke ITP nezobrazi");
     }
 
     [TestMethod]

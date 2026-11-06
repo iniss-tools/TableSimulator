@@ -144,6 +144,28 @@ public class ElektrocasProtocolTests
     }
 
     [TestMethod]
+    [DataRow(null, 80)]
+    [DataRow("celo", 40)]
+    public void Samoucenie_TabulaSCelomSiDrziSirku(string? face, int width)
+    {
+        var sim = new Simulator();
+        sim.SetLine(new LineConfig(1, 5, "TCP://127.0.0.1:47001") { AutoLearn = false, Manufacturer = "LCD1" });
+        sim.SetBoard(new BoardConfig(1, 12, "LCD1")
+        {
+            Profile = BoardProfile.DefaultFor("LCD1") with { Width = 40, Rows = 1, AutoSize = true, Face = face }
+        });
+        byte[] text = [.. Enumerable.Repeat((byte)'A', 10)];
+
+        var replies = Replies(sim, Frame(12, 0x15, [1, 0, 0, 0x10, 10, .. text]));
+
+        CollectionAssert.AreEqual(Status(12, 0), replies);
+        var board = sim.Read(s => s.FindBoard("1-12"))!;
+        Assert.AreEqual(width, board.Profile.Width);
+        Assert.AreEqual(2, board.Profile.Rows, "riadky rastu vzdy");
+        Assert.AreEqual(new string('A', 10), Text(Display(sim).Rows[1]));
+    }
+
+    [TestMethod]
     public void ZlySucet_ChybnaSprava()
     {
         var sim = Create();
