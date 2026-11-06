@@ -82,6 +82,63 @@ public class ElenRowParserTests
     }
 
     [TestMethod]
+    [DataRow("ELENWIN", "Žilina")]
+    [DataRow("ELEKON", "Žilina")]
+    public void VariantyWindows_TextVKodeWindows(string key, string text)
+    {
+        var row = ElenRowParser.Parse(Hex("10 80 1B 42 8E 69 6C 69 6E 61"), ElenVariant.Find(key)!);
+
+        Assert.AreEqual(text, row.PlainText);
+    }
+
+    [TestMethod]
+    public void ElekonKam_TextVKodeKamenickych()
+    {
+        var variant = ElenVariant.Find("elekonkam")!;
+
+        Assert.AreEqual("Žilina", ElenRowParser.Parse(Hex("10 80 1B 42 92 69 6C 69 6E 61"), variant).PlainText);
+        Assert.AreEqual(0x40, variant.DefaultFont);
+        Assert.IsTrue(variant.WideCursor);
+    }
+
+    [TestMethod]
+    [DataRow("ELEKON")]
+    [DataRow("ELEKONKAM")]
+    public void Elekon_MedzeraZaPismomNaKonciRiadkuNieJeZnak(string key)
+    {
+        var row = ElenRowParser.Parse(Hex("10 80 1B 4A 31 36 3A 33 30 1B 42 90"), ElenVariant.Find(key)!);
+
+        Assert.AreEqual("16:30", row.PlainText);
+    }
+
+    [TestMethod]
+    public void ElekonKam_PismenoENaKonciTextuOstava()
+    {
+        var row = ElenRowParser.Parse(Hex("10 80 1B 42 43 61 66 90"), ElenVariant.ElekonKam);
+
+        Assert.AreEqual("CafÉ", row.PlainText);
+    }
+
+    [TestMethod]
+    public void ErpElen_PolohaVZnakochBezPisma()
+    {
+        var row = ElenRowParser.Parse(Hex("10 85 4F 73 20 33 34 31 32"), ElenVariant.Find("erp_elen")!);
+
+        var run = ((RunElement)row.Elements.Single()).Run;
+        Assert.AreEqual(5 * 8, run.X);
+        Assert.AreEqual(0x42, run.Font);
+        Assert.AreEqual("Os 3412", run.Text);
+    }
+
+    [TestMethod]
+    public void Elen_Bajt90JeZnak()
+    {
+        var row = ElenRowParser.Parse(Hex("10 80 1B 42 90"), ElenVariant.Elen);
+
+        Assert.AreEqual("É", row.PlainText);
+    }
+
+    [TestMethod]
     public void PrazdnyObsah_PrazdnyRiadok()
     {
         Assert.IsTrue(ElenRowParser.Parse([], ElenVariant.Elen).IsEmpty);

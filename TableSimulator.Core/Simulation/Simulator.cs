@@ -721,7 +721,7 @@ public sealed class Simulator
         [2] = (() => new ErsProtocol(), ["ERS"]),
         [10] = (() => new ApelProtocol(), ["APEL", "APEL_AN"]),
         [3] = (() => new ElektrocasProtocol(), ["FERS"]),
-        [4] = (() => new ElenProtocol(), ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16Kam", "ELEKON"]),
+        [4] = (() => new ElenProtocol(), ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16Kam", "ELEKON", "ELENWIN", "ELEKONKAM", "ERP_ELEN"]),
         [5] = (() => new ElektrocasProtocol(), ["LCD1", "ERP"]),
         [128] = (() => new RemoteProtocol(), [.. RemoteProtocol.Manufacturers]),
         [129] = (() => new ElsvoProtocol(), ["ELSVO"]),

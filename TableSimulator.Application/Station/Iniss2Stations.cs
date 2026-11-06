@@ -31,6 +31,9 @@ public static partial class Iniss2Stations
     /// <summary>Bodov na znak znakovych tabul - INISS2 ma stlpce v znakoch, INISS 3.39 aj simulator v bodoch.</summary>
     private const int CharWidth = 8;
 
+    /// <summary>Druhy tabul so stlpcami predlohy v znakoch; ELEN ich ma v bodoch ako INISS 3.39.</summary>
+    private static readonly HashSet<string> CharacterClasses = new(StringComparer.Ordinal) { "LCD", "LCD1", "LCD2", "ERP", "ERP2", "FERS", "ERP_ELEN" };
+
     private static readonly Dictionary<string, int> ProtocolClasses = new(StringComparer.Ordinal) { ["ELEN"] = 4, ["ITP"] = 130 };
 
     /// <summary>Nacita linky a tabule servera.</summary>
@@ -115,7 +118,8 @@ public static partial class Iniss2Stations
 
     /// <summary>
     /// Co o cele tabule vedia data stanice. Druh a stlpce su z prvej casti, ktora nie je informacny text. Pocet riadkov je sucet
-    /// vsetkych casti, preto je zaznam jeden riadok. Riadok s informacnym textom je pohyblivy a na sirku tabule nema vplyv.
+    /// vsetkych casti, preto je zaznam jeden riadok. Informacny riadok Elektrocasu byva dlhsi nez tabula a na sirku nema vplyv,
+    /// pohyblivy text ELEN je siroky ako jeho stlpec.
     /// </summary>
     private static StationFaceDto? ToFace(TableDefinition table, string deviceClass, Dictionary<string, CatalogTable> catalog, IReadOnlyList<TrackDefinition> tracks, string station)
     {
@@ -127,10 +131,11 @@ public static partial class Iniss2Stations
         if (main.Catalog is null)
             return null;
 
-        var scale = deviceClass is "LCD" or "LCD1" or "ERP" ? CharWidth : 1;
+        var characters = CharacterClasses.Contains(deviceClass);
+        var scale = characters ? CharWidth : 1;
         var shown = main.Catalog.Columns.Where(column => column.IsVisible).ToList();
         var textRows = shown.Where(column => column.IsTextLine).Select(column => column.Row).ToHashSet();
-        var width = shown.Where(column => !textRows.Contains(column.Row)).Select(column => column.End * scale).DefaultIfEmpty().Max();
+        var width = shown.Where(column => !characters || !textRows.Contains(column.Row)).Select(column => column.End * scale).DefaultIfEmpty().Max();
 
         // tabula len s textom (slepecky hlasic) ma sirku z predvolenej tabule, riadky z predlohy
         if (width == 0)

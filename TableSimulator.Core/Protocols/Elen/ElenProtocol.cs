@@ -146,7 +146,7 @@ internal sealed class ElenProtocol : ILineProtocol
                     var part = ElenRowParser.Parse(end < 0 ? content : content[..end], variant);
                     display.SetRow(r, part);
                     if (board.Profile.AutoSize)
-                        Grow(board, r, part);
+                        Grow(board, r, part, variant);
                     if (end < 0)
                         break;
                     content = content[(end + 1)..];
@@ -318,16 +318,22 @@ internal sealed class ElenProtocol : ILineProtocol
     }
 
     /// <summary>Tabula zo samoucenia sa zvacsi, aby sa obsah zmestil.</summary>
-    private static void Grow(SimBoard board, int row, RowContent content)
+    private static void Grow(SimBoard board, int row, RowContent content, ElenVariant variant)
     {
         var width = board.Profile.Width;
-        foreach (var run in content.Elements.SelectMany(Runs))
+
+        // tabula s celom si drzi sirku, sirka textu z poctu znakov je len odhad a celo by sa zmensilo
+        if (board.Profile.Face is null)
         {
-            if (run.X is { } x)
-                width = Math.Max(width, x + run.Codes.Length * 6);
+            foreach (var run in content.Elements.SelectMany(Runs))
+            {
+                if (run.X is { } x)
+                    width = Math.Max(width, x + run.Codes.Length * Math.Max(6, variant.CursorUnit));
+            }
+
+            width = (width + 31) / 32 * 32;
         }
 
-        width = (width + 31) / 32 * 32;
         if (row > board.Profile.Rows || width > board.Profile.Width)
             board.Profile = board.Profile with { Rows = Math.Max(row, board.Profile.Rows), Width = width };
     }

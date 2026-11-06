@@ -25,6 +25,38 @@ public class ElenPanelTests
     private static byte[] Replies(Simulator sim, byte[] data) => sim.Receive(1, data).SelectMany(r => r.Bytes).ToArray();
 
     [TestMethod]
+    [DataRow("ELENWIN", "81 10 80 8E 69 6C 69 6E 61 1B 40")]
+    [DataRow("ELEKONKAM", "81 10 80 92 69 6C 69 6E 61 1B 42 90")]
+    [DataRow("ERP_ELEN", "81 10 80 8E 69 6C 69 6E 61")]
+    public void Variant_TabulaZobraziTextVSvojomKode(string manufacturer, string content)
+    {
+        var sim = new Simulator();
+        sim.SetLine(new LineConfig(1, 4, "TCP://127.0.0.1:47001") { AutoLearn = false, Manufacturer = manufacturer });
+        sim.SetBoard(new BoardConfig(1, 5, manufacturer) { Profile = BoardProfile.DefaultFor(manufacturer) });
+
+        CollectionAssert.AreEqual(new byte[] { 0x06 }, Replies(sim, ElenFrame.Build(5, 1, Hex(content))));
+
+        Assert.AreEqual("Žilina", Display(sim).Rows[1].PlainText);
+    }
+
+    [TestMethod]
+    [DataRow(null, 256)]
+    [DataRow("celo", 192)]
+    public void Samoucenie_TabulaSCelomSiDrziSirku(string? face, int width)
+    {
+        var sim = new Simulator();
+        sim.SetLine(new LineConfig(1, 4, "TCP://127.0.0.1:47001") { AutoLearn = false, Manufacturer = "ELEN10" });
+        sim.SetBoard(new BoardConfig(1, 5, "ELEN10") { Profile = new BoardProfile { Width = 192, Rows = 1, AutoSize = true, Face = face } });
+        byte[] row = [0x82, 0x10, 0x80, .. Enumerable.Repeat((byte)'A', 40)];
+
+        CollectionAssert.AreEqual(new byte[] { 0x06 }, Replies(sim, ElenFrame.Build(5, 1, row)));
+
+        var profile = sim.Read(s => s.FindBoard("1-5"))!.Profile;
+        Assert.AreEqual(width, profile.Width);
+        Assert.AreEqual(2, profile.Rows, "riadky rastu vzdy");
+    }
+
+    [TestMethod]
     public void DvojitaAdresa_DruhaOvladaHornuPolovicu()
     {
         var sim = Create();

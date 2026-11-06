@@ -17,7 +17,7 @@ export const AMPLIFIER_MANUFACTURERS = ["ELSVO"];
 export const CHAR_MANUFACTURERS = ["LCD", "LCD1", "ERP"];
 
 /** Vyrobcovia tabul ELEN (rodina elen) - len tie maju pisma ELEN, pohyblivy text a typy panelov ELEN Monitora. */
-export const ELEN_MANUFACTURERS = ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16KAM", "ELEKON"];
+export const ELEN_MANUFACTURERS = ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16KAM", "ELEKON", "ELENWIN", "ELEKONKAM", "ERP_ELEN"];
 
 /** Druh tabule podla vyrobcu - urcuje, ake nastavenia profilu maju zmysel; znakove su Elektrocas aj APEL. */
 export type BoardKind = "elen" | "chars" | "flaps" | "amplifier";
@@ -54,9 +54,9 @@ export function defaultProfile(manufacturer: string): BoardProfileDto {
   const upper = manufacturer.toUpperCase();
   const size =
     APEL_SIZES[upper] ??
-    (upper === "ELEN16" || upper === "ELEN16KAM" || upper === "ELEKON"
+    (upper === "ELEN16" || upper === "ELEN16KAM" || upper === "ELEKON" || upper === "ELEKONKAM"
       ? { width: 384, rows: 4, rowHeight: 16 }
-      : CHAR_MANUFACTURERS.includes(upper)
+      : CHAR_MANUFACTURERS.includes(upper) || upper === "ERP_ELEN"
         ? { width: 320, rows: 4, rowHeight: 16 }
         : FLAP_MANUFACTURERS.includes(upper)
           ? { width: 9 * 8, rows: 4, rowHeight: 16 }

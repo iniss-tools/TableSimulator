@@ -81,9 +81,9 @@ public sealed record BoardProfile
     public static BoardProfile DefaultFor(string manufacturerKey) => manufacturerKey.ToUpperInvariant() switch
     {
         "ELEN16" or "ELEN16KAM" => new BoardProfile { Width = 384, Rows = 4, RowHeight = 16 },
-        "ELEKON" => new BoardProfile { Width = 384, Rows = 4, RowHeight = 16 },
-        // znakove tabule Elektrocas: 8 bodov na znak, 40 znakov
-        "LCD1" or "ERP" or "LCD" => new BoardProfile { Width = 320, Rows = 4, RowHeight = 16 },
+        "ELEKON" or "ELEKONKAM" => new BoardProfile { Width = 384, Rows = 4, RowHeight = 16 },
+        // znakove tabule: 8 bodov na znak, 40 znakov
+        "LCD1" or "ERP" or "LCD" or "ERP_ELEN" => new BoardProfile { Width = 320, Rows = 4, RowHeight = 16 },
         // listove tabule: pozicie po 8 bodoch, ERS predvolene 9 modulov v riadku (ERSLineLen)
         "FERS" or "ERS" => new BoardProfile { Width = 9 * 8, Rows = 4, RowHeight = 16 },
         // APEL: jednoriadkova nastupistna, viacriadkova odchodova - znaky po 8 bodoch, rozmer doladi samoucenie

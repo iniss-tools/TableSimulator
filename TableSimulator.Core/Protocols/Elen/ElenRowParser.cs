@@ -14,6 +14,7 @@ public static class ElenRowParser
     private const byte CursorFirst = 0x10;
     private const byte CursorLast = 0x13;
     private const byte WideCursorOrAttribute = 0x14;
+    private const byte PointSpace = 0x90;
 
     /// <summary>
     /// Rozlozi obsah riadku.
@@ -32,7 +33,7 @@ public static class ElenRowParser
                                      && i + 1 < content.Length)
             {
                 state.Flush();
-                state.X = (b - CursorFirst) * 128 + (content[++i] & 0x7F);
+                state.X = ((b - CursorFirst) * 128 + (content[++i] & 0x7F)) * variant.CursorUnit;
             }
             else if (b == WideCursorOrAttribute && variant.CursorCodes && i + 1 < content.Length)
             {
@@ -62,6 +63,8 @@ public static class ElenRowParser
                 state.Flush();
                 state.Font = (content[++i] << 8) | (state.Font & 0xFF);
             }
+            else if (IsClosingPointSpace(content, i, variant))
+                state.Flush();
             else if (state.InAlternation && b == (byte)'|')
                 state.NextPart();
             else if (state.InAlternation && b == (byte)'}')
@@ -75,6 +78,10 @@ public static class ElenRowParser
         state.Flush();
         return new RowContent(state.Elements, content.ToArray());
     }
+
+    // v kode Kamenickych je 90 aj pismeno, medzera je len posledny bajt hned za pismom
+    private static bool IsClosingPointSpace(ReadOnlySpan<byte> content, int index, ElenVariant variant) =>
+        variant.PointSpace && index >= 2 && index == content.Length - 1 && content[index] == PointSpace && content[index - 2] == Esc;
 
     private sealed class State(ElenVariant variant)
     {

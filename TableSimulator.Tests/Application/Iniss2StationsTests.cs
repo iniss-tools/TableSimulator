@@ -23,6 +23,9 @@ public sealed class Iniss2StationsTests
           <line k="Prazdna" typ="TCP_CLIENT" protocol="ELEN" line="10.0.0.3:30" />
           <line k="Vynechana" typ="TCP_CLIENT" protocol="ITP" line="10.0.0.4:40" omit="true" />
           <line k="Lcd" typ="SERIAL" protocol="LCD" line="COM1" />
+          <line k="Hala" typ="TCP_CLIENT" protocol="ELEN" line="10.0.0.5:50" />
+          <line k="Listy" typ="TCP_CLIENT" protocol="LCD" line="10.0.0.6:60" />
+          <line k="SeriovaItp" typ="SERIAL" protocol="ITP" line="COM2" />
         </CommLines>
         """;
 
@@ -48,6 +51,18 @@ public sealed class Iniss2StationsTests
             <div k="Text" inf="TextLine1" align="LEFT"><pos c1="0" c2="230" /></div>
           </t>
           <t k="Elen" n="Elen" cls="ELEN16" />
+          <t k="ElenOdjezdy" n="ElenOdjezdy" cls="ELEN16">
+            <div k="Cas" inf="CasOdjezdu" align="LEFT"><pos c1="0" c2="48" /></div>
+            <div k="Cil" inf="CilNazev" align="LEFT"><pos c1="48" c2="256" /></div>
+            <div k="Text" inf="TextLine1" align="LEFT"><pos r="1" c1="0" c2="384" /></div>
+          </t>
+          <t k="ElenWin" n="ElenWin" cls="ELENWIN"><div k="Cil" inf="CilNazev" align="LEFT"><pos c1="0" c2="192" /></div></t>
+          <t k="ElekonKam" n="ElekonKam" cls="ELEKONKAM"><div k="Cil" inf="CilNazev" align="LEFT"><pos c1="0" c2="640" /></div></t>
+          <t k="ErpElen" n="ErpElen" cls="ERP_ELEN"><div k="Cil" inf="CilNazev" align="LEFT"><pos c1="5" c2="25" /></div></t>
+          <t k="Listova" n="Listova" cls="FERS">
+            <div k="Cas" inf="CasOdjezdu" align="LEFT"><pos c1="0" c2="5" /></div>
+            <div k="Cil" inf="CilNazev" align="LEFT"><pos c1="5" c2="15" /></div>
+          </t>
         </CATALOG>
         """;
 
@@ -90,6 +105,11 @@ public sealed class Iniss2StationsTests
               <t k="Neznama linka" n="Neznama linka" lin="Zmazana" addr="9"><part ck="Nastupistna" t="PLATFORM" rec="1" /></t>
               <t k="Elen na ITP" n="Elen" lin="Tabule" addr="7"><part ck="Elen" t="PLATFORM" rec="1" /></t>
               <t k="Lcd1 na seriovej" n="Lcd" lin="Lcd" addr="3"><part ck="Nastupistna" t="PLATFORM" rec="1" /></t>
+              <t k="Hala" n="Hala" lin="Hala" addr="4"><part ck="ElenOdjezdy" t="DEPARTURE" rec="2" /></t>
+              <t k="Hala win" n="Hala win" lin="Hala" addr="6"><part ck="ElenWin" t="DEPARTURE" rec="2" /></t>
+              <t k="Hala kam" n="Hala kam" lin="Hala" addr="8"><part ck="ElekonKam" t="DEPARTURE" rec="2" /></t>
+              <t k="Hala erp" n="Hala erp" lin="Hala" addr="9"><part ck="ErpElen" t="DEPARTURE" rec="2" /></t>
+              <t k="Listova" n="Listova" lin="Listy" addr="5"><part ck="Listova" t="DEPARTURE" rec="3" /></t>
             </TABLES>
             """);
         Write(@"2030\02 Horany\Tables.xml", """
@@ -135,7 +155,7 @@ public sealed class Iniss2StationsTests
     {
         var lines = Read().Lines;
 
-        CollectionAssert.AreEqual(new int?[] { 1, 2, 3, 4, 5 }, lines.Select(l => l.Number).ToArray());
+        CollectionAssert.AreEqual(new int?[] { 1, 2, 3, 4, 5, 6, 7, 8 }, lines.Select(l => l.Number).ToArray());
         Assert.AreEqual("Tabule", lines[0].Section);
         Assert.AreEqual(130, lines[0].TableClass);
         Assert.AreEqual("10.0.0.1:10001", lines[0].Port);
@@ -151,6 +171,7 @@ public sealed class Iniss2StationsTests
         Assert.AreEqual(5, lines[4].TableClass, "linka LCD s tabulou LCD1");
         Assert.AreEqual(StationLineTransport.Tcp, lines[4].Transport, "seriova linka sa presmeruje na TCP");
         Assert.IsTrue(lines[4].CanRedirect);
+        Assert.IsFalse(lines[7].CanRedirect, "ITP funguje len cez UDP");
     }
 
     [TestMethod]
@@ -201,6 +222,40 @@ public sealed class Iniss2StationsTests
         Assert.AreEqual(StationBoardKind.Departures, face.Kind);
         Assert.AreEqual(5, face.Records * face.LinesPerRecord);
         Assert.AreEqual(80, face.Width);
+    }
+
+    [TestMethod]
+    public void Face_ElenColumnsAreInPointsAndMovingTextCountsToWidth()
+    {
+        var face = Read().Lines[5].Tables[0].Face!;
+
+        Assert.AreEqual(384, face.Width, "pohyblivy text ELEN je siroky ako stlpec");
+        Assert.AreEqual(16, face.RowHeight);
+        Assert.AreEqual(new StationFaceColumnDto(0, 48, 256, Contracts.Faces.FaceAlign.Left, face.Columns[1].Content), face.Columns[1]);
+    }
+
+    [TestMethod]
+    public void Read_Iniss2ElenVariantsAreSupported()
+    {
+        var line = Read().Lines[5];
+
+        Assert.IsEmpty(line.Problems);
+        CollectionAssert.AreEqual(new[] { "ELEN16", "ELENWIN", "ELEKONKAM", "ERP_ELEN" }, line.Tables.Select(t => t.Manufacturer).ToArray());
+        Assert.IsTrue(line.Tables.All(t => t.Shown));
+        Assert.AreEqual(10, line.Tables[1].Face!.RowHeight);
+        Assert.AreEqual(16, line.Tables[2].Face!.RowHeight);
+        Assert.AreEqual(640, line.Tables[2].Face!.Width);
+        Assert.AreEqual(25 * 8, line.Tables[3].Face!.Width, "ERP_ELEN ma stlpce v znakoch");
+        Assert.AreEqual(5 * 8, line.Tables[3].Face!.Columns[0].Start);
+    }
+
+    [TestMethod]
+    public void Face_FlapColumnsAreInCharacters()
+    {
+        var face = Read().Lines[6].Tables[0].Face!;
+
+        Assert.AreEqual(15 * 8, face.Width);
+        Assert.AreEqual(40, face.Columns[1].Start);
     }
 
     [TestMethod]
@@ -315,6 +370,7 @@ public sealed class Iniss2StationsTests
         Assert.AreEqual("127.0.0.1:47003", lines[2].Port);
         Assert.AreEqual("10.0.0.2:20", lines[1].Port, "linku zvuku simulator nezobrazi");
         Assert.AreEqual("10.0.0.4:40", lines[3].Port, "vynechana linka");
+        Assert.AreEqual("COM2", lines[7].Port, "ITP na seriovej linke nefunguje ani cez TCP");
         Assert.AreEqual("127.0.0.1:47005", lines[4].Port, "seriova linka sa zmeni na TCP_CLIENT");
         Assert.AreEqual("COM1", lines[4].OriginalPort);
         Assert.AreEqual(StationLineTransport.Tcp, lines[4].Transport);
