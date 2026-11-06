@@ -35,10 +35,16 @@ const CP1250: Record<string, number> = {
   ý: 0xfd,
   ĺ: 0xe5,
   ŕ: 0xe0,
+  Ě: 0xcc,
+  ě: 0xec,
+  Ř: 0xd8,
+  ř: 0xf8,
+  Ů: 0xd9,
+  ů: 0xf9,
   "–": 0x96,
 };
 
-/** Text vo Windows-1250 (slovenske znaky, inak ASCII). */
+/** Text vo Windows-1250 (slovenske a ceske znaky, inak ASCII). */
 export function cp1250(text: string): number[] {
   return Array.from(text, (ch) => CP1250[ch] ?? (ch.charCodeAt(0) < 0x80 ? ch.charCodeAt(0) : 0x3f));
 }
