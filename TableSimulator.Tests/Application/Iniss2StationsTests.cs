@@ -147,7 +147,8 @@ public sealed class Iniss2StationsTests
         Assert.AreEqual(StationLineTransport.Tcp, lines[2].Transport);
         Assert.IsFalse(lines[3].Active);
         Assert.AreEqual(5, lines[4].TableClass, "linka LCD s tabulou LCD1");
-        Assert.IsFalse(lines[4].CanRedirect);
+        Assert.AreEqual(StationLineTransport.Tcp, lines[4].Transport, "seriova linka sa presmeruje na TCP");
+        Assert.IsTrue(lines[4].CanRedirect);
     }
 
     [TestMethod]
@@ -312,7 +313,9 @@ public sealed class Iniss2StationsTests
         Assert.AreEqual("127.0.0.1:47003", lines[2].Port);
         Assert.AreEqual("10.0.0.2:20", lines[1].Port, "linku zvuku simulator nezobrazi");
         Assert.AreEqual("10.0.0.4:40", lines[3].Port, "vynechana linka");
-        Assert.AreEqual("COM1", lines[4].Port, "seriova linka sa adresou presmerovat neda");
+        Assert.AreEqual("127.0.0.1:47005", lines[4].Port, "seriova linka sa zmeni na TCP_CLIENT");
+        Assert.AreEqual("COM1", lines[4].OriginalPort);
+        Assert.AreEqual(StationLineTransport.Tcp, lines[4].Transport);
     }
 
     [TestMethod]

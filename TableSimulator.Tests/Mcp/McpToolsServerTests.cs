@@ -365,6 +365,7 @@ public sealed class McpToolsServerTests
         // stanica z INISSu bez programu INISSu v nastaveni
         StringAssert.Contains(await mcp.Error("get_iniss_station", new()), "iniss.notConfigured");
         StringAssert.Contains(await mcp.Error("import_iniss_station", new()), "iniss.notConfigured");
+        StringAssert.Contains(await mcp.Error("redirect_iniss_lines", new()), "iniss.notConfigured");
 
         await mcp.Call("delete_board", new() { ["id"] = "8-129" });
         await mcp.Call("delete_line", new() { ["number"] = 8 });

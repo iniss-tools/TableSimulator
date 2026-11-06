@@ -72,4 +72,16 @@ public static class LineTools
         [Description("Create faces also for boards that already exist.")] bool facesForExisting = false,
         CancellationToken cancellationToken = default) =>
         (await handler.Handle(new ImportInissStationCommand(new InissStationImportRequest(faceLanguage, facesForExisting)), cancellationToken)).ValueOrThrow();
+
+    [McpServerTool(Name = "redirect_iniss_lines", Title = "Redirect INISS2 lines", ReadOnly = false, Destructive = true, Idempotent = true, OpenWorld = false,
+        UseStructuredContent = true)]
+    [Description("Points the lines of the INISS2 server set in the simulator at the simulator, or restores their original addresses. Changes the server's line "
+                 + "file, which it reads only at start, so the server must be restarted. Real boards then stop getting data until the redirect is undone. "
+                 + "Load the station with import_iniss_station first. Only for INISS2; INISS 3.39 is redirected from GVDEditor.")]
+    [Authorize(Policy = Permissions.LinesManage)]
+    public static async Task<InissStationDto> RedirectInissLines(
+        ICommandHandler<RedirectInissLinesCommand, InissStationDto> handler,
+        [Description("true = redirect the lines to the simulator; false = restore the original addresses.")] bool redirect = true,
+        CancellationToken cancellationToken = default) =>
+        (await handler.Handle(new RedirectInissLinesCommand(new InissRedirectRequest(redirect)), cancellationToken)).ValueOrThrow();
 }

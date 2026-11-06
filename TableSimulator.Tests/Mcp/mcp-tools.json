@@ -6527,6 +6527,443 @@
       }
     },
     {
+      "name": "redirect_iniss_lines",
+      "title": "Redirect INISS2 lines",
+      "description": "Points the lines of the INISS2 server set in the simulator at the simulator, or restores their original addresses. Changes the server's line file, which it reads only at start, so the server must be restarted. Real boards then stop getting data until the redirect is undone. Load the station with import_iniss_station first. Only for INISS2; INISS 3.39 is redirected from GVDEditor.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "redirect": {
+            "description": "true = redirect the lines to the simulator; false = restore the original addresses.",
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "program": {
+            "type": "string"
+          },
+          "appName": {
+            "type": "string"
+          },
+          "registry": {
+            "type": "boolean"
+          },
+          "grafikons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "section": {
+                  "type": "string"
+                },
+                "number": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "tableClass": {
+                  "type": "integer"
+                },
+                "port": {
+                  "type": "string"
+                },
+                "simulatorPort": {
+                  "type": "integer"
+                },
+                "active": {
+                  "type": "boolean"
+                },
+                "supported": {
+                  "type": "boolean"
+                },
+                "tables": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "address": {
+                        "type": "integer"
+                      },
+                      "grafikon": {
+                        "type": "string"
+                      },
+                      "manufacturer": {
+                        "type": "string"
+                      },
+                      "automatic": {
+                        "type": "boolean"
+                      },
+                      "shown": {
+                        "type": "boolean"
+                      },
+                      "problem": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "severity": {
+                            "type": "string",
+                            "enum": [
+                              "info",
+                              "warning",
+                              "error"
+                            ]
+                          },
+                          "code": {
+                            "type": "string",
+                            "enum": [
+                              "lineOutOfRange",
+                              "lineDuplicate",
+                              "wrongFamily",
+                              "noTables",
+                              "noAutomaticLine",
+                              "noDriver",
+                              "unknownLine"
+                            ]
+                          },
+                          "args": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "severity",
+                          "code",
+                          "args"
+                        ]
+                      },
+                      "flaps": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "linesPerRecord": {
+                            "type": "integer"
+                          },
+                          "modules": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "line": {
+                                  "type": "integer"
+                                },
+                                "position": {
+                                  "type": "integer"
+                                },
+                                "span": {
+                                  "type": "integer"
+                                },
+                                "list": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "line",
+                                "position",
+                                "span",
+                                "list"
+                              ]
+                            }
+                          },
+                          "lists": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "colors": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "$ref": "#/properties/lines/items/properties/tables/items/properties/flaps/properties/lists/additionalProperties"
+                            }
+                          }
+                        }
+                      },
+                      "flapRecords": {
+                        "type": "integer"
+                      },
+                      "face": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "other",
+                              "departures",
+                              "arrivals",
+                              "platform",
+                              "underpass"
+                            ]
+                          },
+                          "linesPerRecord": {
+                            "type": "integer"
+                          },
+                          "records": {
+                            "type": "integer"
+                          },
+                          "width": {
+                            "type": "integer"
+                          },
+                          "rowHeight": {
+                            "type": "integer"
+                          },
+                          "columns": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "line": {
+                                  "type": "integer"
+                                },
+                                "start": {
+                                  "type": "integer"
+                                },
+                                "end": {
+                                  "type": "integer"
+                                },
+                                "align": {
+                                  "type": "string",
+                                  "enum": [
+                                    "left",
+                                    "center",
+                                    "right"
+                                  ]
+                                },
+                                "content": {
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "line",
+                                "start",
+                                "end",
+                                "align",
+                                "content"
+                              ]
+                            }
+                          },
+                          "tracks": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "platforms": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "station": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "linesPerRecord",
+                          "records",
+                          "width",
+                          "rowHeight",
+                          "columns",
+                          "tracks",
+                          "platforms",
+                          "station"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "address",
+                      "grafikon",
+                      "manufacturer",
+                      "automatic",
+                      "shown",
+                      "problem"
+                    ]
+                  }
+                },
+                "problems": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "severity": {
+                        "type": "string",
+                        "enum": [
+                          "info",
+                          "warning",
+                          "error"
+                        ]
+                      },
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "lineOutOfRange",
+                          "lineDuplicate",
+                          "wrongFamily",
+                          "noTables",
+                          "noAutomaticLine",
+                          "noDriver",
+                          "unknownLine"
+                        ]
+                      },
+                      "args": {
+                        "$ref": "#/properties/lines/items/properties/tables/items/properties/problem/properties/args",
+                        "items": {}
+                      }
+                    },
+                    "required": [
+                      "severity",
+                      "code",
+                      "args"
+                    ]
+                  }
+                },
+                "amplifiers": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "line": {
+                        "type": "integer"
+                      },
+                      "address": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "shown": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "line",
+                      "address",
+                      "name",
+                      "shown"
+                    ]
+                  }
+                },
+                "transport": {
+                  "type": "string",
+                  "enum": [
+                    "tcp",
+                    "udp"
+                  ]
+                },
+                "canRedirect": {
+                  "type": "boolean"
+                },
+                "originalPort": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "section",
+                "number",
+                "tableClass",
+                "port",
+                "simulatorPort",
+                "active",
+                "supported",
+                "tables",
+                "problems"
+              ]
+            }
+          },
+          "unserved": {
+            "type": "array",
+            "items": {
+              "$ref": "#/properties/lines/items/properties/tables/items"
+            }
+          },
+          "logFolder": {
+            "type": "string"
+          },
+          "logFolderExists": {
+            "type": "boolean"
+          },
+          "xmlTables": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "source"
+              ]
+            }
+          },
+          "unservedAmplifiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/properties/lines/items/properties/amplifiers/items"
+            }
+          },
+          "iniss2": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "program",
+          "appName",
+          "registry",
+          "grafikons",
+          "lines",
+          "unserved",
+          "logFolder",
+          "logFolderExists",
+          "xmlTables"
+        ]
+      },
+      "annotations": {
+        "title": "Redirect INISS2 lines",
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
       "name": "save_design",
       "title": "Save board design",
       "description": "Saves a custom design: the whole design (as from get_design), or a copy of another design (copyFrom), optionally renamed. Saving under the id of a built-in design overrides it; deleting the custom one brings the built-in back. Boards using it redraw at once.",
