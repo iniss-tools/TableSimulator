@@ -12,7 +12,7 @@ test("prvy spravca, odhlasenie a prihlasenie", async ({ page }) => {
   await page.getByLabel("Heslo", { exact: true }).fill("heslo-e2e-1");
   await page.getByLabel("Heslo znova").fill("heslo-e2e-1");
   await page.getByRole("button", { name: "Založiť správcu" }).click();
-  await expect(page.getByRole("link", { name: "Tabule", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Zariadenia", exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: /Správca E2E/ }).click();
   await page.getByRole("menuitem", { name: "Odhlásiť" }).click();
@@ -25,7 +25,7 @@ test("prvy spravca, odhlasenie a prihlasenie", async ({ page }) => {
 
   await page.getByLabel("Heslo", { exact: true }).fill("heslo-e2e-1");
   await page.getByRole("button", { name: "Prihlásiť" }).click();
-  await expect(page.getByRole("link", { name: "Tabule", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Zariadenia", exact: true })).toBeVisible();
 });
 
 test("vlastna rola: menu len so strankami, na ktore ma pouzivatel opravnenie", async ({ page }) => {
@@ -43,7 +43,7 @@ test("vlastna rola: menu len so strankami, na ktore ma pouzivatel opravnenie", a
   await page.getByLabel("Prihlasovacie meno").fill("panely");
   await page.getByLabel("Heslo", { exact: true }).fill("heslo-panely-1");
   await page.getByRole("button", { name: "Prihlásiť" }).click();
-  await expect(page.getByRole("link", { name: "Tabule", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Zariadenia", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Správy", exact: true })).toBeVisible();
   for (const hidden of ["Štatistiky", "Archív tabúľ", "Používatelia", "Roly", "Audit", "Nastavenia"])
     await expect(page.getByRole("link", { name: hidden, exact: true })).toBeHidden();

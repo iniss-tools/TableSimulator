@@ -22,7 +22,7 @@ test("linka, sprava od INISSu a samoucena tabula", async ({ page }) => {
   const replies = await sendToLine(PORT, [elenRow(3, 1, "E2E TEST")]);
   expect(replies).toContain(0x06);
 
-  await openPage(page, "Tabule");
+  await openPage(page, "Zariadenia");
   const card = page.locator("[data-slot=card]").filter({ hasText: `linka ${LINE} · adresa 3` });
   await expect(card).toBeVisible();
   await expect(card).toContainText("1 správ");

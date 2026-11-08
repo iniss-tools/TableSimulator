@@ -53,7 +53,7 @@ test("listova tabula FERS so zoznamami listov", async ({ page }) => {
   expect(await send(fersFrame(20, 0x10, [0, 0, ..."cR".split("").map((c) => c.charCodeAt(0))]))).toEqual([0x00, 0x06, 0x14, 0x70, 0x00, 0x8a]);
   expect(await send(fersFrame(20, 0x01, []), 300)).toEqual([]);
 
-  await openPage(page, "Tabule");
+  await openPage(page, "Zariadenia");
   const card = page.locator("[data-slot=card]").filter({ hasText: `linka ${LINE} · adresa 20` });
   await expect(card).toContainText("FERS");
   await expect(card.locator("canvas")).toBeVisible();

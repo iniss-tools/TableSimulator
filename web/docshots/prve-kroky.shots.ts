@@ -10,7 +10,7 @@ import { mask, open, shot, THEMES } from "./shoot";
 
 for (const theme of THEMES) {
   test(`rozhranie (${theme})`, async ({ page }) => {
-    await open(page, "/", theme);
+    await open(page, "/devices", theme);
     await expect(page.getByText("Odchody – hala")).toBeVisible();
     await shot(page, "rozhranie/hlavne-okno", theme);
   });

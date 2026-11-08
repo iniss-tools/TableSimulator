@@ -32,7 +32,7 @@ test("linka vzdialeneho INISSu s tabulami ELEN aj Elektrocas", async ({ page }) 
   const replies = await sendToLine(PORT, [remoteTableMessage(1, 8, 5, elenRow(5, 1, "VZDIALENY"), 2), remoteTableMessage(2, 5, 20, lcdRow(20, "Os 3412"), 1)]);
   expect(replies[0]).toBe(0xac);
 
-  await openPage(page, "Tabule");
+  await openPage(page, "Zariadenia");
   const elen = page.locator("[data-slot=card]").filter({ hasText: `linka ${LINE} · adresa 5` });
   await expect(elen).toContainText("ELEN16");
   await expect(elen.locator("canvas")).toBeVisible();

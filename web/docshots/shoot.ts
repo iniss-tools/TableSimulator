@@ -46,9 +46,23 @@ export async function shot(page: Page, name: string, theme: Theme, options: Shot
     await page.setViewportSize({ width: size.width, height: options.height });
     await page.waitForTimeout(300);
   }
+  await defaultPorts(page);
   if (options.target) await options.target.screenshot(opts);
   else await page.screenshot(opts);
   if (options.height && size) await page.setViewportSize(size);
+}
+
+/**
+ * Linka ukazkovej stanice pocuva na 48000 + cislo, ked je port 47000 + cislo obsadeny (napr. bezaci simulator
+ * pouzivatela - demo.ts). Snimka ukaze predvoleny port ako v dokumentacii (len text na stranke, nic sa neuklada).
+ */
+async function defaultPorts(page: Page) {
+  await page.evaluate(() => {
+    const fix = (text: string) => text.replace(/([:=])48(0\d\d)\b/g, "$147$2");
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) if (node.textContent?.includes("480")) node.textContent = fix(node.textContent);
+    for (const input of document.querySelectorAll<HTMLInputElement>("input")) if (input.value.includes("480")) input.value = fix(input.value);
+  });
 }
 
 /** Priecinok dat ukazkoveho servera (e2e/server.mjs). */

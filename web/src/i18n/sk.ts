@@ -1,7 +1,7 @@
 // Texty rozhrania - slovencina (predvoleny jazyk).
 export const sk = {
   "app.title": "Simulátor tabúľ",
-  "nav.boards": "Tabule",
+  "nav.boards": "Zariadenia",
   "nav.lines": "Linky",
   "nav.log": "Komunikácia",
   "nav.settings": "Nastavenia",
@@ -39,8 +39,8 @@ export const sk = {
   "common.none": "žiadny",
   "common.default": "predvolený",
 
-  "boards.empty.title": "Zatiaľ žiadne tabule",
-  "boards.empty.text": "Tabuľa sa objaví sama, keď jej INISS pošle prvú správu. Môžete ju pridať aj ručne.",
+  "boards.empty.title": "Zatiaľ žiadne zariadenia",
+  "boards.empty.text": "Tabuľa alebo iné zariadenie sa objaví samo, keď mu INISS pošle prvú správu. Môžete ho pridať aj ručne.",
   "boards.add": "Pridať tabuľu",
   "boards.filter.all": "Všetky linky",
   "board.unnamed": "Tabuľa {address}",

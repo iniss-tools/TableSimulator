@@ -3,7 +3,7 @@ import type { TextKey } from "./sk";
 
 export const cs: Record<TextKey, string> = {
   "app.title": "Simulátor tabulí",
-  "nav.boards": "Tabule",
+  "nav.boards": "Zařízení",
   "nav.lines": "Linky",
   "nav.log": "Komunikace",
   "nav.settings": "Nastavení",
@@ -41,8 +41,8 @@ export const cs: Record<TextKey, string> = {
   "common.none": "žádný",
   "common.default": "výchozí",
 
-  "boards.empty.title": "Zatím žádné tabule",
-  "boards.empty.text": "Tabule se objeví sama, když jí INISS pošle první zprávu. Můžete ji přidat i ručně.",
+  "boards.empty.title": "Zatím žádná zařízení",
+  "boards.empty.text": "Tabule nebo jiné zařízení se objeví samo, když mu INISS pošle první zprávu. Můžete ho přidat i ručně.",
   "boards.add": "Přidat tabuli",
   "boards.filter.all": "Všechny linky",
   "board.unnamed": "Tabule {address}",

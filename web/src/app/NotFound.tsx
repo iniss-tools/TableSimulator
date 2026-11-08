@@ -7,7 +7,7 @@ export function NotFound() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-background p-4 text-center">
       <p className="text-lg font-medium">{t("nav.notFound")}</p>
-      <Button nativeButton={false} render={<Link to="/" />}>
+      <Button nativeButton={false} render={<Link to="/devices" />}>
         {t("nav.notFound.back")}
       </Button>
     </div>

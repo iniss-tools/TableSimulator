@@ -33,7 +33,7 @@ export function AppSidebar({ me }: { me: MeDto }) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link to="/" onClick={navigated} />}>
+            <SidebarMenuButton size="lg" render={<Link to="/devices" onClick={navigated} />}>
               <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary">
                 <img src="/favicon.svg" alt="" className="size-5" />
               </span>

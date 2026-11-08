@@ -91,14 +91,27 @@ const shell = createRoute({
 });
 
 const pages = [
-  createRoute({ getParentRoute: () => shell, path: "/", component: lazyRouteComponent(() => import("@/features/boards/BoardsPage"), "BoardsPage") }),
-  // povodna adresa stranky tabul
+  // stranka Zariadenia (tabule, ustredne, zosilnovace) - uvodna stranka
+  createRoute({
+    getParentRoute: () => shell,
+    path: "/devices",
+    component: lazyRouteComponent(() => import("@/features/boards/BoardsPage"), "BoardsPage"),
+  }),
+  // povodne adresy stranky tabul (uvodna a #/boards) - odkazy v zalozkach ostavaju platne
+  createRoute({
+    getParentRoute: () => shell,
+    path: "/",
+    beforeLoad: () => {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- presmerovanie TanStack Router sa vyhadzuje ako objekt
+      throw redirect({ to: "/devices" });
+    },
+  }),
   createRoute({
     getParentRoute: () => shell,
     path: "/boards",
     beforeLoad: () => {
       // eslint-disable-next-line @typescript-eslint/only-throw-error -- presmerovanie TanStack Router sa vyhadzuje ako objekt
-      throw redirect({ to: "/" });
+      throw redirect({ to: "/devices" });
     },
   }),
   createRoute({ getParentRoute: () => shell, path: "/lines", component: lazyRouteComponent(() => import("@/features/lines/LinesPage"), "LinesPage") }),

@@ -43,7 +43,7 @@ for (const theme of THEMES) {
   });
 
   test(`tabule (${theme})`, async ({ page }) => {
-    await open(page, "/", theme);
+    await open(page, "/devices", theme);
     await shot(page, "tabule/karta", theme, { target: card(page, "Odchody – hala") });
     const dialog = await openBoard(page, "Odchody – hala");
     await shot(page, "tabule/okno-tabule", theme, { target: dialog, ready: dialog.getByLabel("Názov") });
@@ -75,14 +75,14 @@ for (const theme of THEMES) {
     await shot(page, "cela-tabul/ponuka", theme, { ready: page.getByRole("menuitem", { name: "Duplikovať" }) });
     await page.keyboard.press("Escape");
 
-    await open(page, "/", theme);
+    await open(page, "/devices", theme);
     const dialog = await openBoard(page, "Nástupište 1");
     await dialog.getByRole("tab", { name: "Čelo" }).click();
     await shot(page, "cela-tabul/okno-tabule", theme, { target: dialog, ready: dialog.getByLabel("Koľaj") });
   });
 
   test(`podporovane-tabule (${theme})`, async ({ page }) => {
-    await open(page, "/", theme);
+    await open(page, "/devices", theme);
     await expect(page.getByText("Odchody – listová")).toBeVisible();
     await shot(page, "podporovane-tabule/tabule", theme, { height: 1900 });
     const dialog = await openBoard(page, "Odchody – listová");
@@ -98,7 +98,7 @@ for (const theme of THEMES) {
   test(`poruchy-a-scenare (${theme})`, async ({ page }) => {
     await setFault(page, "Podchod – odchody", { kind: "status", delayMs: 0, status: 0x40 });
     try {
-      await open(page, "/", theme);
+      await open(page, "/devices", theme);
       await shot(page, "poruchy-a-scenare/porucha", theme, { target: card(page, "Podchod – odchody") });
     } finally {
       await setFault(page, "Podchod – odchody", { kind: "none", delayMs: 0, status: 0 });

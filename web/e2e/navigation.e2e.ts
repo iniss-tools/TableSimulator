@@ -15,7 +15,7 @@ const PAGES = [
   "Prístupové kľúče",
   "Audit",
   "Nastavenia",
-  "Tabule",
+  "Zariadenia",
 ];
 
 test("menu otvori vsetky stranky bez chyb", async ({ page }) => {
@@ -43,6 +43,6 @@ test("neznama adresa nespadne", async ({ page }) => {
   await page.goto("/#/neexistuje");
   await expect(page.getByText("Stránka neexistuje.")).toBeVisible();
   await page.getByRole("button", { name: "Na úvodnú stránku" }).click();
-  await expect(page.locator("header h1")).toHaveText("Tabule");
+  await expect(page.locator("header h1")).toHaveText("Zariadenia");
   expect(errors).toEqual([]);
 });

@@ -30,7 +30,7 @@ import type { TextKey } from "@/i18n";
 
 /** Stranky v rame (adresy za # - rovnake ako pred prestavbou, aby ulozene odkazy platili). */
 export type NavPath =
-  | "/"
+  | "/devices"
   | "/designs"
   | "/faces"
   | "/lines"
@@ -71,7 +71,7 @@ export const NAV: NavGroup[] = [
   {
     label: "nav.group.simulation",
     items: [
-      { to: "/", label: "nav.boards", icon: LayoutGrid, permission: PERMISSIONS.view },
+      { to: "/devices", label: "nav.boards", icon: LayoutGrid, permission: PERMISSIONS.view },
       { to: "/designs", label: "nav.designs", icon: Palette, permission: PERMISSIONS.designs },
       { to: "/faces", label: "nav.faces", icon: Frame, permission: PERMISSIONS.designs },
       { to: "/lines", label: "nav.lines", icon: Cable, permission: PERMISSIONS.view },
