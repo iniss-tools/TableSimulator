@@ -1,63 +1,296 @@
 # TableSimulator – pokyny pre agentov
 
-Simulátor tabúľ INISS (informačný systém železničných staníc) bez desktopovej aplikácie – ovládanie aj zobrazenie na webe. Repozitár je súčasťou pracovného priečinka `INISSTools` (nie je git repozitár, každý podpriečinok má vlastné repo); `ToolsCore` musí byť naklonovaný vedľa (`..\ToolsCore`, odkazujú sa `ToolsCore.Iniss` a `ToolsCore.Iniss2`). GVDEditor odkazuje `TableSimulator.Contracts`. Komunikácia, texty UI aj komentáre v kóde (bez diakritiky) sú slovenské.
+Simulátor tabúľ INISS (informačný systém železničných staníc) bez desktopovej aplikácie – ovládanie aj zobrazenie
+na webe. Repozitár je súčasťou pracovného priečinka `INISSTools` (nie je git repozitár, každý podpriečinok má vlastné
+repo); `ToolsCore` musí byť naklonovaný vedľa (`..\ToolsCore`, odkazujú sa `ToolsCore.Iniss` a `ToolsCore.Iniss2`).
+GVDEditor odkazuje `TableSimulator.Contracts`. Komunikácia, texty UI aj komentáre v kóde (bez diakritiky) sú slovenské.
 
 ## Projekty
 
-- `TableSimulator.Core` (`net10.0` bez UI a Windows): `Transport/` linky – TCP/UDP server, rúra klient (rúru vytvára INISS), linka aj zrkadlo na COM (System.IO.Ports), logy spojení cez `ILogger`; `Recording/` záznam `.tsrec` a prehratie (`ReplayPlayer` – pauza, rýchlosť a posun za behu cez príkazy pod zámkom a prebudenie slučky; posun = `Simulator.FastForward` – zmaže tabule liniek záznamu a prehrá správy pred miestom naprázdno bez logu, štatistiky a počítadiel; po dohraní prehrávač čaká, končí len zastavením; web `features/recordings/ReplayPlayer` s časovou osou a hustotou správ), porovnanie záznamov – `RecordingTimeline` (prehratie naprázdno do vlastného simulátora, text tabule `BoardText`, zmeny do 1 s = jeden stav), `TimelineDiff` (Myers), web `features/recordings/ComparePage`, `Monitor/` súbory ELEN Monitora, `Archive/` denné archívy TAB/REP (čítanie po riadkoch, legenda výluk; formát v docs `formaty-suborov/archiv.mdx`; monitor hlásení `ReportTail` – priebežne len pribudnuté celé riadky, iný súbor/prepísaný začiatok = od začiatku; `Application/Archive/ReportMonitor` + `ReportMonitorService` každé 2 s, správa `reports`, web `features/archive/ReportMonitorPage`, stĺpce zdieľa s archívom `archive-columns.tsx`), (informačné panely ako INISSView 2 sú len v Application/Persistence/webe: `Application/Signage` – `SignageSchedule` (čistý rozvrh: priorita, okná, kotva, `NextChange`, `SlotAt`), `SignageData`/`PlanFor`, správy/playlisty/skupiny v DB ako JSON požiadavky, `SignagePanelTracker` v pamäti, súbory `SignageMediaStore` v `media\`; záloha `SignageBackup` (ZIP `signage.json` + `media/`, export `ExportSignageQuery`, obnova `ImportSignageCommand` – nahradiť s pôvodnými číslami alebo pridať s prečíslovaním, `ISignageRepository.ImportAsync` v transakcii); web `features/signage` – stránky, `SignageSlide` (jedna správa, veľkosti v `cqw`), kiosk `PanelKiosk` `#/panel/N` počíta striedanie sám podľa hodín servera) `Virtual/` XML tabúľ INISSu pre virtuálne tabule (`XmlTableFolders` – prechod priečinkov logov, novší z rovnomenných; `XmlTableFilter` – riadky a oddeľovač ako INISSView; `InissViewConfig` – `Web.config` INISSView vrátane `TabXslDir` a `Jscript.*`; `XslTablePages` – stránka zo šablóny XSL ako `Tabule.aspx`), `Protocols/` skladanie správ a odpovede podľa `docs/iniss/protokoly` (`Elen/`, `Elektrocas/` – LCD, LCD1, ERP, listové FERS a obal ITP; `Ers/` – listové ERS (vlastný protokol); `Apel/` – APEL a APEL_AN (rámec `DLE STX…DLE ETX`, záznamy v správe, XOR bez adresy; obsah `CharDisplay`, vzhľad `apel-led` podľa výrobcu v `defaultDesignId`); `Elsvo/` – spínacie jednotky zosilňovačov (trieda 129, nie tabule: obsah `AmplifierDisplay`, rodina `amplifier`, `DisplayDto.Amplifier`, web `features/boards/AmplifierView` + `render/amplifier.ts`); `Dtr/` – spínanie zosilňovača signálom DTR INISSu 3.39 (trieda 900 len simulátora `Simulator.ModemSignalClass`, len COM: `LineHost` sleduje DSR/DCD a volá `Simulator.SetModemSignal`, zariadenie `DTR` na adrese 0 s `AmplifierDisplay`, záznam `dtr.on`/`dtr.off`; spoločný prehľad zosilňovačov `features/aksignal/AmplifiersCard`); `Remote/` – vzdialený INISS (trieda 128, simulátor hrá INISS s `/Remote`): obal `S`/`0xAC` s položkami a `RemoteCrc`, `TCMD` bez súčtu doplní a pošle vnútornému protokolu rodiny podľa `TCLS` (kód výrobcu), stav tabule `TSTA`, fronty hlásení `RSTA` – drží ich rozhlas vzdialeného INISSu `RemoteAudioDisplay` (zariadenie `REMOTE_AUDIO` na adrese 0, `ILineContext.Device` ho založí aj bez samoučenia; rodina `remoteaudio`, `DisplayDto.RemoteAudio`, web `features/boards/RemoteAudioView` + `render/remoteaudio.ts`, karta `features/aksignal/RemoteAudioCard`): `RWAV` = trojice `jazyk/skupina/zvuk,pauza pred,pauza po` (`RemoteSound`), hlásenie hrá podľa dĺžky z banky (`SimEnvironment.SoundLength` – pri INISSe 3.39 `Application/Devices/Iniss339SoundLengths` z `FYZBANK.DAT`/`FYZZVUK.DAT` vedľa programu, inak 1,5 s), kým hrá `RSTA` má `0x100`; prerušenie `Simulator.BreakAnnouncement` (`POST /api/boards/{id}/remote-audio/break`, MCP `break_announcement`) = raz `RSTA` 0 → riadiaci zapíše `remote break`; porucha zariadenia `noReply` = vzdialený INISS mlčí (`remote timeout`), `delay` oneskorí; na jednej linke tabule rôznych rodín – obsah podľa výrobcu `ILineProtocol.CreateDisplay(manufacturer)`, do zrkadla vybalené správy (`MirrorsInnerFrames` + `ILineContext.Forward`); `AkSignal/` – ústredne AK Signal servera INISS2 (svetlo a rozhlas, nie tabule): trieda 131 binárny `AKSIGNAL`, 132 textový `AKSIGNALUH` (jedna ústredňa na linke, v simulátore adresa 0); obsah `AkSignalDisplay` (automatika a ručné svietenie zapína server, tmu hlási snímač `SunTimes` podľa polohy `SimEnvironment.Location`, rozhlas – pri UH kanály 1 a 2 s dĺžkou zo `SimEnvironment.SoundLength`, hlásenia `Announcement` spoločné aj pre vzdialený INISS – `IAnnouncementDisplay`, fronta a okruh v `Announcement.Queue`/`Circuit`), nastavenie a stavy ústredne v `BoardProfile.AkSignal`; obsah meniaci sa s časom = `ITimedDisplay`, posúva ho `Simulator.Tick` (server každú sekundu); testy cez náhradu servera `Tests/Protocols/AkSignal/IniSrvAkSignal`; snímač a stavy mení `PUT /api/boards/{id}/aksignal` (`SetAkSignalCommand` cez `Simulator.UpdateProfile`, svetlá a audio linky ostanú), poloha pre slnko `AppSettings.Location` (migrácia `AddTwilightLocation`); web `features/aksignal` – stránka `#/lights` (stav, snímač, stavy ústredne, rozhlas a hlásenia; posledný dotaz z linky, bežný dotaz stav ústredne nemení) a karta `features/boards/AkSignalView` + `render/aksignal.ts`; história – `DeviceHistoryCollector` v simulátore (zmena stavu svetla ako `LightFlags` a skončené hlásenia po každej zmene tabule, `Simulator.TakeDeviceHistory`), `Infrastructure/Hosting/DeviceHistoryService` každých 5 s do DB (aj hlásenia vzdialeného INISSu, migrácia `AddAnnouncementQueue`) (`IDeviceHistoryRepository`, tabuľky `DeviceLightStates`/`DeviceAnnouncements`, čas v ms, mazanie po 30 dňoch, posledný stav ústredne ostáva), `GET /api/aksignal/history` (`GetDeviceHistoryQuery` – stav na začiatku obdobia a log svetiel servera INISS2 priradený ústredni podľa názvu svetla), web `features/aksignal/HistoryTimeline` + čisté `history.ts`; krok scenára `device` = prekrytie `AkSignalOverride` (stavy sa pridajú k profilu, snímač z neskoršieho kroku) v `SimBoard.Override` cez `Simulator.SetOverride`, neukladá sa – protokoly, tik, história aj `DisplayDto` (`AkSignalDto.Conditions`/`Scenario`) idú cez `SimBoard.EffectiveProfile`, profil (`Profile`) ostáva nastavením; ticho servera (`ServerSilent`) ide do oznámení o výpadkoch ako stav linky `silent` (`Application/Alerts/AlertLines`); MCP `Mcp/AkSignalTools` (`get_aksignal`, `set_aksignal`, `get_aksignal_history`) a `Mcp/RemoteAudioTools` (`get_remote_audio`, `break_announcement`); nová rodina = záznam v `Simulator.Protocols` s výrobcami triedy, poruchy cez `BoardFaults.Apply` a `ILineProtocol.FaultReply`), `Statistics/` štatistika komunikácie v čase (`TrafficCollector` pod zámkom simulátora – linky zo správ v `AddLog` a bajtov v `Receive`, tabule z rozdielu `BoardStats` a najdlhšia pauza v setteri `LastFrameAt`, zmeny stavu liniek; `Simulator.TakeTraffic(minute)`, minúta = `TrafficMinutes.Of` od 1970 UTC; server `StatisticsService` zapisuje každú minútu do DB a maže po 30 dňoch, dotaz zoskupuje v DB po intervaloch `TrafficRetention.BucketFor`; web `features/statistics` s grafmi shadcn `components/ui/chart` (recharts)), `Scenarios/` scenáre porúch v čase (`FaultScenario`/`ScenarioStep`, čistá `ScenarioTimeline` – kroky v cykle a ich účinky; výpadok napájania `Simulator.SetPower` = `SimBoard.PoweredOff` (`FindBoard` vráti null), výpadok linky `SetLineOutage` = `SimLine.Outage`, stav `outage`, `TransportManager.SyncAsync` linku nespustí; beh `Application/Scenarios/ScenarioRunner` – zlúči účinky bežiacich scenárov a mení len rozdiely, pôvodné poruchy vráti; `ScenarioHostedService` tik 200 ms a pri ukončení zastaví scenáre pred uložením tabúľ; web `features/scenarios`), `Boards/` profil a obsah tabule (`ElenDisplay` riadky odspodu, `CharDisplay` znaky zhora vo vrstvách, `AmplifierDisplay` zopnutie zosilňovača ELSVO, `FlapDisplay` kódy listov a otáčanie – text listu `FlapLabels` podľa `BoardProfile.Flaps`), `Simulation/Simulator` – všetko pod jeho zámkom, udalosti mimo neho.
-- `TableSimulator.Contracts`: DTO API a WebSocketu bez logiky a závislostí, každé v samostatnom súbore po oblastiach; enumy s `JsonStringEnumMemberName` a vlastným `JsonConverter`, správy `/ws` polymorfné cez `type`; používa ich aj GVDEditor.
-- `TableSimulator.Application`: CQRS bez mediátora podľa vzoru Milana Jovanovića: `ICommand`/`IQuery<T>` + handlery po oblastiach, `Result`/`Error` s kódom chyby, dekorátory overenia (FluentValidation, kódy cez `WithErrorCode`, popisy anglicky), auditu (každý príkaz do DB – cieľ cez explicitné `IAuditable`, heslá `***`, veľké obsahy `[property: JsonIgnore]`) a záznamu, registrácia skenovaním (Scrutor), `DtoMapper`/`RequestMapper` jadro ↔ kontrakty, služby `RecordingService`/`FontCatalog`/`DesignCatalog`, porty `ISettingsStore`/`ILiveNotifier`/`IAuthService`, `Auth/` – oprávnenia podľa činností `Permissions` (kľúč = politika, nemeniť; `Policies.AnyOf` = aspoň jedno z) a roly v DB s oprávneniami (`AppRole.Permissions`; vstavané `Roles` – správca vždy všetko, operátor/pozorovateľ upraviteľné), `RoleCatalog` v pamäti (načíta `DatabaseInitializer`, po zmene `RoleService`) – autorizácia `PermissionHandler` podľa roly v prihlásení; nikto nepridelí ani nespravuje viac, než sám má (`RoleCatalog.Covers`); správa rolí `Users/RoleCommands` + `/api/roles`, web `features/roles`; nový endpoint = vhodné oprávnenie, nové oprávnenie = `Permissions.All`, predvolené v `Roles.DefaultsOf`, web `PERMISSIONS` + skupina v `features/roles/roles.ts` + texty `permission.*`, `Alerts/` – oznámenia o výpadkoch liniek: kedy (`LineAlertTracker`, čisté), texty SK/CZ (`AlertMessage`), kanál = `IAlertChannel`.
-- `TableSimulator.Persistence`: EF Core + ASP.NET Core Identity: abstraktný `AppDbContext`, poskytovateľ = podtrieda s vlastnými migráciami – `SqliteAppDbContext` (predvolený) a `PostgresAppDbContext` (časy len UTC), `Migrations/Sqlite` a `Migrations/Postgres`, príkazy v README – nová migrácia vždy pre oba; `DatabaseConnection` (poskytovateľ + pripojenie, `Description` bez hesla), `DatabaseCopier` (prenos všetkých údajov medzi databázami – záloha a obnova pri PostgreSQL, záloha je vždy súbor SQLite); testy PostgreSQL len s premennou `TABLESIMULATOR_TEST_POSTGRES`; `DatabaseInitializer` pri štarte migruje a zakladá roly; definície virtuálnych tabúľ cez `IVirtualBoardRepository` z Application; nastavenie servera (`ServerSettings`, `SettingsRepository`) a linky s tabuľami (`Lines`/`Boards`, `SimulatorConfigRepository`, profil tabule JSON stĺpec, enumy kľúčmi z `SimulatorConfigJson`); `ServerDatabase` otvorí DB aj mimo DI.
-- Server `TableSimulator` (ASP.NET Core cez `FrameworkReference`, nie Web SDK – `wwwroot` sa kopíruje do výstupu): `Api/<oblasť>/` jeden `IEndpoint` na súbor – len príkaz/dotaz a `Match(…, CustomResults.Problem)` (ProblemDetails s `code` a `errors`), typ odpovede `.Produces<T>()` / `.Produces(204)` (zhodu s handlerom stráži `OpenApiTests`) a povinne `.RequireAuthorization(Permissions.X)` alebo `.AllowAnonymous()` (stráži `AuthApiTests`); názov operácie OpenAPI = názov triedy endpointu, oblasť = priečinok (`MapEndpoints`); dokument `/api/openapi/v1.json` (`Infrastructure/OpenApi/ApiDocument` – všetky vlastnosti povinné, čísla bez textu, chyba `ApiProblem`).
-- Server MCP na `/mcp` (`Infrastructure/Mcp/McpSetup` – pristupovy kluc alebo token OAuth (schemy `AccessKey`, `OAuthToken`, vyzva `McpAuth` = `McpAuthenticationHandler` SDK s `ForwardAuthenticate = null`) aj bez prihlasovania, kontrola `Origin`, bez relacie – GET/DELETE `/mcp` = 405 (inak by ich zachytil web a 401 bez `resource_metadata`); server OAuth `Infrastructure/OAuth` – opis servera, dynamicka registracia (navrat https, aplikacna schema, http len loopback s lubovolnym portom), `/oauth/authorize` presmeruje na web `#/authorize/{id}` (`features/oauth`, rozhodnutie `/api/oauth/requests`), `/oauth/token` s PKCE S256 a `iss` (RFC 9207); ziadosti a kody v pamati `Application/OAuth/OAuthPending`, klienti a povolenia v DB (`IOAuthRepository`, len hashe tokenov, pristupovy 1 h, obnovovaci 30 dni s vymenou – pouzitie vymeneneho = zrusenie), `OAuthServer` overuje pouzivatela pri obnove a raz za minutu (`OAuthUsers`; `local` len bez prihlasovania); prepojene aplikacie `/api/oauth/grants` (stranka Kluce, ponuka pouzivatela); CORS len verejne adresy OAuth (`OAuthCors`); VS Code (agent v okne s CSP `https:`) sa prihlasi len cez HTTPS simulatora; nastroje registruje sam kvoli uprave schem – `TimeOnly`/`DateTime` bez `format`, null sa zapisuje): nastroje v `Mcp/<Oblast>Tools.cs` ako staticke metody nad handlermi ako endpointy (len prikaz/dotaz, chyba `ValueOrThrow` = `kod: popis`, limity `McpResults.CheckLimit`), povinne `[Authorize(Policy = Permissions.X)]` (nedostupny nastroj klient nevidi), nazov snake_case, popisy anglicky aj pri parametroch a vlastnostiach vysledku, explicitne `ReadOnly`/`OpenWorld` (pri zmene aj `Destructive`/`Idempotent`), `UseStructuredContent`; zmeny cez existujuce prikazy (audit `key:<nazov>`), `set_*` menia len zadane hodnoty (`McpRequests`), `send_frame` = `SendFrameCommand` len na linke bez pripojeneho INISSu, napajanie a vypadok linky len scenarom; vzhlad `Mcp/LookTools` – `set_board_look` meni profil JSON merge patchom (`McpRequests.PatchProfile`), vracia `designInUse` (predvoleny vzhlad `Application/Designs/DesignDefaults` = dvojca `defaultDesignId` vo `web/src/render/design.ts`, menit oboje) a `viewUrl`, cely vzhlad `GetDesignQuery`; ziadny prazdny retazec ako priznak v parametroch (model ho posiela ako neplatny JSON) – radsej `bool`; virtualne tabule `Mcp/VirtualTools` – definicia a rozlozenie cez `McpRequests.Patch<T>` (null = predvolena hodnota, prazdne retazce su platne hodnoty, polia sa nahradzaju cele), vstavane rozlozenie len `copyFrom`; MCP Apps (`ModelContextProtocol.Extensions.Apps`, experimentalne MCPEXP003 v `NoWarn`) – `show_board` a `show_virtual_board` s `[McpAppUi]` (McpSetup vola `McpApps.ApplyAppUiAttributes`), zdroje `Mcp/AppPages` = jeden `wwwroot/mcp-app/app.html` z webu so znackou `data-app` korena (`web/src/mcp-app` – `AppFrame` podanie ruky/argumenty/vyska, `follow.ts` dlhe cakanie, `BoardApp`, `VirtualApp`; `mcp-app.html`, `vite.mcp.config.ts` – jeden subor so vsetkym vlozenym, `bun run build` robi obe zostavy), ramec nesmie na siet – udaje len cez nastroje `board_view` (tabula, design.json, celo, pismo) a `virtual_view` (odtlacok obsahu, server zistuje zmenu po prechode priecinkov XML; sablonu XSL nekresli), oba Visibility App; `BoardView` pri danom `design`/`face` nic nestahuje, pismo `primeFontSet`; most `src/mcp-app/bridge.ts` (JSON-RPC cez postMessage; VS Code posiela vysledok nastroja len ako text, aplikacia startuje z `ui/notifications/tool-input`); ramec bez posuvnika a vyska len pri zmene (inak sa velkost meni dookola); Claude Code MCP Apps nezobrazi; vysledky strucne zaznamy v `Mcp/` (text tabule `BoardText`, nie kody), skracovanie cisto v `McpMapper`; stoja `McpToolsTests` (pravidla a snimka `TableSimulator.Tests/Mcp/mcp-tools.json`) a `McpToolsServerTests` (kazdy nastroj nad stanicou s udajmi a kontrola voci scheme vratane formatov; citanie s klucom pozorovatela, zmeny s klucom operatora) – novy nastroj tam pridat; docs `referencia/mcp.mdx`.
-- `Infrastructure/Auth/` – cookie Identity, bez prihlásenia (len localhost, voľba `RequireLogin` vypnutá) `LocalAuthenticationHandler` = správca `local`, prístupové kľúče zariadení a programov (`AccessKeyAuthenticationHandler`, `Bearer` alebo `access_token` na `/ws`; schéma `Auto` vyberá kľúč, cookie alebo `Local`), zmeny v `/api` s cookie len s hlavičkou `X-Requested-With`, `LoginThrottle` (limit neúspešných pokusov o heslo z adresy), `AdminReset` (`--reset-admin`), kľúče ochrany dát DPAPI pre počítač (`KeyRingProtection`); `Infrastructure/Https/` – Kestrel podľa `ServerEndpoints` (HTTP vždy, HTTPS na vlastnom porte, presmerovanie zo siete), `HttpsCertificates` (vlastná certifikačná autorita simulátora v `https\` priečinka nastavení alebo vlastný certifikát; tajné hodnoty nastavení cez `ISecretProtector`).
-- `Infrastructure/Backup/ServerBackup` – záloha celého simulátora (port `IServerBackup` v Application; ZIP: `backup.json` – aj pôvod (počítač, priečinok, služba) a počty liniek a tabúľ, pri príprave obnovy spočítané znova z databázy, `BackupInfoDto.SameServer`, online kópia SQLite `ServerDatabase.BackupTo`, vlastné vzhľady, `media`, voliteľne záznamy) a obnova len pripravená do `restore.pending` – použije ju `ApplyPendingAsync` v `Program` pred `DatabaseBootstrap` (pôvodné do `before-restore\<čas>`, výsledok `restore-result.json`).
-- `Infrastructure/Hosting/WindowsService` – služba Windows (`--install-service`/`--uninstall-service` cez `sc.exe`, reštart z webu = koniec s kódom 3 a obnova po zlyhaní; `IServerHost`, `GET /api/server`, `POST /api/server/restart`); jeden server nad priečinkom nastavení – `ServerLock` (`server.lock` otvorený na zápis s adresou webu, `DeleteOnClose`, uvoľnený v `ApplicationStopped`) berie `Program` pred obnovou zálohy a migráciou, ďalšie spustenie alebo priečinok služby (`RunningServer`, `WindowsService.InstalledDataFolder` z `ImagePath`) len otvorí bežiaci server (zastavenú službu spustí – `sdset` dáva interaktívnym používateľom len právo spustiť, `WindowsService.WaitForServerAsync` čaká na adresu v zámku alebo dôvod), dôvod neúspešného štartu `StartupError` (`startup-error.txt`, obsadený port s radou, zmaže ho úspešný štart; `--install-service` naň čaká a vráti `NotStartedExitCode` – inštalátor ukáže dôvod), chyba štartu v okne len pre tento proces čaká na kláves (`ConsoleWindow`); odtlačok počítača a priečinka nastavení v hlavičke každej odpovede `ServerIdentity` (`X-TableSimulator-Server`; web `api/server-identity.ts` – iný server na tej istej adrese = nové načítanie s oznámením); pred migráciou existujúcej SQLite `DatabaseBootstrap.BackupBeforeUpdateAsync` do `before-update\<čas>` (posledných 5).
-- `Infrastructure/` – Serilog (`Logging/SerilogSetup`: konzola + denné `logs` v priečinku nastavení; záznamy domény `ToolsCore.Iniss` cez statický `Serilog.Log` idú sem), `LiveHub` (WebSocket `/ws`), `Persistence/DatabaseBootstrap` (pred zostavením servera: migrácie, prvý štart prevedie staré `settings.json`/`config.json` na `*.imported`, nastavenie; nová databáza PostgreSQL prevezme zo SQLite len nastavenie servera), `Persistence/DatabaseConfig` (výber databázy v `database.json` mimo nej, heslo DPAPI pre počítač; zmena po reštarte) + `DatabaseSettings` = `IDatabaseSettings` (`GET`/`PUT /api/database`, `POST /api/database/test`, web `features/settings/database-section`), `DbSettingsStore`, `SimulatorConfigStore` (linky a tabule do DB s odkladom), hostované služby, `Alerts/` – webhook a e-mail (SMTP) ako `IAlertChannel` a `LineAlertService` (sleduje linky každé 2 s; skúška `POST /api/settings/alerts/test`); šablóny XSL INISSView – `Application/Virtual/InissViewSite` (priečinok INISSView z nastavenia, `VirtualViewDto.Page`), súbory stránky `GET /inissview/{cesta}` bez prihlásenia + náhrada `XMLStatus.aspx` (`Infrastructure/Hosting/InissViewEndpoints`), web `features/virtual/TemplateFrame` (dva rámy so `srcdoc`) a `VirtualDisplay`; `POST /api/station` volá GVDEditor pri presmerovaní liniek INISSu – `SimulatorRedirect` v ToolsCore.Iniss; simulátor si stanicu načíta aj sám z programu INISSu v nastavení (`Application/Station/InissStations` – náhľad `GET /api/station/iniss`, import `POST /api/station/iniss`, oboje cez `StationImporter` – novým tabuliam aj čelo z údajov stanice `Station/StationFaces` (popisy stĺpcov merané od ľavého okraja matice, rovnaké čelá zdieľajú predlohu cez `Faces/KnownFaces`); .INI do INISSu nezapisuje; server INISS2 spozná podľa priečinkov `Iniss2Installation.Find` a číta `Application/Station/Iniss2Stations` – linky z `CommLines.xml` s číslom podľa poradia a druhom spojenia `StationLineDto.Transport`, tabule z `Tables.xml`/`TCatalog.xml` aj s čelom (`ToFace` – stĺpce Elektročasu a FERS sú v znakoch, ELEN v bodoch, čísla obsahu podľa názvu `CatalogColumn.Section`), trieda podľa protokolu (`LCD` podľa tabúľ), ústredne AK Signal zo svetiel `Lights.xml` a audio liniek `Audio.xml` (`Iniss2Devices` – linka a adresa podľa pravidiel servera, chyby v `InissStationDto.DeviceProblems`; nové načítanie prepíše svetlá a audio linky, snímač a stavy ostanú); `POST /api/station/iniss/redirect` a nástroj MCP `redirect_iniss_lines` prepíšu `line` v `CommLines.xml` cez `CommLinesXml.Write`, sériovej linke aj `typ` na `TCP_CLIENT`, pôvodné hodnoty v komentári, platí po reštarte servera; ukážkový server `web/docshots/iniss2-install.ts` pre snímky aj `e2e/iniss2.e2e.ts`). Zariadenia v čase: `Application/Devices/DeviceClock` (banka zvukov programu v nastavení – server INISS2 `SoundLengths` z hlavičky EWA, INISS 3.39 `Iniss339SoundLengths` podľa kľúčov – a `Simulator.Tick`) + `Infrastructure/Hosting/DeviceClockService` každú sekundu. Aktualizácie: `Infrastructure/Hosting/ServerUpdates` + `UpdateCheckService` (12 h, nastavenie `CheckUpdates`), `GET /api/server/update`, `POST /api/server/update/check`, web `app/update-banner.tsx` a riadok v `features/settings/server-section.tsx`.
+Menný priestor = cesta priečinka (`TableSimulator.Core/Boards/AkSignal` → `TableSimulator.Core.Boards.AkSignal`).
+
+### TableSimulator.Core
+
+`net10.0` bez UI a Windows. Všetko beží pod zámkom `Simulation/Simulator`, udalosti (`Simulation/Events`) idú
+von mimo zámku.
+
+- `Transport/` – linky: TCP/UDP server, klient rúry (rúru vytvára INISS), COM a zrkadlo (System.IO.Ports);
+  `TransportManager.SyncAsync` spúšťa a zastavuje linky podľa nastavenia.
+- `Boards/` – profil tabule `BoardProfile` a obsah podľa technológie: `Elen/` (riadky odspodu), `Chars/` (znaky zhora
+  vo vrstvách, písma LCD1/ERP podľa čísla), `Flaps/` (kódy listov a otáčanie, text listu `FlapLabels`),
+  `AmplifierDisplay` (zosilňovače ELSVO a DTR), predloha čela `Faces/`.
+  - Zariadenia, ktoré nie sú tabule: ústredne `AkSignal/`, rozhlas vzdialeného INISSu `RemoteAudio/`, ich spoločné
+    hlásenia `Announcements/` (`IAnnouncementDisplay`, fronta a okruh v `Announcement`) a história `History/`.
+  - Obsah meniaci sa s časom = `ITimedDisplay`, posúva ho `Simulator.Tick` (server každú sekundu).
+  - Prekrytie zo scenára (`AkSignalOverride` v `SimBoard.Override` cez `Simulator.SetOverride`) sa neukladá. Protokoly,
+    tik, história aj `DisplayDto` idú cez `SimBoard.EffectiveProfile`, `Profile` ostáva nastavením.
+- `Protocols/` – skladanie správ a odpovede podľa `docs/iniss/protokoly`. Nová rodina = záznam
+  v `Simulator.Protocols` s výrobcami triedy, poruchy cez `BoardFaults.Apply` a `ILineProtocol.FaultReply`.
+  - `Elen/`, `Elektrocas/` (LCD, LCD1, ERP, listové FERS, obal ITP), `Ers/` (listové ERS, vlastný protokol),
+    `Apel/` (APEL a APEL_AN: rámec `DLE STX…DLE ETX`, viac záznamov v správe, XOR bez adresy).
+  - `Elsvo/` – spínacie jednotky zosilňovačov (trieda 129, rodina `amplifier`).
+  - `Dtr/` – zosilňovač spínaný signálom DTR INISSu 3.39: trieda 900 len simulátora (`Simulator.ModemSignalClass`),
+    len COM – `LineHost` sleduje DSR/DCD a volá `Simulator.SetModemSignal`; zariadenie `DTR` na adrese 0.
+  - `Remote/` – vzdialený INISS (trieda 128, simulátor hrá INISS s `/Remote`): obal `S`/`0xAC` s `RemoteCrc`.
+    `TCMD` bez súčtu doplní a pošle vnútornému protokolu rodiny podľa `TCLS` (kód výrobcu), `TSTA` = stav tabule.
+    Na jednej linke sú tabule rôznych rodín – obsah podľa výrobcu `ILineProtocol.CreateDisplay(manufacturer)`,
+    do zrkadla idú vybalené správy (`MirrorsInnerFrames` + `ILineContext.Forward`).
+  - Fronty hlásení `RSTA` drží zariadenie `REMOTE_AUDIO` na adrese 0 (`ILineContext.Device` ho založí aj bez
+    samoučenia). `RWAV` = trojice `jazyk/skupina/zvuk,pauza pred,pauza po`; hlásenie hrá podľa dĺžky zvuku
+    (`SimEnvironment.SoundLength`, inak 1,5 s) a kým hrá, `RSTA` má `0x100`. Prerušenie
+    `Simulator.BreakAnnouncement` pošle raz `RSTA` 0 (riadiaci zapíše `remote break`). Porucha `noReply` = vzdialený
+    INISS mlčí (`remote timeout`), `delay` oneskorí odpoveď.
+  - `AkSignal/` – ústredne AK Signal servera INISS2 (svetlo a rozhlas): trieda 131 binárny `AKSIGNAL`, 132 textový
+    `AKSIGNALUH`, jedna ústredňa na linke (v simulátore adresa 0). Automatiku a ručné svietenie zapína server, tmu
+    hlási snímač (`SunTimes` podľa `SimEnvironment.Location`), rozhlas UH má kanály 1 a 2. Testy cez náhradu
+    servera `TableSimulator.Tests/Protocols/AkSignal/IniSrvAkSignal`.
+- `Recording/` – záznam `.tsrec` a `ReplayPlayer` (pauza, rýchlosť a posun cez príkazy pod zámkom a prebudenie
+  slučky). Posun = `Simulator.FastForward`: zmaže tabule liniek záznamu a prehrá správy pred miestom naprázdno bez
+  logu, štatistiky a počítadiel. Po dohraní prehrávač čaká, končí len zastavením. Porovnanie záznamov
+  `RecordingTimeline` (prehratie naprázdno do vlastného simulátora, zmeny do 1 s = jeden stav) a `TimelineDiff`.
+- `Archive/` – denné archívy TAB/REP (formát v docs `formaty-suborov/archiv.mdx`); `ReportTail` číta len pribudnuté
+  celé riadky, iný súbor alebo prepísaný začiatok = od začiatku.
+- `Virtual/` – XML tabúľ INISSu pre virtuálne tabule: `XmlTableFolders` (novší z rovnomenných), `XmlTableFilter`
+  (riadky a oddeľovač ako INISSView), `InissViewConfig` (`Web.config` INISSView), `XslTablePages` (ako `Tabule.aspx`).
+- `Statistics/` – `TrafficCollector` pod zámkom simulátora, `Simulator.TakeTraffic(minute)`; minúta =
+  `TrafficMinutes.Of` od 1970 UTC.
+- `Scenarios/` – scenáre porúch, čistá `ScenarioTimeline` (kroky v cykle a ich účinky). Výpadok napájania
+  `Simulator.SetPower` (`FindBoard` vráti null), výpadok linky `SetLineOutage` (stav `outage`, linka sa nespustí).
+- `Monitor/` – súbory ELEN Monitora.
+
+### TableSimulator.Contracts
+
+DTO API a WebSocketu bez logiky a závislostí, jedno v súbore, po oblastiach. Enumy s `JsonStringEnumMemberName`
+a vlastným `JsonConverter`, správy `/ws` polymorfné cez `type`. Používa ich aj GVDEditor.
+
+### TableSimulator.Application
+
+- CQRS bez mediátora podľa vzoru Milana Jovanovića: `ICommand`/`IQuery<T>` + handlery po oblastiach, `Result`/`Error`
+  s kódom chyby, registrácia skenovaním (Scrutor). Príkaz alebo dotaz môže byť v jednom súbore so svojím validátorom
+  a handlerom, iné typy (chyby, pravidlá, porty) sú v samostatných súboroch.
+- Dekorátory: overenie (FluentValidation, kódy cez `WithErrorCode`, popisy anglicky), audit (každý príkaz do DB – cieľ
+  cez `IAuditable`, heslá `***`, veľké obsahy `[property: JsonIgnore]`) a záznam.
+- `Mapping/` – `DtoMapper`/`RequestMapper` jadro ↔ kontrakty. Porty pre server: `ISettingsStore`, `ILiveNotifier`,
+  `IAuthService`, `IServerBackup`, `IDatabaseSettings`…
+- `Auth/` – oprávnenia podľa činností `Permissions` (kľúč = politika, nemeniť; `Policies.AnyOf` = aspoň jedno z)
+  a roly v DB (`AppRole.Permissions`; vstavané `Roles` – správca vždy všetko, operátor a pozorovateľ upraviteľné).
+  `RoleCatalog` v pamäti (načíta `DatabaseInitializer`, po zmene `RoleService`), autorizácia `PermissionHandler`
+  podľa roly v prihlásení. Nikto nepridelí ani nespravuje viac, než sám má (`RoleCatalog.Covers`).
+  - Nový endpoint = vhodné oprávnenie. Nové oprávnenie = `Permissions.All`, predvolené v `Roles.DefaultsOf`, na webe
+    `PERMISSIONS` + skupina v `features/roles/roles.ts` + texty `permission.*`.
+- `Alerts/` – oznámenia o výpadkoch liniek: kedy (`LineAlertTracker`, čisté), texty SK/CZ (`AlertMessage`), kanál
+  `IAlertChannel`. Ticho servera INISS2 (`ServerSilent`) ide ako stav linky `silent` (`AlertLines`).
+- `Devices/` – `DeviceClock` (dĺžky zvukov banky programu v nastavení: server INISS2 `SoundLengths` z hlavičky EWA,
+  INISS 3.39 `Iniss339SoundLengths` z `FYZBANK.DAT`/`FYZZVUK.DAT` vedľa programu) a história ústrední
+  `GetDeviceHistoryQuery` (stav na začiatku obdobia; log svetiel servera INISS2 priradený ústredni podľa názvu
+  svetla). Snímač a stavy ústredne mení `Boards/SetAkSignalCommand` cez `Simulator.UpdateProfile` (svetlá a audio
+  linky ostanú).
+- `Scenarios/ScenarioRunner` – zlúči účinky bežiacich scenárov a mení len rozdiely, pôvodné poruchy vráti.
+- `Signage/` – informačné panely ako INISSView 2 (len Application, Persistence a web): čistý rozvrh
+  `SignageSchedule`, správy, playlisty a skupiny v DB ako JSON požiadavky, `SignagePanelTracker` v pamäti, súbory
+  `SignageMediaStore` v `media\`. Záloha `SignageBackup` (ZIP `signage.json` + `media/`), obnova nahradí s pôvodnými
+  číslami alebo pridá s prečíslovaním (`ISignageRepository.ImportAsync` v transakcii).
+- `Station/` – stanica z programu INISSu v nastavení (`InissStations`, import cez `StationImporter`; novým tabuliam
+  čelo z údajov stanice `StationFaces`, rovnaké čelá zdieľajú predlohu `Faces/KnownFaces`). Do .INI INISSu nezapisuje.
+  - Server INISS2 spozná `Iniss2Installation.Find`. `Iniss2Stations`: linky z `CommLines.xml` (číslo podľa poradia),
+    tabule z `Tables.xml`/`TCatalog.xml` aj s čelom (stĺpce Elektročasu a FERS v znakoch, ELEN v bodoch, obsah podľa
+    `CatalogColumn.Section`), ústredne AK Signal zo `Lights.xml` a `Audio.xml` (`Iniss2Devices` – linka a adresa
+    podľa pravidiel servera, chyby v `InissStationDto.DeviceProblems`).
+  - Nové načítanie prepíše svetlá a audio linky ústrední, snímač a stavy ostanú.
+  - Presmerovanie liniek INISS2 prepíše `line` v `CommLines.xml` (`CommLinesXml.Write`, sériovej linke aj `typ`
+    na `TCP_CLIENT`, pôvodné hodnoty v komentári); platí po reštarte servera.
+- `Virtual/` – virtuálne tabule, šablóny XSL INISSView (`InissViewSite`), vstavané rozloženia `Layouts/*.json`
+  vložené do zostavy (vlastné v DB).
+- `Designs/DesignDefaults` = dvojča `defaultDesignId` vo `web/src/render/design.ts` – meniť oboje.
+
+### TableSimulator.Persistence
+
+- EF Core + ASP.NET Core Identity: abstraktný `AppDbContext`, poskytovateľ = podtrieda s vlastnými migráciami –
+  `SqliteAppDbContext` (predvolený, `Migrations/Sqlite`) a `PostgresAppDbContext` (časy len UTC,
+  `Migrations/Postgres`). Nová migrácia vždy pre oba (príkazy v README).
+- Entity sú aj typy z Application (záznamy signage, štatistiky, scenárov, histórie zariadení) – ich menný priestor
+  je v snímke modelu, nepresúvať ich.
+- `DatabaseConnection` (poskytovateľ + pripojenie, `Description` bez hesla), `DatabaseCopier` (prenos všetkých údajov
+  medzi databázami; záloha je vždy súbor SQLite), `DatabaseInitializer` pri štarte migruje a zakladá roly,
+  `ServerDatabase` otvorí DB aj mimo DI.
+- Linky a tabule `SimulatorConfigRepository` (profil tabule ako JSON stĺpec, enumy kľúčmi zo `SimulatorConfigJson`).
+- Testy PostgreSQL bežia len s premennou `TABLESIMULATOR_TEST_POSTGRES`.
+
+### Server TableSimulator
+
+ASP.NET Core cez `FrameworkReference`, nie Web SDK (`wwwroot` sa kopíruje do výstupu).
+
+- `Api/<oblasť>/` – jeden `IEndpoint` na súbor: len príkaz/dotaz a `Match(…, CustomResults.Problem)` (ProblemDetails
+  s `code` a `errors`). Typ odpovede `.Produces<T>()`/`.Produces(204)` (zhodu s handlerom stráži `OpenApiTests`)
+  a povinne `.RequireAuthorization(Permissions.X)` alebo `.AllowAnonymous()` (stráži `AuthApiTests`). Názov
+  operácie OpenAPI = názov triedy, oblasť = priečinok. Dokument `/api/openapi/v1.json`
+  (`Infrastructure/OpenApi/ApiDocument` – všetky vlastnosti povinné, čísla bez textu, chyba `ApiProblem`).
+- `Infrastructure/Auth/` – cookie Identity; bez prihlásenia (len localhost, `RequireLogin` vypnuté) je používateľ
+  správca `local`. Prístupové kľúče (`Bearer` alebo `access_token` na `/ws`), schéma `Auto` vyberá kľúč, cookie
+  alebo `Local`. Zmeny v `/api` s cookie len s hlavičkou `X-Requested-With`; `LoginThrottle`, `AdminReset`
+  (`--reset-admin`), kľúče ochrany dát DPAPI pre počítač.
+- `Infrastructure/Https/` – Kestrel podľa `ServerEndpoints` (HTTP vždy, HTTPS na vlastnom porte), vlastná
+  certifikačná autorita `HttpsCertificates` v `https\` priečinka nastavení; tajné hodnoty cez `ISecretProtector`.
+- `Infrastructure/Backup/ServerBackup` – záloha celého simulátora (ZIP: `backup.json`, online kópia SQLite, vlastné
+  vzhľady, `media`, voliteľne záznamy). Obnova sa len pripraví do `restore.pending`, použije ju `ApplyPendingAsync`
+  v `Program` pred `DatabaseBootstrap` (pôvodné do `before-restore\<čas>`).
+- `Infrastructure/Hosting/` – služba Windows (`WindowsService`, `--install-service`, reštart z webu = koniec
+  s kódom 3), jeden server nad priečinkom nastavení (`ServerLock`; ďalšie spustenie len otvorí bežiaci server),
+  dôvod neúspešného štartu `StartupError`, odtlačok servera v hlavičke `X-TableSimulator-Server` (`ServerIdentity`),
+  služby na pozadí:
+
+  | Služba | Perióda | Čo robí |
+  |---|---|---|
+  | `DeviceClockService` | 1 s | `Simulator.Tick` – ústredne a rozhlas |
+  | `DeviceHistoryService` | 5 s | história zariadení do DB (`Simulator.TakeDeviceHistory`) |
+  | `StatisticsService` | 1 min | štatistika komunikácie do DB, mazanie po 30 dňoch |
+  | `ScenarioHostedService` | 200 ms | tik scenárov, pri ukončení ich zastaví pred uložením tabúľ |
+  | `ReportMonitorService` | 2 s | monitor hlásení (správa `reports`) |
+  | `UpdateCheckService` | 12 h | kontrola aktualizácií (nastavenie `CheckUpdates`) |
+  | `Alerts/LineAlertService` | 2 s | oznámenia o výpadkoch (webhook, e-mail) |
+
+- `Infrastructure/Persistence/` – `DatabaseBootstrap` (pred zostavením servera: záloha SQLite do `before-update\`,
+  migrácie, prevod starých `settings.json`/`config.json`), výber databázy `DatabaseConfig` (`database.json` mimo
+  databázy, heslo DPAPI, zmena po reštarte), `SimulatorConfigStore` (linky a tabule do DB s odkladom).
+- Ďalšie: Serilog `Infrastructure/Logging/SerilogSetup` (konzola + denné `logs`; sem idú aj záznamy `ToolsCore.Iniss`),
+  WebSocket `/ws` `Realtime/LiveHub`, stránky INISSView bez prihlásenia `Hosting/InissViewEndpoints`.
+- `POST /api/station` volá GVDEditor pri presmerovaní liniek INISSu (`SimulatorRedirect` v ToolsCore.Iniss).
+
+### Server MCP (`/mcp`)
+
+- Prístup: `Infrastructure/Mcp/McpSetup` – prístupový kľúč alebo token OAuth (schémy `AccessKey`, `OAuthToken`,
+  výzva `McpAuth`), aj bez prihlasovania; kontrola `Origin`, bez relácie – GET/DELETE `/mcp` = 405 (inak by ich
+  zachytil web a vrátil 401 bez `resource_metadata`).
+- Server OAuth `Infrastructure/OAuth` – dynamická registrácia (návrat https, aplikačná schéma, http len loopback),
+  súhlas na webe `#/authorize/{id}`, `/oauth/token` s PKCE S256 a `iss`. Žiadosti a kódy v pamäti
+  (`Application/OAuth/OAuthPending`), klienti a povolenia v DB len s hashmi tokenov (prístupový 1 h, obnovovací
+  30 dní s výmenou – použitie vymeneného = zrušenie). VS Code sa prihlási len cez HTTPS simulátora.
+- Nástroje `Mcp/<Oblasť>Tools.cs` – statické metódy nad handlermi ako endpointy, výsledky `Mcp/Results/`
+  (stručné, text tabule `BoardText`, nie kódy; skracovanie v `McpMapper`):
+  - povinne `[Authorize(Policy = Permissions.X)]` (nedostupný nástroj klient nevidí), názov snake_case, popisy
+    anglicky aj pri parametroch a vlastnostiach výsledku, explicitne `ReadOnly`/`OpenWorld` (pri zmene aj
+    `Destructive`/`Idempotent`), `UseStructuredContent`;
+  - chyba `ValueOrThrow` = `kód: popis`, limity `McpResults.CheckLimit`; schémy upravuje `McpSetup` (`TimeOnly`
+    a `DateTime` bez `format`, null sa zapisuje);
+  - zmeny cez existujúce príkazy (audit `key:<názov>`), `set_*` menia len zadané hodnoty (`McpRequests`),
+    `McpRequests.Patch<T>` – null = predvolená hodnota, prázdne reťazce sú platné, polia sa nahrádzajú celé;
+  - žiadny prázdny reťazec ako príznak v parametroch (model ho posiela ako neplatný JSON) – radšej `bool`;
+  - `send_frame` len na linke bez pripojeného INISSu, napájanie a výpadok linky len scenárom;
+  - `set_board_look` mení profil JSON merge patchom a vracia `designInUse` a `viewUrl`.
+- MCP Apps (experimentálne MCPEXP003) – `show_board` a `show_virtual_board` s `[McpAppUi]`, jeden
+  `wwwroot/mcp-app/app.html` z webu (`web/src/mcp-app`, `vite.mcp.config.ts` – všetko vložené). Rámec nesmie na
+  sieť – údaje len cez nástroje `board_view` a `virtual_view` (Visibility App). VS Code posiela výsledok nástroja
+  len ako text (aplikácia štartuje z `ui/notifications/tool-input`); rámec bez posuvníka a výška len pri zmene.
+  Claude Code MCP Apps nezobrazí.
+- Testy: `McpToolsTests` (pravidlá a snímka `TableSimulator.Tests/Mcp/mcp-tools.json`) a `McpToolsServerTests`
+  (každý nástroj nad stanicou s údajmi, kontrola voči schéme) – nový nástroj pridať do oboch. Docs
+  `referencia/mcp.mdx`.
 
 ## Web (`web/`)
 
-React + TS 7, bun/Vite: renderer `src/render` (z API len typy `api/generated/types.gen` a `api/auth`; listové tabule `render/flaps.ts` + `features/boards/FlapView` – plátno s modulmi, nie LED, `BoardView` vyberá podľa rodiny; bez písma ELEN bodové písma misc-fixed – `pixel-fonts.data.ts` generuje `tools/pixel-fonts/bdf2ts.py`, ručne nemeniť), texty SK/CZ v `src/i18n` – žiadny text UI natvrdo, chyby API podľa kódu `error.<kód>`; klient API generuje @hey-api/openapi-ts zo snímky `web/openapi.json` do `src/api/generated` (ručne nemeniť; generátor má vlastný balík `web/tools/api` s TS 6), `src/api/` – interceptory a `ApiError` (`client.ts`), cache TanStack Query (`query.ts`), WebSocket mení cache (`live.ts`: board/line `setQueryData`, ostatné zneplatní), `hooks.ts` (`useMe`, `useCan`, `useSimulatorState`); dáta cez generované `…Options()`/`…Mutation()`, nie vlastný `fetch`; rozhranie shadcn/ui (Base UI, preset nova, ikony lucide) v `src/components/ui` – kód je náš, anglické texty cez `t()`; Tailwind v4, tokeny v `src/index.css`.
+React + TS 7, bun/Vite; texty SK/CZ v `src/i18n` – žiadny text UI natvrdo, chyby API podľa kódu `error.<kód>`.
 
-- Rám `src/app`: TanStack Router s adresami za `#` (`router.tsx` – adresy nemeniť, sú v odkazoch zariadení `?key=…#/virtual/N`; stránky a kiosky lenivo), menu `navigation.ts` (skupiny, ikony, oprávnenie – rám stránku bez oprávnenia nezobrazí), kiosky `app/kiosk.ts` (manifest kiosku `GET /api/manifest`, Wake Lock, skrytý kurzor) + `KioskControls`, `start-view.ts` (`/?view=` → `#`), `install.ts` (ponuka inštalácie), service worker `public/sw.js` (len stránka a `/assets`), `ServerWaiting` kým server neodpovedá, upozornenia na výpadky liniek `app/line-alerts.ts` (oznámenie do návratu linky, len zmeny počas otvorenej stránky) + `app/notifications.ts` (systémové oznámenia, zapína ich používateľ; klik z Androidu cez `sw.js`), stav linky pre obsluhu `features/lines/line-status.ts` (`isOutage`, `lineLabel`, čas posledná správa / od výpadku) – stav `lost` = INISS sa odpojil (TCP/rúra), `StatusSince`/`LastReceivedAt` v `SimLine`, `AppShell`/`AppSidebar`/`UserMenu` (jazyk, téma `lib/theme.ts` = trieda `.dark`).
-- Stránky po oblastiach v `src/features/<oblasť>/` (stránka, jej dialógy a pomocné funkcie), spoločné súčasti `src/components/common` – `FormDialog`, `FormField`/`CheckField`, `OptionSelect` (Select z Base UI s `items`), `confirmAction` (+ `ConfirmHost`, nie `window.confirm`), `RowActions`, `PageHeader`, `StatusBadge`, `CopyButton`; oznámenia `toast` (sonner); tabuľky `src/components/data-table` (TanStack Table v9 podľa shadcn: `features.ts`, `DataTable` – hľadanie, triedenie, stránkovanie, výber stĺpcov, stĺpce cez `columnsFor<T>()`; hodnotu stĺpca z iného dotazu, napr. názov roly, vložiť do dát riadkov – tabuľka si `accessor` pamätá, kým sa nezmenia dáta), dlhý zoznam virtualizovať (`@tanstack/react-virtual`, vzor log komunikácie); CSS = triedy Tailwindu, CSS modul len pre vzhľad určený dátami (`VirtualScreen.module.css`).
-- Kvalita: ESLint (`tools/lint/eslint.config.js` – vlastný balík s TypeScript 6, typescript-eslint nevie TS 7; pravidlá recommendedTypeChecked + `no-deprecated` + react-hooks + react-refresh) a Prettier (`.prettierrc.json`, šírka 160, triedy Tailwindu zoradí plugin, `endOfLine auto` kvôli CRLF) – po zmene webu `bun run lint` a `bun run format`, obe bez nálezu; sľub bez čakania označiť `void` (chyby ošetrené v ňom), modul s komponentom neexportuje nič iné (Fast Refresh – pomocníci do `.ts` vedľa, napr. `confirm.ts` + `confirm-host.tsx`), čas počas vykresľovania cez `hooks/use-now`, nie `Date.now()`.
-- Snímky do dokumentácie `docshots/*.shots.ts` (`bun run docshots`, vlastná konfigurácia Playwright, server `e2e/server.mjs docshots` na porte 5495 s ukážkovou stanicou z `docshots/demo.ts` – linky 47000+N, ak sú voľné, písma ELEN len z premennej `DOCSHOTS_FONTS` (žiadne absolútne cesty v kóde), dva záznamy (pred a po zmene grafikonu) a hodina štatistiky zapísaná priamo do SQLite cez `docshots/statistics.ts` (bun), priečinok logov INISSu s XML tabúľ a dennými archívmi `docshots/iniss-log.ts`, informačné panely `docshots/signage.ts`, ústredne AK Signal a rozhlas vzdialeného INISSu si zakladá a na konci odstraňuje sám `docshots/osvetlenie-a-rozhlas.shots.ts` (linky 7–9, priebežné dotazy, 2 hodiny histórie priamo do SQLite cez `docshots/device-history.ts`), HTTPS na porte 5496; cesty, meno a adresy počítača na snímkach nahradí `mask()` v `shoot.ts`; výstup `iniss-tools-docs/static/img/tablesimulator/<článok>/<snímka>-light|dark.png`, články v `iniss-tools-docs/docs/tablesimulator`).
-- Testy prehliadača `e2e/*.e2e.ts` (nie `*.spec.ts` – tie spustí aj bun test; texty podľa SK rozhrania, výber cez role a popisy, spoločný stav servera – testy po jednom a každý si zakladá vlastné linky/údaje, správy ako INISS cez `e2e/helpers.ts` – trvalé spojenie `openLine` (odpojenie by vyvolalo upozornenie na výpadok, ktoré prekryje tlačidlá), správy AK Signal a front vzdialeného INISSu, zariadenie cez `createBoard`; ak beh trvá ~13 min a v `%TEMP%` ostávajú `playwright_chromiumdev_profile-*`, ESET „Ochrana bankovníctva a platieb“ (zabezpečené prehliadače) blokuje dočasný profil Edge – vypnúť ju).
-- Koreňový `.gitignore` (šablóna VS) ignoruje priečinky `log`, `bin`, `obj`, `debug`, `release`… – tak nepomenúvať priečinky vo `web/src` (Tailwind ich nečíta, git ich nezaradí); web zostaví cieľ `BuildWeb` v `TableSimulator.csproj` (zdroje `WebSource` sa zbierajú až v cieli – statická `ItemGroup` by ich Rider ukazoval ako odkazy v koreni projektu).
+- API: klient generuje @hey-api/openapi-ts zo snímky `web/openapi.json` do `src/api/generated` (ručne nemeniť;
+  generátor má vlastný balík `web/tools/api` s TS 6). Dáta cez generované `…Options()`/`…Mutation()`, nie vlastný
+  `fetch`; cache TanStack Query (`api/query.ts`), WebSocket mení cache (`api/live.ts`), `api/hooks.ts` (`useMe`,
+  `useCan`, `useSimulatorState`).
+- Renderer `src/render` (z API len typy a `api/auth`): `BoardView` vyberá kreslenie podľa rodiny, listové tabule
+  na plátne s modulmi (`render/flaps.ts`). Bodové písma misc-fixed `pixel-fonts.data.ts` generuje
+  `tools/pixel-fonts/bdf2ts.py` – ručne nemeniť. Snímka tabule = `BoardView` `ref` → `snapshot()`.
+- Rám `src/app`: TanStack Router s adresami za `#` (`router.tsx` – adresy nemeniť, sú v odkazoch zariadení
+  `?key=…#/virtual/N`; premenovaná stránka dostane presmerovanie zo starej adresy – úvodná stránka Zariadenia
+  `#/devices`, `#/` a `#/boards` na ňu presmerujú), menu `navigation.ts` (stránku bez oprávnenia rám nezobrazí), kiosky `app/kiosk.ts`, service
+  worker `public/sw.js` (len stránka a `/assets`), upozornenia na výpadky `app/line-alerts.ts` + `app/notifications.ts`.
+  Iný server na tej istej adrese = nové načítanie (`api/server-identity.ts`).
+- Stránky po oblastiach `src/features/<oblasť>/` (stránka, dialógy, pomocné funkcie). Spoločné súčasti
+  `src/components/common` (`FormDialog`, `OptionSelect`, `confirmAction` – nie `window.confirm`, `RowActions`…),
+  tabuľky `src/components/data-table` (`columnsFor<T>()`; hodnotu z iného dotazu vložiť do dát riadkov – tabuľka si
+  `accessor` pamätá, kým sa nezmenia dáta), dlhý zoznam virtualizovať (`@tanstack/react-virtual`).
+- Rozhranie shadcn/ui (Base UI, preset nova, ikony lucide) v `src/components/ui` – kód je náš, texty cez `t()`;
+  Tailwind v4, tokeny v `src/index.css`; CSS modul len pre vzhľad určený dátami.
+- Editor čiel `features/faces` – čisté moduly `faces/*.ts` (úpravy, história, prichytávanie, zarovnanie, meranie),
+  príkazy z klávesov aj ponuky cez `faces/actions.ts`. Klávesy stránky `DocumentKeys` (posluchač s aktuálnou
+  obsluhou, nie efekt pred skorým návratom); ťahanie za popis poľa `NumberField` = jeden krok histórie.
+- Kvalita: ESLint (`tools/lint` – vlastný balík s TS 6, typescript-eslint nevie TS 7) a Prettier (šírka 160,
+  `endOfLine auto` kvôli CRLF) – po zmene `bun run lint` a `bun run format`, obe bez nálezu. Sľub bez čakania
+  označiť `void`; modul s komponentom neexportuje nič iné (Fast Refresh – pomocníci do `.ts` vedľa); čas počas
+  vykresľovania cez `hooks/use-now`, nie `Date.now()`.
+- Koreňový `.gitignore` (šablóna VS) ignoruje priečinky `log`, `bin`, `obj`, `debug`, `release`… – tak nepomenúvať
+  priečinky vo `web/src`. Web zostaví cieľ `BuildWeb` v `TableSimulator.csproj` (zdroje `WebSource` sa zbierajú až
+  v cieli, inak by ich Rider ukazoval v koreni projektu).
+
+### Snímky do dokumentácie a e2e
+
+- `docshots/*.shots.ts` (`bun run docshots`): server `e2e/server.mjs docshots` na porte 5495 (HTTPS 5496)
+  s ukážkovou stanicou `docshots/demo.ts` (linky 47000+N, ak sú voľné, inak 48000+N – snímka aj tak ukáže
+  47000+N, `defaultPorts` v `shoot.ts`). Písma ELEN len z premennej `DOCSHOTS_FONTS`
+  (žiadne absolútne cesty v kóde); údaje do SQLite priamo (`docshots/statistics.ts`, `docshots/device-history.ts`),
+  logy INISSu `docshots/iniss-log.ts`, ukážkový server INISS2 `docshots/iniss2-install.ts`. Cesty, meno a adresy
+  počítača nahradí `mask()` v `shoot.ts`. Výstup do
+  `iniss-tools-docs/static/img/tablesimulator/<článok>/<snímka>-light|dark.png`.
+- Testy prehliadača `e2e/*.e2e.ts` (nie `*.spec.ts` – tie spustí aj bun test): texty podľa SK rozhrania, výber cez
+  role a popisy, spoločný server – testy po jednom, každý si zakladá vlastné linky. Správy ako INISS cez
+  `e2e/helpers.ts` – trvalé spojenie `openLine` (odpojenie vyvolá upozornenie na výpadok, ktoré prekryje tlačidlá).
+- Beh ~13 min a `playwright_chromiumdev_profile-*` v `%TEMP%` = ESET „Ochrana bankovníctva a platieb“ blokuje
+  dočasný profil Edge – vypnúť ju.
 
 ## Zásady
 
-- Jadro určuje, čo tabuľa ukazuje (vrátane striedania a pohyblivého textu), prehliadač, ako vyzerá; profil tabule, vzhľad (`designs/<id>/design.json`; editor `features/designs` – `PUT`/`DELETE /api/designs/{id}`, náhľad cez `BoardView design={…}`), predloha čela (editor `features/faces` na výšku okna ako Figma: `FacesPage` – nástroje a Ctrl+S, `LayersPanel` – vrstvy, poradie ťahaním, zámok `FaceElement.Locked` sa ukladá, skrytie len v editore, `FaceCanvas` – mierka `BoardView scale`/`onScale`, Ctrl+koliesko, medzerník, `ElementProperties`/`FaceProperties` – panel vlastností (viac prvkov: spoločné polia, rôzne = `undefined` s nápisom Rôzne, zmena pre všetky), výber `number[]` (Ctrl/Shift+klik, obdĺžnik, Ctrl+A), zarovnanie a rozmiestnenie `faces/align.ts` (čisté, posuny v bodoch → `moveElement`; jeden prvok k ukotveniu, plochy z `onLayout`), poradie výberu `stepOrder`/`extremeOrder`, príkazy z klávesov aj kontextovej ponuky `FaceContextMenu` cez `faces/actions.ts` (`FaceAction`, `shortcutAction` – ]/[ podľa `e.code`, schránka prvkov pre všetky predlohy `useClipboard`) a `run` vo `FacesPage`, klávesy stránky `DocumentKeys` (posluchač s aktuálnou obsluhou, nie efekt pred skorým návratom), ťahanie za popis poľa v `NumberField` (`onScrub` – každý prvok od svojej hodnoty, jeden krok histórie), meranie s Alt `faces/measure.ts`, okno skratiek `ShortcutsDialog` (`ui/kbd`, `ui/context-menu` z Base UI), prichytávanie `faces/snap.ts` (čisté: mriežka od rohu bodov, okraje a stredy prvkov a štruktúry tabule, vodiace čiary a vzdialenosti), voľby zobrazenia `faces/view.ts` v localStorage; úpravy ťahaním cez `BoardView overlay` a `FaceCanvasEditor`, polohy prvkov `faceBoxes` ako pri kreslení, čisté úpravy `faces/edit.ts`, kroky späť `faces/history.ts`; prvky plocha, text, hodiny, symbol – šípky vektorom `symbolOutline` – a obrázok ako data URL v predlohe, načítanie `render/images.ts`), písma LCD1/ERP podľa čísla (`BoardProfile.CharFonts`, kľúč = číslo bez 0x40/0x80, bodové písmo `PixelCellGlyphSource.named` a tučné v `render/chars.ts`, záložka Písma `features/boards/CharFontsEditor`); snímka tabule = `BoardView` `ref` → `snapshot()` (PNG v pevnej mierke cez nový `LedRenderer`, karta ho ukladá cez `lib/download.ts` alebo do schránky) a rozloženie virtuálnej tabule (vstavané `Application/Virtual/Layouts/*.json` vložené do zostavy, vlastné v DB) sú dáta, nie kód.
-- Údaje servera ukladať do databázy (Persistence, migrácia na poskytovateľa), nie do súborov JSON – ako súbory ostávajú len záznamy `.tsrec`, vlastné vzhľady, certifikáty, kľúče ochrany dát a logy; linky a tabule sa prenášajú exportom/importom (`/api/config`, tvar `SimulatorConfigJson`). Kľúče v JSON explicitne (`JsonStringEnumMemberName`), nie z názvov C#; vlastnosti kontraktov camelCase (`JsonSerializerDefaults.Web`) – tvar JSON stráži `ContractsJsonTests`.
-- Logovanie: server cez `ILogger<T>` (Microsoft.Extensions.Logging nad Serilogom), statický `Serilog.Log` len v `Program` pred zostavením servera; pravidlá šablón a úrovní ako v `ToolsCore/AGENTS.md` (časť Logovanie).
+- Jadro určuje, čo tabuľa ukazuje (vrátane striedania a pohyblivého textu), prehliadač, ako vyzerá. Profil tabule,
+  vzhľad (`designs/<id>/design.json`, editor `features/designs`), predloha čela a rozloženie virtuálnej tabule sú
+  dáta, nie kód.
+- Údaje servera do databázy (Persistence, migrácia pre oboch poskytovateľov), nie do súborov JSON. Ako súbory
+  ostávajú len záznamy `.tsrec`, vlastné vzhľady, certifikáty, kľúče ochrany dát a logy; linky a tabule sa prenášajú
+  exportom/importom (`/api/config`, tvar `SimulatorConfigJson`).
+- Kľúče v JSON explicitne (`JsonStringEnumMemberName`), nie z názvov C#; vlastnosti kontraktov camelCase
+  (`JsonSerializerDefaults.Web`) – tvar JSON stráži `ContractsJsonTests`.
+- Logovanie: server cez `ILogger<T>` (Microsoft.Extensions.Logging nad Serilogom), statický `Serilog.Log` len
+  v `Program` pred zostavením servera; pravidlá šablón a úrovní v `ToolsCore/AGENTS.md` (časť Logovanie).
 
 ## Príkazy
 
 ```bash
-dotnet test TableSimulator.Tests/TableSimulator.Tests.csproj   # build zostavi aj web (bun); -p:SkipWebBuild=true
-cd web && bun test                                   # renderer; bun run build = typecheck + wwwroot
-cd web && bun run lint && bun run format:check       # ESLint (balik tools/lint s TS 6) a Prettier; bun run format prepise
-cd web && bun run e2e                                # Playwright v nainstalovanom Edge proti 2 serverom s cistymi datami (e2e/.run); npx playwright test = bez noveho buildu
-TABLESIMULATOR_UPDATE_OPENAPI=1 dotnet test TableSimulator.Tests/TableSimulator.Tests.csproj --filter OpenApiTests   # nova snimka web/openapi.json; potom vo web/ bun run api
-TABLESIMULATOR_UPDATE_MCP=1 dotnet test TableSimulator.Tests/TableSimulator.Tests.csproj --filter McpToolsTests   # nova snimka nastrojov MCP (Mcp/mcp-tools.json)
-dotnet publish TableSimulator/TableSimulator.csproj -c Release && "/c/Program Files/Inno Setup 7/ISCC.exe" TableSimulatorInstaller.iss   # publish len win-x64 do prazdneho priecinka; sluzba Windows, pravidlo firewallu, data pri odinstalovani ostavaju
+# build zostavi aj web (bun); -p:SkipWebBuild=true ho vynecha
+dotnet test TableSimulator.Tests/TableSimulator.Tests.csproj
+# renderer; bun run build = typecheck + wwwroot
+cd web && bun test
+# ESLint (balik tools/lint s TS 6) a Prettier; bun run format prepise
+cd web && bun run lint && bun run format:check
+# Playwright v nainstalovanom Edge proti 2 serverom s cistymi datami (e2e/.run)
+cd web && bun run e2e
+# nova snimka web/openapi.json; potom vo web/ bun run api
+TABLESIMULATOR_UPDATE_OPENAPI=1 dotnet test TableSimulator.Tests/TableSimulator.Tests.csproj --filter OpenApiTests
+# nova snimka nastrojov MCP (Mcp/mcp-tools.json)
+TABLESIMULATOR_UPDATE_MCP=1 dotnet test TableSimulator.Tests/TableSimulator.Tests.csproj --filter McpToolsTests
+# instalator: publish len win-x64 do prazdneho priecinka (sluzba Windows, firewall, data pri odinstalovani ostavaju)
+dotnet publish TableSimulator/TableSimulator.csproj -c Release
+"/c/Program Files/Inno Setup 7/ISCC.exe" TableSimulatorInstaller.iss
 ```
 
 Vydanie: značka `vX.Y` spustí `.github/workflows/release.yml` (spoločný postup v `ToolsCore/Installer/README.md`).
 
 ## Spoločné pravidlá
 
-- `Directory.Build.props`: `TreatWarningsAsErrors`, `Nullable`, `ImplicitUsings`, `AnalysisLevel latest-recommended` – build bez jediného varovania; zámerne vypnuté pravidlá len tam (`NoWarn` s dôvodom), varovanie opraviť v kóde, výnimočné potlačenie priamo na nájdenom člene (`[SuppressMessage(..., Justification = ...)]`). Kopírovací konštruktor recordu s primárnym konštruktorom nespúšťa inicializátory polí – priradiť všetky členy.
+- `Directory.Build.props`: `TreatWarningsAsErrors`, `Nullable`, `ImplicitUsings`, `AnalysisLevel latest-recommended` –
+  build bez jediného varovania; zámerne vypnuté pravidlá len tam (`NoWarn` s dôvodom), varovanie opraviť v kóde,
+  výnimočné potlačenie priamo na nájdenom člene (`[SuppressMessage(..., Justification = ...)]`). Kopírovací
+  konštruktor recordu s primárnym konštruktorom nespúšťa inicializátory polí – priradiť všetky členy.
+- Jeden typ najvyššej úrovne na súbor (vnorené typy môžu ostať), viac súvisiacich súborov do vlastného priečinka.
+  Výnimka: príkaz alebo dotaz CQRS môže byť v jednom súbore so svojím validátorom a handlerom.
 - Kultúra: UI `CultureInfo.CurrentCulture`, formáty a logy `InvariantCulture`.
-- Testy MSTest, metódy `Oblast_CoOveruje`; do repa len testy s vlastnými dátami (korpusové overenie nad `D:\INISSroot` len na stroji používateľa).
+- Testy MSTest, metódy `Oblast_CoOveruje`; do repa len testy s vlastnými dátami (korpusové overenie nad
+  `D:\INISSroot` len na stroji používateľa).
 - Skripty: generátory ukladať ako súbor (bash heredoc mení `\\` a `\n`); v `.ps1` žiadna diakritika.
 
 ## Commity (Conventional Commits)
 
-Commitovať len na požiadanie. Správy podľa [Conventional Commits](https://www.conventionalcommits.org/): `<typ>(<oblasť>): <popis>`.
+Commitovať len na požiadanie. Správy podľa [Conventional Commits](https://www.conventionalcommits.org/):
+`<typ>(<oblasť>): <popis>`.
 
-- Typ: `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `build` (projekty, balíky, inštalátor), `ci` (workflow), `style`, `chore`, `revert`.
+- Typ: `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `build` (projekty, balíky, inštalátor), `ci` (workflow),
+  `style`, `chore`, `revert`.
 - Oblasť nepovinná, malými písmenami (napr. `web`, `mcp`, `oauth`, `protocols`, `signage`, `persistence`, `e2e`).
-- Popis anglicky v rozkazovacom spôsobe, malým písmenom, bez bodky, najviac 72 znakov; názvy tried v backtickoch. Telo po prázdnom riadku vysvetľuje prečo; nekompatibilná zmena (API, MCP nástroje, formát exportu, databáza bez migrácie) má `!` a pätičku `BREAKING CHANGE: …`.
+- Popis anglicky v rozkazovacom spôsobe, malým písmenom, bez bodky, najviac 72 znakov; názvy tried v backtickoch.
+  Telo po prázdnom riadku vysvetľuje prečo; nekompatibilná zmena (API, MCP nástroje, formát exportu, databáza bez
+  migrácie) má `!` a pätičku `BREAKING CHANGE: …`.
 - Príklad: ``fix(protocols): answer `TSTA` for powered-off boards``.
