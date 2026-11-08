@@ -18,9 +18,3 @@ public interface IHttpsCertificates
     /// <summary>Overi, ci sa vlastny certifikat da pouzit (subor, heslo, sukromny kluc).</summary>
     Result Check(string certificate, string key, string password);
 }
-
-/// <summary>Certifikat na stiahnutie.</summary>
-/// <param name="Content">certifikat v tvare DER</param>
-/// <param name="FileName">meno suboru</param>
-/// <param name="Authority">je to certifikacna autorita (zariadenie ho ma nainstalovat ako doveryhodnu autoritu)</param>
-public sealed record HttpsCertificateFile(byte[] Content, string FileName, bool Authority);

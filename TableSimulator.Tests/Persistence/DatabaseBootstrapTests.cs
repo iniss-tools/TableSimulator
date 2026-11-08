@@ -171,7 +171,7 @@ public sealed class DatabaseBootstrapTests
         {
             HttpPort = 5480, AllowNetwork = true, RequireLogin = true, FontsFolder = "F", DesignsFolder = "D", ConnectHost = "10.0.0.5",
             MonitorFolder = "M", VirtualFolders = ["A", "B"], HttpsPort = 5481, HttpsRedirect = false, HttpsCertificate = "c.pfx", HttpsKey = "k.pem",
-            HttpsPassword = "sifrovane", Location = new Core.Boards.GeoLocation(48.7164, 21.2611)
+            HttpsPassword = "sifrovane", Location = new Core.Boards.AkSignal.GeoLocation(48.7164, 21.2611)
         };
 
         await using (var db = ServerDatabase.Open(paths.DatabaseFile))

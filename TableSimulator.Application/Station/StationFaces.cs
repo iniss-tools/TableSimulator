@@ -1,14 +1,8 @@
 using TableSimulator.Contracts.Station;
-using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Faces;
 using ContractAlign = TableSimulator.Contracts.Faces.FaceAlign;
 
 namespace TableSimulator.Application.Station;
-
-/// <summary>Celo tabule z dat stanice: predloha (bez kluca), napoveda kluca a hodnoty premennych pre tabulu.</summary>
-/// <param name="Face">predloha s nazvom, bez kluca</param>
-/// <param name="IdHint">napoveda kluca predlohy (druh tabule a stanica)</param>
-/// <param name="Values">hodnoty premennych cela pre tabulu</param>
-public sealed record StationFace(BoardFace Face, string IdHint, IReadOnlyDictionary<string, string> Values);
 
 /// <summary>
 /// Celo tabule z dat stanice podla druhu tabule: odchodova a prichodova maju pas s nadpisom a hodinami, nastupistna

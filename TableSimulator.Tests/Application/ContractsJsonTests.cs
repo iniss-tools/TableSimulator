@@ -1,8 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using TableSimulator.Application.Mapping;
-using TableSimulator.Contracts.Boards;
-using TableSimulator.Contracts.Frames;
 using TableSimulator.Contracts.Lines;
 using TableSimulator.Contracts.Live;
 using TableSimulator.Contracts.Signage;

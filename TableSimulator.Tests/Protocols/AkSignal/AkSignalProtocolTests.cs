@@ -1,4 +1,6 @@
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.AkSignal;
+using TableSimulator.Core.Boards.Announcements;
 using TableSimulator.Core.Protocols.AkSignal;
 using TableSimulator.Core.Recording;
 using TableSimulator.Core.Simulation;

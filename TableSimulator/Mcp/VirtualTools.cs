@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Text.Json;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
@@ -8,11 +9,13 @@ using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Auth;
 using TableSimulator.Application.Virtual;
 using TableSimulator.Contracts.Virtual;
+using TableSimulator.Mcp.Results;
 
 namespace TableSimulator.Mcp;
 
 /// <summary>Nastroje virtualnych tabul - XML tabul INISSu na obrazovkach ako v INISSView.</summary>
 [McpServerToolType]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class VirtualTools
 {
     [McpServerTool(Name = "list_virtual_boards", Title = "Virtual boards", ReadOnly = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]

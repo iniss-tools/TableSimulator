@@ -4,7 +4,6 @@ using System.Text.Json;
 using Npgsql;
 using TableSimulator.Contracts.Database;
 using TableSimulator.Contracts.Lines;
-using TableSimulator.Contracts.Settings;
 using TableSimulator.Contracts.State;
 
 namespace TableSimulator.Tests.Server;

@@ -1,15 +1,18 @@
 using System.ComponentModel;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol.Server;
 using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Auth;
 using TableSimulator.Application.Statistics;
 using TableSimulator.Contracts.Statistics;
+using TableSimulator.Mcp.Results;
 
 namespace TableSimulator.Mcp;
 
 /// <summary>Nastroje statistiky komunikacie.</summary>
 [McpServerToolType]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class StatisticsTools
 {
     [McpServerTool(Name = "get_traffic_statistics", Title = "Traffic statistics", ReadOnly = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]

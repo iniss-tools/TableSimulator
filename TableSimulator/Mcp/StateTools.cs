@@ -1,15 +1,18 @@
 using System.ComponentModel;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol.Server;
 using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Auth;
 using TableSimulator.Application.State;
 using TableSimulator.Contracts.State;
+using TableSimulator.Mcp.Results;
 
 namespace TableSimulator.Mcp;
 
 /// <summary>Nastroje stavu simulatora.</summary>
 [McpServerToolType]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class StateTools
 {
     [McpServerTool(Name = "get_status", Title = "Simulator status", ReadOnly = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]

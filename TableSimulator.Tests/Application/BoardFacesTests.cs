@@ -6,6 +6,7 @@ using TableSimulator.Application.Mapping;
 using TableSimulator.Contracts.Boards;
 using TableSimulator.Contracts.Live;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Faces;
 using TableSimulator.Core.Simulation;
 using TableSimulator.Core.Transport;
 

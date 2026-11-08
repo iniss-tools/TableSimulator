@@ -1,5 +1,6 @@
 using System.Globalization;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.RemoteAudio;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Protocols.Apel;
 using TableSimulator.Core.Protocols.Elektrocas;

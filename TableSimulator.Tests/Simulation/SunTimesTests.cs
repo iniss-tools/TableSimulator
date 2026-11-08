@@ -1,4 +1,4 @@
-using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.AkSignal;
 
 namespace TableSimulator.Tests.Simulation;
 

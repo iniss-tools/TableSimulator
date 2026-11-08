@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
@@ -6,33 +7,13 @@ using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Auth;
 using TableSimulator.Application.Boards;
 using TableSimulator.Application.State;
-using TableSimulator.Contracts.Boards;
-using TableSimulator.Contracts.Display;
 using TableSimulator.Contracts.State;
+using TableSimulator.Mcp.Results;
 
 namespace TableSimulator.Mcp;
 
-/// <summary>Rozhlas vzdialeneho INISSu (linka triedy 128) - fronty, hlasenia a ich prerusenie.</summary>
-public sealed record RemoteAudioResult(IReadOnlyList<RemoteAudioDevice> Devices);
-
-/// <summary>Rozhlas jedneho vzdialeneho INISSu.</summary>
-public sealed record RemoteAudioDevice(
-    [property: Description("Board id \"line-address\" of the device (address 0 on a class 128 line).")]
-    string Id,
-    string Name,
-    int Line,
-    [property: Description("Simulated power outage: queues answer as before, without announcements.")]
-    bool PoweredOff,
-    [property: Description("Simulated fault of the remote INISS: noReply = it does not answer (the controlling INISS logs remote timeout), delay = late answers.")]
-    FaultKind Fault,
-    [property: Description("Last message of the controlling INISS with queues; null = none yet.")]
-    DateTimeOffset? LastQueryAt,
-    [property: Description("Announcement queues; name \"\" = the only queue of the line.")]
-    IReadOnlyList<RemoteQueueDto> Queues,
-    [property: Description("Last announcements, newest last; result cancelled = broken by the operator (remote break).")]
-    IReadOnlyList<AnnouncementDto> Announcements);
-
 [McpServerToolType]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class RemoteAudioTools
 {
     private const int MaxAnnouncements = 50;

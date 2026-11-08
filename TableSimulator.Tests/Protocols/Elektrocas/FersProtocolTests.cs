@@ -1,4 +1,5 @@
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Flaps;
 using TableSimulator.Core.Protocols.Elektrocas;
 using TableSimulator.Core.Protocols.Remote;
 using TableSimulator.Core.Recording;

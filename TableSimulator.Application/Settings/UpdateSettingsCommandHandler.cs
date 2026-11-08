@@ -37,7 +37,7 @@ public sealed class UpdateSettingsCommandHandler(ISettingsStore settings, ILiveN
             // heslo sa vracia len ako priznak - bez noveho ostava ulozene
             HttpsPassword = request.HttpsPassword is null ? current.HttpsPassword : secrets.Protect(request.HttpsPassword),
             CheckUpdates = request.CheckUpdates,
-            Location = request.Location is { } location ? new Core.Boards.GeoLocation(location.Latitude, location.Longitude) : current.Location
+            Location = request.Location is { } location ? new Core.Boards.AkSignal.GeoLocation(location.Latitude, location.Longitude) : current.Location
         };
         // vlastny certifikat musi byt pouzitelny skor, nez sa ulozi - inak by server po restarte HTTPS nemal
         if (updated.HttpsPort > 0 && updated.HttpsCertificate.Length > 0

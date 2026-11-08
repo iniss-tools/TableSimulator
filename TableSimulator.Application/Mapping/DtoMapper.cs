@@ -10,6 +10,12 @@ using TableSimulator.Contracts.Recordings;
 using TableSimulator.Contracts.Settings;
 using TableSimulator.Contracts.Station;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.AkSignal;
+using TableSimulator.Core.Boards.Announcements;
+using TableSimulator.Core.Boards.Chars;
+using TableSimulator.Core.Boards.Elen;
+using TableSimulator.Core.Boards.Flaps;
+using TableSimulator.Core.Boards.RemoteAudio;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Monitor;
 using TableSimulator.Core.Protocols;
@@ -133,10 +139,10 @@ public static partial class DtoMapper
     private static AkSignalConditionsDto ToDto(AkSignalConditions c) =>
         new(c.LightsFault, c.HighPriority, c.OutputPowerError, c.AmpSupplyMissing, c.AmpCommError, c.BankNotSynced);
 
-    private static Contracts.Boards.TwilightMode ToDto(Core.Boards.TwilightMode mode) => mode switch
+    private static Contracts.Boards.TwilightMode ToDto(Core.Boards.AkSignal.TwilightMode mode) => mode switch
     {
-        Core.Boards.TwilightMode.Dark => Contracts.Boards.TwilightMode.Dark,
-        Core.Boards.TwilightMode.Light => Contracts.Boards.TwilightMode.Light,
+        Core.Boards.AkSignal.TwilightMode.Dark => Contracts.Boards.TwilightMode.Dark,
+        Core.Boards.AkSignal.TwilightMode.Light => Contracts.Boards.TwilightMode.Light,
         _ => Contracts.Boards.TwilightMode.Sun
     };
 
@@ -280,9 +286,9 @@ public static partial class DtoMapper
     private static AnnouncementDto ToDto(Announcement announcement) =>
         new(announcement.Id, announcement.Channel, announcement.Sounds.ToArray(), announcement.StartedAt, announcement.Result switch
         {
-            Core.Boards.AnnouncementResult.Completed => Contracts.Display.AnnouncementResult.Completed,
-            Core.Boards.AnnouncementResult.Stopped => Contracts.Display.AnnouncementResult.Stopped,
-            Core.Boards.AnnouncementResult.Cancelled => Contracts.Display.AnnouncementResult.Cancelled,
+            Core.Boards.Announcements.AnnouncementResult.Completed => Contracts.Display.AnnouncementResult.Completed,
+            Core.Boards.Announcements.AnnouncementResult.Stopped => Contracts.Display.AnnouncementResult.Stopped,
+            Core.Boards.Announcements.AnnouncementResult.Cancelled => Contracts.Display.AnnouncementResult.Cancelled,
             _ => Contracts.Display.AnnouncementResult.Playing
         })
         {

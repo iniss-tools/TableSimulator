@@ -1,15 +1,18 @@
 using System.ComponentModel;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol.Server;
 using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Archive;
 using TableSimulator.Application.Auth;
 using TableSimulator.Contracts.Archive;
+using TableSimulator.Mcp.Results;
 
 namespace TableSimulator.Mcp;
 
 /// <summary>Nastroje dennych archivov INISSu (priecinok logov z nastavenia simulatora).</summary>
 [McpServerToolType]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class ArchiveTools
 {
     /// <summary>Najviac zaznamov archivu v jednom vysledku.</summary>

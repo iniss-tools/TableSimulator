@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TableSimulator.Application.Faces;
 using TableSimulator.Core.Simulation;
+using TableSimulator.Core.Simulation.Events;
 using TableSimulator.Persistence.Simulation;
 
 namespace TableSimulator.Infrastructure.Persistence;

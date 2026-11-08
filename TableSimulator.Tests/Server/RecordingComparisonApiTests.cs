@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using TableSimulator.Contracts.Boards;
 using TableSimulator.Contracts.Recordings;
-using TableSimulator.Core.Lines;
 using TableSimulator.Core.Protocols;
 using TableSimulator.Core.Protocols.Elen;
 using TableSimulator.Core.Recording;

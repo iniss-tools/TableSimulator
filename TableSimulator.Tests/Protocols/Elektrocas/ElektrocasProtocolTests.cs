@@ -1,4 +1,5 @@
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Chars;
 using TableSimulator.Core.Protocols.Elektrocas;
 using TableSimulator.Core.Simulation;
 using static TableSimulator.Tests.Protocols.Elen.ElenFrameTests;

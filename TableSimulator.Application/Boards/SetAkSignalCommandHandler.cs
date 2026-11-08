@@ -1,7 +1,7 @@
 using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Abstractions.Results;
 using TableSimulator.Application.Mapping;
-using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.AkSignal;
 using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Application.Boards;

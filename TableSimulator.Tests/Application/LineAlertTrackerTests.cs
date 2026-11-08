@@ -1,5 +1,4 @@
 using TableSimulator.Application.Alerts;
-using TableSimulator.Core.Boards;
 using TableSimulator.Core.Protocols.AkSignal;
 using TableSimulator.Core.Simulation;
 

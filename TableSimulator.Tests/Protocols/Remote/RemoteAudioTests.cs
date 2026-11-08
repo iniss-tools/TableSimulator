@@ -1,5 +1,7 @@
 using TableSimulator.Application.Devices;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Announcements;
+using TableSimulator.Core.Boards.RemoteAudio;
 using TableSimulator.Core.Protocols.Remote;
 using TableSimulator.Core.Simulation;
 using ToolsCore.Iniss.Entities;

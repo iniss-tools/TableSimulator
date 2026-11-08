@@ -310,10 +310,3 @@ public sealed partial class HttpsCertificates(
     [LoggerMessage(Level = LogLevel.Warning, Message = "HTTPS: certifikacnu autoritu {File} sa neda precitat (iny pouzivatel alebo pocitac?) - vytvori sa nova")]
     private static partial void AuthorityUnreadable(ILogger logger, string file);
 }
-
-/// <summary>Vlastny certifikat sa neda pouzit.</summary>
-public sealed class CertificateLoadException(Error error) : Exception(error?.Description)
-{
-    /// <summary>Chyba s kodom pre obsluhu.</summary>
-    public Error Error { get; } = error ?? throw new ArgumentNullException(nameof(error));
-}

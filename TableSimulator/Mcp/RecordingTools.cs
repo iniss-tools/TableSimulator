@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
@@ -7,11 +8,13 @@ using TableSimulator.Application.Auth;
 using TableSimulator.Application.Recordings;
 using TableSimulator.Application.Replay;
 using TableSimulator.Contracts.Recordings;
+using TableSimulator.Mcp.Results;
 
 namespace TableSimulator.Mcp;
 
 /// <summary>Nastroje zaznamov komunikacie (.tsrec).</summary>
 [McpServerToolType]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class RecordingTools
 {
     /// <summary>Najviac krokov porovnania jednej tabule.</summary>

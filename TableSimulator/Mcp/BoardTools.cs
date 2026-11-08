@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Globalization;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol.Server;
 using TableSimulator.Application.Abstractions.Messaging;
@@ -10,11 +11,13 @@ using TableSimulator.Application.State;
 using TableSimulator.Contracts.Boards;
 using TableSimulator.Contracts.Designs;
 using TableSimulator.Contracts.State;
+using TableSimulator.Mcp.Results;
 
 namespace TableSimulator.Mcp;
 
 /// <summary>Nastroje tabul - co ukazuju a ich zmeny.</summary>
 [McpServerToolType]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class BoardTools
 {
     private const string IdDescription = "Board id \"line-address\", e.g. \"1-12\".";

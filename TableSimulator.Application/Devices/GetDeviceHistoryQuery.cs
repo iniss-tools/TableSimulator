@@ -5,6 +5,8 @@ using TableSimulator.Application.Abstractions.Results;
 using TableSimulator.Application.Settings;
 using TableSimulator.Application.Station;
 using TableSimulator.Contracts.AkSignal;
+using TableSimulator.Core.Boards.AkSignal;
+using TableSimulator.Core.Boards.History;
 using TableSimulator.Core.Boards;
 using TableSimulator.Core.Simulation;
 using ToolsCore.Iniss2.Devices;

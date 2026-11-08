@@ -2,6 +2,7 @@ using TableSimulator.Application.Live;
 using TableSimulator.Contracts.Live;
 using TableSimulator.Contracts.Scenarios;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.AkSignal;
 using TableSimulator.Core.Scenarios;
 using TableSimulator.Core.Simulation;
 using TableSimulator.Core.Transport;

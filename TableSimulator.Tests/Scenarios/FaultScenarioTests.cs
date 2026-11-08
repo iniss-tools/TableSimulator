@@ -4,6 +4,7 @@ using TableSimulator.Application.Live;
 using TableSimulator.Application.Scenarios;
 using TableSimulator.Contracts.Live;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Elen;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Protocols.Elen;
 using TableSimulator.Core.Scenarios;

@@ -1,4 +1,5 @@
-using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.AkSignal;
+using TableSimulator.Core.Boards.RemoteAudio;
 
 namespace TableSimulator.Core.Simulation;
 
@@ -16,20 +17,4 @@ public sealed record SimEnvironment
     /// (<see cref="AkSignalProfile.SoundSeconds" />, <see cref="RemoteAudioDisplay.DefaultSoundLength" />).
     /// </summary>
     public Func<string, TimeSpan?>? SoundLength { get; init; }
-}
-
-/// <summary>Vysledok preruseni hlasenia (<see cref="Simulator.BreakAnnouncement" />).</summary>
-public enum BreakResult
-{
-    /// <summary>Hlasenie sa prerusilo.</summary>
-    Broken,
-
-    /// <summary>Tabula nie je.</summary>
-    NotFound,
-
-    /// <summary>Tabula nie je rozhlas vzdialeneho INISSu.</summary>
-    NotRemoteAudio,
-
-    /// <summary>Nic nehra.</summary>
-    NothingPlaying
 }

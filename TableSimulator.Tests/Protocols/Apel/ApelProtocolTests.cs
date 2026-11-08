@@ -1,4 +1,5 @@
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Chars;
 using TableSimulator.Core.Protocols.Apel;
 using TableSimulator.Core.Protocols.Remote;
 using TableSimulator.Core.Recording;

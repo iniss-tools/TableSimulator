@@ -3,6 +3,9 @@ using TableSimulator.Contracts.Scenarios;
 using TableSimulator.Contracts.Lines;
 using TableSimulator.Contracts.Station;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.AkSignal;
+using TableSimulator.Core.Boards.Chars;
+using TableSimulator.Core.Boards.Flaps;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Simulation;
 
@@ -116,11 +119,11 @@ public static partial class RequestMapper
         ? new TwilightSensor()
         : new TwilightSensor { Mode = ToMode(sensor.Mode), OffsetMinutes = sensor.OffsetMinutes };
 
-    private static Core.Boards.TwilightMode ToMode(Contracts.Boards.TwilightMode mode) => mode switch
+    private static Core.Boards.AkSignal.TwilightMode ToMode(Contracts.Boards.TwilightMode mode) => mode switch
     {
-        Contracts.Boards.TwilightMode.Dark => Core.Boards.TwilightMode.Dark,
-        Contracts.Boards.TwilightMode.Light => Core.Boards.TwilightMode.Light,
-        _ => Core.Boards.TwilightMode.Sun
+        Contracts.Boards.TwilightMode.Dark => Core.Boards.AkSignal.TwilightMode.Dark,
+        Contracts.Boards.TwilightMode.Light => Core.Boards.AkSignal.TwilightMode.Light,
+        _ => Core.Boards.AkSignal.TwilightMode.Sun
     };
 
     private static AkSignalConditions ToConditions(AkSignalConditionsDto? c) => c is null

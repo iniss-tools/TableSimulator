@@ -1,4 +1,4 @@
-using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Elen;
 using TableSimulator.Core.Protocols.Elen;
 using static TableSimulator.Tests.Protocols.Elen.ElenFrameTests;
 

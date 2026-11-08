@@ -5,7 +5,7 @@ using TableSimulator.Application.Settings;
 using TableSimulator.Application.Virtual;
 using TableSimulator.Contracts.Live;
 using TableSimulator.Contracts.Station;
-using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Faces;
 using TableSimulator.Core.Simulation;
 using TableSimulator.Core.Transport;
 

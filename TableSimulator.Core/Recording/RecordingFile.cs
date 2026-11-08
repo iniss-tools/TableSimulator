@@ -3,28 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using TableSimulator.Core.Protocols;
-using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Core.Recording;
-
-/// <summary>
-/// Hlavicka zaznamu: kedy vznikol a nastavenie liniek a tabul v tom case (pri prehrati inde sa podla neho doplnia).
-/// </summary>
-/// <param name="Format">vzdy <see cref="RecordingFile.FormatName" /></param>
-/// <param name="Version">verzia formatu</param>
-/// <param name="Created">zaciatok zaznamu</param>
-/// <param name="Config">linky a tabule simulatora pri zaciatku zaznamu</param>
-/// <param name="Note">poznamka obsluhy</param>
-public sealed record RecordingHeader(string Format, int Version, DateTimeOffset Created, SimulatorConfig Config, string? Note);
-
-/// <summary>
-/// Kus prevadzky na linke - bajty tak, ako prisli (nie cele spravy), aby prehratie preslo tym istym skladanim sprav.
-/// </summary>
-/// <param name="Time">cas od zaciatku zaznamu [s]</param>
-/// <param name="Line">cislo linky</param>
-/// <param name="Direction">od INISSu (prehrava sa) alebo odpoved tabule (len na porovnanie)</param>
-/// <param name="Bytes">bajty</param>
-public sealed record RecordingEntry(double Time, int Line, FrameDirection Direction, byte[] Bytes);
 
 /// <summary>
 /// Zaznam komunikacie (<c>.tsrec</c>) - JSON Lines v UTF-8: prvy riadok hlavicka, potom jeden riadok na kus prevadzky

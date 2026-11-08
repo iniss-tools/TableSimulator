@@ -10,6 +10,7 @@ using TableSimulator.Contracts.Live;
 using TableSimulator.Core.Boards;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Simulation;
+using TableSimulator.Core.Simulation.Events;
 
 namespace TableSimulator.Infrastructure.Realtime;
 

@@ -10,11 +10,6 @@ using TableSimulator.Infrastructure.Auth;
 
 namespace TableSimulator.Infrastructure.Hosting;
 
-/// <summary>Ako dopadlo spustenie servera sluzby.</summary>
-/// <param name="Url">adresa bieziaceho servera; null = nespustil sa</param>
-/// <param name="Error">dovod; null = server sa nespustil v case a dovod nie je znamy</param>
-public sealed record ServerStart(string? Url, string? Error);
-
 /// <summary>
 /// Server ako sluzba Windows: bezi bez prihlaseneho pouzivatela, startuje so systemom (oneskorene) a po pade alebo
 /// restarte z weboveho rozhrania ho Windows spusti znova. Instalacia a odinstalovanie cez <c>sc.exe</c> (prava spravcu).

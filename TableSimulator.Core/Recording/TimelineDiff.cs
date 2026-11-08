@@ -1,27 +1,5 @@
 namespace TableSimulator.Core.Recording;
 
-/// <summary>Druh kroku porovnania.</summary>
-public enum DiffKind
-{
-    /// <summary>Rovnaky text v oboch zaznamoch.</summary>
-    Same,
-
-    /// <summary>Na tom istom mieste postupnosti iny text.</summary>
-    Changed,
-
-    /// <summary>Text len v prvom zazname.</summary>
-    Removed,
-
-    /// <summary>Text len v druhom zazname.</summary>
-    Added
-}
-
-/// <summary>Krok porovnania dvoch priebehov tabule.</summary>
-/// <param name="Kind">druh</param>
-/// <param name="A">stav v prvom zazname; null pri pridanom</param>
-/// <param name="B">stav v druhom zazname; null pri odobranom</param>
-public sealed record DiffStep(DiffKind Kind, BoardState? A, BoardState? B);
-
 /// <summary>
 /// Porovnanie postupnosti stavov tabule dvoch zaznamov ako <c>diff</c> (Myers): na case nezalezi, len na poradi, takze
 /// zaznamy mozu zacat inokedy. Susedne odobrane a pridane stavy sa sparuju ako zmenene.

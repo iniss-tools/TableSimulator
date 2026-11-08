@@ -4,65 +4,6 @@ using TableSimulator.Core.Protocols;
 
 namespace TableSimulator.Core.Statistics;
 
-/// <summary>Komunikacia linky za jednu minutu.</summary>
-/// <param name="Line">cislo linky</param>
-/// <param name="Minute">minuta od 1. 1. 1970 UTC (<see cref="TrafficMinutes.Of" />)</param>
-/// <param name="Ok">spravy od INISSu v poriadku</param>
-/// <param name="BadChecksum">spravy so zlym suctom</param>
-/// <param name="NoBoard">spravy na adresu bez tabule</param>
-/// <param name="Noise">useky bajtov mimo sprav (sum)</param>
-/// <param name="Other">ine chybne spravy (napr. koniec spravy v obsahu)</param>
-/// <param name="Replies">odpovede tabul bez poruchy</param>
-/// <param name="Faults">odpovede ovplyvnene predstieranou poruchou (aj vynechane)</param>
-/// <param name="BytesIn">bajty od INISSu</param>
-/// <param name="BytesOut">bajty INISSu</param>
-/// <param name="Connections">pripojenia INISSu</param>
-/// <param name="Disconnections">odpojenia INISSu</param>
-public sealed record LineMinute(
-    int Line,
-    long Minute,
-    int Ok,
-    int BadChecksum,
-    int NoBoard,
-    int Noise,
-    int Other,
-    int Replies,
-    int Faults,
-    long BytesIn,
-    long BytesOut,
-    int Connections,
-    int Disconnections);
-
-/// <summary>Komunikacia tabule za jednu minutu.</summary>
-/// <param name="Line">cislo linky</param>
-/// <param name="Address">adresa tabule</param>
-/// <param name="Minute">minuta od 1. 1. 1970 UTC</param>
-/// <param name="Frames">spravy pre tabulu</param>
-/// <param name="Acks">kladne odpovede</param>
-/// <param name="Naks">zaporne odpovede (aj predstierane poruchy)</param>
-/// <param name="Unanswered">spravy bez odpovede (porucha neodpoveda)</param>
-/// <param name="MaxGapMs">najdlhsia pauza medzi spravami, ktora sa v tejto minute skoncila [ms]; null = ziadna</param>
-public sealed record BoardMinute(int Line, int Address, long Minute, int Frames, int Acks, int Naks, int Unanswered, long? MaxGapMs);
-
-/// <summary>Minuty statistiky - cislo minuty od 1. 1. 1970 UTC.</summary>
-public static class TrafficMinutes
-{
-    /// <summary>Minuta, do ktorej cas patri.</summary>
-    public static long Of(DateTimeOffset time) => Math.DivRem(time.ToUnixTimeMilliseconds(), 60_000, out var rest) - (rest < 0 ? 1 : 0);
-
-    /// <summary>Zaciatok minuty.</summary>
-    public static DateTimeOffset Start(long minute) => DateTimeOffset.FromUnixTimeMilliseconds(minute * 60_000);
-}
-
-/// <summary>Zmena stavu linky (pripojenie, odpojenie, vypadok…).</summary>
-public sealed record LineStatusChange(int Line, DateTimeOffset Time, LineStatus Status, string? Detail);
-
-/// <summary>Co sa nazbieralo od posledneho odberu.</summary>
-public sealed record TrafficSample(IReadOnlyList<LineMinute> Lines, IReadOnlyList<BoardMinute> Boards, IReadOnlyList<LineStatusChange> StatusChanges)
-{
-    public bool IsEmpty => Lines.Count == 0 && Boards.Count == 0 && StatusChanges.Count == 0;
-}
-
 /// <summary>
 /// Pocitadla komunikacie od posledneho odberu - simulator ich plni pod svojim zamkom, server ich kazdu minutu odoberie
 /// a ulozi. Linky sa pocitaju priamo zo sprav a bajtov, tabule z rozdielu ich suhrnnych pocitadiel od posledneho odberu.

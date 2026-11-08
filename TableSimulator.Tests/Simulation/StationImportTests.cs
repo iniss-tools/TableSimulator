@@ -1,5 +1,5 @@
 using TableSimulator.Core.Boards;
-using TableSimulator.Core.Lines;
+using TableSimulator.Core.Boards.Chars;
 using TableSimulator.Core.Simulation;
 using static TableSimulator.Tests.Protocols.Elen.ElenFrameTests;
 

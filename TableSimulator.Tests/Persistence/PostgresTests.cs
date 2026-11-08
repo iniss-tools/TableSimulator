@@ -3,7 +3,6 @@ using Npgsql;
 using TableSimulator.Application.Audit;
 using TableSimulator.Application.Keys;
 using TableSimulator.Application.Settings;
-using TableSimulator.Application.Statistics;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Simulation;
 using TableSimulator.Core.Statistics;

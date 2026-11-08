@@ -1,4 +1,5 @@
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Flaps;
 using TableSimulator.Core.Protocols.Ers;
 using TableSimulator.Core.Recording;
 using TableSimulator.Core.Simulation;

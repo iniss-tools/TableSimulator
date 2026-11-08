@@ -1,4 +1,9 @@
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.AkSignal;
+using TableSimulator.Core.Boards.Chars;
+using TableSimulator.Core.Boards.Elen;
+using TableSimulator.Core.Boards.Flaps;
+using TableSimulator.Core.Boards.RemoteAudio;
 using TableSimulator.Core.Protocols.Elektrocas;
 
 namespace TableSimulator.Core.Recording;

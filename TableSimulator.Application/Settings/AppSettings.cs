@@ -78,5 +78,5 @@ public sealed record AppSettings
     public bool CheckUpdates { get; init; } = true;
 
     /// <summary>Poloha pre vychod a zapad slnka - snimac tmy ustredni AK Signal.</summary>
-    public Core.Boards.GeoLocation Location { get; init; } = Core.Boards.GeoLocation.Default;
+    public Core.Boards.AkSignal.GeoLocation Location { get; init; } = Core.Boards.AkSignal.GeoLocation.Default;
 }

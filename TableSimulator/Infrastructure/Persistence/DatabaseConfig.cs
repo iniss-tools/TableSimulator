@@ -11,35 +11,6 @@ using TableSimulator.Persistence;
 
 namespace TableSimulator.Infrastructure.Persistence;
 
-/// <summary>Pripojenie k PostgreSQL v <c>database.json</c>.</summary>
-public sealed record PostgresConfig
-{
-    public string Host { get; init; } = "localhost";
-    public int Port { get; init; } = 5432;
-    public string Database { get; init; } = "tablesimulator";
-
-    /// <summary>Pouzivatel; prazdny = prihlasenie Windows (SSPI/Kerberos), ak ho server PostgreSQL dovoli.</summary>
-    public string Username { get; init; } = "";
-
-    /// <summary>Citatelne heslo - napisane rucne; server ho pri starte zasifruje do <see cref="ProtectedPassword" />.</summary>
-    public string? Password { get; init; }
-
-    /// <summary>Heslo zasifrovane DPAPI pre tento pocitac (kopia suboru inde nepomoze).</summary>
-    public string? ProtectedPassword { get; init; }
-
-    /// <summary>Dalsie parametre pripojenia Npgsql, napr. <c>SSL Mode=Require</c>.</summary>
-    public string Options { get; init; } = "";
-}
-
-/// <summary>Obsah <c>database.json</c>: poskytovatel databazy a pripojenie k PostgreSQL.</summary>
-public sealed record DatabaseConfigFile
-{
-    /// <summary><c>sqlite</c> (predvolene) alebo <c>postgres</c>.</summary>
-    public string Provider { get; init; } = DatabaseConfig.Sqlite;
-
-    public PostgresConfig? Postgres { get; init; }
-}
-
 /// <summary>
 /// Vyber databazy simulatora mimo nej samej - subor <c>database.json</c> v priecinku nastaveni. Bez suboru SQLite
 /// v <c>tablesimulator.db</c>. Heslo k PostgreSQL je v subore zasifrovane DPAPI pre pocitac (ako kluce ochrany dat);
@@ -156,19 +127,4 @@ public static class DatabaseConfig
             throw new InvalidOperationException("The PostgreSQL password in database.json cannot be decrypted on this computer - enter it again.", e);
         }
     }
-}
-
-internal static partial class DatabaseLog
-{
-    [LoggerMessage(Level = LogLevel.Information, Message = "Heslo k PostgreSQL v {File} je teraz zasifrovane pre tento pocitac")]
-    public static partial void PasswordProtected(ILogger logger, string file);
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Databaza: {Database}")]
-    public static partial void Using(ILogger logger, string database);
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Nova databaza PostgreSQL prevzala nastavenie servera zo SQLite {File}")]
-    public static partial void SettingsFromSqlite(ILogger logger, string file);
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Vybrana databaza: {Database} - pouzije sa po restarte servera")]
-    public static partial void Selected(ILogger logger, string database);
 }

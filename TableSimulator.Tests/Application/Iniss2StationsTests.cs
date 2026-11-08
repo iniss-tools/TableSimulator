@@ -3,7 +3,7 @@ using TableSimulator.Application.Mapping;
 using TableSimulator.Application.Settings;
 using TableSimulator.Application.Station;
 using TableSimulator.Contracts.Station;
-using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.AkSignal;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Simulation;
 using ToolsCore.Iniss.Tools;

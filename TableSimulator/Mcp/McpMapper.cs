@@ -5,6 +5,7 @@ using TableSimulator.Contracts.Frames;
 using TableSimulator.Contracts.Recordings;
 using TableSimulator.Contracts.State;
 using TableSimulator.Contracts.Statistics;
+using TableSimulator.Mcp.Results;
 
 namespace TableSimulator.Mcp;
 

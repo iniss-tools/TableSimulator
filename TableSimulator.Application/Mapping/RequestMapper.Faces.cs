@@ -1,5 +1,5 @@
 using TableSimulator.Contracts.Faces;
-using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Faces;
 
 namespace TableSimulator.Application.Mapping;
 
@@ -29,22 +29,22 @@ public static partial class RequestMapper
         {
             Kind = element.Kind switch
             {
-                Contracts.Faces.FaceElementKind.Rect => Core.Boards.FaceElementKind.Rect,
-                Contracts.Faces.FaceElementKind.Text => Core.Boards.FaceElementKind.Text,
-                Contracts.Faces.FaceElementKind.Clock => Core.Boards.FaceElementKind.Clock,
-                Contracts.Faces.FaceElementKind.Symbol => Core.Boards.FaceElementKind.Symbol,
-                Contracts.Faces.FaceElementKind.Image => Core.Boards.FaceElementKind.Image,
+                Contracts.Faces.FaceElementKind.Rect => Core.Boards.Faces.FaceElementKind.Rect,
+                Contracts.Faces.FaceElementKind.Text => Core.Boards.Faces.FaceElementKind.Text,
+                Contracts.Faces.FaceElementKind.Clock => Core.Boards.Faces.FaceElementKind.Clock,
+                Contracts.Faces.FaceElementKind.Symbol => Core.Boards.Faces.FaceElementKind.Symbol,
+                Contracts.Faces.FaceElementKind.Image => Core.Boards.Faces.FaceElementKind.Image,
                 _ => throw new ArgumentOutOfRangeException(nameof(element), element.Kind, null)
             },
             Anchor = element.Anchor switch
             {
-                Contracts.Faces.FaceAnchor.Face => Core.Boards.FaceAnchor.Face,
-                Contracts.Faces.FaceAnchor.Matrix => Core.Boards.FaceAnchor.Matrix,
-                Contracts.Faces.FaceAnchor.Row => Core.Boards.FaceAnchor.Row,
-                Contracts.Faces.FaceAnchor.Top => Core.Boards.FaceAnchor.Top,
-                Contracts.Faces.FaceAnchor.Bottom => Core.Boards.FaceAnchor.Bottom,
-                Contracts.Faces.FaceAnchor.Left => Core.Boards.FaceAnchor.Left,
-                Contracts.Faces.FaceAnchor.Right => Core.Boards.FaceAnchor.Right,
+                Contracts.Faces.FaceAnchor.Face => Core.Boards.Faces.FaceAnchor.Face,
+                Contracts.Faces.FaceAnchor.Matrix => Core.Boards.Faces.FaceAnchor.Matrix,
+                Contracts.Faces.FaceAnchor.Row => Core.Boards.Faces.FaceAnchor.Row,
+                Contracts.Faces.FaceAnchor.Top => Core.Boards.Faces.FaceAnchor.Top,
+                Contracts.Faces.FaceAnchor.Bottom => Core.Boards.Faces.FaceAnchor.Bottom,
+                Contracts.Faces.FaceAnchor.Left => Core.Boards.Faces.FaceAnchor.Left,
+                Contracts.Faces.FaceAnchor.Right => Core.Boards.Faces.FaceAnchor.Right,
                 _ => throw new ArgumentOutOfRangeException(nameof(element), element.Anchor, null)
             },
             Row = element.Row,
@@ -54,16 +54,16 @@ public static partial class RequestMapper
             Height = element.Height,
             Align = element.Align switch
             {
-                Contracts.Faces.FaceAlign.Left => Core.Boards.FaceAlign.Left,
-                Contracts.Faces.FaceAlign.Center => Core.Boards.FaceAlign.Center,
-                Contracts.Faces.FaceAlign.Right => Core.Boards.FaceAlign.Right,
+                Contracts.Faces.FaceAlign.Left => Core.Boards.Faces.FaceAlign.Left,
+                Contracts.Faces.FaceAlign.Center => Core.Boards.Faces.FaceAlign.Center,
+                Contracts.Faces.FaceAlign.Right => Core.Boards.Faces.FaceAlign.Right,
                 _ => throw new ArgumentOutOfRangeException(nameof(element), element.Align, null)
             },
             VAlign = element.VAlign switch
             {
-                Contracts.Faces.FaceVAlign.Top => Core.Boards.FaceVAlign.Top,
-                Contracts.Faces.FaceVAlign.Middle => Core.Boards.FaceVAlign.Middle,
-                Contracts.Faces.FaceVAlign.Bottom => Core.Boards.FaceVAlign.Bottom,
+                Contracts.Faces.FaceVAlign.Top => Core.Boards.Faces.FaceVAlign.Top,
+                Contracts.Faces.FaceVAlign.Middle => Core.Boards.Faces.FaceVAlign.Middle,
+                Contracts.Faces.FaceVAlign.Bottom => Core.Boards.Faces.FaceVAlign.Bottom,
                 _ => throw new ArgumentOutOfRangeException(nameof(element), element.VAlign, null)
             },
             Text = element.Text,
@@ -79,12 +79,12 @@ public static partial class RequestMapper
             Spacing = element.Spacing,
             Format = element.Format switch
             {
-                Contracts.Faces.FaceClockFormat.HourMinute => Core.Boards.FaceClockFormat.HourMinute,
-                Contracts.Faces.FaceClockFormat.HourMinutePadded => Core.Boards.FaceClockFormat.HourMinutePadded,
-                Contracts.Faces.FaceClockFormat.WithSeconds => Core.Boards.FaceClockFormat.WithSeconds,
+                Contracts.Faces.FaceClockFormat.HourMinute => Core.Boards.Faces.FaceClockFormat.HourMinute,
+                Contracts.Faces.FaceClockFormat.HourMinutePadded => Core.Boards.Faces.FaceClockFormat.HourMinutePadded,
+                Contracts.Faces.FaceClockFormat.WithSeconds => Core.Boards.Faces.FaceClockFormat.WithSeconds,
                 _ => throw new ArgumentOutOfRangeException(nameof(element), element.Format, null)
             },
-            Render = element.Render == Contracts.Faces.FaceRender.Display ? Core.Boards.FaceRender.Display : Core.Boards.FaceRender.Text,
+            Render = element.Render == Contracts.Faces.FaceRender.Display ? Core.Boards.Faces.FaceRender.Display : Core.Boards.Faces.FaceRender.Text,
             Symbol = ToSymbol(element.Symbol),
             // obrazok len pri prvku obrazok - inde by bol zbytocnou zatazou predlohy
             Image = element.Kind == Contracts.Faces.FaceElementKind.Image ? element.Image.Trim() : "",
@@ -92,19 +92,19 @@ public static partial class RequestMapper
         };
     }
 
-    private static Core.Boards.FaceSymbol ToSymbol(Contracts.Faces.FaceSymbol symbol) =>
+    private static Core.Boards.Faces.FaceSymbol ToSymbol(Contracts.Faces.FaceSymbol symbol) =>
         symbol switch
         {
-            Contracts.Faces.FaceSymbol.ArrowUp => Core.Boards.FaceSymbol.ArrowUp,
-            Contracts.Faces.FaceSymbol.ArrowDown => Core.Boards.FaceSymbol.ArrowDown,
-            Contracts.Faces.FaceSymbol.ArrowLeft => Core.Boards.FaceSymbol.ArrowLeft,
-            Contracts.Faces.FaceSymbol.ArrowRight => Core.Boards.FaceSymbol.ArrowRight,
-            Contracts.Faces.FaceSymbol.ArrowUpLeft => Core.Boards.FaceSymbol.ArrowUpLeft,
-            Contracts.Faces.FaceSymbol.ArrowUpRight => Core.Boards.FaceSymbol.ArrowUpRight,
-            Contracts.Faces.FaceSymbol.ArrowDownLeft => Core.Boards.FaceSymbol.ArrowDownLeft,
-            Contracts.Faces.FaceSymbol.ArrowDownRight => Core.Boards.FaceSymbol.ArrowDownRight,
-            Contracts.Faces.FaceSymbol.ArrowsLeftRight => Core.Boards.FaceSymbol.ArrowsLeftRight,
-            Contracts.Faces.FaceSymbol.ArrowsUpDown => Core.Boards.FaceSymbol.ArrowsUpDown,
+            Contracts.Faces.FaceSymbol.ArrowUp => Core.Boards.Faces.FaceSymbol.ArrowUp,
+            Contracts.Faces.FaceSymbol.ArrowDown => Core.Boards.Faces.FaceSymbol.ArrowDown,
+            Contracts.Faces.FaceSymbol.ArrowLeft => Core.Boards.Faces.FaceSymbol.ArrowLeft,
+            Contracts.Faces.FaceSymbol.ArrowRight => Core.Boards.Faces.FaceSymbol.ArrowRight,
+            Contracts.Faces.FaceSymbol.ArrowUpLeft => Core.Boards.Faces.FaceSymbol.ArrowUpLeft,
+            Contracts.Faces.FaceSymbol.ArrowUpRight => Core.Boards.Faces.FaceSymbol.ArrowUpRight,
+            Contracts.Faces.FaceSymbol.ArrowDownLeft => Core.Boards.Faces.FaceSymbol.ArrowDownLeft,
+            Contracts.Faces.FaceSymbol.ArrowDownRight => Core.Boards.Faces.FaceSymbol.ArrowDownRight,
+            Contracts.Faces.FaceSymbol.ArrowsLeftRight => Core.Boards.Faces.FaceSymbol.ArrowsLeftRight,
+            Contracts.Faces.FaceSymbol.ArrowsUpDown => Core.Boards.Faces.FaceSymbol.ArrowsUpDown,
             _ => throw new ArgumentOutOfRangeException(nameof(symbol), symbol, null)
         };
 }

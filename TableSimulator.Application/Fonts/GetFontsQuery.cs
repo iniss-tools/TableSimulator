@@ -1,5 +1,4 @@
 using TableSimulator.Application.Abstractions.Messaging;
-using TableSimulator.Application.Abstractions.Results;
 
 namespace TableSimulator.Application.Fonts;
 

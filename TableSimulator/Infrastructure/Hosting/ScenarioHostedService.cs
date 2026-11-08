@@ -40,9 +40,3 @@ public sealed class ScenarioHostedService(ScenarioRunner runner, ILogger<Scenari
         await runner.StopAllAsync().ConfigureAwait(false);
     }
 }
-
-internal static partial class ScenarioLog
-{
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Scenar porucha sa nepodarilo posunut")]
-    public static partial void TickFailed(ILogger logger, Exception error);
-}

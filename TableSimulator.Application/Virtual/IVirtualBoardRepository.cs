@@ -21,6 +21,3 @@ public interface IVirtualBoardRepository
     /// </summary>
     Task<VirtualImportCounts> ImportAsync(IReadOnlyList<VirtualBoard> boards, bool replace, CancellationToken cancellationToken);
 }
-
-/// <summary>Kolko tabul import pridal, prepisal a vynechal.</summary>
-public readonly record struct VirtualImportCounts(int Added, int Replaced, int Skipped);

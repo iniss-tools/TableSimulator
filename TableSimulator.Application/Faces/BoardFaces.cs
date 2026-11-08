@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Faces;
 using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Application.Faces;

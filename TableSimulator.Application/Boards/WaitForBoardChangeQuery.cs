@@ -3,6 +3,7 @@ using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Abstractions.Results;
 using TableSimulator.Application.Mapping;
 using TableSimulator.Contracts.Boards;
+using TableSimulator.Core.Simulation.Events;
 using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Application.Boards;

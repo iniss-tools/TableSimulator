@@ -1,7 +1,7 @@
 using System.Globalization;
 using FluentValidation;
 using TableSimulator.Contracts.Boards;
-using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Chars;
 
 namespace TableSimulator.Application.Boards;
 

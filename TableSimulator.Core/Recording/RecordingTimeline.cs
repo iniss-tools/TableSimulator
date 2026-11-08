@@ -1,25 +1,7 @@
-using System.Globalization;
-using TableSimulator.Core.Boards;
 using TableSimulator.Core.Protocols;
 using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Core.Recording;
-
-/// <summary>Co tabula ukazovala od casu <paramref name="Time" /> (s od zaciatku zaznamu) - riadky textu zhora.</summary>
-public sealed record BoardState(double Time, IReadOnlyList<string> Rows)
-{
-    /// <summary>Kedy sa tabula ustalila - posledna zmena, ktora k stavu patri [s]; na zobrazenie tabule v tomto stave.</summary>
-    public double Settled { get; init; } = Time;
-
-    /// <summary>Kluc na porovnanie obsahu (bez casu).</summary>
-    public string Key { get; } = string.Join('\n', Rows);
-}
-
-/// <summary>Zmeny textu jednej tabule v zazname.</summary>
-/// <param name="Id">tabula <c>linka-adresa</c></param>
-/// <param name="Name">nazov tabule v zazname</param>
-/// <param name="States">stavy v poradi casu (kazdy sa lisi od predchadzajuceho)</param>
-public sealed record BoardTimeline(string Id, string Name, IReadOnlyList<BoardState> States);
 
 /// <summary>
 /// Prehratie zaznamu bez cakania do vlastneho simulatora (bez liniek a bez vplyvu na beziaci simulator) s hodinami
@@ -137,28 +119,5 @@ public static class RecordingTimeline
         public DateTimeOffset Now { get; set; } = start;
 
         public override DateTimeOffset GetUtcNow() => Now;
-    }
-}
-
-/// <summary>Poradie tabul podla linky a adresy (<c>2-10</c> za <c>2-9</c>).</summary>
-public sealed class BoardIdComparer : IComparer<string>
-{
-    public static BoardIdComparer Instance { get; } = new();
-
-    public int Compare(string? x, string? y)
-    {
-        var a = Parts(x);
-        var b = Parts(y);
-        var line = a.Line.CompareTo(b.Line);
-        return line != 0 ? line : a.Address != b.Address ? a.Address.CompareTo(b.Address) : string.CompareOrdinal(x, y);
-    }
-
-    private static (int Line, int Address) Parts(string? id)
-    {
-        var parts = (id ?? "").Split('-');
-        return parts.Length == 2 && int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var line)
-                                 && int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var address)
-            ? (line, address)
-            : (int.MaxValue, int.MaxValue);
     }
 }

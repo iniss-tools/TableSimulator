@@ -4,14 +4,6 @@ using ToolsCore.Iniss.Tools;
 namespace TableSimulator.Core.Monitor;
 
 /// <summary>
-/// Predloha tabule - typ panelu z programu Monitor prevedeny na profil simulatora.
-/// </summary>
-/// <param name="File">subor typu panelu (.cfg)</param>
-/// <param name="Name">nazov typu panelu</param>
-/// <param name="Profile">profil tabule</param>
-public sealed record BoardTemplate(string File, string Name, BoardProfile Profile);
-
-/// <summary>
 /// Instalacia programu ELEN Monitor (<c>Sim\*.cfg</c>, <c>Sim\CONFIG</c>, <c>Sim\FONT</c>, <c>Projects\*.prj</c>, <c>Monitor.INI</c>)
 /// ako zdroj predloh tabul a projektov.
 /// </summary>

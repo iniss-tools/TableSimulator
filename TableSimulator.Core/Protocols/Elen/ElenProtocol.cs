@@ -1,5 +1,6 @@
 using System.Globalization;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Elen;
 
 namespace TableSimulator.Core.Protocols.Elen;
 

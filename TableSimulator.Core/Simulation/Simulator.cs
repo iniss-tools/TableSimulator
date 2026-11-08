@@ -1,11 +1,16 @@
 using System.Globalization;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.AkSignal;
+using TableSimulator.Core.Boards.Flaps;
+using TableSimulator.Core.Boards.History;
+using TableSimulator.Core.Boards.RemoteAudio;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Protocols;
 using TableSimulator.Core.Protocols.AkSignal;
 using TableSimulator.Core.Protocols.Dtr;
 using TableSimulator.Core.Protocols.Apel;
 using TableSimulator.Core.Protocols.Elsvo;
+using TableSimulator.Core.Simulation.Events;
 using TableSimulator.Core.Statistics;
 using TableSimulator.Core.Protocols.Elektrocas;
 using TableSimulator.Core.Protocols.Elen;
@@ -14,40 +19,6 @@ using TableSimulator.Core.Protocols.Remote;
 using TableSimulator.Core.Recording;
 
 namespace TableSimulator.Core.Simulation;
-
-/// <summary>
-/// Udalost simulatora pre rozhranie.
-/// </summary>
-public abstract record SimulatorEvent;
-
-/// <summary>Tabula zmenila obsah alebo nastavenie.</summary>
-public sealed record BoardChanged(string BoardId) : SimulatorEvent;
-
-/// <summary>Linka zmenila stav alebo nastavenie.</summary>
-public sealed record LineChanged(int Line) : SimulatorEvent;
-
-/// <summary>Pribudli alebo ubudli linky ci tabule.</summary>
-public sealed record StructureChanged : SimulatorEvent;
-
-/// <summary>Novy zaznam komunikacie.</summary>
-public sealed record FrameLogged(FrameRecord Record) : SimulatorEvent;
-
-/// <summary>
-/// Odkial prisli bajty linky.
-/// </summary>
-public enum TrafficSource
-{
-    /// <summary>Od INISSu po linke.</summary>
-    Line,
-
-    /// <summary>Z prehravaneho zaznamu - nezapisuje sa do prebiehajuceho zaznamu.</summary>
-    Replay
-}
-
-/// <summary>
-/// Odpoved INISSu - posle sa po <see cref="Delay" />.
-/// </summary>
-public sealed record LineReply(byte[] Bytes, TimeSpan Delay);
 
 /// <summary>
 /// Simulator tabul: linky, tabule na nich a zaznam komunikacie. Bez sietoveho prenosu - ten zabezpecuje

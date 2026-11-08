@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TableSimulator.Application.Devices;
-using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.History;
 using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Persistence.Devices;

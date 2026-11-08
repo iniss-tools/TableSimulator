@@ -1,5 +1,6 @@
 using System.Text;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Elen;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Protocols;
 using TableSimulator.Core.Protocols.Elen;

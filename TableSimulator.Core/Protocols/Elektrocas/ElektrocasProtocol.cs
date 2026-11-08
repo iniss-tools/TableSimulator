@@ -1,5 +1,7 @@
 using System.Globalization;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Chars;
+using TableSimulator.Core.Boards.Flaps;
 using ToolsCore.Iniss.Tools;
 
 namespace TableSimulator.Core.Protocols.Elektrocas;

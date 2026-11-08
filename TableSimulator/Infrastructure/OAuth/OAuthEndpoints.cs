@@ -1,17 +1,9 @@
-using System.Globalization;
-using System.Net;
-using System.Security.Claims;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Authentication;
-using TableSimulator.Application.Auth;
 using TableSimulator.Application.OAuth;
-using TableSimulator.Infrastructure.Auth;
-using TableSimulator.Infrastructure.Mcp;
 
 namespace TableSimulator.Infrastructure.OAuth;
 

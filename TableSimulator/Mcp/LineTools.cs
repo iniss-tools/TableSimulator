@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Globalization;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol.Server;
 using TableSimulator.Application.Abstractions.Messaging;
@@ -10,11 +11,13 @@ using TableSimulator.Application.Station;
 using TableSimulator.Contracts.Lines;
 using TableSimulator.Contracts.State;
 using TableSimulator.Contracts.Station;
+using TableSimulator.Mcp.Results;
 
 namespace TableSimulator.Mcp;
 
 /// <summary>Nastroje liniek a nacitania stanice z INISSu.</summary>
 [McpServerToolType]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class LineTools
 {
     [McpServerTool(Name = "set_line", Title = "Create or change line", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false,

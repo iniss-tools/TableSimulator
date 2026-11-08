@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Security.Cryptography;
 using System.Text.Json;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol;
 using ModelContextProtocol.Extensions.Apps;
@@ -18,11 +19,13 @@ using TableSimulator.Contracts.Faces;
 using TableSimulator.Contracts.Fonts;
 using TableSimulator.Contracts.Virtual;
 using TableSimulator.Infrastructure.Hosting;
+using TableSimulator.Mcp.Results;
 
 namespace TableSimulator.Mcp;
 
 /// <summary>Nastroje so zobrazenim v klientovi s MCP Apps (VS Code, aplikacia Claude) - zive tabule a virtualne tabule priamo v chate.</summary>
 [McpServerToolType]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class AppTools
 {
     [McpServerTool(Name = "show_board", Title = "Show board", ReadOnly = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
@@ -116,22 +119,3 @@ public static class AppTools
         }
     }
 }
-
-/// <summary>Udaje zobrazenia tabule pre aplikaciu MCP Apps (web/src/mcp-app/board-view.ts).</summary>
-public sealed record BoardViewData(
-    [property: Description("The board changed; false = the timeout expired.")]
-    bool Changed,
-    BoardDto Board,
-    [property: Description("Content of design.json of the design used; null = default of the renderer.")]
-    SetDesignRequest? Design,
-    BoardFaceDto? Face,
-    [property: Description("ELEN font file of the board; null = none or the view has it already.")]
-    FontFileDto? Font);
-
-/// <summary>Udaje zobrazenia virtualnej tabule pre aplikaciu MCP Apps (web/src/mcp-app/VirtualApp.tsx).</summary>
-public sealed record VirtualViewData(
-    [property: Description("The content changed; false = the timeout expired.")]
-    bool Changed,
-    [property: Description("Hash of the content; pass it as afterHash to wait for the next change.")]
-    string Hash,
-    VirtualViewDto View);

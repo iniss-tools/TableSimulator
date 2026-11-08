@@ -1,15 +1,18 @@
 using System.ComponentModel;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol.Server;
 using TableSimulator.Application.Abstractions.Messaging;
 using TableSimulator.Application.Auth;
 using TableSimulator.Application.Scenarios;
 using TableSimulator.Contracts.Scenarios;
+using TableSimulator.Mcp.Results;
 
 namespace TableSimulator.Mcp;
 
 /// <summary>Nastroje scenarov poruch.</summary>
 [McpServerToolType]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class ScenarioTools
 {
     [McpServerTool(Name = "list_scenarios", Title = "Fault scenarios", ReadOnly = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
@@ -79,6 +82,3 @@ public static class ScenarioTools
         CancellationToken cancellationToken) =>
         (await scenarios.Handle(new GetFaultScenariosQuery(), cancellationToken)).ValueOrThrow().First(s => s.Id == id);
 }
-
-/// <summary>Scenare poruch.</summary>
-public sealed record ScenariosResult(IReadOnlyList<FaultScenarioDto> Scenarios);

@@ -8,9 +8,6 @@ namespace TableSimulator.Application.Signage;
 /// <summary>Zaloha informacnych panelov ako ZIP (definicie a nahrate subory).</summary>
 public sealed record ExportSignageQuery : IQuery<SignageExportFile>;
 
-/// <summary>Docasny subor zalohy (po odoslani sa zmaze) a meno na stiahnutie.</summary>
-public sealed record SignageExportFile(string Path, string FileName);
-
 public sealed class ExportSignageQueryHandler(ISignageRepository repository, SignageMediaStore store, TimeProvider time)
     : IQueryHandler<ExportSignageQuery, SignageExportFile>
 {

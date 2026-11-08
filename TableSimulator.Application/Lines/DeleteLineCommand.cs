@@ -1,6 +1,5 @@
 using System.Globalization;
 using TableSimulator.Application.Abstractions.Messaging;
-using TableSimulator.Application.Abstractions.Results;
 using TableSimulator.Application.Audit;
 
 namespace TableSimulator.Application.Lines;

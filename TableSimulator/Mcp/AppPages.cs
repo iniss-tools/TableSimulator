@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol.Extensions.Apps;
 using ModelContextProtocol.Server;
@@ -13,6 +14,7 @@ namespace TableSimulator.Mcp;
 /// udaje si aplikacia berie z nastrojov board_view a virtual_view.
 /// </summary>
 [McpServerResourceType]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class AppPages
 {
     public const string BoardUri = "ui://tablesimulator/board.html";

@@ -13,7 +13,7 @@ public sealed class DeviceClock(Simulator simulator, ISettingsStore settings)
 {
     private readonly Lock _lock = new();
     private string? _program;
-    private Core.Boards.GeoLocation? _location;
+    private Core.Boards.AkSignal.GeoLocation? _location;
 
     /// <summary>Nastavi okolie podla nastavenia, ak sa program INISSu zmenil, a posunie zariadenia v case.</summary>
     public void Tick()

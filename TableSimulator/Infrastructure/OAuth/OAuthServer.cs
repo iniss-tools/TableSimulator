@@ -4,9 +4,6 @@ using TableSimulator.Application.OAuth;
 
 namespace TableSimulator.Infrastructure.OAuth;
 
-/// <summary>Tokeny vydane klientovi (odpoved /oauth/token).</summary>
-public sealed record OAuthTokens(string AccessToken, string RefreshToken, TimeSpan ExpiresIn);
-
 /// <summary>
 /// Server OAuth pre MCP: registracia klientov, vymena kodu za tokeny (PKCE S256), obnovovanie s vymenou obnovovacieho
 /// tokenu a overenie pristupoveho tokenu. Pouzitie uz vymeneneho obnovovacieho tokenu (unik) povolenie zrusi;

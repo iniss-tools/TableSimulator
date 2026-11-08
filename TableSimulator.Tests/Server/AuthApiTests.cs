@@ -2,15 +2,12 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using TableSimulator.Application.Auth;
 using TableSimulator.Contracts.Auth;
 using TableSimulator.Contracts.Lines;
-using TableSimulator.Infrastructure.Auth;
 using TableSimulator.Persistence.Identity;
 
 namespace TableSimulator.Tests.Server;

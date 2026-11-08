@@ -1,5 +1,4 @@
-using TableSimulator.Core.Boards;
-using TableSimulator.Core.Lines;
+using TableSimulator.Core.Boards.Elen;
 using TableSimulator.Core.Protocols;
 using TableSimulator.Core.Protocols.Elen;
 using TableSimulator.Core.Recording;

@@ -3,7 +3,7 @@ using TableSimulator.Application.Faces;
 using TableSimulator.Application.Mapping;
 using TableSimulator.Contracts.Boards;
 using TableSimulator.Contracts.Faces;
-using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Chars;
 using ContractKind = TableSimulator.Contracts.Faces.FaceElementKind;
 using ContractSymbol = TableSimulator.Contracts.Faces.FaceSymbol;
 
@@ -53,8 +53,8 @@ public class FaceSymbolsImagesTests
         var stored = BoardFaces.Deserialize(new FaceRecord("logo", core.Name, BoardFaces.Serialize(core)));
         var back = DtoMapper.ToDto(stored, false);
 
-        Assert.AreEqual(Core.Boards.FaceElementKind.Symbol, core.Elements[0].Kind);
-        Assert.AreEqual(Core.Boards.FaceSymbol.ArrowDownLeft, stored.Elements[0].Symbol);
+        Assert.AreEqual(Core.Boards.Faces.FaceElementKind.Symbol, core.Elements[0].Kind);
+        Assert.AreEqual(Core.Boards.Faces.FaceSymbol.ArrowDownLeft, stored.Elements[0].Symbol);
         Assert.AreEqual(ContractSymbol.ArrowDownLeft, back.Elements[0].Symbol);
         Assert.AreEqual(Png, back.Elements[1].Image);
         Assert.IsTrue(back.Elements[1].Locked, "zamok sa uklada do predlohy");

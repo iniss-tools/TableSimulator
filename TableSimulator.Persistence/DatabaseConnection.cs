@@ -3,16 +3,6 @@ using Npgsql;
 
 namespace TableSimulator.Persistence;
 
-/// <summary>Poskytovatel databazy simulatora.</summary>
-public enum DatabaseProvider
-{
-    /// <summary>Subor SQLite v priecinku nastaveni (predvolene).</summary>
-    Sqlite,
-
-    /// <summary>Server PostgreSQL.</summary>
-    Postgres
-}
-
 /// <summary>Databaza simulatora: poskytovatel a pripojenie.</summary>
 /// <param name="Provider">poskytovatel</param>
 /// <param name="ConnectionString">pripojenie (pri SQLite subor bez poolu, pri PostgreSQL aj s heslom - nezapisovat do logov)</param>

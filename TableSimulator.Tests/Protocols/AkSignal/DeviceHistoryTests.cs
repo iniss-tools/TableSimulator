@@ -1,5 +1,8 @@
 using System.Text;
 using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.AkSignal;
+using TableSimulator.Core.Boards.Announcements;
+using TableSimulator.Core.Boards.History;
 using TableSimulator.Core.Protocols.AkSignal;
 using TableSimulator.Core.Simulation;
 

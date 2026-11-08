@@ -36,7 +36,7 @@ public sealed class SettingsRepository(AppDbContext db)
             HttpsKey = record.HttpsKey,
             HttpsPassword = record.HttpsPassword,
             CheckUpdates = record.CheckUpdates,
-            Location = new Core.Boards.GeoLocation(record.Latitude, record.Longitude),
+            Location = new Core.Boards.AkSignal.GeoLocation(record.Latitude, record.Longitude),
             Alerts = record.Alerts.Length == 0 ? new AlertSettings() : JsonSerializer.Deserialize<AlertSettings>(record.Alerts, Json) ?? new AlertSettings()
         };
     }

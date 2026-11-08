@@ -5,12 +5,6 @@ using TableSimulator.Contracts.Signage;
 
 namespace TableSimulator.Application.Signage;
 
-/// <summary>Panel v zalohe.</summary>
-public sealed record SignageBackupPanel(int Id, SetSignagePanelRequest Definition);
-
-/// <summary>Nahraty subor v zalohe; obsah je v ZIP pod <paramref name="File" />.</summary>
-public sealed record SignageBackupMedia(Guid Id, string Name, string ContentType, long Size, string File);
-
 /// <summary>
 /// Zaloha informacnych panelov - <c>signage.json</c> v ZIP spolu s nahratymi subormi v <c>media/</c>. Cisla
 /// zaznamov su tie zo simulatora (obnova ich zachova, pridanie ich precisluje).

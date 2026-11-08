@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text.Json;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
@@ -13,12 +14,14 @@ using TableSimulator.Contracts.Boards;
 using TableSimulator.Contracts.Designs;
 using TableSimulator.Contracts.Faces;
 using TableSimulator.Contracts.Fonts;
-using TableSimulator.Core.Boards;
+using TableSimulator.Core.Boards.Chars;
+using TableSimulator.Mcp.Results;
 
 namespace TableSimulator.Mcp;
 
 /// <summary>Nastroje vzhladu tabul: vzhlady, predlohy ciel, pisma a vzhlad jednej tabule.</summary>
 [McpServerToolType]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class LookTools
 {
     [McpServerTool(Name = "list_designs", Title = "Board designs", ReadOnly = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]

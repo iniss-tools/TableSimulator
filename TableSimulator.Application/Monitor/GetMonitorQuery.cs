@@ -1,5 +1,4 @@
 using TableSimulator.Application.Abstractions.Messaging;
-using TableSimulator.Application.Abstractions.Results;
 using TableSimulator.Contracts.Monitor;
 
 namespace TableSimulator.Application.Monitor;

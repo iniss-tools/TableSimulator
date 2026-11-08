@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
@@ -11,11 +12,13 @@ using TableSimulator.Contracts.AkSignal;
 using TableSimulator.Contracts.Boards;
 using TableSimulator.Contracts.Display;
 using TableSimulator.Contracts.State;
+using TableSimulator.Mcp.Results;
 
 namespace TableSimulator.Mcp;
 
 /// <summary>Nastroje ustredni AK Signal servera INISS2 - svetlo, snimac tmy, stavy a historia.</summary>
 [McpServerToolType]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class AkSignalTools
 {
     private const string IdDescription = "Board id \"line-address\" of the controller, e.g. \"6-5\"; AKSIGNALUH controllers have address 0.";
@@ -119,6 +122,7 @@ public static class AkSignalTools
     private static DateTimeOffset? LastQuery(AkSignalDto state) => (state.LightQueryAt, state.AudioQueryAt) switch
     {
         ({ } light, { } audio) => light > audio ? light : audio,
-        (var light, var audio) => light ?? audio
+        (var light, null) => light,
+        (null, var audio) => audio
     };
 }

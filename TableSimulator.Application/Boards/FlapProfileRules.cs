@@ -22,5 +22,5 @@ public static class FlapProfileRules
                               l.Value.All(e => e.Key.Length is >= 1 and <= MaxCodeLength && e.Value.Length <= MaxTextLength)) &&
          flaps.Colors.Count <= MaxLists &&
          flaps.Colors.All(l => l.Key.Length <= 100 && l.Value.Count <= MaxListEntries &&
-                               l.Value.All(e => e.Key.Length is >= 1 and <= MaxCodeLength && Core.Boards.FlapColors.All.Contains(e.Value))));
+                               l.Value.All(e => e.Key.Length is >= 1 and <= MaxCodeLength && Core.Boards.Flaps.FlapColors.All.Contains(e.Value))));
 }
