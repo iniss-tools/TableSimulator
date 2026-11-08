@@ -1,7 +1,9 @@
-using TableSimulator.Application.Devices;
+using TableSimulator.Application.Devices.Sounds;
+using TableSimulator.Application.Settings;
 using TableSimulator.Application.Station;
 using TableSimulator.Contracts.Station;
 using ToolsCore.Iniss.Tools;
+using ToolsCore.Iniss2;
 using ToolsCore.Iniss2.Devices;
 using ToolsCore.Iniss2.Tables;
 
@@ -107,6 +109,59 @@ public sealed class Iniss2DevicesTests
         {
             root.Delete(true);
         }
+    }
+
+    [TestMethod]
+    public async Task Nahravka_ZBankyServeraAkoWav()
+    {
+        var root = Directory.CreateTempSubdirectory("tssound");
+        try
+        {
+            var program = Path.Combine(root.FullName, "IniSrv.exe");
+            File.WriteAllBytes(program, []);
+            Directory.CreateDirectory(Path.Combine(root.FullName, Iniss2Installation.DataDirName));
+            File.WriteAllText(Path.Combine(root.FullName, Iniss2Installation.DataDirName, Iniss2Installation.ConfigFileName), "<Config />");
+            var bank = Iniss2Installation.Find(root.FullName)?.RawBankDir;
+            Assert.IsNotNull(bank, "instalacia INISS2 pre test");
+            Directory.CreateDirectory(Path.Combine(bank, "CZ", "vlak"));
+            var wav = Wav(800);
+            using (var file = File.Create(Path.Combine(bank, "CZ", "vlak", "1234.EWA")))
+                EwaCodec.Encode(new MemoryStream(wav), file, key: 0x5a);
+            File.WriteAllBytes(Path.Combine(root.FullName, "mimo.EWA"), wav);
+            var handler = new GetSoundQueryHandler(new SoundBanks(new TestSettings(new AppSettings { InissProgram = program })));
+
+            var sound = await handler.Handle(new GetSoundQuery("CZ/vlak/1234"), CancellationToken.None);
+            CollectionAssert.AreEqual(wav, sound.Value, "dekodovany WAV");
+            Assert.AreEqual("sound.notFound", (await handler.Handle(new GetSoundQuery("../mimo"), CancellationToken.None)).Error.Code, "len subory v banke");
+            Assert.AreEqual("sound.notFound", (await handler.Handle(new GetSoundQuery("CZ/vlak/9999"), CancellationToken.None)).Error.Code);
+            var none = new GetSoundQueryHandler(new SoundBanks(new TestSettings(new AppSettings())));
+            Assert.AreEqual("sound.noBank", (await none.Handle(new GetSoundQuery("CZ/vlak/1234"), CancellationToken.None)).Error.Code);
+        }
+        finally
+        {
+            root.Delete(true);
+        }
+    }
+
+    [TestMethod]
+    public void Nahravka_SkratenyBlokDatSaZmensi()
+    {
+        var wav = Wav(800)[..^300];
+
+        WavHeader.ClampData(wav);
+
+        Assert.AreEqual(wav.Length - 8, BitConverter.ToInt32(wav, 4), "RIFF");
+        Assert.AreEqual(500, BitConverter.ToInt32(wav, 40), "data");
+        var text = "nie je wav"u8.ToArray();
+        WavHeader.ClampData(text);
+        CollectionAssert.AreEqual("nie je wav"u8.ToArray(), text);
+    }
+
+    private sealed class TestSettings(AppSettings settings) : ISettingsStore
+    {
+        public AppSettings Current { get; private set; } = settings;
+
+        public void Save(AppSettings settings) => Current = settings;
     }
 
     /// <summary>WAV PCM 8 kHz mono 8 bit - 8000 bajtov za sekundu.</summary>

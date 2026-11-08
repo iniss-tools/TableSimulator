@@ -16,6 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useNow } from "@/hooks/use-now";
 import { defaultEndpoint, lineConfig } from "@/lib/boards";
 import { t, type TextKey } from "@/i18n";
+import { InissRedirectButton } from "./InissRedirectButton";
 import { InissStationDialog } from "./InissStationDialog";
 import { LineDialog } from "./LineDialog";
 import { lineStatusTime, STATUS_TONES } from "./line-status";
@@ -160,6 +161,7 @@ export function LinesPage() {
               <MonitorDown />
               {t("iniss.button")}
             </Button>
+            <InissRedirectButton />
             <input ref={upload} type="file" accept=".json" hidden onChange={(e) => onImport(e.target.files)} />
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="outline" disabled={importing.isPending} title={t("lines.import.hint")} />}>

@@ -15,6 +15,7 @@ test("stav fronty a text hlasenia vzdialeneho INISSu", () => {
     startedAt: "2026-11-08T10:00:00Z",
     result: "playing" as const,
     title: null,
+    pauses: null,
     durationMs: 3000,
     value: null,
     endedAt: null,

@@ -539,6 +539,74 @@
         }
       }
     },
+    "/api/station/iniss/redirect": {
+      "get": {
+        "tags": [
+          "Station"
+        ],
+        "operationId": "GetInissRedirect",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InissRedirectDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Station"
+        ],
+        "operationId": "RedirectInissLines",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InissRedirectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InissStationDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/station/iniss": {
       "get": {
         "tags": [
@@ -653,29 +721,19 @@
         }
       }
     },
-    "/api/station/iniss/redirect": {
-      "post": {
+    "/api/state": {
+      "get": {
         "tags": [
-          "Station"
+          "State"
         ],
-        "operationId": "RedirectInissLines",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InissRedirectRequest"
-              }
-            }
-          },
-          "required": true
-        },
+        "operationId": "GetState",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InissStationDto"
+                  "$ref": "#/components/schemas/StateDto"
                 }
               }
             }
@@ -693,22 +751,25 @@
         }
       }
     },
-    "/api/state": {
+    "/api/sounds": {
       "get": {
         "tags": [
-          "State"
+          "Sounds"
         ],
-        "operationId": "GetState",
+        "operationId": "GetSound",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StateDto"
-                }
-              }
-            }
+            "description": "OK"
           },
           "default": {
             "description": "Error (ProblemDetails)",
@@ -4936,6 +4997,7 @@
           "sounds",
           "startedAt",
           "result",
+          "pauses",
           "title",
           "durationMs",
           "value",
@@ -4965,6 +5027,15 @@
           },
           "result": {
             "$ref": "#/components/schemas/AnnouncementResult"
+          },
+          "pauses": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SoundPauseDto"
+            }
           },
           "title": {
             "type": [
@@ -7448,6 +7519,21 @@
           "warning",
           "error"
         ]
+      },
+      "InissRedirectDto": {
+        "required": [
+          "available",
+          "redirected"
+        ],
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "redirected": {
+            "type": "boolean"
+          }
+        }
       },
       "InissRedirectRequest": {
         "required": [
@@ -10152,6 +10238,23 @@
           "large"
         ]
       },
+      "SoundPauseDto": {
+        "required": [
+          "beforeMs",
+          "afterMs"
+        ],
+        "type": "object",
+        "properties": {
+          "beforeMs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "afterMs": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "StartRecordingRequest": {
         "required": [
           "note"
@@ -11579,6 +11682,9 @@
     },
     {
       "name": "State"
+    },
+    {
+      "name": "Sounds"
     },
     {
       "name": "Signage"

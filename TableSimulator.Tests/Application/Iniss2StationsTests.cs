@@ -509,6 +509,27 @@ public sealed class Iniss2StationsTests
         Assert.AreEqual("iniss.notIniss2", result.Error.Code);
     }
 
+    [TestMethod]
+    public async Task RedirectStatus_FollowsCommLines()
+    {
+        var status = new GetInissRedirectQueryHandler(new TestSettings(Settings));
+
+        Assert.AreEqual(new InissRedirectDto(true, false), (await status.Handle(new GetInissRedirectQuery(), CancellationToken.None)).Value);
+        await Handler().Handle(new RedirectInissLinesCommand(new InissRedirectRequest(true)), CancellationToken.None);
+        Assert.AreEqual(new InissRedirectDto(true, true), (await status.Handle(new GetInissRedirectQuery(), CancellationToken.None)).Value);
+    }
+
+    [TestMethod]
+    public async Task RedirectStatus_UnavailableWithoutIniss2()
+    {
+        var status = new GetInissRedirectQueryHandler(new TestSettings(new AppSettings()));
+
+        var result = await status.Handle(new GetInissRedirectQuery(), CancellationToken.None);
+
+        Assert.IsTrue(result.IsSuccess, "stranka Linky nema dostat chybu");
+        Assert.AreEqual(new InissRedirectDto(false, false), result.Value);
+    }
+
     private sealed class TestSettings(AppSettings settings) : ISettingsStore
     {
         public AppSettings Current { get; private set; } = settings;

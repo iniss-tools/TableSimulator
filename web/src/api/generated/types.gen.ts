@@ -126,6 +126,7 @@ export type AnnouncementDto = {
     sounds: Array<string>;
     startedAt: string;
     result: AnnouncementResult;
+    pauses: null | Array<SoundPauseDto>;
     title: null | string;
     durationMs: null | number;
     value: null | number;
@@ -700,6 +701,11 @@ export type InissProblemDto = {
 };
 
 export type InissProblemSeverity = 'info' | 'warning' | 'error';
+
+export type InissRedirectDto = {
+    available: boolean;
+    redirected: boolean;
+};
 
 export type InissRedirectRequest = {
     redirect: boolean;
@@ -1344,6 +1350,11 @@ export type SignageSlotDto = {
 };
 
 export type SignageTextSize = 'small' | 'medium' | 'large';
+
+export type SoundPauseDto = {
+    beforeMs: number;
+    afterMs: number;
+};
 
 export type StartRecordingRequest = {
     note: null | string;
@@ -2049,6 +2060,56 @@ export type GetTrafficStatisticsResponses = {
 
 export type GetTrafficStatisticsResponse = GetTrafficStatisticsResponses[keyof GetTrafficStatisticsResponses];
 
+export type GetInissRedirectData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/station/iniss/redirect';
+};
+
+export type GetInissRedirectErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetInissRedirectError = GetInissRedirectErrors[keyof GetInissRedirectErrors];
+
+export type GetInissRedirectResponses = {
+    /**
+     * OK
+     */
+    200: InissRedirectDto;
+};
+
+export type GetInissRedirectResponse = GetInissRedirectResponses[keyof GetInissRedirectResponses];
+
+export type RedirectInissLinesData = {
+    body: InissRedirectRequest;
+    path?: never;
+    query?: never;
+    url: '/api/station/iniss/redirect';
+};
+
+export type RedirectInissLinesErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type RedirectInissLinesError = RedirectInissLinesErrors[keyof RedirectInissLinesErrors];
+
+export type RedirectInissLinesResponses = {
+    /**
+     * OK
+     */
+    200: InissStationDto;
+};
+
+export type RedirectInissLinesResponse = RedirectInissLinesResponses[keyof RedirectInissLinesResponses];
+
 export type GetInissStationData = {
     body?: never;
     path?: never;
@@ -2124,31 +2185,6 @@ export type ImportStationResponses = {
 
 export type ImportStationResponse = ImportStationResponses[keyof ImportStationResponses];
 
-export type RedirectInissLinesData = {
-    body: InissRedirectRequest;
-    path?: never;
-    query?: never;
-    url: '/api/station/iniss/redirect';
-};
-
-export type RedirectInissLinesErrors = {
-    /**
-     * Error (ProblemDetails)
-     */
-    default: ApiProblem;
-};
-
-export type RedirectInissLinesError = RedirectInissLinesErrors[keyof RedirectInissLinesErrors];
-
-export type RedirectInissLinesResponses = {
-    /**
-     * OK
-     */
-    200: InissStationDto;
-};
-
-export type RedirectInissLinesResponse = RedirectInissLinesResponses[keyof RedirectInissLinesResponses];
-
 export type GetStateData = {
     body?: never;
     path?: never;
@@ -2173,6 +2209,31 @@ export type GetStateResponses = {
 };
 
 export type GetStateResponse = GetStateResponses[keyof GetStateResponses];
+
+export type GetSoundData = {
+    body?: never;
+    path?: never;
+    query: {
+        name: string;
+    };
+    url: '/api/sounds';
+};
+
+export type GetSoundErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetSoundError = GetSoundErrors[keyof GetSoundErrors];
+
+export type GetSoundResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type CreateSignageGroupData = {
     body: SetSignageGroupRequest;

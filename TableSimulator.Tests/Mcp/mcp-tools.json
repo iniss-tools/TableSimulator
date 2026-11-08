@@ -778,6 +778,27 @@
                                 "cancelled"
                               ]
                             },
+                            "pauses": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "beforeMs": {
+                                    "type": "integer"
+                                  },
+                                  "afterMs": {
+                                    "type": "integer"
+                                  }
+                                },
+                                "required": [
+                                  "beforeMs",
+                                  "afterMs"
+                                ]
+                              }
+                            },
                             "title": {
                               "type": [
                                 "string",
@@ -1021,6 +1042,10 @@
                                     "stopped",
                                     "cancelled"
                                   ]
+                                },
+                                "pauses": {
+                                  "$ref": "#/properties/board/properties/display/properties/akSignal/properties/announcements/items/properties/pauses",
+                                  "items": {}
                                 },
                                 "title": {
                                   "type": [
@@ -1784,6 +1809,27 @@
                         "cancelled"
                       ]
                     },
+                    "pauses": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "beforeMs": {
+                            "type": "integer"
+                          },
+                          "afterMs": {
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "beforeMs",
+                          "afterMs"
+                        ]
+                      }
+                    },
                     "title": {
                       "type": [
                         "string",
@@ -1873,6 +1919,10 @@
                     "stopped",
                     "cancelled"
                   ]
+                },
+                "pauses": {
+                  "$ref": "#/properties/queues/items/properties/playing/properties/pauses",
+                  "items": {}
                 },
                 "title": {
                   "type": [
@@ -2763,6 +2813,27 @@
                             "cancelled"
                           ]
                         },
+                        "pauses": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "beforeMs": {
+                                "type": "integer"
+                              },
+                              "afterMs": {
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "beforeMs",
+                              "afterMs"
+                            ]
+                          }
+                        },
                         "title": {
                           "type": [
                             "string",
@@ -3006,6 +3077,10 @@
                                 "stopped",
                                 "cancelled"
                               ]
+                            },
+                            "pauses": {
+                              "$ref": "#/properties/display/properties/akSignal/properties/announcements/items/properties/pauses",
+                              "items": {}
                             },
                             "title": {
                               "type": [
@@ -3813,6 +3888,27 @@
                           "stopped",
                           "cancelled"
                         ]
+                      },
+                      "pauses": {
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "beforeMs": {
+                              "type": "integer"
+                            },
+                            "afterMs": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "beforeMs",
+                            "afterMs"
+                          ]
+                        }
                       },
                       "title": {
                         "type": [
@@ -4973,6 +5069,27 @@
                             "cancelled"
                           ]
                         },
+                        "pauses": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "beforeMs": {
+                                "type": "integer"
+                              },
+                              "afterMs": {
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "beforeMs",
+                              "afterMs"
+                            ]
+                          }
+                        },
                         "title": {
                           "type": [
                             "string",
@@ -5216,6 +5333,10 @@
                                 "stopped",
                                 "cancelled"
                               ]
+                            },
+                            "pauses": {
+                              "$ref": "#/properties/display/properties/akSignal/properties/announcements/items/properties/pauses",
+                              "items": {}
                             },
                             "title": {
                               "type": [
@@ -6856,6 +6977,27 @@
                               "cancelled"
                             ]
                           },
+                          "pauses": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "beforeMs": {
+                                  "type": "integer"
+                                },
+                                "afterMs": {
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "beforeMs",
+                                "afterMs"
+                              ]
+                            }
+                          },
                           "title": {
                             "type": [
                               "string",
@@ -6945,6 +7087,10 @@
                           "stopped",
                           "cancelled"
                         ]
+                      },
+                      "pauses": {
+                        "$ref": "#/properties/devices/items/properties/queues/items/properties/playing/properties/pauses",
+                        "items": {}
                       },
                       "title": {
                         "type": [
@@ -11949,6 +12095,27 @@
                     "cancelled"
                   ]
                 },
+                "pauses": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "beforeMs": {
+                        "type": "integer"
+                      },
+                      "afterMs": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "beforeMs",
+                      "afterMs"
+                    ]
+                  }
+                },
                 "title": {
                   "type": [
                     "string",
@@ -12902,6 +13069,27 @@
                             "cancelled"
                           ]
                         },
+                        "pauses": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "beforeMs": {
+                                "type": "integer"
+                              },
+                              "afterMs": {
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "beforeMs",
+                              "afterMs"
+                            ]
+                          }
+                        },
                         "title": {
                           "type": [
                             "string",
@@ -13145,6 +13333,10 @@
                                 "stopped",
                                 "cancelled"
                               ]
+                            },
+                            "pauses": {
+                              "$ref": "#/properties/display/properties/akSignal/properties/announcements/items/properties/pauses",
+                              "items": {}
                             },
                             "title": {
                               "type": [
@@ -14115,6 +14307,27 @@
                             "cancelled"
                           ]
                         },
+                        "pauses": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "beforeMs": {
+                                "type": "integer"
+                              },
+                              "afterMs": {
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "beforeMs",
+                              "afterMs"
+                            ]
+                          }
+                        },
                         "title": {
                           "type": [
                             "string",
@@ -14358,6 +14571,10 @@
                                 "stopped",
                                 "cancelled"
                               ]
+                            },
+                            "pauses": {
+                              "$ref": "#/properties/display/properties/akSignal/properties/announcements/items/properties/pauses",
+                              "items": {}
                             },
                             "title": {
                               "type": [
@@ -15847,6 +16064,27 @@
                             "cancelled"
                           ]
                         },
+                        "pauses": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "beforeMs": {
+                                "type": "integer"
+                              },
+                              "afterMs": {
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "beforeMs",
+                              "afterMs"
+                            ]
+                          }
+                        },
                         "title": {
                           "type": [
                             "string",
@@ -16090,6 +16328,10 @@
                                 "stopped",
                                 "cancelled"
                               ]
+                            },
+                            "pauses": {
+                              "$ref": "#/properties/display/properties/akSignal/properties/announcements/items/properties/pauses",
+                              "items": {}
                             },
                             "title": {
                               "type": [

@@ -10,6 +10,9 @@ namespace TableSimulator.Core.Boards.Announcements;
 /// <param name="StartedAt">zaciatok</param>
 public sealed record Announcement(long Id, int Channel, IReadOnlyList<string> Sounds, DateTimeOffset StartedAt)
 {
+    /// <summary>Ticho pred a po kazdej nahravke v poradi <see cref="Sounds" />; null = nahravky idu hned po sebe.</summary>
+    public IReadOnlyList<SoundPause>? Pauses { get; init; }
+
     /// <summary>Titulok hlasenia, ak ho INISS posiela; null = ziadny.</summary>
     public string? Title { get; init; }
 

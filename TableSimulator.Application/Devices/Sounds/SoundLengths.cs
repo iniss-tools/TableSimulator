@@ -1,14 +1,14 @@
 using System.Collections.Concurrent;
 using ToolsCore.Iniss.Tools;
 
-namespace TableSimulator.Application.Devices;
+namespace TableSimulator.Application.Devices.Sounds;
 
 /// <summary>
-/// Dlzky zvukov banky servera INISS2 podla mena, ako ho server posiela ustredni AK Signal UH (<c>CZ/vlak/1234</c> =
-/// subor <c>RawBank\CZ\vlak\1234.EWA</c>). Dlzka sa zisti z hlavicky WAV pri prvom pouziti a zapamata sa.
+/// Banka zvukov servera INISS2 podla mena, ako ho server posiela ustredni AK Signal UH (<c>CZ/vlak/1234</c> = subor
+/// <c>RawBank\CZ\vlak\1234.EWA</c>). Dlzka sa zisti z hlavicky WAV pri prvom pouziti a zapamata sa.
 /// </summary>
 /// <param name="rawBankDir">priecinok banky zvukov servera</param>
-public sealed class SoundLengths(string rawBankDir)
+public sealed class SoundLengths(string rawBankDir) : ISoundBank
 {
     private const string Extension = ".EWA";
 
@@ -18,15 +18,17 @@ public sealed class SoundLengths(string rawBankDir)
     /// <summary>Priecinok banky zvukov.</summary>
     public string Root => _root;
 
-    /// <summary>Dlzka zvuku; null = subor nie je v banke alebo sa neda precitat.</summary>
+    /// <inheritdoc />
     public TimeSpan? Length(string sound)
     {
         ArgumentNullException.ThrowIfNull(sound);
         return _cache.GetOrAdd(sound, Read);
     }
 
-    private TimeSpan? Read(string sound)
+    /// <inheritdoc />
+    public string? FileOf(string sound)
     {
+        ArgumentNullException.ThrowIfNull(sound);
         var relative = sound.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
         if (!relative.EndsWith(Extension, StringComparison.OrdinalIgnoreCase))
             relative += Extension;
@@ -42,7 +44,13 @@ public sealed class SoundLengths(string rawBankDir)
             return null;
         }
 
-        if (!file.StartsWith(Path.TrimEndingDirectorySeparator(_root) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || !File.Exists(file))
+        var inBank = file.StartsWith(Path.TrimEndingDirectorySeparator(_root) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+        return inBank && File.Exists(file) ? file : null;
+    }
+
+    private TimeSpan? Read(string sound)
+    {
+        if (FileOf(sound) is not { } file)
             return null;
 
         try

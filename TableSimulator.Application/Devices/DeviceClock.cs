@@ -1,5 +1,5 @@
+using TableSimulator.Application.Devices.Sounds;
 using TableSimulator.Application.Settings;
-using TableSimulator.Application.Station;
 using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Application.Devices;
@@ -9,7 +9,7 @@ namespace TableSimulator.Application.Devices;
 /// vzdialeneho INISSu): okolie simulatora podla nastavenia - poloha pre slnko a banka zvukov z programu INISSu (servera
 /// INISS2 alebo INISSu 3.39) - a posun v case. Server ho vola kazdu sekundu.
 /// </summary>
-public sealed class DeviceClock(Simulator simulator, ISettingsStore settings)
+public sealed class DeviceClock(Simulator simulator, ISettingsStore settings, SoundBanks banks)
 {
     private readonly Lock _lock = new();
     private string? _program;
@@ -20,19 +20,6 @@ public sealed class DeviceClock(Simulator simulator, ISettingsStore settings)
     {
         UpdateEnvironment();
         simulator.Tick();
-    }
-
-    /// <summary>
-    /// Dlzky zvukov banky programu INISSu z nastavenia: servera INISS2 (subory podla mena) alebo INISSu 3.39 (kluce
-    /// banky); null = program nie je nastaveny alebo banku nema.
-    /// </summary>
-    public static Func<string, TimeSpan?>? SoundLengthOf(AppSettings settings)
-    {
-        ArgumentNullException.ThrowIfNull(settings);
-        if (InissStations.Iniss2Of(settings) is { } installation)
-            return Directory.Exists(installation.RawBankDir) ? new SoundLengths(installation.RawBankDir).Length : null;
-        var program = settings.InissProgram.Trim();
-        return program.Length > 0 && File.Exists(program) && Iniss339SoundLengths.BankOf(program) is { } bank ? new Iniss339SoundLengths(bank).Length : null;
     }
 
     private void UpdateEnvironment()
@@ -52,6 +39,6 @@ public sealed class DeviceClock(Simulator simulator, ISettingsStore settings)
         if (!program)
             return;
 
-        simulator.SetEnvironment(simulator.Environment with { SoundLength = SoundLengthOf(current) });
+        simulator.SetEnvironment(simulator.Environment with { SoundLength = banks.Current is { } bank ? bank.Length : null });
     }
 }

@@ -7,6 +7,7 @@ using TableSimulator.Application.Auth;
 using TableSimulator.Application.Decorators;
 using TableSimulator.Application.Designs;
 using TableSimulator.Application.Devices;
+using TableSimulator.Application.Devices.Sounds;
 using TableSimulator.Application.Faces;
 using TableSimulator.Application.Fonts;
 using TableSimulator.Application.Recordings;
@@ -64,6 +65,7 @@ public static class DependencyInjection
         services.AddScoped<FaceHeaders>();
         services.AddSingleton<SignagePanelTracker>();
         services.AddSingleton<ScenarioRunner>();
+        services.AddSingleton<SoundBanks>();
         services.AddSingleton<DeviceClock>();
         services.AddSingleton<SignageMediaStore>();
         services.AddSingleton<XslTablePages>();

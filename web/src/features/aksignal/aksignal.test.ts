@@ -8,6 +8,7 @@ const announcement = (id: number, channel: number, result: AnnouncementDto["resu
   sounds: ["CZ/vlak/1234"],
   startedAt: "2026-11-08T10:00:00Z",
   result,
+  pauses: null,
   title: null,
   durationMs: 4000,
   value: null,

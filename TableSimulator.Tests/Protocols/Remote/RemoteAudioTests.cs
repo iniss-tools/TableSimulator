@@ -1,4 +1,4 @@
-using TableSimulator.Application.Devices;
+using TableSimulator.Application.Devices.Sounds;
 using TableSimulator.Core.Boards;
 using TableSimulator.Core.Boards.Announcements;
 using TableSimulator.Core.Boards.RemoteAudio;
@@ -73,6 +73,7 @@ public class RemoteAudioTests
         var playing = Audio(sim).Queues.Single().Playing!;
         Assert.AreEqual((TimeSpan.FromMilliseconds(4500), "Os 3412", "", "Nastupiste"), (playing.Duration!.Value, playing.Title, playing.Queue, playing.Circuit));
         CollectionAssert.AreEqual(new[] { "SK/R1/9900100", "SK/VLAK/prich" }, playing.Sounds.ToArray());
+        CollectionAssert.AreEqual(new[] { new SoundPause(0, 0), new SoundPause(0, 500) }, playing.Pauses!.ToArray(), "pauzy pre prehratie v prehliadaci");
 
         // prevzate - kym hra, stav ma 0x100
         time.Advance(TimeSpan.FromSeconds(1));
@@ -155,16 +156,24 @@ public class RemoteAudioTests
             var group = new FyzGroup(language, "VlakNum", "Číslovky", "R1\\");
             group.Sounds.Add(new FyzSound(group, "9900100", "9900100", "9900100.EWA", "", "Lipovec", 1840));
             group.Sounds.Add(new FyzSound(group, "prazdna", "prazdna", "PRAZDNA.EWA", "", "", 0));
+            group.Sounds.Add(new FyzSound(group, "mimo", "mimo", "..\\..\\..\\MIMO.EWA", "", "", 0));
             language.Groups = [group];
             RawBankParser.WriteFyzBankFile(bank, [language]);
             RawBankParser.WriteFyzZvukFile(bank, language);
             File.WriteAllBytes(Path.Combine(folder, "INISS.exe"), []);
+            var file = group.Sounds[0].GetAbsPath(bank);
+            Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+            File.WriteAllBytes(file, []);
+            File.WriteAllBytes(Path.Combine(folder, "MIMO.EWA"), []);
 
             Assert.AreEqual(Path.Combine(folder, "RAWBANK"), Iniss339SoundLengths.BankOf(Path.Combine(folder, "INISS.exe")));
             var lengths = new Iniss339SoundLengths(Path.Combine(folder, "RAWBANK"));
             Assert.AreEqual(TimeSpan.FromMilliseconds(1840), lengths.Length("sk/vlaknum/9900100"), "kluce bez ohladu na velkost pismen");
             Assert.IsNull(lengths.Length("SK/Číslovky/9900100"), "nazov skupiny sa nepouziva");
             Assert.IsNull(lengths.Length("SK/VlakNum/prazdna"), "nulova dlzka a chybajuci subor");
+            Assert.AreEqual(Path.GetFullPath(file), lengths.FileOf("SK/VLAKNUM/9900100"));
+            Assert.IsNull(lengths.FileOf("SK/VlakNum/prazdna"), "subor chyba");
+            Assert.IsNull(lengths.FileOf("SK/VlakNum/mimo"), "len subory v banke");
             Assert.IsNull(Iniss339SoundLengths.BankOf(Path.Combine(Path.GetTempPath(), "nie", "INISS.exe")));
         }
         finally

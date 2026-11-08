@@ -292,6 +292,7 @@ public static partial class DtoMapper
             _ => Contracts.Display.AnnouncementResult.Playing
         })
         {
+            Pauses = announcement.Pauses?.Select(p => new SoundPauseDto(p.Before, p.After)).ToArray(),
             Title = announcement.Title,
             DurationMs = announcement.Duration is { } duration ? (long)duration.TotalMilliseconds : null,
             Value = announcement.Value,

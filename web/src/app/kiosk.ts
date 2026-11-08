@@ -2,6 +2,7 @@
 // kurzor sa po chvili skryje, cela obrazovka.
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { accessKey } from "@/api";
+import { useReloadWhenOutdated } from "./use-web-version";
 
 /** Ako dlho po poslednom pohybe ostanu ovladacie prvky a kurzor (ms). */
 const IDLE_MS = 3000;
@@ -89,9 +90,10 @@ export function toggleFullscreen() {
   else document.documentElement.requestFullscreen?.().catch(() => undefined);
 }
 
-/** Spravanie kiosku; vrati, ci ukazat kurzor a ovladacie prvky. */
+/** Spravanie kiosku (s novym rozhranim na serveri sa nacita znova sam); vrati, ci ukazat kurzor a ovladacie prvky. */
 export function useKiosk(view: string, name: string): boolean {
   useKioskManifest(view, name);
   useWakeLock();
+  useReloadWhenOutdated();
   return useActivity();
 }

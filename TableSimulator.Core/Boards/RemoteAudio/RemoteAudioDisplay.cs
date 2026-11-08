@@ -114,6 +114,7 @@ public sealed class RemoteAudioDisplay : BoardDisplay, ITimedDisplay, IAnnouncem
                 queue.Playing = new Announcement(++_nextId, 0, sounds.Select(s => s.Name).ToList(), now)
                 {
                     Title = string.IsNullOrEmpty(title) ? null : title,
+                    Pauses = sounds.Any(s => s.PauseBefore != 0 || s.PauseAfter != 0) ? sounds.Select(s => new SoundPause(s.PauseBefore, s.PauseAfter)).ToList() : null,
                     Duration = RemoteSound.Duration(sounds, soundLength, DefaultSoundLength),
                     Queue = name,
                     Circuit = string.IsNullOrEmpty(circuit) ? null : circuit

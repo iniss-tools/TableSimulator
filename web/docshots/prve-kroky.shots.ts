@@ -1,4 +1,4 @@
-// Snimky clankov Prve kroky: hlavne okno s tabulami a stranka Linky s hodnotami TablePort.
+// Snimky clankov Prve kroky: hlavne okno s tabulami, stranka Linky s hodnotami TablePort a presmerovanim INISS2.
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -48,6 +48,13 @@ for (const theme of THEMES) {
       }, folder);
       await mask(page);
       await shot(page, "nacitanie-stanice/nacitat-z-iniss2", theme, { target: dialog, height: 1400 });
+
+      // presmerovanie priamo zo stranky Linky
+      await page.keyboard.press("Escape");
+      await expect(dialog).toBeHidden();
+      await expect(page.getByRole("button", { name: "Presmerovať linky INISS2" })).toBeVisible();
+      await mask(page);
+      await shot(page, "nacitanie-stanice/presmerovat-linky", theme);
     } finally {
       await save(settings.inissProgram);
       rmSync(folder, { recursive: true, force: true });

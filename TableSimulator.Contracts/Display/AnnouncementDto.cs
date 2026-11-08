@@ -8,6 +8,9 @@ namespace TableSimulator.Contracts.Display;
 /// <param name="Result">ako skoncilo</param>
 public sealed record AnnouncementDto(long Id, int Channel, IReadOnlyList<string> Sounds, DateTimeOffset StartedAt, AnnouncementResult Result)
 {
+    /// <summary>Ticho pred a po kazdej nahravke v poradi zvukov; null = nahravky idu hned po sebe.</summary>
+    public IReadOnlyList<SoundPauseDto>? Pauses { get; init; }
+
     /// <summary>Titulok hlasenia; null = ziadny.</summary>
     public string? Title { get; init; }
 

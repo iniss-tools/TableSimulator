@@ -1,15 +1,14 @@
 // Nacitanie liniek a tabul z instalacie INISSu nastavenej v Nastaveniach: nahlad (linky, tabule, zistenia) a import.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleAlert, FolderOpen, Info, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import {
   ApiError,
   errorText,
+  getInissRedirectQueryKey,
   getInissStationOptions,
-  getInissStationQueryKey,
   importInissStationMutation,
-  redirectInissLinesMutation,
   type InissAmplifierDto,
   type InissControllerDto,
   type InissLineDto,
@@ -17,7 +16,6 @@ import {
   type InissTableDto,
   type StationImportedDto,
 } from "@/api";
-import { confirmAction } from "@/components/common/confirm";
 import { CheckField } from "@/components/common/form-field";
 import { StatusBadge } from "@/components/common/status-badge";
 import { DataTable } from "@/components/data-table/data-table";
@@ -29,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { getLanguage, hasText, t, type TextKey } from "@/i18n";
+import { useInissRedirect } from "./iniss-redirect";
 
 const SEVERITY_CLASS: Record<InissProblemDto["severity"], string> = {
   error: "text-red-700 dark:text-red-400",
@@ -102,15 +101,13 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
   // pri kazdom otvoreni znova - instalacia INISSu sa mohla zmenit
   const query = useQuery({ ...getInissStationOptions(), staleTime: 0, gcTime: 0, retry: false });
   const station = query.data;
-  const [facesForExisting, setFacesForExisting] = useState(false);
+  // nove nacitanie instalacie obnovi aj tlacidlo presmerovania na stranke (program sa mohol zmenit)
   const client = useQueryClient();
-  const redirect = useMutation({
-    ...redirectInissLinesMutation(),
-    onSuccess: (result, variables) => {
-      client.setQueryData(getInissStationQueryKey(), result);
-      toast.success(t(variables.body.redirect ? "iniss.redirect.done" : "iniss.redirect.undone"), { duration: 10_000 });
-    },
-  });
+  useEffect(() => {
+    if (station) void client.invalidateQueries({ queryKey: getInissRedirectQueryKey() });
+  }, [station, client]);
+  const [facesForExisting, setFacesForExisting] = useState(false);
+  const redirect = useInissRedirect();
   const load = useMutation({
     ...importInissStationMutation(),
     onSuccess: (result) => {
@@ -171,15 +168,6 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
 
   const redirected = station?.lines.some((l) => l.originalPort) ?? false;
   const canRedirect = station?.iniss2 === true && station.lines.some((l) => l.active && l.supported && l.canRedirect);
-
-  async function toggleRedirect() {
-    const confirmed = await confirmAction(
-      redirected
-        ? { title: t("iniss.redirect.undoConfirm"), description: t("iniss.redirect.undoDescription"), confirmLabel: t("iniss.redirect.undo") }
-        : { title: t("iniss.redirect.confirm"), description: t("iniss.redirect.description"), confirmLabel: t("iniss.redirect") },
-    );
-    if (confirmed) redirect.mutate({ body: { redirect: !redirected } });
-  }
 
   const notConfigured = query.error instanceof ApiError && query.error.code === "iniss.notConfigured";
   const nothing = station !== undefined && !station.lines.some((l) => l.active && l.supported) && station.xmlTables.length === 0;
@@ -283,18 +271,18 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
               />
             </>
           )}
-          {(load.error ?? redirect.error) && (
+          {load.error && (
             <Alert variant="destructive">
               <CircleAlert />
-              <AlertDescription className="whitespace-pre-line">{errorText(load.error ?? redirect.error)}</AlertDescription>
+              <AlertDescription className="whitespace-pre-line">{errorText(load.error)}</AlertDescription>
             </Alert>
           )}
         </div>
         <DialogFooter>
           <DialogClose render={<Button type="button" variant="outline" />}>{t("common.cancel")}</DialogClose>
           {canRedirect && (
-            <Button type="button" variant="outline" disabled={redirect.isPending} onClick={() => void toggleRedirect()}>
-              {redirect.isPending && <Spinner />}
+            <Button type="button" variant="outline" disabled={redirect.pending} onClick={() => void redirect.toggle(redirected)}>
+              {redirect.pending && <Spinner />}
               {t(redirected ? "iniss.redirect.undo" : "iniss.redirect")}
             </Button>
           )}

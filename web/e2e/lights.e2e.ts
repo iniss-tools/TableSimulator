@@ -1,5 +1,5 @@
 // Osvetlenie a rozhlas: ustredna AK Signal (snimac tmy, server zapne automatiku, porucha svetiel v odpovedi), krok scenara
-// so stavom ustredne a rozhlas vzdialeneho INISSu (hlasenie, prerusenie = odpoved bez stavu fronty).
+// so stavom ustredne a rozhlas vzdialeneho INISSu (hlasenie, prerusenie = odpoved bez stavu fronty, zvuk v prehliadaci).
 import { expect, test } from "@playwright/test";
 import {
   akSignalFrame,
@@ -96,6 +96,17 @@ test("rozhlas vzdialeneho INISSu - hlasenie a prerusenie", async ({ page }) => {
   await openPage(page, "Osvetlenie a rozhlas");
   const card = page.locator("[data-slot=card]").filter({ hasText: `linka ${REMOTE_LINE} · vzdialený INISS` });
   await expect(card.getByText("Os 3412 Lipovec").first()).toBeVisible();
+
+  // zvuk hlaseni: predvolene stlmeny, prepinac v zahlavi; nahravka z banky len s programom INISSu v nastaveniach
+  const sound = page.locator("header").getByRole("button", { name: "Zvuk hlásení" });
+  await expect(sound).toHaveAttribute("aria-pressed", "false");
+  await sound.click();
+  await expect(sound).toHaveAttribute("aria-pressed", "true");
+  await sound.click();
+  await expect(sound).toHaveAttribute("aria-pressed", "false");
+  const recording = await page.request.get("/api/sounds?name=SK/R1/9900100", { headers: API_HEADERS });
+  expect(recording.status()).toBe(404);
+
   await card.getByRole("button", { name: "Prerušiť" }).click();
   await expect(card.getByText("prerušené")).toBeVisible();
 
@@ -103,9 +114,10 @@ test("rozhlas vzdialeneho INISSu - hlasenie a prerusenie", async ({ page }) => {
   expect(await queueState(remoteQueueMessage(3, 1))).toBe(0);
   expect(await queueState(remoteQueueMessage(4, 0))).toBe(1);
   const board = (await (await page.request.get(`/api/boards/${REMOTE_LINE}-0`, { headers: API_HEADERS })).json()) as {
-    display: { remoteAudio: { announcements: { result: string }[] } };
+    display: { remoteAudio: { announcements: { result: string; pauses: unknown }[] } };
   };
   expect(board.display.remoteAudio.announcements.map((a) => a.result)).toEqual(["cancelled"]);
+  expect(board.display.remoteAudio.announcements[0].pauses).toEqual([{ beforeMs: 0, afterMs: 600000 }]);
 
   controller.close();
   await deleteLine(page, REMOTE_LINE);

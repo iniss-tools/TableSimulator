@@ -80,11 +80,14 @@ a vlastným `JsonConverter`, správy `/ws` polymorfné cez `type`. Používa ich
     `PERMISSIONS` + skupina v `features/roles/roles.ts` + texty `permission.*`.
 - `Alerts/` – oznámenia o výpadkoch liniek: kedy (`LineAlertTracker`, čisté), texty SK/CZ (`AlertMessage`), kanál
   `IAlertChannel`. Ticho servera INISS2 (`ServerSilent`) ide ako stav linky `silent` (`AlertLines`).
-- `Devices/` – `DeviceClock` (dĺžky zvukov banky programu v nastavení: server INISS2 `SoundLengths` z hlavičky EWA,
-  INISS 3.39 `Iniss339SoundLengths` z `FYZBANK.DAT`/`FYZZVUK.DAT` vedľa programu) a história ústrední
+- `Devices/` – `DeviceClock` (dĺžky zvukov z banky programu v nastavení) a história ústrední
   `GetDeviceHistoryQuery` (stav na začiatku obdobia; log svetiel servera INISS2 priradený ústredni podľa názvu
   svetla). Snímač a stavy ústredne mení `Boards/SetAkSignalCommand` cez `Simulator.UpdateProfile` (svetlá a audio
   linky ostanú).
+  - `Sounds/` – banka zvukov `ISoundBank`: server INISS2 `SoundLengths` (súbor podľa mena, dĺžka z hlavičky EWA),
+    INISS 3.39 `Iniss339SoundLengths` (kľúče z `FYZBANK.DAT`/`FYZZVUK.DAT` vedľa programu). `SoundBanks` drží banku
+    programu v nastavení pre `DeviceClock` aj `GET /api/sounds` (nahrávka ako WAV na prehratie v prehliadači, len
+    súbory v banke, skrátený blok dát opraví `WavHeader`).
 - `Scenarios/ScenarioRunner` – zlúči účinky bežiacich scenárov a mení len rozdiely, pôvodné poruchy vráti.
 - `Signage/` – informačné panely ako INISSView 2 (len Application, Persistence a web): čistý rozvrh
   `SignageSchedule`, správy, playlisty a skupiny v DB ako JSON požiadavky, `SignagePanelTracker` v pamäti, súbory
@@ -98,7 +101,8 @@ a vlastným `JsonConverter`, správy `/ws` polymorfné cez `type`. Používa ich
     podľa pravidiel servera, chyby v `InissStationDto.DeviceProblems`).
   - Nové načítanie prepíše svetlá a audio linky ústrední, snímač a stavy ostanú.
   - Presmerovanie liniek INISS2 prepíše `line` v `CommLines.xml` (`CommLinesXml.Write`, sériovej linke aj `typ`
-    na `TCP_CLIENT`, pôvodné hodnoty v komentári); platí po reštarte servera.
+    na `TCP_CLIENT`, pôvodné hodnoty v komentári); platí po reštarte servera. Tlačidlo na stránke Linky sa riadi
+    `GetInissRedirectQuery` – vždy úspech, aby stránka bez INISSu nedostala chybu.
 - `Virtual/` – virtuálne tabule, šablóny XSL INISSView (`InissViewSite`), vstavané rozloženia `Layouts/*.json`
   vložené do zostavy (vlastné v DB).
 - `Designs/DesignDefaults` = dvojča `defaultDesignId` vo `web/src/render/design.ts` – meniť oboje.
@@ -201,7 +205,11 @@ React + TS 7, bun/Vite; texty SK/CZ v `src/i18n` – žiadny text UI natvrdo, ch
   `?key=…#/virtual/N`; premenovaná stránka dostane presmerovanie zo starej adresy – úvodná stránka Zariadenia
   `#/devices`, `#/` a `#/boards` na ňu presmerujú), menu `navigation.ts` (stránku bez oprávnenia rám nezobrazí), kiosky `app/kiosk.ts`, service
   worker `public/sw.js` (len stránka a `/assets`), upozornenia na výpadky `app/line-alerts.ts` + `app/notifications.ts`.
-  Iný server na tej istej adrese = nové načítanie (`api/server-identity.ts`).
+  Zvuk hlásení `app/sound` (Web Audio, predvolene stlmený, hrá len hlásenia začaté po načítaní stránky a zapnutí
+  zvuku, dohraté nezastavuje; čistá logika v `announcement-sound.ts`).
+  Iný server na tej istej adrese = nové načítanie (`api/server-identity.ts`). Nové rozhranie na tom istom serveri
+  (zostava, aktualizácia) zistí `app/use-web-version.ts` po každom pripojení podľa vstupného skriptu stránky – rám
+  ukáže pruh, kiosk (`useKiosk`) sa načíta znova sám, raz pre každú verziu.
 - Stránky po oblastiach `src/features/<oblasť>/` (stránka, dialógy, pomocné funkcie). Spoločné súčasti
   `src/components/common` (`FormDialog`, `OptionSelect`, `confirmAction` – nie `window.confirm`, `RowActions`…),
   tabuľky `src/components/data-table` (`columnsFor<T>()`; hodnotu z iného dotazu vložiť do dát riadkov – tabuľka si

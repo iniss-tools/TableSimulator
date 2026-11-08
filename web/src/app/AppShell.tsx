@@ -1,5 +1,5 @@
 // Ram aplikacie: bocny panel, zahlavie s nazvom stranky a stav spojenia, nova verzia simulatora, obsah stranky (ak na nu
-// ma pouzivatel pravo), upozornenia na vypadky liniek.
+// ma pouzivatel pravo), nove rozhranie na serveri, upozornenia na vypadky liniek a zvuk hlaseni.
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import { CircleAlert } from "lucide-react";
 import { can, useConnection, useMe, useSimulatorState } from "@/api";
@@ -9,7 +9,10 @@ import { t } from "@/i18n";
 import { AppSidebar } from "./AppSidebar";
 import { useLineAlerts } from "./line-alerts";
 import { navItem } from "./navigation";
+import { SoundToggle } from "./sound/SoundToggle";
+import { useAnnouncementSound } from "./sound/use-announcement-sound";
 import { UpdateBanner } from "./update-banner";
+import { WebUpdateBanner } from "./WebUpdateBanner";
 
 export function AppShell() {
   // ram sa ukazuje az po zisteni pouzivatela (Root)
@@ -20,6 +23,7 @@ export function AppShell() {
   const item = navItem(pathname);
   const allowed = item === undefined || can(me, item.permission);
   useLineAlerts();
+  useAnnouncementSound();
 
   return (
     <SidebarProvider>
@@ -29,6 +33,9 @@ export function AppShell() {
           <SidebarTrigger />
           <Separator orientation="vertical" className="mr-1 data-[orientation=vertical]:h-4" />
           <h1 className="truncate text-sm font-medium">{item ? t(item.label) : t("app.title")}</h1>
+          <div className="ml-auto">
+            <SoundToggle />
+          </div>
         </header>
         {!connected && loaded && (
           <div
@@ -39,6 +46,7 @@ export function AppShell() {
             {t("server.offline")}
           </div>
         )}
+        <WebUpdateBanner />
         <UpdateBanner />
         <div className="mx-auto w-full max-w-[1600px] flex-1 p-4">
           {allowed ? <Outlet /> : <p className="text-sm text-muted-foreground">{t("nav.forbidden")}</p>}

@@ -1,4 +1,5 @@
-// Server INISS2 v okne Nacitat z INISSu: nahlad liniek, nacitanie s celom a presmerovanie liniek aj jeho zrusenie.
+// Server INISS2 v okne Nacitat z INISSu: nahlad liniek, nacitanie s celom a presmerovanie liniek (tlacidlo na stranke
+// Linky) aj jeho zrusenie v okne.
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -57,10 +58,11 @@ test("server INISS2: nacitanie liniek a ich presmerovanie", async ({ page }) => 
     expect(loaded.boards.find((b) => b.id === "2-10")?.profile.width).toBe(272);
 
     // presmerovanie zmeni adresy, pri seriovej linke aj sposob spojenia
-    dialog = await openDialog(page);
-    await dialog.getByRole("button", { name: "Presmerovať linky" }).click();
+    await page.getByRole("button", { name: "Presmerovať linky INISS2" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Presmerovať linky" }).click();
     await expect(page.getByText("Linky sú presmerované. Reštartujte server INISS2.")).toBeVisible();
+    await expect(page.locator("main").getByRole("button", { name: "Zrušiť presmerovanie" })).toBeVisible();
+    dialog = await openDialog(page);
     await expect(dialog.getByText("pôvodne 10.0.0.11:10001")).toBeVisible();
     await expect(dialog.getByText("pôvodne COM3")).toBeVisible();
     const redirected = readFileSync(commLines, "latin1");
@@ -76,6 +78,8 @@ test("server INISS2: nacitanie liniek a ich presmerovanie", async ({ page }) => 
     await expect(page.getByText("Pôvodné adresy sú vrátené. Reštartujte server INISS2.")).toBeVisible();
     await expect(dialog.getByRole("button", { name: "Presmerovať linky" })).toBeVisible();
     expect(readFileSync(commLines).equals(original)).toBe(true);
+    await dialog.getByRole("button", { name: "Zrušiť" }).click();
+    await expect(page.getByRole("button", { name: "Presmerovať linky INISS2" })).toBeVisible();
   } finally {
     await setProgram(page, settings, settings.inissProgram);
     await deleteLine(page, 1);
