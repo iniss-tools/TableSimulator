@@ -48,6 +48,8 @@ function board(manufacturer: string, rows: { row: number; codes: string }[], pro
       flapRows: rows,
       rotatingUntil: null,
       amplifier: null,
+      akSignal: null,
+      remoteAudio: null,
     },
   };
 }

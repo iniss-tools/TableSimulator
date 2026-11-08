@@ -2,7 +2,9 @@ namespace TableSimulator.Contracts.Display;
 
 /// <summary>
 /// Obsah tabule: rodina <c>elen</c> (riadky <see cref="Rows" />), <c>chars</c> (<see cref="CharRows" />), <c>flaps</c>
-/// (<see cref="FlapRows" />) alebo <c>amplifier</c> - spinacia jednotka zosilnovaca ELSVO (<see cref="Amplifier" />).
+/// (<see cref="FlapRows" />), <c>amplifier</c> - spinacia jednotka zosilnovaca ELSVO (<see cref="Amplifier" />),
+/// <c>aksignal</c> - ustredna AK Signal (<see cref="AkSignal" />) alebo <c>remoteaudio</c> - rozhlas vzdialeneho INISSu
+/// (<see cref="RemoteAudio" />).
 /// </summary>
 public sealed record DisplayDto(
     string Family,
@@ -34,4 +36,10 @@ public sealed record DisplayDto(
 
     /// <summary>Zosilnovac ELSVO; null pri inej rodine.</summary>
     public AmplifierDto? Amplifier { get; init; }
+
+    /// <summary>Ustredna AK Signal; null pri inej rodine.</summary>
+    public AkSignalDto? AkSignal { get; init; }
+
+    /// <summary>Rozhlas vzdialeneho INISSu; null pri inej rodine.</summary>
+    public RemoteAudioDto? RemoteAudio { get; init; }
 }

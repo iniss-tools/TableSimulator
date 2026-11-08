@@ -13,7 +13,10 @@ public enum ScenarioAction
     [JsonStringEnumMemberName("powerLoss")] PowerLoss,
 
     /// <summary>Vypadok linky - spojenie s INISSom sa zavrie a nove sa neprijima.</summary>
-    [JsonStringEnumMemberName("lineOutage")] LineOutage
+    [JsonStringEnumMemberName("lineOutage")] LineOutage,
+
+    /// <summary>Stavy a snimac ustredne AK Signal (<see cref="ScenarioStep.Device" />); inej tabule sa netyka.</summary>
+    [JsonStringEnumMemberName("device")] Device
 }
 
 /// <summary>
@@ -29,6 +32,9 @@ public sealed record ScenarioStep(int AtMs, int DurationMs, int Line, int? Addre
 {
     /// <summary>Porucha pri <see cref="ScenarioAction.Fault" />.</summary>
     public BoardFault Fault { get; init; } = BoardFault.None;
+
+    /// <summary>Stavy a snimac ustredne pri <see cref="ScenarioAction.Device" />.</summary>
+    public AkSignalOverride Device { get; init; } = new(AkSignalConditions.None, null);
 
     /// <summary>Koniec kroku [ms].</summary>
     public long EndMs => (long)AtMs + DurationMs;
@@ -83,8 +89,9 @@ public static class ScenarioTimeline
     }
 
     /// <summary>
-    /// Ucinok platnych krokov: porucha kazdej tabule (neskorsi krok scenara prepise skorsi), tabule bez napajania a linky
-    /// s vypadkom. Krok pre vsetky tabule linky sa rozvinie podla <paramref name="boardsOfLine" />.
+    /// Ucinok platnych krokov: porucha kazdej tabule (neskorsi krok scenara prepise skorsi), tabule bez napajania, linky
+    /// s vypadkom a prekrytie ustredni (stavy z vsetkych krokov, snimac z neskorsieho). Krok pre vsetky tabule linky sa
+    /// rozvinie podla <paramref name="boardsOfLine" />.
     /// </summary>
     public static ScenarioEffects Effects(FaultScenario scenario, IReadOnlyList<int> activeSteps, Func<int, IEnumerable<string>> boardsOfLine)
     {
@@ -94,6 +101,7 @@ public static class ScenarioTimeline
         var faults = new Dictionary<string, BoardFault>(StringComparer.Ordinal);
         var powerOff = new HashSet<string>(StringComparer.Ordinal);
         var outages = new HashSet<int>();
+        var devices = new Dictionary<string, AkSignalOverride>(StringComparer.Ordinal);
         foreach (var step in activeSteps.Select(i => scenario.Steps[i]))
         {
             if (step.Action == ScenarioAction.LineOutage)
@@ -107,12 +115,14 @@ public static class ScenarioTimeline
             {
                 if (step.Action == ScenarioAction.PowerLoss)
                     powerOff.Add(board);
+                else if (step.Action == ScenarioAction.Device)
+                    devices[board] = devices.TryGetValue(board, out var earlier) ? earlier.Then(step.Device) : step.Device;
                 else
                     faults[board] = step.Fault;
             }
         }
 
-        return new ScenarioEffects(faults, powerOff, outages);
+        return new ScenarioEffects(faults, powerOff, outages) { Devices = devices };
     }
 }
 
@@ -120,4 +130,8 @@ public static class ScenarioTimeline
 /// <param name="Faults">porucha tabule podla identifikatora</param>
 /// <param name="PoweredOff">tabule bez napajania</param>
 /// <param name="Outages">linky s vypadkom</param>
-public sealed record ScenarioEffects(IReadOnlyDictionary<string, BoardFault> Faults, IReadOnlySet<string> PoweredOff, IReadOnlySet<int> Outages);
+public sealed record ScenarioEffects(IReadOnlyDictionary<string, BoardFault> Faults, IReadOnlySet<string> PoweredOff, IReadOnlySet<int> Outages)
+{
+    /// <summary>Prekrytie ustredne AK Signal podla identifikatora (tabule ineho druhu ho nepouziju).</summary>
+    public IReadOnlyDictionary<string, AkSignalOverride> Devices { get; init; } = new Dictionary<string, AkSignalOverride>();
+}

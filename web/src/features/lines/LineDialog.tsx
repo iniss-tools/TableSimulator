@@ -7,7 +7,7 @@ import { FormDialog } from "@/components/common/form-dialog";
 import { OptionSelect } from "@/components/common/option-select";
 import { FieldDescription, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { defaultEndpoint, REMOTE_INISS_CLASS } from "@/lib/boards";
+import { defaultEndpoint, DTR_CLASS, REMOTE_INISS_CLASS } from "@/lib/boards";
 import { t, type TextKey } from "@/i18n";
 
 export function LineDialog({ initial, isNew, onClose }: { initial: SetLineRequest; isNew: boolean; onClose: () => void }) {
@@ -53,6 +53,7 @@ export function LineDialog({ initial, isNew, onClose }: { initial: SetLineReques
           </FormField>
         </div>
         {remote && <FieldDescription>{t("line.class.128.hint")}</FieldDescription>}
+        {config.tableClass === DTR_CLASS && <FieldDescription>{t("line.class.900.hint")}</FieldDescription>}
         <FormField label={t("field.name")}>
           <Input value={config.name} onChange={(e) => setConfig({ ...config, name: e.target.value })} />
         </FormField>

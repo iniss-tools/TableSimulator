@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<ISignageRepository, SignageRepository>();
         services.AddScoped<IFaultScenarioRepository, FaultScenarioRepository>();
         services.AddScoped<ITrafficStatisticsRepository, TrafficStatisticsRepository>();
+        services.AddScoped<Application.Devices.IDeviceHistoryRepository, Devices.DeviceHistoryRepository>();
         return services;
     }
 }

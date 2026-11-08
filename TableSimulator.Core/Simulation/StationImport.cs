@@ -54,6 +54,9 @@ public sealed record StationBoard(int Line, int Address, string Manufacturer)
 
     /// <summary>Riadkov tabule z katalogu (nie listova tabula); 0 = podla vyrobcu.</summary>
     public int Rows { get; init; }
+
+    /// <summary>Ustredna AK Signal: svetla a audio linky z dat stanice (snimac a stavy sa neberu); null = ina tabula.</summary>
+    public Boards.AkSignalProfile? AkSignal { get; init; }
 }
 
 /// <summary>Co import stanice v simulatore zmenil.</summary>

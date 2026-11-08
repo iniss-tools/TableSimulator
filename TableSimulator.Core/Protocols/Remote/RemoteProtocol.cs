@@ -5,6 +5,7 @@ using TableSimulator.Core.Protocols.Apel;
 using TableSimulator.Core.Protocols.Elektrocas;
 using TableSimulator.Core.Protocols.Elen;
 using TableSimulator.Core.Protocols.Ers;
+using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Core.Protocols.Remote;
 
@@ -14,13 +15,22 @@ namespace TableSimulator.Core.Protocols.Remote;
 /// prikazom pre tabulu (<c>TCLS</c> kod vyrobcu, <c>TADR</c> adresa, <c>TCMD</c> sprava protokolu tabule bez
 /// kontrolneho suctu). Simulator spravu tabule dokonci, spracuje ako <see cref="ElenProtocol" /> alebo
 /// <see cref="ElektrocasProtocol" /> a hned odpovie spravou <c>0xAC</c> s tym istym poradovym cislom: stav tabule
-/// (<c>TSTA</c>) a stav kazdej fronty (<c>RSTA</c>). Hlasenia sa "prehraju" hned - prvu odpoved hlasi ako prijate,
-/// dalsiu ako dohrate.
+/// (<c>TSTA</c>) a stav kazdej fronty (<c>RSTA</c>). Fronty a hlasenia drzi rozhlas vzdialeneho INISSu - zariadenie
+/// <see cref="AudioManufacturer" /> na adrese <see cref="AudioAddress" /> (<see cref="RemoteAudioDisplay" />), ktore
+/// simulator zalozi pri prvej sprave s frontami; hlasenie hra podla dlzky nahravok. Porucha zariadenia "neodpoveda"
+/// = vzdialeny INISS mlci (riadiaci zapise <c>remote timeout</c>), "oneskorene" odpoved oneskori.
 /// </summary>
 internal sealed class RemoteProtocol : ILineProtocol
 {
     /// <summary>Vyrobcovia tabul, ktore simulator za vzdialenym INISSom zobrazi; prvy je predvoleny.</summary>
-    public static readonly string[] Manufacturers = ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16Kam", "ELEKON", "LCD1", "ERP", "LCD", "FERS", "ERS", "APEL", "APEL_AN"];
+    public static readonly string[] Manufacturers =
+        ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16Kam", "ELEKON", "LCD1", "ERP", "LCD", "FERS", "ERS", "APEL", "APEL_AN", AudioManufacturer];
+
+    /// <summary>Druh zariadenia "rozhlas vzdialeneho INISSu" (nie tabula).</summary>
+    public const string AudioManufacturer = "REMOTE_AUDIO";
+
+    /// <summary>Adresa rozhlasu vzdialeneho INISSu na linke (tabule maju adresy od 1, ELEN 0 = hromadna sprava).</summary>
+    public const int AudioAddress = 0;
 
     /// <summary>Stav tabule: zapis v poriadku.</summary>
     public const int TableOk = 0x00;
@@ -87,7 +97,8 @@ internal sealed class RemoteProtocol : ILineProtocol
         _apel.Reset();
     }
 
-    public BoardDisplay CreateDisplay(string manufacturer) => Inner(manufacturer).CreateDisplay(manufacturer);
+    public BoardDisplay CreateDisplay(string manufacturer) =>
+        manufacturer == AudioManufacturer ? new RemoteAudioDisplay() : Inner(manufacturer).CreateDisplay(manufacturer);
 
     /// <summary>Poruchu tabule uplatnuje vnutorny protokol jej rodiny - tu len pre uplnost rozhrania.</summary>
     public (byte[] Bytes, FrameInfo Info) FaultReply(BoardFault fault, byte[] normal) => _elen.FaultReply(fault, normal);
@@ -131,13 +142,45 @@ internal sealed class RemoteProtocol : ILineProtocol
             return;
         }
 
+        // porucha rozhlasu = porucha celeho vzdialeneho INISSu: "neodpoveda" = spravu nespracuje a mlci
+        var existing = context.Boards.FirstOrDefault(b => b.Display is RemoteAudioDisplay);
+        if (existing is { Fault.Kind: FaultKind.NoReply } && context.Line.Mode != LineMode.Monitor)
+        {
+            context.Line.Stats.Frames++;
+            existing.Stats.Frames++;
+            existing.Stats.Unanswered++;
+            existing.Stats.LastFrameAt = context.Now;
+            context.LogReceived(message.Raw, AudioAddress, FrameStatus.Fault, new FrameInfo("remote.silent", Args(("seq", seq))));
+            return;
+        }
+
         var reply = new List<RemoteChunk>();
         var logged = false;
-        foreach (var queue in Queues(message))
+        var queues = Queues(message);
+        var device = queues.Count > 0 ? context.Device(AudioAddress, AudioManufacturer) : existing;
+        var audio = device?.Display as RemoteAudioDisplay;
+        var audioChanged = false;
+        foreach (var queue in queues)
         {
             if (queue.Name is { } name)
                 reply.Add(new RemoteChunk(QueueName, RemoteManufacturers.Bytes(name)));
-            reply.Add(RemoteChunk.FromInt32(QueueStatus, QueueState(queue)));
+            int state;
+            if (audio is not null)
+            {
+                state = audio.Handle(queue.Name ?? "", queue.Command, queue.Recordings, queue.Title, queue.MixerLine, context.Now,
+                    context.Environment.SoundLength, out var changed);
+                audioChanged |= changed;
+                if (state == 0)
+                {
+                    logged = true;
+                    context.LogReceived(message.Raw, AudioAddress, FrameStatus.Ok,
+                        new FrameInfo("remote.break", Args(("seq", seq), ("queue", queue.Name ?? ""))));
+                }
+            }
+            else
+                state = QueueState(queue);
+
+            reply.Add(RemoteChunk.FromInt32(QueueStatus, state));
             if (queue.Recordings is not null)
             {
                 logged = true;
@@ -154,17 +197,29 @@ internal sealed class RemoteProtocol : ILineProtocol
             }
         }
 
+        if (device is not null && audioChanged)
+            context.Changed(device);
+        if (device is not null && queues.Count > 0)
+        {
+            device.Stats.Frames++;
+            device.Stats.LastFrameAt = context.Now;
+        }
+
         var table = Table(message, context, seq);
         if (table is { } t)
             reply.Add(RemoteChunk.FromInt32(TableStatus, t.Code | t.Length << 16));
         else
             context.Line.Stats.Frames++;
 
+        var fault = device?.Fault ?? BoardFault.None;
         var info = table is { } r
             ? new FrameInfo("remote.reply", Args(("seq", seq), ("code", r.Code.ToString("X2", CultureInfo.InvariantCulture)), ("result", Result(r.Code))))
             : new FrameInfo("remote.reply", Args(("seq", seq)));
         // pravidelny dotaz bez hlasenia a tabule do zaznamu nejde (pri frontach na linke chodi kazdu sekundu)
-        context.ReplyRaw(table?.Address, RemoteMessage.Build(RemoteMessage.Reply, message.Sequence, reply), table?.Delay ?? TimeSpan.Zero,
+        var delay = table?.Delay ?? TimeSpan.Zero;
+        if (fault.Kind == FaultKind.Delay && TimeSpan.FromMilliseconds(fault.DelayMs) > delay)
+            delay = TimeSpan.FromMilliseconds(fault.DelayMs);
+        context.ReplyRaw(table?.Address, RemoteMessage.Build(RemoteMessage.Reply, message.Sequence, reply), delay,
             table?.Status ?? FrameStatus.Ok, info, logged || table is not null);
     }
 
@@ -424,12 +479,17 @@ internal sealed class RemoteProtocol : ILineProtocol
 
         public DateTimeOffset Now => outer.Now;
 
+        public SimEnvironment Environment => outer.Environment;
+
         public IReadOnlyList<SimBoard> Boards => outer.Boards.Where(b => b.Display.GetType() == _family).ToList();
+
+        public SimBoard? Device(int address, string manufacturer) => outer.Device(address, manufacturer);
 
         public SimBoard? FindBoard(int address, string? manufacturer = null)
         {
             var board = outer.FindBoard(address, manufacturer ?? tableManufacturer);
-            if (board is null)
+            // rozhlas vzdialeneho INISSu nie je tabula
+            if (board is null || board.Display is RemoteAudioDisplay)
                 return null;
             // riadiaci INISS vie presneho vyrobcu - tabula s inym ho dostane ako navrh na prepnutie
             var known = board.Mismatch is { Evidence: Mismatch } m && m.Suggested.SequenceEqual([tableManufacturer]);

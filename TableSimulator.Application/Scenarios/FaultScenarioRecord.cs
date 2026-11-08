@@ -48,10 +48,12 @@ public static class ScenarioMapping
         Contracts.Scenarios.ScenarioAction.Fault => Core.Scenarios.ScenarioAction.Fault,
         Contracts.Scenarios.ScenarioAction.PowerLoss => Core.Scenarios.ScenarioAction.PowerLoss,
         Contracts.Scenarios.ScenarioAction.LineOutage => Core.Scenarios.ScenarioAction.LineOutage,
+        Contracts.Scenarios.ScenarioAction.Device => Core.Scenarios.ScenarioAction.Device,
         _ => throw new ArgumentOutOfRangeException(nameof(step), step.Action, null)
     })
     {
-        Fault = step.Fault is { } fault ? RequestMapper.ToFault(fault) : BoardFault.None
+        Fault = step.Fault is { } fault ? RequestMapper.ToFault(fault) : BoardFault.None,
+        Device = step.Device is { } device ? RequestMapper.ToOverride(device) : new AkSignalOverride(AkSignalConditions.None, null)
     };
 
     /// <summary>Scenar pre API s behom (ak bezi).</summary>

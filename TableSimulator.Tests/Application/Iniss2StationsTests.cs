@@ -3,6 +3,7 @@ using TableSimulator.Application.Mapping;
 using TableSimulator.Application.Settings;
 using TableSimulator.Application.Station;
 using TableSimulator.Contracts.Station;
+using TableSimulator.Core.Boards;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Simulation;
 using ToolsCore.Iniss.Tools;
@@ -164,7 +165,9 @@ public sealed class Iniss2StationsTests
         Assert.IsTrue(lines[0].CanRedirect);
         Assert.IsNull(lines[0].OriginalPort);
 
-        Assert.IsFalse(lines[1].Supported, "AKSIGNAL nie je linka tabul");
+        Assert.AreEqual(131, lines[1].TableClass, "ustredna AK Signal");
+        Assert.IsTrue(lines[1].Supported);
+        Assert.AreEqual(InissProblemCode.NoDevices, lines[1].Problems.Single().Code, "bez Lights.xml a Audio.xml");
         Assert.AreEqual(4, lines[2].TableClass);
         Assert.AreEqual(StationLineTransport.Tcp, lines[2].Transport);
         Assert.IsFalse(lines[3].Active);
@@ -312,6 +315,98 @@ public sealed class Iniss2StationsTests
     }
 
     [TestMethod]
+    public void Read_ControllersFromLightsAndAudio()
+    {
+        Write("CommLines.xml", """
+            <CommLines>
+              <line k="Svetlo" typ="SERIAL" protocol="AKSIGNAL" line="COM3" />
+              <line k="Uh" typ="TCP_CLIENT" protocol="AKSIGNALUH" line="10.0.0.9:5000" />
+            </CommLines>
+            """);
+        Write("Lights.xml", """
+            <Lights>
+              <l st="5400010" jm="Nástupište 1" lin="Svetlo" addr="3" ppp="5" pso="2" zh="10" />
+              <l st="5400010" jm="Nástupište 2" addr="4" />
+              <l st="5400020" jm="Podchod" typ="AKSIGNALUH" />
+              <l st="5400020" jm="Bez adresy" />
+            </Lights>
+            """);
+        Write("Audio.xml", """
+            <AUDIO>
+              <line st="5400010" jm="Lipovec" fr="Lipovec" out="AKSIGNAL" port="Svetlo" addr="3" wave="0" />
+              <line st="5400020" jm="Horany" fr="Horany" out="AKSIGNALUH" port="Uh" ch="2" />
+              <line st="5499999" jm="Ina stanica" fr="Ina" out="AKSIGNALUH" port="Uh" />
+              <line st="5400020" jm="Zly kanal" fr="Zly" out="AKSIGNALUH" port="Uh" ch="3" />
+            </AUDIO>
+            """);
+
+        var station = Read();
+
+        Assert.AreEqual(131, station.Lines[0].TableClass);
+        Assert.IsTrue(station.Lines[0].CanRedirect, "seriova linka AKSIGNAL sa presmeruje na TCP");
+        var controllers = station.Lines[0].Controllers;
+        CollectionAssert.AreEqual(new[] { 3, 4 }, controllers.Select(c => c.Address).ToArray());
+        Assert.AreEqual("Nástupište 1, Lipovec", controllers[0].Name);
+        Assert.AreEqual(new StationLightDto("Nástupište 1", 5400010) { BeforeArrival = 5, AfterDeparture = 2, MinOff = 10 }, controllers[0].Lights.Single());
+        Assert.AreEqual(new StationAudioDto("Lipovec", 5400010), controllers[0].Audio.Single());
+        Assert.AreEqual("AKSIGNAL", controllers[1].Manufacturer);
+
+        var uh = station.Lines[1].Controllers.Single();
+        Assert.AreEqual(132, station.Lines[1].TableClass);
+        Assert.AreEqual(0, uh.Address);
+        Assert.AreEqual("AKSIGNALUH", uh.Manufacturer);
+        Assert.AreEqual("Podchod, Horany", uh.Name);
+        Assert.AreEqual(2, uh.Audio.Single().Channel, "audio linka inej stanice sa vynecha");
+
+        CollectionAssert.AreEquivalent(new[] { InissProblemCode.DeviceAddress, InissProblemCode.AudioChannel },
+            station.DeviceProblems.Select(p => p.Code).ToArray());
+    }
+
+    [TestMethod]
+    public void Import_ControllerKeepsSensorOnReload()
+    {
+        Write("CommLines.xml", """<CommLines><line k="Svetlo" typ="TCP_CLIENT" protocol="AKSIGNAL" line="10.0.0.2:20" /></CommLines>""");
+        Write("Lights.xml", """<Lights><l st="5400010" jm="Nástupište 1" addr="3" /></Lights>""");
+        var simulator = new Simulator();
+
+        simulator.ImportStation(RequestMapper.ToImport(InissStations.ToRequest(Read())));
+        var board = simulator.Read(s => s.FindBoard("1-3"))!;
+        Assert.AreEqual("Nástupište 1", board.Name);
+        Assert.AreEqual("Nástupište 1", board.Profile.AkSignal!.Lights.Single().Name);
+        Assert.IsInstanceOfType<AkSignalDisplay>(board.Display);
+
+        // obsluha nastavi snimac, stanica premenuje svetlo - nazov svetla sa zmeni, snimac ostane
+        simulator.SetBoard(new BoardConfig(1, 3, "AKSIGNAL")
+        {
+            Name = board.Name,
+            Profile = board.Profile with { AkSignal = board.Profile.AkSignal with { Sensor = new TwilightSensor { Mode = TwilightMode.Dark } } }
+        });
+        Write("Lights.xml", """<Lights><l st="5400010" jm="Nástupište 1A" addr="3" /></Lights>""");
+        var result = simulator.ImportStation(RequestMapper.ToImport(InissStations.ToRequest(Read())));
+
+        board = simulator.Read(s => s.FindBoard("1-3"))!;
+        Assert.AreEqual(1, result.BoardsKept);
+        Assert.AreEqual("Nástupište 1A", board.Profile.AkSignal!.Lights.Single().Name);
+        Assert.AreEqual(TwilightMode.Dark, board.Profile.AkSignal.Sensor.Mode);
+    }
+
+    [TestMethod]
+    public void Redirect_ControllerLinesToo()
+    {
+        Write("CommLines.xml", """
+            <CommLines>
+              <line k="Svetlo" typ="SERIAL" protocol="AKSIGNAL" line="COM3" param="9600,n,8,1" />
+              <line k="Uh" typ="TCP_CLIENT" protocol="AKSIGNALUH" line="10.0.0.9:5000" />
+            </CommLines>
+            """);
+
+        var addresses = Iniss2Stations.RedirectAddresses(Read());
+
+        Assert.AreEqual("127.0.0.1:47001", addresses["Svetlo"]);
+        Assert.AreEqual("127.0.0.1:47002", addresses["Uh"]);
+    }
+
+    [TestMethod]
     public void Read_XmlTablesOfAllStations()
     {
         var xml = Read().XmlTables;
@@ -341,7 +436,8 @@ public sealed class Iniss2StationsTests
 
         var result = simulator.ImportStation(RequestMapper.ToImport(request));
 
-        Assert.Contains(2, result.UnsupportedLines);
+        Assert.IsEmpty(result.UnsupportedLines);
+        Assert.AreEqual(131, simulator.Read(s => s.FindLine(2)!.TableClass), "linka ustredne AK Signal");
         Assert.AreEqual(new LineEndpoint(LineTransport.Udp, "0.0.0.0", 47001), simulator.Read(s => s.FindLine(1)!.Endpoint));
         Assert.AreEqual(new LineEndpoint(LineTransport.Tcp, "0.0.0.0", 47003), simulator.Read(s => s.FindLine(3)!.Endpoint));
         Assert.AreEqual(3, simulator.Read(s => s.Boards.Count(b => b.Line == 1)), "tabula ELEN sa na linke ITP nezobrazi");
@@ -368,7 +464,7 @@ public sealed class Iniss2StationsTests
         Assert.AreEqual("10.0.0.1:10001", lines[0].OriginalPort);
         Assert.AreEqual(47001, lines[0].SimulatorPort);
         Assert.AreEqual("127.0.0.1:47003", lines[2].Port);
-        Assert.AreEqual("10.0.0.2:20", lines[1].Port, "linku zvuku simulator nezobrazi");
+        Assert.AreEqual("127.0.0.1:47002", lines[1].Port, "linka ustredne AK Signal");
         Assert.AreEqual("10.0.0.4:40", lines[3].Port, "vynechana linka");
         Assert.AreEqual("COM2", lines[7].Port, "ITP na seriovej linke nefunguje ani cez TCP");
         Assert.AreEqual("127.0.0.1:47005", lines[4].Port, "seriova linka sa zmeni na TCP_CLIENT");

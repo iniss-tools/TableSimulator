@@ -13,6 +13,7 @@ public static class ScenarioErrors
     public const string StepLine = "scenario.stepLine";
     public const string StepAddress = "scenario.stepAddress";
     public const string StepFault = "scenario.stepFault";
+    public const string StepDevice = "scenario.stepDevice";
 
     /// <summary>Najviac krokov scenara.</summary>
     public const int MaxSteps = 200;

@@ -63,9 +63,12 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
   const kind = boardKind(config.manufacturer);
   // listova tabula: pozicie (moduly) namiesto bodov, cas otacania; pisma, hlavicka a casovanie textov nemaju zmysel
   const flaps = kind === "flaps";
-  // spinacia jednotka zosilnovaca: len linka, adresa (aj 0), nazov a vyrobca
+  // spinacia jednotka zosilnovaca a ustredna AK Signal: len linka, adresa (aj 0), nazov a vyrobca
   const amplifier = kind === "amplifier";
-  const board = !flaps && !amplifier;
+  const controller = kind === "aksignal";
+  const remoteAudio = kind === "remoteaudio";
+  const device = amplifier || controller || remoteAudio;
+  const board = !flaps && !device;
   // pisma ELEN, farebnost panelu, pohyblivy text a typy panelov Monitora ma len ELEN; znakova tabula ma sirku v znakoch
   const elen = kind === "elen";
   // LCD1 a ERP dostavaju pri kazdom znaku cislo pisma - jeho vyznam priradi obsluha
@@ -93,7 +96,11 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
     ? t("dialog.board.new")
     : amplifier
       ? t("dialog.amplifier.edit", { name: config.name || t("amplifier.unnamed", { address: config.address }) })
-      : t("dialog.board.edit", { name: config.name || t("board.unnamed", { address: config.address }) });
+      : controller
+        ? t("dialog.aksignal.edit", { name: config.name || t("aksignal.unnamed", { address: config.address }) })
+        : remoteAudio
+          ? t("dialog.remoteaudio.edit", { name: config.name || t("remoteaudio.unnamed", { address: config.address }) })
+          : t("dialog.board.edit", { name: config.name || t("board.unnamed", { address: config.address }) });
   return (
     <FormDialog
       title={title}
@@ -106,10 +113,10 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
       <Tabs defaultValue="board">
         <TabsList>
           <TabsTrigger value="board">{t("board.tab.board")}</TabsTrigger>
-          {!amplifier && <TabsTrigger value="profile">{t("board.tab.profile")}</TabsTrigger>}
+          {!device && <TabsTrigger value="profile">{t("board.tab.profile")}</TabsTrigger>}
           {flaps && p.flaps && <TabsTrigger value="lists">{t("board.tab.lists")}</TabsTrigger>}
           {charFonts && <TabsTrigger value="fonts">{t("board.tab.fonts")}</TabsTrigger>}
-          {!amplifier && <TabsTrigger value="face">{t("board.tab.face")}</TabsTrigger>}
+          {!device && <TabsTrigger value="face">{t("board.tab.face")}</TabsTrigger>}
           {board && <TabsTrigger value="timing">{t("section.timing")}</TabsTrigger>}
         </TabsList>
 
@@ -132,7 +139,7 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
               <FormField label={t("field.address")}>
                 <Input
                   type="number"
-                  min={amplifier ? 0 : 1}
+                  min={device ? 0 : 1}
                   max={255}
                   value={config.address}
                   disabled={!isNew}
@@ -153,6 +160,8 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
             </div>
             {board && <FieldDescription className="-mt-4">{t("field.secondAddress.hint")}</FieldDescription>}
             {amplifier && <FieldDescription className="-mt-4">{t("field.address.amplifier.hint")}</FieldDescription>}
+            {controller && <FieldDescription className="-mt-4">{t("field.address.aksignal.hint")}</FieldDescription>}
+            {remoteAudio && <FieldDescription className="-mt-4">{t("field.address.remoteaudio.hint")}</FieldDescription>}
             <FormField label={t("field.name")}>
               <Input value={config.name} onChange={(e) => setConfig({ ...config, name: e.target.value })} />
             </FormField>
@@ -165,7 +174,7 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
                   className="w-full"
                 />
               </FormField>
-              {!amplifier && (
+              {!device && (
                 <FormField label={t("field.design")}>
                   <OptionSelect
                     value={config.design ?? NONE}
@@ -292,7 +301,7 @@ export function BoardDialog({ initial, isNew, onClose }: { initial: SetBoardRequ
           </TabsContent>
         )}
 
-        {!amplifier && (
+        {!device && (
           <TabsContent value="face" className="pt-2">
             <FaceSection profile={p} onChange={profile} manufacturer={config.manufacturer} name={config.name} live={liveBoard} />
           </TabsContent>

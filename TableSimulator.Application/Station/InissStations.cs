@@ -134,6 +134,7 @@ public static class InissStations
             boards.AddRange(line.Tables.Where(t => t.Manufacturer.Length > 0 && t.Address is >= 0 and <= 255)
                 .Select(t => new StationBoardDto(number, t.Address, t.Manufacturer, t.Name) { Flaps = t.Flaps, FlapRecords = t.FlapRecords, Face = t.Face }));
             boards.AddRange(line.Amplifiers.Select(a => new StationBoardDto(number, a.Address, AmplifierManufacturer, a.Name)));
+            boards.AddRange(line.Controllers.Select(c => new StationBoardDto(number, c.Address, c.Manufacturer, c.Name) { Lights = c.Lights, Audio = c.Audio }));
         }
 
         var xml = station.XmlTables.Where(t => t.Source.Length <= 100 && t.Source.AsSpan().IndexOfAny(InvalidXmlName) < 0).ToList();

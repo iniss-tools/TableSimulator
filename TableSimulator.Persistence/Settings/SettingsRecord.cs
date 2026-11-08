@@ -49,4 +49,10 @@ public sealed class SettingsRecord
 
     /// <summary>Zistovat novu verziu servera (stlpec pridany s predvolenou hodnotou true).</summary>
     public bool CheckUpdates { get; set; } = true;
+
+    /// <summary>Poloha pre vychod a zapad slnka - sirka (stlpec s predvolenou hodnotou stredu Slovenska).</summary>
+    public double Latitude { get; set; } = 48.67;
+
+    /// <summary>Poloha pre vychod a zapad slnka - dlzka.</summary>
+    public double Longitude { get; set; } = 19.70;
 }

@@ -81,6 +81,12 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
     /// <summary>Scenare porucha.</summary>
     public DbSet<FaultScenarioRecord> FaultScenarios => Set<FaultScenarioRecord>();
 
+    /// <summary>Historia ustredni AK Signal - zmeny stavu svetla.</summary>
+    public DbSet<Application.Devices.LightStateRecord> DeviceLightStates => Set<Application.Devices.LightStateRecord>();
+
+    /// <summary>Historia ustredni AK Signal - skoncene hlasenia.</summary>
+    public DbSet<Application.Devices.AnnouncementRecord> DeviceAnnouncements => Set<Application.Devices.AnnouncementRecord>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -226,6 +232,28 @@ public abstract class AppDbContext(DbContextOptions options) : IdentityDbContext
             status.Property(s => s.Detail).HasMaxLength(200);
             // zmien stavu je malo (desiatky za den) - staci index casu
             status.HasIndex(s => s.TimeMs);
+        });
+        // historia ustredni AK Signal: cas v ms od 1. 1. 1970 UTC ako cislo - porovnava sa v kazdej databaze rovnako
+        builder.Entity<Application.Devices.LightStateRecord>(state =>
+        {
+            state.ToTable("DeviceLightStates");
+            state.HasKey(s => s.Id);
+            state.Property(s => s.Id).ValueGeneratedOnAdd();
+            state.HasIndex(s => new { s.Line, s.Address, s.TimeMs });
+            state.HasIndex(s => s.TimeMs);
+        });
+        builder.Entity<Application.Devices.AnnouncementRecord>(announcement =>
+        {
+            announcement.ToTable("DeviceAnnouncements");
+            announcement.HasKey(a => a.Id);
+            announcement.Property(a => a.Id).ValueGeneratedOnAdd();
+            announcement.Property(a => a.Result).HasMaxLength(20);
+            announcement.Property(a => a.Sounds).HasMaxLength(Application.Devices.DeviceHistoryRetention.MaxSounds);
+            announcement.Property(a => a.Title).HasMaxLength(Application.Devices.DeviceHistoryRetention.MaxTitle);
+            announcement.Property(a => a.Queue).HasMaxLength(Application.Devices.DeviceHistoryRetention.MaxName);
+            announcement.Property(a => a.Circuit).HasMaxLength(Application.Devices.DeviceHistoryRetention.MaxName);
+            announcement.HasIndex(a => a.StartMs);
+            announcement.HasIndex(a => a.EndMs);
         });
         // kroky scenara su JSON ako v API - scenarov je malo a citaju sa vzdy cele
         builder.Entity<FaultScenarioRecord>(scenario =>

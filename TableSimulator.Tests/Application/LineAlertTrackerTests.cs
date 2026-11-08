@@ -1,10 +1,13 @@
 using TableSimulator.Application.Alerts;
+using TableSimulator.Core.Boards;
+using TableSimulator.Core.Protocols.AkSignal;
+using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Tests.Application;
 
 /// <summary>
 /// Kedy oznamit vypadok linky: az po cakani, navrat len po oznamenom vypadku a pri znova pripojenom INISSe, viac
-/// liniek v jednom oznameni; texty oznameni.
+/// liniek v jednom oznameni; ticho servera pri ustredniach AK Signal; texty oznameni.
 /// </summary>
 [TestClass]
 public class LineAlertTrackerTests
@@ -74,5 +77,37 @@ public class LineAlertTrackerTests
         Assert.AreEqual("outage", sk.Event);
         Assert.AreEqual("TableSimulator: Znovu funguje: Linka 1 – Hala", cs.Subject);
         StringAssert.Contains(cs.Text, "INISS je znovu připojen");
+    }
+
+    [TestMethod]
+    public void TichoServera_UstrednaAkoVypadokANavrat()
+    {
+        var time = new ManualTime();
+        var sim = new Simulator(time);
+        sim.SetLine(new LineConfig(6, 131, "TCP://127.0.0.1:47006") { AutoLearn = false, Manufacturer = AkSignalProtocol.Manufacturer, Name = "Svetla" });
+        sim.SetBoard(new BoardConfig(6, 5, AkSignalProtocol.Manufacturer) { Name = "Nastupiste" });
+        sim.SetBoard(new BoardConfig(6, 7, AkSignalProtocol.Manufacturer));
+        var asked = time.GetUtcNow();
+        sim.Receive(6, AkSignalFrame.Build(5, AkSignalFrame.GetLight));
+        sim.Receive(6, AkSignalFrame.Build(7, AkSignalFrame.GetLight));
+        sim.Tick();
+        Assert.AreEqual("stopped", AlertLines.Of(sim).Single().Status, "server sa pyta");
+
+        time.Advance(TimeSpan.FromSeconds(20));
+        sim.Tick();
+        var silent = AlertLines.Of(sim).Single();
+        Assert.AreEqual((AlertLineState.Silent, "Nastupiste, 7", asked), (silent.Status, silent.Detail, silent.Since));
+
+        var tracker = new LineAlertTracker();
+        var due = tracker.Update([silent], time.GetUtcNow(), Settings with { DelaySeconds = 10 }).Outages.Single();
+        var text = AlertMessage.Create(AlertKind.Outage, [due], time.GetUtcNow(), "PC1", "sk", TimeZoneInfo.Utc).Text;
+        StringAssert.Contains(text, "Linka 6 – Svetla: server INISS2 sa nepýta ústredne Nastupiste, 7 (posledný dotaz ");
+
+        // server sa znova ozve - navrat
+        sim.Receive(6, AkSignalFrame.Build(5, AkSignalFrame.GetLight));
+        sim.Receive(6, AkSignalFrame.Build(7, AkSignalFrame.GetLight));
+        var back = tracker.Update([AlertLines.Of(sim).Single() with { Status = "connected" }], time.GetUtcNow(), Settings).Recoveries.Single();
+        var cs = AlertMessage.Create(AlertKind.Recovery, [back], time.GetUtcNow(), "PC1", "cs", TimeZoneInfo.Utc).Text;
+        StringAssert.Contains(cs, "Linka 6 – Svetla: server INISS2 se ústředen znovu ptá");
     }
 }

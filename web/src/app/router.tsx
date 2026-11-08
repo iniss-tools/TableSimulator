@@ -104,6 +104,11 @@ const pages = [
   createRoute({ getParentRoute: () => shell, path: "/lines", component: lazyRouteComponent(() => import("@/features/lines/LinesPage"), "LinesPage") }),
   createRoute({
     getParentRoute: () => shell,
+    path: "/lights",
+    component: lazyRouteComponent(() => import("@/features/aksignal/AkSignalPage"), "AkSignalPage"),
+  }),
+  createRoute({
+    getParentRoute: () => shell,
     path: "/scenarios",
     component: lazyRouteComponent(() => import("@/features/scenarios/ScenariosPage"), "ScenariosPage"),
   }),

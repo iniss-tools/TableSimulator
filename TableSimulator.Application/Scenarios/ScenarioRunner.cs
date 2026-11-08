@@ -11,8 +11,8 @@ namespace TableSimulator.Application.Scenarios;
 /// <summary>
 /// Beziace scenare porucha. Pri kazdom tiku (server ho vola asi 5x za sekundu) zluci ucinky vsetkych beziacich scenarov
 /// (porucha tabule z neskor spusteneho scenara prepise skorsi) a v simulatore zmeni len to, co sa od posledneho tiku
-/// zmenilo. Tabula, ktoru uz ziadny scenar neovlada, dostane spat poruchu spred scenara; po vypadku napajania sa zapne
-/// a linka po vypadku sa spusti znova. Ruca zmena poruchy pocas scenara plati do dalsej zmeny scenara.
+/// zmenilo. Tabula, ktoru uz ziadny scenar neovlada, dostane spat poruchu spred scenara; po vypadku napajania sa zapne,
+/// linka po vypadku sa spusti znova a ustredna AK Signal plati opat podla profilu. Ruca zmena poruchy pocas scenara plati do dalsej zmeny scenara.
 /// </summary>
 public sealed class ScenarioRunner(Simulator simulator, TransportManager transport, ILiveNotifier live, TimeProvider time) : IDisposable
 {
@@ -25,6 +25,7 @@ public sealed class ScenarioRunner(Simulator simulator, TransportManager transpo
     private readonly Dictionary<string, BoardFault> _original = new(StringComparer.Ordinal);
     private readonly HashSet<string> _poweredOff = new(StringComparer.Ordinal);
     private readonly HashSet<int> _outages = [];
+    private readonly Dictionary<string, AkSignalOverride> _devices = new(StringComparer.Ordinal);
     private volatile bool _disposed;
 
     private sealed class Run(FaultScenario scenario, DateTimeOffset startedAt)
@@ -161,6 +162,7 @@ public sealed class ScenarioRunner(Simulator simulator, TransportManager transpo
         var faults = new Dictionary<string, BoardFault>(StringComparer.Ordinal);
         var powerOff = new HashSet<string>(StringComparer.Ordinal);
         var outages = new HashSet<int>();
+        var devices = new Dictionary<string, AkSignalOverride>(StringComparer.Ordinal);
         var changed = false;
         lock (_lock)
         {
@@ -182,11 +184,14 @@ public sealed class ScenarioRunner(Simulator simulator, TransportManager transpo
                     faults[board] = fault;
                 powerOff.UnionWith(effects.PoweredOff);
                 outages.UnionWith(effects.Outages);
+                foreach (var (board, device) in effects.Devices)
+                    devices[board] = devices.TryGetValue(board, out var earlier) ? earlier.Then(device) : device;
             }
         }
 
         ApplyFaults(faults);
         ApplyPower(powerOff);
+        ApplyDevices(devices);
         if (ApplyOutages(outages))
             await transport.SyncAsync().ConfigureAwait(false);
         return changed;
@@ -228,6 +233,24 @@ public sealed class ScenarioRunner(Simulator simulator, TransportManager transpo
         {
             simulator.SetPower(board, true);
             _poweredOff.Remove(board);
+        }
+    }
+
+    // prekrytie ustredne sa neuklada - po scenari staci zrusit
+    private void ApplyDevices(Dictionary<string, AkSignalOverride> wanted)
+    {
+        foreach (var (board, device) in wanted)
+        {
+            if (_devices.TryGetValue(board, out var applied) && applied == device)
+                continue;
+            if (simulator.SetOverride(board, device))
+                _devices[board] = device;
+        }
+
+        foreach (var board in _devices.Keys.Where(b => !wanted.ContainsKey(b)).ToList())
+        {
+            simulator.SetOverride(board, null);
+            _devices.Remove(board);
         }
     }
 

@@ -239,6 +239,29 @@ export function SettingsPage() {
               checked={form.inissElevated}
               onCheckedChange={(value) => change({ inissElevated: value })}
             />
+            <div className="grid max-w-md gap-4 sm:grid-cols-2">
+              <FormField label={t("settings.latitude")}>
+                <Input
+                  type="number"
+                  min={-90}
+                  max={90}
+                  step={0.01}
+                  value={form.location.latitude}
+                  onChange={(e) => change({ location: { ...form.location, latitude: Number.isFinite(e.target.valueAsNumber) ? e.target.valueAsNumber : 0 } })}
+                />
+              </FormField>
+              <FormField label={t("settings.longitude")}>
+                <Input
+                  type="number"
+                  min={-180}
+                  max={180}
+                  step={0.01}
+                  value={form.location.longitude}
+                  onChange={(e) => change({ location: { ...form.location, longitude: Number.isFinite(e.target.valueAsNumber) ? e.target.valueAsNumber : 0 } })}
+                />
+              </FormField>
+            </div>
+            <p className="-mt-3 text-sm text-muted-foreground">{t("settings.location.hint")}</p>
           </Section>
 
           <Section id="network" description={t("settings.network.hint")}>

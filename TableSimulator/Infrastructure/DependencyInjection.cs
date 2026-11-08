@@ -42,6 +42,8 @@ public static class DependencyInjection
         services.AddHostedService<SimulatorHostedService>();
         // za SimulatorHostedService - pri ukonceni servera zastavi scenare skor, nez sa linky a tabule ulozia
         services.AddHostedService<ScenarioHostedService>();
+        services.AddHostedService<DeviceClockService>();
+        services.AddHostedService<DeviceHistoryService>();
         services.AddHostedService<DesignWatcherService>();
         services.AddHostedService<XmlTableWatcherService>();
         services.AddHostedService<ReportMonitorService>();

@@ -266,6 +266,125 @@
                         }
                       }
                     }
+                  },
+                  "akSignal": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "lights": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "station": {
+                              "type": "integer"
+                            },
+                            "beforeArrival": {
+                              "type": "integer"
+                            },
+                            "beforeDeparture": {
+                              "type": "integer"
+                            },
+                            "afterDeparture": {
+                              "type": "integer"
+                            },
+                            "afterArrival": {
+                              "type": "integer"
+                            },
+                            "minOff": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "station"
+                          ]
+                        }
+                      },
+                      "audio": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "station": {
+                              "type": "integer"
+                            },
+                            "channel": {
+                              "type": "integer",
+                              "default": 1
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "station"
+                          ]
+                        }
+                      },
+                      "sensor": {
+                        "type": "object",
+                        "properties": {
+                          "mode": {
+                            "type": "string",
+                            "enum": [
+                              "sun",
+                              "dark",
+                              "light"
+                            ],
+                            "default": "sun"
+                          },
+                          "offsetMinutes": {
+                            "type": "integer",
+                            "default": 0
+                          }
+                        }
+                      },
+                      "conditions": {
+                        "type": "object",
+                        "properties": {
+                          "lightsFault": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "highPriority": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "outputPowerError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampSupplyMissing": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampCommError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "bankNotSynced": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        }
+                      },
+                      "soundSeconds": {
+                        "type": "number"
+                      },
+                      "syncSeconds": {
+                        "type": "integer"
+                      },
+                      "silenceSeconds": {
+                        "type": "integer"
+                      }
+                    }
                   }
                 }
               },
@@ -603,6 +722,384 @@
                       "onSince",
                       "switches",
                       "lastCommand"
+                    ]
+                  },
+                  "akSignal": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "autoMode": {
+                        "type": "boolean"
+                      },
+                      "manual": {
+                        "type": "boolean"
+                      },
+                      "dark": {
+                        "type": "boolean"
+                      },
+                      "lightOn": {
+                        "type": "boolean"
+                      },
+                      "lightState": {
+                        "type": "string"
+                      },
+                      "audioState": {
+                        "type": "string"
+                      },
+                      "announcements": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "channel": {
+                              "type": "integer"
+                            },
+                            "sounds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "startedAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "result": {
+                              "type": "string",
+                              "enum": [
+                                "playing",
+                                "completed",
+                                "stopped",
+                                "cancelled"
+                              ]
+                            },
+                            "title": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "durationMs": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "value": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "endedAt": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "date-time"
+                            },
+                            "queue": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "circuit": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "channel",
+                            "sounds",
+                            "startedAt",
+                            "result"
+                          ]
+                        }
+                      },
+                      "darkSince": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "darkChangesAt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "lightChangedAt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "lightQueryAt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "audioQueryAt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "serverSilent": {
+                        "type": "boolean"
+                      },
+                      "banks": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
+                      "syncedAt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "syncUntil": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "conditions": {
+                        "type": "object",
+                        "properties": {
+                          "lightsFault": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "highPriority": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "outputPowerError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampSupplyMissing": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampCommError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "bankNotSynced": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        }
+                      },
+                      "scenario": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "conditions": {
+                            "type": "object",
+                            "properties": {
+                              "lightsFault": {
+                                "type": "boolean",
+                                "default": false
+                              },
+                              "highPriority": {
+                                "type": "boolean",
+                                "default": false
+                              },
+                              "outputPowerError": {
+                                "type": "boolean",
+                                "default": false
+                              },
+                              "ampSupplyMissing": {
+                                "type": "boolean",
+                                "default": false
+                              },
+                              "ampCommError": {
+                                "type": "boolean",
+                                "default": false
+                              },
+                              "bankNotSynced": {
+                                "type": "boolean",
+                                "default": false
+                              }
+                            }
+                          },
+                          "sensor": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "sun",
+                              "dark",
+                              "light",
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "conditions",
+                          "sensor"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "autoMode",
+                      "manual",
+                      "dark",
+                      "lightOn",
+                      "lightState",
+                      "audioState",
+                      "announcements"
+                    ]
+                  },
+                  "remoteAudio": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "queues": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "off": {
+                              "type": "boolean"
+                            },
+                            "playing": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "id": {
+                                  "type": "integer"
+                                },
+                                "channel": {
+                                  "type": "integer"
+                                },
+                                "sounds": {
+                                  "$ref": "#/properties/board/properties/display/properties/akSignal/properties/announcements/items/properties/sounds",
+                                  "items": {}
+                                },
+                                "startedAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "result": {
+                                  "type": "string",
+                                  "enum": [
+                                    "playing",
+                                    "completed",
+                                    "stopped",
+                                    "cancelled"
+                                  ]
+                                },
+                                "title": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "durationMs": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ]
+                                },
+                                "value": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ]
+                                },
+                                "endedAt": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "format": "date-time"
+                                },
+                                "queue": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "circuit": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "channel",
+                                "sounds",
+                                "startedAt",
+                                "result"
+                              ]
+                            },
+                            "lastCommandAt": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "date-time"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "off",
+                            "playing"
+                          ]
+                        }
+                      },
+                      "announcements": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/properties/board/properties/display/properties/akSignal/properties/announcements/items"
+                        }
+                      },
+                      "lastQueryAt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      }
+                    },
+                    "required": [
+                      "queues",
+                      "announcements"
                     ]
                   }
                 },
@@ -1184,6 +1681,267 @@
       }
     },
     {
+      "name": "break_announcement",
+      "title": "Break remote announcement",
+      "description": "Breaks the announcement playing on a remote INISS queue: the next answer has no state of the queue, so the controlling INISS ends the announcement and writes remote break to its report archive. For a remote timeout set the fault noReply on the device.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Board id \"line-address\" of the remote INISS public address, e.g. \"4-0\".",
+            "type": "string"
+          },
+          "queue": {
+            "description": "Queue name; \"\" = the only queue of the line; null = every playing queue.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Board id \"line-address\" of the device (address 0 on a class 128 line).",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer"
+          },
+          "poweredOff": {
+            "description": "Simulated power outage: queues answer as before, without announcements.",
+            "type": "boolean"
+          },
+          "fault": {
+            "description": "Simulated fault of the remote INISS: noReply = it does not answer (the controlling INISS logs remote timeout), delay = late answers.",
+            "type": "string",
+            "enum": [
+              "none",
+              "noReply",
+              "nak",
+              "delay",
+              "garbage",
+              "status"
+            ]
+          },
+          "lastQueryAt": {
+            "description": "Last message of the controlling INISS with queues; null = none yet.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "queues": {
+            "description": "Announcement queues; name \"\" = the only queue of the line.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "off": {
+                  "type": "boolean"
+                },
+                "playing": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "channel": {
+                      "type": "integer"
+                    },
+                    "sounds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "startedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "result": {
+                      "type": "string",
+                      "enum": [
+                        "playing",
+                        "completed",
+                        "stopped",
+                        "cancelled"
+                      ]
+                    },
+                    "title": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "durationMs": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "value": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "endedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "queue": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "circuit": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "channel",
+                    "sounds",
+                    "startedAt",
+                    "result"
+                  ]
+                },
+                "lastCommandAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "name",
+                "off",
+                "playing"
+              ]
+            }
+          },
+          "announcements": {
+            "description": "Last announcements, newest last; result cancelled = broken by the operator (remote break).",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "channel": {
+                  "type": "integer"
+                },
+                "sounds": {
+                  "$ref": "#/properties/queues/items/properties/playing/properties/sounds",
+                  "items": {}
+                },
+                "startedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "result": {
+                  "type": "string",
+                  "enum": [
+                    "playing",
+                    "completed",
+                    "stopped",
+                    "cancelled"
+                  ]
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "durationMs": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "value": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "endedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "queue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "circuit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "channel",
+                "sounds",
+                "startedAt",
+                "result"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "line",
+          "poweredOff",
+          "fault",
+          "lastQueryAt",
+          "queues",
+          "announcements"
+        ]
+      },
+      "annotations": {
+        "title": "Break remote announcement",
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
       "name": "clear_board",
       "title": "Clear board",
       "description": "Clears what a board shows; INISS fills it again with its next messages.",
@@ -1225,7 +1983,7 @@
             "type": "string"
           },
           "family": {
-            "description": "elen, chars, flaps, amplifier or unknown.",
+            "description": "elen, chars, flaps, amplifier, aksignal, remoteaudio or unknown.",
             "type": "string"
           },
           "design": {
@@ -1556,6 +2314,125 @@
                     }
                   }
                 }
+              },
+              "akSignal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "lights": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "station": {
+                          "type": "integer"
+                        },
+                        "beforeArrival": {
+                          "type": "integer"
+                        },
+                        "beforeDeparture": {
+                          "type": "integer"
+                        },
+                        "afterDeparture": {
+                          "type": "integer"
+                        },
+                        "afterArrival": {
+                          "type": "integer"
+                        },
+                        "minOff": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "station"
+                      ]
+                    }
+                  },
+                  "audio": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "station": {
+                          "type": "integer"
+                        },
+                        "channel": {
+                          "type": "integer",
+                          "default": 1
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "station"
+                      ]
+                    }
+                  },
+                  "sensor": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "sun",
+                          "dark",
+                          "light"
+                        ],
+                        "default": "sun"
+                      },
+                      "offsetMinutes": {
+                        "type": "integer",
+                        "default": 0
+                      }
+                    }
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "properties": {
+                      "lightsFault": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "highPriority": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "outputPowerError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampSupplyMissing": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampCommError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "bankNotSynced": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    }
+                  },
+                  "soundSeconds": {
+                    "type": "number"
+                  },
+                  "syncSeconds": {
+                    "type": "integer"
+                  },
+                  "silenceSeconds": {
+                    "type": "integer"
+                  }
+                }
               }
             }
           },
@@ -1830,6 +2707,384 @@
                   "onSince",
                   "switches",
                   "lastCommand"
+                ]
+              },
+              "akSignal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "autoMode": {
+                    "type": "boolean"
+                  },
+                  "manual": {
+                    "type": "boolean"
+                  },
+                  "dark": {
+                    "type": "boolean"
+                  },
+                  "lightOn": {
+                    "type": "boolean"
+                  },
+                  "lightState": {
+                    "type": "string"
+                  },
+                  "audioState": {
+                    "type": "string"
+                  },
+                  "announcements": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "channel": {
+                          "type": "integer"
+                        },
+                        "sounds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "result": {
+                          "type": "string",
+                          "enum": [
+                            "playing",
+                            "completed",
+                            "stopped",
+                            "cancelled"
+                          ]
+                        },
+                        "title": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "durationMs": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "value": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "endedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
+                        "queue": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "circuit": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "channel",
+                        "sounds",
+                        "startedAt",
+                        "result"
+                      ]
+                    }
+                  },
+                  "darkSince": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "darkChangesAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "lightChangedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "lightQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "audioQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "serverSilent": {
+                    "type": "boolean"
+                  },
+                  "banks": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "syncedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "syncUntil": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "properties": {
+                      "lightsFault": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "highPriority": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "outputPowerError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampSupplyMissing": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampCommError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "bankNotSynced": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    }
+                  },
+                  "scenario": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "conditions": {
+                        "type": "object",
+                        "properties": {
+                          "lightsFault": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "highPriority": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "outputPowerError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampSupplyMissing": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampCommError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "bankNotSynced": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        }
+                      },
+                      "sensor": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "sun",
+                          "dark",
+                          "light",
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "conditions",
+                      "sensor"
+                    ]
+                  }
+                },
+                "required": [
+                  "autoMode",
+                  "manual",
+                  "dark",
+                  "lightOn",
+                  "lightState",
+                  "audioState",
+                  "announcements"
+                ]
+              },
+              "remoteAudio": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "queues": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "off": {
+                          "type": "boolean"
+                        },
+                        "playing": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "channel": {
+                              "type": "integer"
+                            },
+                            "sounds": {
+                              "$ref": "#/properties/display/properties/akSignal/properties/announcements/items/properties/sounds",
+                              "items": {}
+                            },
+                            "startedAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "result": {
+                              "type": "string",
+                              "enum": [
+                                "playing",
+                                "completed",
+                                "stopped",
+                                "cancelled"
+                              ]
+                            },
+                            "title": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "durationMs": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "value": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "endedAt": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "date-time"
+                            },
+                            "queue": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "circuit": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "channel",
+                            "sounds",
+                            "startedAt",
+                            "result"
+                          ]
+                        },
+                        "lastCommandAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "off",
+                        "playing"
+                      ]
+                    }
+                  },
+                  "announcements": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/properties/display/properties/akSignal/properties/announcements/items"
+                    }
+                  },
+                  "lastQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "queues",
+                  "announcements"
                 ]
               }
             },
@@ -2338,6 +3593,560 @@
       }
     },
     {
+      "name": "get_aksignal",
+      "title": "AK Signal controllers",
+      "description": "AK Signal controllers through which the INISS2 server switches platform lights and public address: light mode set by the server, twilight sensor, conditions (faults, higher priority) including those of a running fault scenario, the state as the controller replies, whether the server still asks, and announcements playing now.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Only this controller; null = all.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "controllers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "description": "Board id \"line-address\" of the controller.",
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "protocol": {
+                  "description": "AKSIGNAL (binary, class 131) or AKSIGNALUH (text, class 132).",
+                  "type": "string"
+                },
+                "poweredOff": {
+                  "description": "Simulated power outage: the controller does not answer.",
+                  "type": "boolean"
+                },
+                "lightOn": {
+                  "description": "The lights are on: switched on manually, or automatic mode while it is dark.",
+                  "type": "boolean"
+                },
+                "lightMode": {
+                  "description": "Light mode set by the server: off, auto (switched by trains) or manual.",
+                  "type": "string"
+                },
+                "dark": {
+                  "description": "The twilight sensor reports darkness.",
+                  "type": "boolean"
+                },
+                "sensor": {
+                  "description": "Twilight sensor setting: sun (by sunrise and sunset at the simulator location), dark or light.",
+                  "type": "string",
+                  "enum": [
+                    "sun",
+                    "dark",
+                    "light"
+                  ]
+                },
+                "sensorOffsetMinutes": {
+                  "description": "Sensor offset against sunrise and sunset [min]; positive shortens the darkness.",
+                  "type": "integer"
+                },
+                "darkChangesAt": {
+                  "description": "When the sensor changes by the sun; null = fixed sensor.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "conditions": {
+                  "description": "Conditions the controller reports now: from its settings together with a running fault scenario.",
+                  "type": "object",
+                  "properties": {
+                    "lightsFault": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "highPriority": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "outputPowerError": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "ampSupplyMissing": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "ampCommError": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "bankNotSynced": {
+                      "type": "boolean",
+                      "default": false
+                    }
+                  }
+                },
+                "scenario": {
+                  "description": "What a running fault scenario sets now (added conditions, sensor mode); null = nothing.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "conditions": {
+                      "type": "object",
+                      "properties": {
+                        "lightsFault": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "highPriority": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "outputPowerError": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "ampSupplyMissing": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "ampCommError": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "bankNotSynced": {
+                          "type": "boolean",
+                          "default": false
+                        }
+                      }
+                    },
+                    "sensor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "sun",
+                        "dark",
+                        "light",
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "conditions",
+                    "sensor"
+                  ]
+                },
+                "serverSilent": {
+                  "description": "The server has not asked the controller for a while (SilenceSeconds).",
+                  "type": "boolean"
+                },
+                "lastQueryAt": {
+                  "description": "Last query of the server; null = none yet.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "lightState": {
+                  "description": "Light state as the controller would reply now: hex byte (AKSIGNAL) or keys (AKSIGNALUH).",
+                  "type": "string"
+                },
+                "audioState": {
+                  "description": "Audio state as the controller would reply now: hex byte (AKSIGNAL) or keys (AKSIGNALUH).",
+                  "type": "string"
+                },
+                "lights": {
+                  "description": "Lights of the station (Lights.xml) the controller switches.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "audioLines": {
+                  "description": "Audio lines of the station (Audio.xml) that announce through the controller.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "playing": {
+                  "description": "Announcements playing now; channel 0 = AKSIGNAL switching, 1 and 2 = AKSIGNALUH channels.",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "channel": {
+                        "type": "integer"
+                      },
+                      "sounds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "startedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "result": {
+                        "type": "string",
+                        "enum": [
+                          "playing",
+                          "completed",
+                          "stopped",
+                          "cancelled"
+                        ]
+                      },
+                      "title": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "durationMs": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "value": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "endedAt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "queue": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "circuit": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "channel",
+                      "sounds",
+                      "startedAt",
+                      "result"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "protocol",
+                "poweredOff",
+                "lightOn",
+                "lightMode",
+                "dark",
+                "sensor",
+                "sensorOffsetMinutes",
+                "darkChangesAt",
+                "conditions",
+                "scenario",
+                "serverSilent",
+                "lastQueryAt",
+                "lightState",
+                "audioState",
+                "lights",
+                "audioLines",
+                "playing"
+              ]
+            }
+          }
+        },
+        "required": [
+          "controllers"
+        ]
+      },
+      "annotations": {
+        "title": "AK Signal controllers",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_aksignal_history",
+      "title": "AK Signal history",
+      "description": "History of AK Signal controllers and remote INISS public address: light states (on, auto, manual, dark, fault, server silent, power), finished announcements and the light log of the INISS2 server (which train made the server switch a light) for the last minutes. The simulator keeps the history for 30 days.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Only this controller or remote INISS public address; null = all.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "minutes": {
+            "description": "How many minutes back from now, 1-10080.",
+            "type": "integer",
+            "default": 60
+          },
+          "limit": {
+            "description": "At most this many entries of each list (the last ones), 1-1000.",
+            "type": "integer",
+            "default": 200
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "states": {
+            "description": "Light states: the state at the start of the period and every change; the last ones when truncated.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "boardId": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "auto": {
+                  "type": "boolean"
+                },
+                "manual": {
+                  "type": "boolean"
+                },
+                "dark": {
+                  "type": "boolean"
+                },
+                "on": {
+                  "type": "boolean"
+                },
+                "fault": {
+                  "type": "boolean"
+                },
+                "silent": {
+                  "type": "boolean"
+                },
+                "poweredOff": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "boardId",
+                "at",
+                "auto",
+                "manual",
+                "dark",
+                "on",
+                "fault",
+                "silent",
+                "poweredOff"
+              ]
+            }
+          },
+          "announcements": {
+            "description": "Finished announcements started in the period; the last ones when truncated.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "boardId": {
+                  "type": "string"
+                },
+                "channel": {
+                  "type": "integer"
+                },
+                "sounds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "startedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "endedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "result": {
+                  "type": "string",
+                  "enum": [
+                    "playing",
+                    "completed",
+                    "stopped",
+                    "cancelled"
+                  ]
+                },
+                "value": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "queue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "circuit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "boardId",
+                "channel",
+                "sounds",
+                "startedAt",
+                "endedAt",
+                "result"
+              ]
+            }
+          },
+          "serverEvents": {
+            "description": "Light log of the INISS2 server: why the server switched a light (train, manual, state); the last ones when truncated.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "station": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "event": {
+                  "type": "string",
+                  "enum": [
+                    "train",
+                    "mode",
+                    "state",
+                    "other"
+                  ]
+                },
+                "boardId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "manual": {
+                  "type": "boolean"
+                },
+                "mode": {
+                  "type": "string"
+                },
+                "trainNeedsLight": {
+                  "type": "boolean"
+                },
+                "state": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "turnOn": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "turnOff": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "train": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "at",
+                "station",
+                "name",
+                "event"
+              ]
+            }
+          },
+          "truncated": {
+            "description": "Some list had more entries than the limit.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "states",
+          "announcements",
+          "serverEvents",
+          "truncated"
+        ]
+      },
+      "annotations": {
+        "title": "AK Signal history",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
       "name": "get_board",
       "title": "Board detail",
       "description": "One board: what it shows as text rows, brightness and clock set by INISS, simulated fault, message counters and version. raw = true adds the board settings and the raw content with fonts and character codes.",
@@ -2384,7 +4193,7 @@
             "type": "string"
           },
           "family": {
-            "description": "elen, chars, flaps, amplifier or unknown.",
+            "description": "elen, chars, flaps, amplifier, aksignal, remoteaudio or unknown.",
             "type": "string"
           },
           "design": {
@@ -2715,6 +4524,125 @@
                     }
                   }
                 }
+              },
+              "akSignal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "lights": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "station": {
+                          "type": "integer"
+                        },
+                        "beforeArrival": {
+                          "type": "integer"
+                        },
+                        "beforeDeparture": {
+                          "type": "integer"
+                        },
+                        "afterDeparture": {
+                          "type": "integer"
+                        },
+                        "afterArrival": {
+                          "type": "integer"
+                        },
+                        "minOff": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "station"
+                      ]
+                    }
+                  },
+                  "audio": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "station": {
+                          "type": "integer"
+                        },
+                        "channel": {
+                          "type": "integer",
+                          "default": 1
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "station"
+                      ]
+                    }
+                  },
+                  "sensor": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "sun",
+                          "dark",
+                          "light"
+                        ],
+                        "default": "sun"
+                      },
+                      "offsetMinutes": {
+                        "type": "integer",
+                        "default": 0
+                      }
+                    }
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "properties": {
+                      "lightsFault": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "highPriority": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "outputPowerError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampSupplyMissing": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampCommError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "bankNotSynced": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    }
+                  },
+                  "soundSeconds": {
+                    "type": "number"
+                  },
+                  "syncSeconds": {
+                    "type": "integer"
+                  },
+                  "silenceSeconds": {
+                    "type": "integer"
+                  }
+                }
               }
             }
           },
@@ -2989,6 +4917,384 @@
                   "onSince",
                   "switches",
                   "lastCommand"
+                ]
+              },
+              "akSignal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "autoMode": {
+                    "type": "boolean"
+                  },
+                  "manual": {
+                    "type": "boolean"
+                  },
+                  "dark": {
+                    "type": "boolean"
+                  },
+                  "lightOn": {
+                    "type": "boolean"
+                  },
+                  "lightState": {
+                    "type": "string"
+                  },
+                  "audioState": {
+                    "type": "string"
+                  },
+                  "announcements": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "channel": {
+                          "type": "integer"
+                        },
+                        "sounds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "result": {
+                          "type": "string",
+                          "enum": [
+                            "playing",
+                            "completed",
+                            "stopped",
+                            "cancelled"
+                          ]
+                        },
+                        "title": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "durationMs": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "value": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "endedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
+                        "queue": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "circuit": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "channel",
+                        "sounds",
+                        "startedAt",
+                        "result"
+                      ]
+                    }
+                  },
+                  "darkSince": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "darkChangesAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "lightChangedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "lightQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "audioQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "serverSilent": {
+                    "type": "boolean"
+                  },
+                  "banks": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "syncedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "syncUntil": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "properties": {
+                      "lightsFault": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "highPriority": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "outputPowerError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampSupplyMissing": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampCommError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "bankNotSynced": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    }
+                  },
+                  "scenario": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "conditions": {
+                        "type": "object",
+                        "properties": {
+                          "lightsFault": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "highPriority": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "outputPowerError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampSupplyMissing": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampCommError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "bankNotSynced": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        }
+                      },
+                      "sensor": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "sun",
+                          "dark",
+                          "light",
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "conditions",
+                      "sensor"
+                    ]
+                  }
+                },
+                "required": [
+                  "autoMode",
+                  "manual",
+                  "dark",
+                  "lightOn",
+                  "lightState",
+                  "audioState",
+                  "announcements"
+                ]
+              },
+              "remoteAudio": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "queues": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "off": {
+                          "type": "boolean"
+                        },
+                        "playing": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "channel": {
+                              "type": "integer"
+                            },
+                            "sounds": {
+                              "$ref": "#/properties/display/properties/akSignal/properties/announcements/items/properties/sounds",
+                              "items": {}
+                            },
+                            "startedAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "result": {
+                              "type": "string",
+                              "enum": [
+                                "playing",
+                                "completed",
+                                "stopped",
+                                "cancelled"
+                              ]
+                            },
+                            "title": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "durationMs": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "value": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "endedAt": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "date-time"
+                            },
+                            "queue": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "circuit": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "channel",
+                            "sounds",
+                            "startedAt",
+                            "result"
+                          ]
+                        },
+                        "lastCommandAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "off",
+                        "playing"
+                      ]
+                    }
+                  },
+                  "announcements": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/properties/display/properties/akSignal/properties/announcements/items"
+                    }
+                  },
+                  "lastQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "queues",
+                  "announcements"
                 ]
               }
             },
@@ -3756,7 +6062,16 @@
                               "noTables",
                               "noAutomaticLine",
                               "noDriver",
-                              "unknownLine"
+                              "unknownLine",
+                              "noDevices",
+                              "deviceNoLine",
+                              "deviceLineAmbiguous",
+                              "deviceUnknownLine",
+                              "deviceWrongProtocol",
+                              "deviceAddress",
+                              "audioChannel",
+                              "deviceType",
+                              "masterLight"
                             ]
                           },
                           "args": {
@@ -3955,7 +6270,16 @@
                           "noTables",
                           "noAutomaticLine",
                           "noDriver",
-                          "unknownLine"
+                          "unknownLine",
+                          "noDevices",
+                          "deviceNoLine",
+                          "deviceLineAmbiguous",
+                          "deviceUnknownLine",
+                          "deviceWrongProtocol",
+                          "deviceAddress",
+                          "audioChannel",
+                          "deviceType",
+                          "masterLight"
                         ]
                       },
                       "args": {
@@ -3993,6 +6317,85 @@
                       "address",
                       "name",
                       "shown"
+                    ]
+                  }
+                },
+                "controllers": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "address": {
+                        "type": "integer"
+                      },
+                      "manufacturer": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "lights": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "station": {
+                              "type": "integer"
+                            },
+                            "beforeArrival": {
+                              "type": "integer"
+                            },
+                            "beforeDeparture": {
+                              "type": "integer"
+                            },
+                            "afterDeparture": {
+                              "type": "integer"
+                            },
+                            "afterArrival": {
+                              "type": "integer"
+                            },
+                            "minOff": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "station"
+                          ]
+                        }
+                      },
+                      "audio": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "station": {
+                              "type": "integer"
+                            },
+                            "channel": {
+                              "type": "integer",
+                              "default": 1
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "station"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "address",
+                      "manufacturer",
+                      "name",
+                      "lights",
+                      "audio"
                     ]
                   }
                 },
@@ -4060,6 +6463,12 @@
             "type": "array",
             "items": {
               "$ref": "#/properties/lines/items/properties/amplifiers/items"
+            }
+          },
+          "deviceProblems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/properties/lines/items/properties/problems/items"
             }
           },
           "iniss2": {
@@ -4335,6 +6744,275 @@
       },
       "annotations": {
         "title": "Board in a recording",
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_remote_audio",
+      "title": "Remote INISS public address",
+      "description": "Public address of remote INISS lines (class 128) as INISS 3.39 sends it: queues (off, idle, playing), the announcement playing with its title, circuit, recordings (language/group/sound keys of the sound bank) and length from the bank, and last announcements. The simulator creates the device at address 0 with the first queue message.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Only this device; null = all.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "announcements": {
+            "description": "At most this many last announcements per device, 1-50.",
+            "type": "integer",
+            "default": 10
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "devices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "description": "Board id \"line-address\" of the device (address 0 on a class 128 line).",
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "line": {
+                  "type": "integer"
+                },
+                "poweredOff": {
+                  "description": "Simulated power outage: queues answer as before, without announcements.",
+                  "type": "boolean"
+                },
+                "fault": {
+                  "description": "Simulated fault of the remote INISS: noReply = it does not answer (the controlling INISS logs remote timeout), delay = late answers.",
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "noReply",
+                    "nak",
+                    "delay",
+                    "garbage",
+                    "status"
+                  ]
+                },
+                "lastQueryAt": {
+                  "description": "Last message of the controlling INISS with queues; null = none yet.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "queues": {
+                  "description": "Announcement queues; name \"\" = the only queue of the line.",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "off": {
+                        "type": "boolean"
+                      },
+                      "playing": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "channel": {
+                            "type": "integer"
+                          },
+                          "sounds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "startedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "result": {
+                            "type": "string",
+                            "enum": [
+                              "playing",
+                              "completed",
+                              "stopped",
+                              "cancelled"
+                            ]
+                          },
+                          "title": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "durationMs": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "value": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "endedAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
+                          "queue": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "circuit": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "channel",
+                          "sounds",
+                          "startedAt",
+                          "result"
+                        ]
+                      },
+                      "lastCommandAt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "off",
+                      "playing"
+                    ]
+                  }
+                },
+                "announcements": {
+                  "description": "Last announcements, newest last; result cancelled = broken by the operator (remote break).",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "channel": {
+                        "type": "integer"
+                      },
+                      "sounds": {
+                        "$ref": "#/properties/devices/items/properties/queues/items/properties/playing/properties/sounds",
+                        "items": {}
+                      },
+                      "startedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "result": {
+                        "type": "string",
+                        "enum": [
+                          "playing",
+                          "completed",
+                          "stopped",
+                          "cancelled"
+                        ]
+                      },
+                      "title": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "durationMs": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "value": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "endedAt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "queue": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "circuit": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "channel",
+                      "sounds",
+                      "startedAt",
+                      "result"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "line",
+                "poweredOff",
+                "fault",
+                "lastQueryAt",
+                "queues",
+                "announcements"
+              ]
+            }
+          }
+        },
+        "required": [
+          "devices"
+        ]
+      },
+      "annotations": {
+        "title": "Remote INISS public address",
         "idempotentHint": true,
         "openWorldHint": false,
         "readOnlyHint": true
@@ -5668,7 +8346,7 @@
                   "type": "string"
                 },
                 "family": {
-                  "description": "elen, chars, flaps, amplifier or unknown.",
+                  "description": "elen, chars, flaps, amplifier, aksignal, remoteaudio or unknown.",
                   "type": "string"
                 },
                 "version": {
@@ -6080,7 +8758,7 @@
     {
       "name": "list_scenarios",
       "title": "Fault scenarios",
-      "description": "Fault scenarios: timed steps (at [ms], duration [ms]) that simulate a board fault, a board power loss or a line outage, and for a running scenario its start, cycle and active steps. After a power loss the board is empty until INISS sends its content again.",
+      "description": "Fault scenarios: timed steps (at [ms], duration [ms]) that simulate a board fault, a board power loss, a line outage or conditions of an AK Signal controller, and for a running scenario its start, cycle and active steps. After a power loss the board is empty until INISS sends its content again.",
       "inputSchema": {
         "type": "object",
         "properties": {}
@@ -6133,7 +8811,8 @@
                         "enum": [
                           "fault",
                           "powerLoss",
-                          "lineOutage"
+                          "lineOutage",
+                          "device"
                         ]
                       },
                       "fault": {
@@ -6164,6 +8843,59 @@
                         },
                         "required": [
                           "kind"
+                        ]
+                      },
+                      "device": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "conditions": {
+                            "type": "object",
+                            "properties": {
+                              "lightsFault": {
+                                "type": "boolean",
+                                "default": false
+                              },
+                              "highPriority": {
+                                "type": "boolean",
+                                "default": false
+                              },
+                              "outputPowerError": {
+                                "type": "boolean",
+                                "default": false
+                              },
+                              "ampSupplyMissing": {
+                                "type": "boolean",
+                                "default": false
+                              },
+                              "ampCommError": {
+                                "type": "boolean",
+                                "default": false
+                              },
+                              "bankNotSynced": {
+                                "type": "boolean",
+                                "default": false
+                              }
+                            }
+                          },
+                          "sensor": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "sun",
+                              "dark",
+                              "light",
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "conditions",
+                          "sensor"
                         ]
                       }
                     },
@@ -6633,7 +9365,16 @@
                               "noTables",
                               "noAutomaticLine",
                               "noDriver",
-                              "unknownLine"
+                              "unknownLine",
+                              "noDevices",
+                              "deviceNoLine",
+                              "deviceLineAmbiguous",
+                              "deviceUnknownLine",
+                              "deviceWrongProtocol",
+                              "deviceAddress",
+                              "audioChannel",
+                              "deviceType",
+                              "masterLight"
                             ]
                           },
                           "args": {
@@ -6832,7 +9573,16 @@
                           "noTables",
                           "noAutomaticLine",
                           "noDriver",
-                          "unknownLine"
+                          "unknownLine",
+                          "noDevices",
+                          "deviceNoLine",
+                          "deviceLineAmbiguous",
+                          "deviceUnknownLine",
+                          "deviceWrongProtocol",
+                          "deviceAddress",
+                          "audioChannel",
+                          "deviceType",
+                          "masterLight"
                         ]
                       },
                       "args": {
@@ -6870,6 +9620,85 @@
                       "address",
                       "name",
                       "shown"
+                    ]
+                  }
+                },
+                "controllers": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "address": {
+                        "type": "integer"
+                      },
+                      "manufacturer": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "lights": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "station": {
+                              "type": "integer"
+                            },
+                            "beforeArrival": {
+                              "type": "integer"
+                            },
+                            "beforeDeparture": {
+                              "type": "integer"
+                            },
+                            "afterDeparture": {
+                              "type": "integer"
+                            },
+                            "afterArrival": {
+                              "type": "integer"
+                            },
+                            "minOff": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "station"
+                          ]
+                        }
+                      },
+                      "audio": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "station": {
+                              "type": "integer"
+                            },
+                            "channel": {
+                              "type": "integer",
+                              "default": 1
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "station"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "address",
+                      "manufacturer",
+                      "name",
+                      "lights",
+                      "audio"
                     ]
                   }
                 },
@@ -6937,6 +9766,12 @@
             "type": "array",
             "items": {
               "$ref": "#/properties/lines/items/properties/amplifiers/items"
+            }
+          },
+          "deviceProblems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/properties/lines/items/properties/problems/items"
             }
           },
           "iniss2": {
@@ -8028,7 +10863,7 @@
     {
       "name": "save_scenario",
       "title": "Save fault scenario",
-      "description": "Creates a fault scenario (without id) or replaces an existing one. Each step starts atMs after the start of the cycle and lasts durationMs: fault = the board (line + address) simulates the fault, powerLoss = the board is dark and does not answer, lineOutage = the whole line (address null) is disconnected. Steps may overlap. A one-step scenario is the way to switch a board off or cut a line for a while.",
+      "description": "Creates a fault scenario (without id) or replaces an existing one. Each step starts atMs after the start of the cycle and lasts durationMs: fault = the board (line + address) simulates the fault, powerLoss = the board is dark and does not answer, lineOutage = the whole line (address null) is disconnected, device = an AK Signal controller (address null = all controllers of the line) adds the conditions of device.conditions to its settings and switches its twilight sensor to device.sensor (null = keep). Steps may overlap. A one-step scenario is the way to switch a board off or cut a line for a while.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -8062,7 +10897,8 @@
                   "enum": [
                     "fault",
                     "powerLoss",
-                    "lineOutage"
+                    "lineOutage",
+                    "device"
                   ]
                 },
                 "fault": {
@@ -8093,6 +10929,59 @@
                   },
                   "required": [
                     "kind"
+                  ]
+                },
+                "device": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "conditions": {
+                      "type": "object",
+                      "properties": {
+                        "lightsFault": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "highPriority": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "outputPowerError": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "ampSupplyMissing": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "ampCommError": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "bankNotSynced": {
+                          "type": "boolean",
+                          "default": false
+                        }
+                      }
+                    },
+                    "sensor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "sun",
+                        "dark",
+                        "light",
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "conditions",
+                    "sensor"
                   ]
                 }
               },
@@ -8176,7 +11065,8 @@
                   "enum": [
                     "fault",
                     "powerLoss",
-                    "lineOutage"
+                    "lineOutage",
+                    "device"
                   ]
                 },
                 "fault": {
@@ -8207,6 +11097,59 @@
                   },
                   "required": [
                     "kind"
+                  ]
+                },
+                "device": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "conditions": {
+                      "type": "object",
+                      "properties": {
+                        "lightsFault": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "highPriority": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "outputPowerError": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "ampSupplyMissing": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "ampCommError": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "bankNotSynced": {
+                          "type": "boolean",
+                          "default": false
+                        }
+                      }
+                    },
+                    "sensor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "sun",
+                        "dark",
+                        "light",
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "conditions",
+                    "sensor"
                   ]
                 }
               },
@@ -8713,6 +11656,378 @@
       }
     },
     {
+      "name": "set_aksignal",
+      "title": "Set AK Signal controller",
+      "description": "Changes the twilight sensor and the conditions of an AK Signal controller that the server reads but does not set; only the given values change. The light mode is set by the server only. For a condition that lasts only a while use a fault scenario with a device step.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Board id \"line-address\" of the controller, e.g. \"6-5\"; AKSIGNALUH controllers have address 0.",
+            "type": "string"
+          },
+          "sensor": {
+            "description": "Sensor mode: sun (by sunrise and sunset at the simulator location), dark or light.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "sun",
+              "dark",
+              "light",
+              null
+            ],
+            "default": null
+          },
+          "sensorOffsetMinutes": {
+            "description": "Sensor offset against sunrise and sunset [min], -240 to 240; positive shortens the darkness.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          },
+          "lightsFault": {
+            "description": "Lights fault (the controller does not report its lights as OK).",
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "default": null
+          },
+          "highPriority": {
+            "description": "An announcement with higher priority (e.g. local microphone) runs; it cancels the announcement of the server.",
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "default": null
+          },
+          "outputPowerError": {
+            "description": "Power error on the audio output.",
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "default": null
+          },
+          "ampSupplyMissing": {
+            "description": "Amplifier power supply missing.",
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "default": null
+          },
+          "ampCommError": {
+            "description": "Communication error with the amplifier (AKSIGNALUH only).",
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "default": null
+          },
+          "bankNotSynced": {
+            "description": "Sound bank not synchronized (AKSIGNALUH only).",
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "default": null
+          },
+          "silenceSeconds": {
+            "description": "After how many seconds without a query the controller reports that the server does not ask.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Board id \"line-address\" of the controller.",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "protocol": {
+            "description": "AKSIGNAL (binary, class 131) or AKSIGNALUH (text, class 132).",
+            "type": "string"
+          },
+          "poweredOff": {
+            "description": "Simulated power outage: the controller does not answer.",
+            "type": "boolean"
+          },
+          "lightOn": {
+            "description": "The lights are on: switched on manually, or automatic mode while it is dark.",
+            "type": "boolean"
+          },
+          "lightMode": {
+            "description": "Light mode set by the server: off, auto (switched by trains) or manual.",
+            "type": "string"
+          },
+          "dark": {
+            "description": "The twilight sensor reports darkness.",
+            "type": "boolean"
+          },
+          "sensor": {
+            "description": "Twilight sensor setting: sun (by sunrise and sunset at the simulator location), dark or light.",
+            "type": "string",
+            "enum": [
+              "sun",
+              "dark",
+              "light"
+            ]
+          },
+          "sensorOffsetMinutes": {
+            "description": "Sensor offset against sunrise and sunset [min]; positive shortens the darkness.",
+            "type": "integer"
+          },
+          "darkChangesAt": {
+            "description": "When the sensor changes by the sun; null = fixed sensor.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "conditions": {
+            "description": "Conditions the controller reports now: from its settings together with a running fault scenario.",
+            "type": "object",
+            "properties": {
+              "lightsFault": {
+                "type": "boolean",
+                "default": false
+              },
+              "highPriority": {
+                "type": "boolean",
+                "default": false
+              },
+              "outputPowerError": {
+                "type": "boolean",
+                "default": false
+              },
+              "ampSupplyMissing": {
+                "type": "boolean",
+                "default": false
+              },
+              "ampCommError": {
+                "type": "boolean",
+                "default": false
+              },
+              "bankNotSynced": {
+                "type": "boolean",
+                "default": false
+              }
+            }
+          },
+          "scenario": {
+            "description": "What a running fault scenario sets now (added conditions, sensor mode); null = nothing.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "conditions": {
+                "type": "object",
+                "properties": {
+                  "lightsFault": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "highPriority": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "outputPowerError": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "ampSupplyMissing": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "ampCommError": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "bankNotSynced": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              },
+              "sensor": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "sun",
+                  "dark",
+                  "light",
+                  null
+                ]
+              }
+            },
+            "required": [
+              "conditions",
+              "sensor"
+            ]
+          },
+          "serverSilent": {
+            "description": "The server has not asked the controller for a while (SilenceSeconds).",
+            "type": "boolean"
+          },
+          "lastQueryAt": {
+            "description": "Last query of the server; null = none yet.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lightState": {
+            "description": "Light state as the controller would reply now: hex byte (AKSIGNAL) or keys (AKSIGNALUH).",
+            "type": "string"
+          },
+          "audioState": {
+            "description": "Audio state as the controller would reply now: hex byte (AKSIGNAL) or keys (AKSIGNALUH).",
+            "type": "string"
+          },
+          "lights": {
+            "description": "Lights of the station (Lights.xml) the controller switches.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "audioLines": {
+            "description": "Audio lines of the station (Audio.xml) that announce through the controller.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "playing": {
+            "description": "Announcements playing now; channel 0 = AKSIGNAL switching, 1 and 2 = AKSIGNALUH channels.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "channel": {
+                  "type": "integer"
+                },
+                "sounds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "startedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "result": {
+                  "type": "string",
+                  "enum": [
+                    "playing",
+                    "completed",
+                    "stopped",
+                    "cancelled"
+                  ]
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "durationMs": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "value": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "endedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "queue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "circuit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "channel",
+                "sounds",
+                "startedAt",
+                "result"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "protocol",
+          "poweredOff",
+          "lightOn",
+          "lightMode",
+          "dark",
+          "sensor",
+          "sensorOffsetMinutes",
+          "darkChangesAt",
+          "conditions",
+          "scenario",
+          "serverSilent",
+          "lastQueryAt",
+          "lightState",
+          "audioState",
+          "lights",
+          "audioLines",
+          "playing"
+        ]
+      },
+      "annotations": {
+        "title": "Set AK Signal controller",
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      }
+    },
+    {
       "name": "set_board",
       "title": "Create or change board",
       "description": "Creates a board on a line or changes an existing one; for an existing board only the given values change. A new board needs a manufacturer and gets the default size of the manufacturer. Look, face and fonts are not changed here.",
@@ -8807,7 +12122,7 @@
             "type": "string"
           },
           "family": {
-            "description": "elen, chars, flaps, amplifier or unknown.",
+            "description": "elen, chars, flaps, amplifier, aksignal, remoteaudio or unknown.",
             "type": "string"
           },
           "design": {
@@ -9138,6 +12453,125 @@
                     }
                   }
                 }
+              },
+              "akSignal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "lights": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "station": {
+                          "type": "integer"
+                        },
+                        "beforeArrival": {
+                          "type": "integer"
+                        },
+                        "beforeDeparture": {
+                          "type": "integer"
+                        },
+                        "afterDeparture": {
+                          "type": "integer"
+                        },
+                        "afterArrival": {
+                          "type": "integer"
+                        },
+                        "minOff": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "station"
+                      ]
+                    }
+                  },
+                  "audio": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "station": {
+                          "type": "integer"
+                        },
+                        "channel": {
+                          "type": "integer",
+                          "default": 1
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "station"
+                      ]
+                    }
+                  },
+                  "sensor": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "sun",
+                          "dark",
+                          "light"
+                        ],
+                        "default": "sun"
+                      },
+                      "offsetMinutes": {
+                        "type": "integer",
+                        "default": 0
+                      }
+                    }
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "properties": {
+                      "lightsFault": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "highPriority": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "outputPowerError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampSupplyMissing": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampCommError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "bankNotSynced": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    }
+                  },
+                  "soundSeconds": {
+                    "type": "number"
+                  },
+                  "syncSeconds": {
+                    "type": "integer"
+                  },
+                  "silenceSeconds": {
+                    "type": "integer"
+                  }
+                }
               }
             }
           },
@@ -9412,6 +12846,384 @@
                   "onSince",
                   "switches",
                   "lastCommand"
+                ]
+              },
+              "akSignal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "autoMode": {
+                    "type": "boolean"
+                  },
+                  "manual": {
+                    "type": "boolean"
+                  },
+                  "dark": {
+                    "type": "boolean"
+                  },
+                  "lightOn": {
+                    "type": "boolean"
+                  },
+                  "lightState": {
+                    "type": "string"
+                  },
+                  "audioState": {
+                    "type": "string"
+                  },
+                  "announcements": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "channel": {
+                          "type": "integer"
+                        },
+                        "sounds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "result": {
+                          "type": "string",
+                          "enum": [
+                            "playing",
+                            "completed",
+                            "stopped",
+                            "cancelled"
+                          ]
+                        },
+                        "title": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "durationMs": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "value": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "endedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
+                        "queue": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "circuit": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "channel",
+                        "sounds",
+                        "startedAt",
+                        "result"
+                      ]
+                    }
+                  },
+                  "darkSince": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "darkChangesAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "lightChangedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "lightQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "audioQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "serverSilent": {
+                    "type": "boolean"
+                  },
+                  "banks": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "syncedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "syncUntil": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "properties": {
+                      "lightsFault": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "highPriority": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "outputPowerError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampSupplyMissing": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampCommError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "bankNotSynced": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    }
+                  },
+                  "scenario": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "conditions": {
+                        "type": "object",
+                        "properties": {
+                          "lightsFault": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "highPriority": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "outputPowerError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampSupplyMissing": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampCommError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "bankNotSynced": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        }
+                      },
+                      "sensor": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "sun",
+                          "dark",
+                          "light",
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "conditions",
+                      "sensor"
+                    ]
+                  }
+                },
+                "required": [
+                  "autoMode",
+                  "manual",
+                  "dark",
+                  "lightOn",
+                  "lightState",
+                  "audioState",
+                  "announcements"
+                ]
+              },
+              "remoteAudio": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "queues": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "off": {
+                          "type": "boolean"
+                        },
+                        "playing": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "channel": {
+                              "type": "integer"
+                            },
+                            "sounds": {
+                              "$ref": "#/properties/display/properties/akSignal/properties/announcements/items/properties/sounds",
+                              "items": {}
+                            },
+                            "startedAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "result": {
+                              "type": "string",
+                              "enum": [
+                                "playing",
+                                "completed",
+                                "stopped",
+                                "cancelled"
+                              ]
+                            },
+                            "title": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "durationMs": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "value": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "endedAt": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "date-time"
+                            },
+                            "queue": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "circuit": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "channel",
+                            "sounds",
+                            "startedAt",
+                            "result"
+                          ]
+                        },
+                        "lastCommandAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "off",
+                        "playing"
+                      ]
+                    }
+                  },
+                  "announcements": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/properties/display/properties/akSignal/properties/announcements/items"
+                    }
+                  },
+                  "lastQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "queues",
+                  "announcements"
                 ]
               }
             },
@@ -9523,7 +13335,7 @@
             "type": "string"
           },
           "family": {
-            "description": "elen, chars, flaps, amplifier or unknown.",
+            "description": "elen, chars, flaps, amplifier, aksignal, remoteaudio or unknown.",
             "type": "string"
           },
           "design": {
@@ -9854,6 +13666,125 @@
                     }
                   }
                 }
+              },
+              "akSignal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "lights": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "station": {
+                          "type": "integer"
+                        },
+                        "beforeArrival": {
+                          "type": "integer"
+                        },
+                        "beforeDeparture": {
+                          "type": "integer"
+                        },
+                        "afterDeparture": {
+                          "type": "integer"
+                        },
+                        "afterArrival": {
+                          "type": "integer"
+                        },
+                        "minOff": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "station"
+                      ]
+                    }
+                  },
+                  "audio": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "station": {
+                          "type": "integer"
+                        },
+                        "channel": {
+                          "type": "integer",
+                          "default": 1
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "station"
+                      ]
+                    }
+                  },
+                  "sensor": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "sun",
+                          "dark",
+                          "light"
+                        ],
+                        "default": "sun"
+                      },
+                      "offsetMinutes": {
+                        "type": "integer",
+                        "default": 0
+                      }
+                    }
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "properties": {
+                      "lightsFault": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "highPriority": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "outputPowerError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampSupplyMissing": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampCommError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "bankNotSynced": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    }
+                  },
+                  "soundSeconds": {
+                    "type": "number"
+                  },
+                  "syncSeconds": {
+                    "type": "integer"
+                  },
+                  "silenceSeconds": {
+                    "type": "integer"
+                  }
+                }
               }
             }
           },
@@ -10128,6 +14059,384 @@
                   "onSince",
                   "switches",
                   "lastCommand"
+                ]
+              },
+              "akSignal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "autoMode": {
+                    "type": "boolean"
+                  },
+                  "manual": {
+                    "type": "boolean"
+                  },
+                  "dark": {
+                    "type": "boolean"
+                  },
+                  "lightOn": {
+                    "type": "boolean"
+                  },
+                  "lightState": {
+                    "type": "string"
+                  },
+                  "audioState": {
+                    "type": "string"
+                  },
+                  "announcements": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "channel": {
+                          "type": "integer"
+                        },
+                        "sounds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "result": {
+                          "type": "string",
+                          "enum": [
+                            "playing",
+                            "completed",
+                            "stopped",
+                            "cancelled"
+                          ]
+                        },
+                        "title": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "durationMs": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "value": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "endedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
+                        "queue": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "circuit": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "channel",
+                        "sounds",
+                        "startedAt",
+                        "result"
+                      ]
+                    }
+                  },
+                  "darkSince": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "darkChangesAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "lightChangedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "lightQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "audioQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "serverSilent": {
+                    "type": "boolean"
+                  },
+                  "banks": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "syncedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "syncUntil": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "properties": {
+                      "lightsFault": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "highPriority": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "outputPowerError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampSupplyMissing": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampCommError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "bankNotSynced": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    }
+                  },
+                  "scenario": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "conditions": {
+                        "type": "object",
+                        "properties": {
+                          "lightsFault": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "highPriority": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "outputPowerError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampSupplyMissing": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampCommError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "bankNotSynced": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        }
+                      },
+                      "sensor": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "sun",
+                          "dark",
+                          "light",
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "conditions",
+                      "sensor"
+                    ]
+                  }
+                },
+                "required": [
+                  "autoMode",
+                  "manual",
+                  "dark",
+                  "lightOn",
+                  "lightState",
+                  "audioState",
+                  "announcements"
+                ]
+              },
+              "remoteAudio": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "queues": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "off": {
+                          "type": "boolean"
+                        },
+                        "playing": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "channel": {
+                              "type": "integer"
+                            },
+                            "sounds": {
+                              "$ref": "#/properties/display/properties/akSignal/properties/announcements/items/properties/sounds",
+                              "items": {}
+                            },
+                            "startedAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "result": {
+                              "type": "string",
+                              "enum": [
+                                "playing",
+                                "completed",
+                                "stopped",
+                                "cancelled"
+                              ]
+                            },
+                            "title": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "durationMs": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "value": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "endedAt": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "date-time"
+                            },
+                            "queue": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "circuit": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "channel",
+                            "sounds",
+                            "startedAt",
+                            "result"
+                          ]
+                        },
+                        "lastCommandAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "off",
+                        "playing"
+                      ]
+                    }
+                  },
+                  "announcements": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/properties/display/properties/akSignal/properties/announcements/items"
+                    }
+                  },
+                  "lastQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "queues",
+                  "announcements"
                 ]
               }
             },
@@ -10425,6 +14734,125 @@
                     }
                   }
                 }
+              },
+              "akSignal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "lights": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "station": {
+                          "type": "integer"
+                        },
+                        "beforeArrival": {
+                          "type": "integer"
+                        },
+                        "beforeDeparture": {
+                          "type": "integer"
+                        },
+                        "afterDeparture": {
+                          "type": "integer"
+                        },
+                        "afterArrival": {
+                          "type": "integer"
+                        },
+                        "minOff": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "station"
+                      ]
+                    }
+                  },
+                  "audio": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "station": {
+                          "type": "integer"
+                        },
+                        "channel": {
+                          "type": "integer",
+                          "default": 1
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "station"
+                      ]
+                    }
+                  },
+                  "sensor": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "sun",
+                          "dark",
+                          "light"
+                        ],
+                        "default": "sun"
+                      },
+                      "offsetMinutes": {
+                        "type": "integer",
+                        "default": 0
+                      }
+                    }
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "properties": {
+                      "lightsFault": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "highPriority": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "outputPowerError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampSupplyMissing": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampCommError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "bankNotSynced": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    }
+                  },
+                  "soundSeconds": {
+                    "type": "number"
+                  },
+                  "syncSeconds": {
+                    "type": "integer"
+                  },
+                  "silenceSeconds": {
+                    "type": "integer"
+                  }
+                }
               }
             }
           },
@@ -10461,7 +14889,7 @@
             "type": "integer"
           },
           "tableClass": {
-            "description": "INISS table class, selects the protocol: 1 Elektrocas LCD, 2 ERS, 3 FERS, 4 ELEN, 5 LCD1/ERP, 10 APEL, 128 remote INISS, 129 ELSVO, 130 ITP.",
+            "description": "INISS table class, selects the protocol: 1 Elektrocas LCD, 2 ERS, 3 FERS, 4 ELEN, 5 LCD1/ERP, 10 APEL, 128 remote INISS, 129 ELSVO, 130 ITP, 131 AK Signal, 132 AK Signal UH (INISS2 platform lighting and PA controllers).",
             "type": [
               "integer",
               "null"
@@ -10639,7 +15067,7 @@
             "type": "string"
           },
           "family": {
-            "description": "elen, chars, flaps, amplifier or unknown.",
+            "description": "elen, chars, flaps, amplifier, aksignal, remoteaudio or unknown.",
             "type": "string"
           },
           "design": {
@@ -10970,6 +15398,125 @@
                     }
                   }
                 }
+              },
+              "akSignal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "lights": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "station": {
+                          "type": "integer"
+                        },
+                        "beforeArrival": {
+                          "type": "integer"
+                        },
+                        "beforeDeparture": {
+                          "type": "integer"
+                        },
+                        "afterDeparture": {
+                          "type": "integer"
+                        },
+                        "afterArrival": {
+                          "type": "integer"
+                        },
+                        "minOff": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "station"
+                      ]
+                    }
+                  },
+                  "audio": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "station": {
+                          "type": "integer"
+                        },
+                        "channel": {
+                          "type": "integer",
+                          "default": 1
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "station"
+                      ]
+                    }
+                  },
+                  "sensor": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "sun",
+                          "dark",
+                          "light"
+                        ],
+                        "default": "sun"
+                      },
+                      "offsetMinutes": {
+                        "type": "integer",
+                        "default": 0
+                      }
+                    }
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "properties": {
+                      "lightsFault": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "highPriority": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "outputPowerError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampSupplyMissing": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampCommError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "bankNotSynced": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    }
+                  },
+                  "soundSeconds": {
+                    "type": "number"
+                  },
+                  "syncSeconds": {
+                    "type": "integer"
+                  },
+                  "silenceSeconds": {
+                    "type": "integer"
+                  }
+                }
               }
             }
           },
@@ -11244,6 +15791,384 @@
                   "onSince",
                   "switches",
                   "lastCommand"
+                ]
+              },
+              "akSignal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "autoMode": {
+                    "type": "boolean"
+                  },
+                  "manual": {
+                    "type": "boolean"
+                  },
+                  "dark": {
+                    "type": "boolean"
+                  },
+                  "lightOn": {
+                    "type": "boolean"
+                  },
+                  "lightState": {
+                    "type": "string"
+                  },
+                  "audioState": {
+                    "type": "string"
+                  },
+                  "announcements": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "channel": {
+                          "type": "integer"
+                        },
+                        "sounds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "result": {
+                          "type": "string",
+                          "enum": [
+                            "playing",
+                            "completed",
+                            "stopped",
+                            "cancelled"
+                          ]
+                        },
+                        "title": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "durationMs": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "value": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "endedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
+                        "queue": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "circuit": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "channel",
+                        "sounds",
+                        "startedAt",
+                        "result"
+                      ]
+                    }
+                  },
+                  "darkSince": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "darkChangesAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "lightChangedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "lightQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "audioQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "serverSilent": {
+                    "type": "boolean"
+                  },
+                  "banks": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "syncedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "syncUntil": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "properties": {
+                      "lightsFault": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "highPriority": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "outputPowerError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampSupplyMissing": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "ampCommError": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "bankNotSynced": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    }
+                  },
+                  "scenario": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "conditions": {
+                        "type": "object",
+                        "properties": {
+                          "lightsFault": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "highPriority": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "outputPowerError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampSupplyMissing": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "ampCommError": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "bankNotSynced": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        }
+                      },
+                      "sensor": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "sun",
+                          "dark",
+                          "light",
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "conditions",
+                      "sensor"
+                    ]
+                  }
+                },
+                "required": [
+                  "autoMode",
+                  "manual",
+                  "dark",
+                  "lightOn",
+                  "lightState",
+                  "audioState",
+                  "announcements"
+                ]
+              },
+              "remoteAudio": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "queues": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "off": {
+                          "type": "boolean"
+                        },
+                        "playing": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "channel": {
+                              "type": "integer"
+                            },
+                            "sounds": {
+                              "$ref": "#/properties/display/properties/akSignal/properties/announcements/items/properties/sounds",
+                              "items": {}
+                            },
+                            "startedAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "result": {
+                              "type": "string",
+                              "enum": [
+                                "playing",
+                                "completed",
+                                "stopped",
+                                "cancelled"
+                              ]
+                            },
+                            "title": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "durationMs": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "value": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ]
+                            },
+                            "endedAt": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "date-time"
+                            },
+                            "queue": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "circuit": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "channel",
+                            "sounds",
+                            "startedAt",
+                            "result"
+                          ]
+                        },
+                        "lastCommandAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "off",
+                        "playing"
+                      ]
+                    }
+                  },
+                  "announcements": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/properties/display/properties/akSignal/properties/announcements/items"
+                    }
+                  },
+                  "lastQueryAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "queues",
+                  "announcements"
                 ]
               }
             },
@@ -11614,7 +16539,8 @@
                   "enum": [
                     "fault",
                     "powerLoss",
-                    "lineOutage"
+                    "lineOutage",
+                    "device"
                   ]
                 },
                 "fault": {
@@ -11645,6 +16571,59 @@
                   },
                   "required": [
                     "kind"
+                  ]
+                },
+                "device": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "conditions": {
+                      "type": "object",
+                      "properties": {
+                        "lightsFault": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "highPriority": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "outputPowerError": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "ampSupplyMissing": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "ampCommError": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "bankNotSynced": {
+                          "type": "boolean",
+                          "default": false
+                        }
+                      }
+                    },
+                    "sensor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "sun",
+                        "dark",
+                        "light",
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "conditions",
+                    "sensor"
                   ]
                 }
               },
@@ -11787,7 +16766,7 @@
     {
       "name": "stop_scenario",
       "title": "Stop fault scenario",
-      "description": "Stops a fault scenario; faults, power and lines return to the state before it.",
+      "description": "Stops a fault scenario; faults, power, lines and AK Signal controllers return to the state before it.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -11843,7 +16822,8 @@
                   "enum": [
                     "fault",
                     "powerLoss",
-                    "lineOutage"
+                    "lineOutage",
+                    "device"
                   ]
                 },
                 "fault": {
@@ -11874,6 +16854,59 @@
                   },
                   "required": [
                     "kind"
+                  ]
+                },
+                "device": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "conditions": {
+                      "type": "object",
+                      "properties": {
+                        "lightsFault": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "highPriority": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "outputPowerError": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "ampSupplyMissing": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "ampCommError": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "bankNotSynced": {
+                          "type": "boolean",
+                          "default": false
+                        }
+                      }
+                    },
+                    "sensor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "sun",
+                        "dark",
+                        "light",
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "conditions",
+                    "sensor"
                   ]
                 }
               },

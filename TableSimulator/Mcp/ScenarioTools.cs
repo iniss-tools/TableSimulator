@@ -13,7 +13,7 @@ namespace TableSimulator.Mcp;
 public static class ScenarioTools
 {
     [McpServerTool(Name = "list_scenarios", Title = "Fault scenarios", ReadOnly = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
-    [Description("Fault scenarios: timed steps (at [ms], duration [ms]) that simulate a board fault, a board power loss or a line outage, "
+    [Description("Fault scenarios: timed steps (at [ms], duration [ms]) that simulate a board fault, a board power loss, a line outage or conditions of an AK Signal controller, "
                  + "and for a running scenario its start, cycle and active steps. After a power loss the board is empty until INISS sends its content again.")]
     [Authorize(Policy = Permissions.SimulatorView)]
     public static async Task<ScenariosResult> ListScenarios(
@@ -25,7 +25,9 @@ public static class ScenarioTools
         UseStructuredContent = true)]
     [Description("Creates a fault scenario (without id) or replaces an existing one. Each step starts atMs after the start of the cycle and lasts durationMs: "
                  + "fault = the board (line + address) simulates the fault, powerLoss = the board is dark and does not answer, lineOutage = the whole line "
-                 + "(address null) is disconnected. Steps may overlap. A one-step scenario is the way to switch a board off or cut a line for a while.")]
+                 + "(address null) is disconnected, device = an AK Signal controller (address null = all controllers of the line) adds the conditions "
+                 + "of device.conditions to its settings and switches its twilight sensor to device.sensor (null = keep). "
+                 + "Steps may overlap. A one-step scenario is the way to switch a board off or cut a line for a while.")]
     [Authorize(Policy = Permissions.ScenariosManage)]
     public static async Task<FaultScenarioDto> SaveScenario(
         IQueryHandler<GetFaultScenariosQuery, IReadOnlyList<FaultScenarioDto>> scenarios,
@@ -61,7 +63,7 @@ public static class ScenarioTools
 
     [McpServerTool(Name = "stop_scenario", Title = "Stop fault scenario", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false,
         UseStructuredContent = true)]
-    [Description("Stops a fault scenario; faults, power and lines return to the state before it.")]
+    [Description("Stops a fault scenario; faults, power, lines and AK Signal controllers return to the state before it.")]
     [Authorize(Policy = Permissions.ScenariosManage)]
     public static async Task<FaultScenarioDto> StopScenario(
         IQueryHandler<GetFaultScenariosQuery, IReadOnlyList<FaultScenarioDto>> scenarios,

@@ -177,7 +177,9 @@ public class RemoteProtocolTests
     [TestMethod]
     public void Fronty_HlaseniePrijateAVypnutieSaPamata()
     {
-        var sim = Create();
+        var time = new ManualTime();
+        var sim = new Simulator(time);
+        sim.SetLine(new LineConfig(4, 128, "TCP://127.0.0.1:8090"));
         var name = Encoding.Latin1.GetBytes("Nastupiste 1");
 
         // jedina fronta bez nazvu: necinna
@@ -186,11 +188,13 @@ public class RemoteProtocolTests
         Assert.IsNull(idle.Find("QNAM"));
         Assert.IsNull(idle.Find("TSTA"));
 
-        // hlasenie: prijate (0x100), potom dalsi dotaz bez neho = dohrate
+        // hlasenie: prijate (0x100), kym hra (nahravka bez banky 1,5 s), potom dalsi dotaz bez neho = dohrate
         var report = Send(sim, 2, new RemoteChunk("QNAM", name), RemoteChunk.FromInt32("RCMD", 0), new RemoteChunk("RWAV", "a1,0,0"u8.ToArray()),
             new RemoteChunk("RTIT", "Os 3412"u8.ToArray()));
         CollectionAssert.AreEqual(name, report.Find("QNAM")!.Data);
         Assert.AreEqual(0x103, report.Find("RSTA")!.Int32);
+        Assert.AreEqual(0x503, Send(sim, 3, new RemoteChunk("QNAM", name), RemoteChunk.FromInt32("RCMD", 1)).Find("RSTA")!.Int32);
+        time.Advance(TimeSpan.FromSeconds(2));
         Assert.AreEqual(0x401, Send(sim, 3, new RemoteChunk("QNAM", name), RemoteChunk.FromInt32("RCMD", 1)).Find("RSTA")!.Int32);
 
         // vypnutie fronty: ozvena ziadosti, stav 2 ostane aj po nej

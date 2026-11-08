@@ -1,6 +1,7 @@
 using System.Globalization;
 using TableSimulator.Core.Boards;
 using TableSimulator.Core.Lines;
+using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Core.Protocols.Elektrocas;
 
@@ -118,7 +119,11 @@ internal sealed class ItpProtocol : ILineProtocol
 
         public DateTimeOffset Now => outer.Now;
 
+        public SimEnvironment Environment => outer.Environment;
+
         public IReadOnlyList<SimBoard> Boards => outer.Boards;
+
+        public SimBoard? Device(int address, string manufacturer) => outer.Device(address, manufacturer);
 
         public SimBoard? FindBoard(int address, string? manufacturer = null) => outer.FindBoard(address, manufacturer);
 

@@ -3513,6 +3513,46 @@
         }
       }
     },
+    "/api/boards/{id}/remote-audio/break": {
+      "post": {
+        "tags": [
+          "Boards"
+        ],
+        "operationId": "BreakBoardAnnouncement",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "queue",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/boards/{id}/clear": {
       "post": {
         "tags": [
@@ -3650,6 +3690,49 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SetBoardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/boards/{id}/aksignal": {
+      "put": {
+        "tags": [
+          "Boards"
+        ],
+        "operationId": "SetBoardAkSignal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AkSignalSettingsRequest"
               }
             }
           },
@@ -4291,6 +4374,63 @@
           }
         }
       }
+    },
+    "/api/aksignal/history": {
+      "get": {
+        "tags": [
+          "AkSignal"
+        ],
+        "operationId": "GetAkSignalHistory",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "board",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceHistoryDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error (ProblemDetails)",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4360,6 +4500,246 @@
           "device",
           "api"
         ]
+      },
+      "AkSignalConditionsDto": {
+        "required": [
+          "lightsFault",
+          "highPriority",
+          "outputPowerError",
+          "ampSupplyMissing",
+          "ampCommError",
+          "bankNotSynced"
+        ],
+        "type": "object",
+        "properties": {
+          "lightsFault": {
+            "type": "boolean",
+            "default": false
+          },
+          "highPriority": {
+            "type": "boolean",
+            "default": false
+          },
+          "outputPowerError": {
+            "type": "boolean",
+            "default": false
+          },
+          "ampSupplyMissing": {
+            "type": "boolean",
+            "default": false
+          },
+          "ampCommError": {
+            "type": "boolean",
+            "default": false
+          },
+          "bankNotSynced": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "AkSignalDto": {
+        "required": [
+          "autoMode",
+          "manual",
+          "dark",
+          "lightOn",
+          "lightState",
+          "audioState",
+          "announcements",
+          "darkSince",
+          "darkChangesAt",
+          "lightChangedAt",
+          "lightQueryAt",
+          "audioQueryAt",
+          "serverSilent",
+          "banks",
+          "syncedAt",
+          "syncUntil",
+          "conditions",
+          "scenario"
+        ],
+        "type": "object",
+        "properties": {
+          "autoMode": {
+            "type": "boolean"
+          },
+          "manual": {
+            "type": "boolean"
+          },
+          "dark": {
+            "type": "boolean"
+          },
+          "lightOn": {
+            "type": "boolean"
+          },
+          "lightState": {
+            "type": "string"
+          },
+          "audioState": {
+            "type": "string"
+          },
+          "announcements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnnouncementDto"
+            }
+          },
+          "darkSince": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "darkChangesAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lightChangedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lightQueryAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "audioQueryAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "serverSilent": {
+            "type": "boolean"
+          },
+          "banks": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "syncedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "syncUntil": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "conditions": {
+            "$ref": "#/components/schemas/AkSignalConditionsDto"
+          },
+          "scenario": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ScenarioDeviceDto"
+              }
+            ]
+          }
+        }
+      },
+      "AkSignalProfileDto": {
+        "required": [
+          "lights",
+          "audio",
+          "sensor",
+          "conditions",
+          "soundSeconds",
+          "syncSeconds",
+          "silenceSeconds"
+        ],
+        "type": "object",
+        "properties": {
+          "lights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationLightDto"
+            }
+          },
+          "audio": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationAudioDto"
+            }
+          },
+          "sensor": {
+            "$ref": "#/components/schemas/TwilightSensorDto"
+          },
+          "conditions": {
+            "$ref": "#/components/schemas/AkSignalConditionsDto"
+          },
+          "soundSeconds": {
+            "type": "number",
+            "format": "double"
+          },
+          "syncSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "silenceSeconds": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AkSignalSettingsRequest": {
+        "required": [
+          "sensor",
+          "conditions",
+          "soundSeconds",
+          "syncSeconds",
+          "silenceSeconds"
+        ],
+        "type": "object",
+        "properties": {
+          "sensor": {
+            "$ref": "#/components/schemas/TwilightSensorDto"
+          },
+          "conditions": {
+            "$ref": "#/components/schemas/AkSignalConditionsDto"
+          },
+          "soundSeconds": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "syncSeconds": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "silenceSeconds": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
       },
       "AlertChannelResultDto": {
         "required": [
@@ -4548,6 +4928,158 @@
             "format": "int32"
           }
         }
+      },
+      "AnnouncementDto": {
+        "required": [
+          "id",
+          "channel",
+          "sounds",
+          "startedAt",
+          "result",
+          "title",
+          "durationMs",
+          "value",
+          "endedAt",
+          "queue",
+          "circuit"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "channel": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sounds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "result": {
+            "$ref": "#/components/schemas/AnnouncementResult"
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "durationMs": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          },
+          "value": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "endedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "queue": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "circuit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AnnouncementHistoryDto": {
+        "required": [
+          "boardId",
+          "channel",
+          "sounds",
+          "startedAt",
+          "endedAt",
+          "result",
+          "value",
+          "title",
+          "queue",
+          "circuit"
+        ],
+        "type": "object",
+        "properties": {
+          "boardId": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sounds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "result": {
+            "$ref": "#/components/schemas/AnnouncementResult"
+          },
+          "value": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "queue": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "circuit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AnnouncementResult": {
+        "enum": [
+          "playing",
+          "completed",
+          "stopped",
+          "cancelled"
+        ]
       },
       "ApiProblem": {
         "type": "object",
@@ -5102,7 +5634,8 @@
           "movingFont",
           "autoSize",
           "rotationMs",
-          "flaps"
+          "flaps",
+          "akSignal"
         ],
         "type": "object",
         "properties": {
@@ -5208,6 +5741,16 @@
               },
               {
                 "$ref": "#/components/schemas/FlapProfileDto"
+              }
+            ]
+          },
+          "akSignal": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AkSignalProfileDto"
               }
             ]
           }
@@ -5741,6 +6284,44 @@
           }
         }
       },
+      "DeviceHistoryDto": {
+        "required": [
+          "from",
+          "to",
+          "lights",
+          "announcements",
+          "server"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LightStateDto"
+            }
+          },
+          "announcements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnnouncementHistoryDto"
+            }
+          },
+          "server": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServerLightEventDto"
+            }
+          }
+        }
+      },
       "DisplayDto": {
         "required": [
           "family",
@@ -5757,7 +6338,9 @@
           "charRows",
           "flapRows",
           "rotatingUntil",
-          "amplifier"
+          "amplifier",
+          "akSignal",
+          "remoteAudio"
         ],
         "type": "object",
         "properties": {
@@ -5858,6 +6441,26 @@
               },
               {
                 "$ref": "#/components/schemas/AmplifierDto"
+              }
+            ]
+          },
+          "akSignal": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AkSignalDto"
+              }
+            ]
+          },
+          "remoteAudio": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RemoteAudioDto"
               }
             ]
           }
@@ -6420,6 +7023,23 @@
           "eotInData"
         ]
       },
+      "GeoLocationDto": {
+        "required": [
+          "latitude",
+          "longitude"
+        ],
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "HeaderClockDto": {
         "required": [
           "x",
@@ -6662,6 +7282,40 @@
           }
         }
       },
+      "InissControllerDto": {
+        "required": [
+          "address",
+          "manufacturer",
+          "name",
+          "lights",
+          "audio"
+        ],
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "lights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationLightDto"
+            }
+          },
+          "audio": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationAudioDto"
+            }
+          }
+        }
+      },
       "InissLineDto": {
         "required": [
           "section",
@@ -6674,6 +7328,7 @@
           "tables",
           "problems",
           "amplifiers",
+          "controllers",
           "transport",
           "canRedirect",
           "originalPort"
@@ -6725,6 +7380,12 @@
               "$ref": "#/components/schemas/InissAmplifierDto"
             }
           },
+          "controllers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InissControllerDto"
+            }
+          },
           "transport": {
             "$ref": "#/components/schemas/StationLineTransport"
           },
@@ -6747,7 +7408,16 @@
           "noTables",
           "noAutomaticLine",
           "noDriver",
-          "unknownLine"
+          "unknownLine",
+          "noDevices",
+          "deviceNoLine",
+          "deviceLineAmbiguous",
+          "deviceUnknownLine",
+          "deviceWrongProtocol",
+          "deviceAddress",
+          "audioChannel",
+          "deviceType",
+          "masterLight"
         ]
       },
       "InissProblemDto": {
@@ -6802,6 +7472,7 @@
           "logFolderExists",
           "xmlTables",
           "unservedAmplifiers",
+          "deviceProblems",
           "iniss2"
         ],
         "type": "object",
@@ -6849,6 +7520,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/InissAmplifierDto"
+            }
+          },
+          "deviceProblems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InissProblemDto"
             }
           },
           "iniss2": {
@@ -6990,6 +7667,50 @@
             "type": "string"
           },
           "replace": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LightStateDto": {
+        "required": [
+          "boardId",
+          "at",
+          "auto",
+          "manual",
+          "dark",
+          "on",
+          "fault",
+          "silent",
+          "poweredOff"
+        ],
+        "type": "object",
+        "properties": {
+          "boardId": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "auto": {
+            "type": "boolean"
+          },
+          "manual": {
+            "type": "boolean"
+          },
+          "dark": {
+            "type": "boolean"
+          },
+          "on": {
+            "type": "boolean"
+          },
+          "fault": {
+            "type": "boolean"
+          },
+          "silent": {
+            "type": "boolean"
+          },
+          "poweredOff": {
             "type": "boolean"
           }
         }
@@ -7806,6 +8527,69 @@
           }
         }
       },
+      "RemoteAudioDto": {
+        "required": [
+          "queues",
+          "announcements",
+          "lastQueryAt"
+        ],
+        "type": "object",
+        "properties": {
+          "queues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RemoteQueueDto"
+            }
+          },
+          "announcements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnnouncementDto"
+            }
+          },
+          "lastQueryAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "RemoteQueueDto": {
+        "required": [
+          "name",
+          "off",
+          "playing",
+          "lastCommandAt"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "off": {
+            "type": "boolean"
+          },
+          "playing": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AnnouncementDto"
+              }
+            ]
+          },
+          "lastCommandAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
       "ReplayState": {
         "enum": [
           "running",
@@ -8133,8 +8917,31 @@
         "enum": [
           "fault",
           "powerLoss",
-          "lineOutage"
+          "lineOutage",
+          "device"
         ]
+      },
+      "ScenarioDeviceDto": {
+        "required": [
+          "conditions",
+          "sensor"
+        ],
+        "type": "object",
+        "properties": {
+          "conditions": {
+            "$ref": "#/components/schemas/AkSignalConditionsDto"
+          },
+          "sensor": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TwilightMode"
+              }
+            ]
+          }
+        }
       },
       "ScenarioRunDto": {
         "required": [
@@ -8173,7 +8980,8 @@
           "line",
           "address",
           "action",
-          "fault"
+          "fault",
+          "device"
         ],
         "type": "object",
         "properties": {
@@ -8208,6 +9016,16 @@
                 "$ref": "#/components/schemas/BoardFaultDto"
               }
             ]
+          },
+          "device": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ScenarioDeviceDto"
+              }
+            ]
           }
         }
       },
@@ -8234,6 +9052,84 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "ServerLightEvent": {
+        "enum": [
+          "train",
+          "mode",
+          "state",
+          "other"
+        ]
+      },
+      "ServerLightEventDto": {
+        "required": [
+          "at",
+          "station",
+          "name",
+          "event",
+          "boardId",
+          "manual",
+          "mode",
+          "trainNeedsLight",
+          "state",
+          "turnOn",
+          "turnOff",
+          "train"
+        ],
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "station": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "event": {
+            "$ref": "#/components/schemas/ServerLightEvent"
+          },
+          "boardId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "manual": {
+            "type": "boolean"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "trainNeedsLight": {
+            "type": "boolean"
+          },
+          "state": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "turnOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "turnOff": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "train": {
+            "type": "string"
           }
         }
       },
@@ -8721,7 +9617,8 @@
           "httpsCertificate",
           "httpsKey",
           "httpsPasswordSet",
-          "checkUpdates"
+          "checkUpdates",
+          "location"
         ],
         "type": "object",
         "properties": {
@@ -8789,6 +9686,9 @@
           },
           "checkUpdates": {
             "type": "boolean"
+          },
+          "location": {
+            "$ref": "#/components/schemas/GeoLocationDto"
           }
         }
       },
@@ -9309,6 +10209,28 @@
           }
         }
       },
+      "StationAudioDto": {
+        "required": [
+          "name",
+          "station",
+          "channel"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "station": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "channel": {
+            "type": "integer",
+            "format": "int32",
+            "default": 1
+          }
+        }
+      },
       "StationBoardDto": {
         "required": [
           "line",
@@ -9317,7 +10239,9 @@
           "name",
           "flaps",
           "flapRecords",
-          "face"
+          "face",
+          "lights",
+          "audio"
         ],
         "type": "object",
         "properties": {
@@ -9359,6 +10283,18 @@
                 "$ref": "#/components/schemas/StationFaceDto"
               }
             ]
+          },
+          "lights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationLightDto"
+            }
+          },
+          "audio": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationAudioDto"
+            }
           }
         }
       },
@@ -9571,6 +10507,47 @@
           },
           "facesForExisting": {
             "type": "boolean"
+          }
+        }
+      },
+      "StationLightDto": {
+        "required": [
+          "name",
+          "station",
+          "beforeArrival",
+          "beforeDeparture",
+          "afterDeparture",
+          "afterArrival",
+          "minOff"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "station": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "beforeArrival": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "beforeDeparture": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "afterDeparture": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "afterArrival": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "minOff": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -9798,6 +10775,31 @@
           }
         }
       },
+      "TwilightMode": {
+        "enum": [
+          "sun",
+          "dark",
+          "light"
+        ],
+        "default": "sun"
+      },
+      "TwilightSensorDto": {
+        "required": [
+          "mode",
+          "offsetMinutes"
+        ],
+        "type": "object",
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/TwilightMode"
+          },
+          "offsetMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          }
+        }
+      },
       "UpdateDatabaseRequest": {
         "required": [
           "provider",
@@ -9870,7 +10872,8 @@
           "httpsCertificate",
           "httpsKey",
           "httpsPassword",
-          "checkUpdates"
+          "checkUpdates",
+          "location"
         ],
         "type": "object",
         "properties": {
@@ -9948,6 +10951,16 @@
           },
           "checkUpdates": {
             "type": "boolean"
+          },
+          "location": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/GeoLocationDto"
+              }
+            ]
           }
         }
       },
@@ -10638,6 +11651,9 @@
     },
     {
       "name": "Archive"
+    },
+    {
+      "name": "AkSignal"
     }
   ]
 }

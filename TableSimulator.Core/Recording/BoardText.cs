@@ -6,7 +6,8 @@ namespace TableSimulator.Core.Recording;
 /// <summary>
 /// Co tabula ukazuje ako riadky textu zhora (na porovnanie zaznamov): kazdy riadok profilu, prazdny riadok = "",
 /// striedanie ako <c>{a|b}</c>; pohyblivy text ELEN ako posledny riadok <c>» text</c>. Pismo, farby a jas sa
-/// neporovnavaju. Zosilnovac ELSVO je jeden riadok <c>ON 1</c>, <c>ON 2</c> alebo <c>OFF</c>.
+/// neporovnavaju. Zosilnovac ELSVO je jeden riadok <c>ON 1</c>, <c>ON 2</c> alebo <c>OFF</c>, rozhlas vzdialeneho INISSu
+/// riadok kazdej fronty.
 /// </summary>
 public static class BoardText
 {
@@ -23,9 +24,41 @@ public static class BoardText
             FlapDisplay flaps => Flaps(flaps, board.Profile, board.ManufacturerKey),
             // zosilnovac ELSVO: zopnuty v pasme alebo vypnuty
             AmplifierDisplay amplifier => [amplifier.Band > 0 ? "ON " + amplifier.Band.ToString(System.Globalization.CultureInfo.InvariantCulture) : "OFF"],
+            AkSignalDisplay akSignal => AkSignal(akSignal),
+            RemoteAudioDisplay remote => Remote(remote),
             _ => []
         };
     }
+
+    /// <summary>Ustredna AK Signal: riadok svetla a riadok kazdeho hrajuceho kanala rozhlasu.</summary>
+    private static List<string> AkSignal(AkSignalDisplay display)
+    {
+        var light = new List<string> { "LIGHT" };
+        if (display.Manual)
+            light.Add("MAN");
+        if (display.AutoMode)
+            light.Add("AUTO");
+        if (display.Dark)
+            light.Add("DARK");
+        light.Add(display.IsLightOn ? "ON" : "OFF");
+
+        var text = new List<string> { string.Join(" ", light) };
+        for (var channel = 0; channel <= 2; channel++)
+        {
+            if (display.Playing(channel) is not { } playing)
+                continue;
+            var name = channel == 0 ? "AUDIO" : "CH" + channel.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            text.Add(playing.Sounds.Count > 0 ? name + " " + string.Join("*", playing.Sounds) : name + " ON");
+        }
+
+        return text;
+    }
+
+    /// <summary>Rozhlas vzdialeneho INISSu: riadok kazdej fronty - vypnuta, volna alebo nahravky hrajuceho hlasenia.</summary>
+    private static List<string> Remote(RemoteAudioDisplay display) =>
+        display.Queues.Select(q => (q.Name.Length > 0 ? q.Name + " " : "")
+                                   + (q.Off ? "OFF" : q.Playing is { } playing ? "PLAY " + string.Join("*", playing.Sounds) : "IDLE"))
+            .ToList();
 
     private static List<string> Elen(ElenDisplay display, int rows)
     {

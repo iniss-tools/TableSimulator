@@ -76,4 +76,7 @@ public sealed record AppSettings
 
     /// <summary>Zistovat novu verziu servera z posledneho vydania na GitHube (len server z vydania).</summary>
     public bool CheckUpdates { get; init; } = true;
+
+    /// <summary>Poloha pre vychod a zapad slnka - snimac tmy ustredni AK Signal.</summary>
+    public Core.Boards.GeoLocation Location { get; init; } = Core.Boards.GeoLocation.Default;
 }

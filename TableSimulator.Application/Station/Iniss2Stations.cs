@@ -7,6 +7,7 @@ using TableSimulator.Core.Boards;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Simulation;
 using ToolsCore.Iniss2;
+using ToolsCore.Iniss2.Devices;
 using ToolsCore.Iniss2.Grafikon;
 using ToolsCore.Iniss2.Tables;
 using ContractAlign = TableSimulator.Contracts.Faces.FaceAlign;
@@ -34,7 +35,13 @@ public static partial class Iniss2Stations
     /// <summary>Druhy tabul so stlpcami predlohy v znakoch; ELEN ich ma v bodoch ako INISS 3.39.</summary>
     private static readonly HashSet<string> CharacterClasses = new(StringComparer.Ordinal) { "LCD", "LCD1", "LCD2", "ERP", "ERP2", "FERS", "ERP_ELEN" };
 
-    private static readonly Dictionary<string, int> ProtocolClasses = new(StringComparer.Ordinal) { ["ELEN"] = 4, ["ITP"] = 130 };
+    /// <summary>Triedy liniek ustredni AK Signal v simulatore (INISS 3.39 ich nepozna).</summary>
+    private const int AkSignalClass = 131, AkSignalUhClass = 132;
+
+    private static readonly Dictionary<string, int> ProtocolClasses = new(StringComparer.Ordinal)
+    {
+        ["ELEN"] = 4, ["ITP"] = 130, [Iniss2Devices.AkSignal] = AkSignalClass, [Iniss2Devices.AkSignalUh] = AkSignalUhClass
+    };
 
     /// <summary>Nacita linky a tabule servera.</summary>
     /// <param name="program">program servera</param>
@@ -46,19 +53,22 @@ public static partial class Iniss2Stations
         IReadOnlyList<CommLine> commLines;
         List<StationTable> tables;
         IReadOnlyList<string> grafikons;
+        Iniss2Devices.Result devices;
         try
         {
             var groups = DirListXml.Read(installation.DataDir);
             commLines = CommLinesXml.Read(installation.DataDir);
             tables = ReadTables(installation.DataDir, groups);
             grafikons = groups.Select(group => group.Name).ToList();
+            var stations = groups.SelectMany(group => group.Items).Select(item => item.Station).ToHashSet();
+            devices = Iniss2Devices.Resolve(commLines, LightsXml.Read(installation.DataDir), AudioXml.Read(installation.DataDir), stations);
         }
         catch (Exception e) when (e is IOException or FormatException or UnauthorizedAccessException or XmlException)
         {
             return Result.Failure<InissStationDto>(InissStationErrors.Unreadable(e.Message));
         }
 
-        var lines = commLines.Select((line, index) => ToLine(line, index + 1, tables.Where(t => t.Table.Line == line.Key).ToList())).ToList();
+        var lines = commLines.Select((line, index) => ToLine(line, index + 1, tables.Where(t => t.Table.Line == line.Key).ToList(), devices.For(line.Key))).ToList();
         var known = commLines.Select(line => line.Key).ToHashSet(StringComparer.Ordinal);
         var unserved = tables.Where(t => t.Table.Line.Length > 0 && !known.Contains(t.Table.Line))
             .Select(t => ToTable(t, [], new InissProblemDto(InissProblemSeverity.Error, InissProblemCode.UnknownLine, [t.Table.Line])))
@@ -72,7 +82,8 @@ public static partial class Iniss2Stations
         return Result.Success(new InissStationDto(program, Path.GetFileNameWithoutExtension(program), false, grafikons, lines, unserved, installation.LogDir,
             Directory.Exists(installation.LogDir), xml)
         {
-            Iniss2 = true
+            Iniss2 = true,
+            DeviceProblems = devices.Problems
         });
     }
 
@@ -173,7 +184,7 @@ public static partial class Iniss2Stations
         _ => ContractAlign.Left
     };
 
-    private static InissLineDto ToLine(CommLine line, int number, List<StationTable> tables)
+    private static InissLineDto ToLine(CommLine line, int number, List<StationTable> tables, IReadOnlyList<InissControllerDto> controllers)
     {
         var tableClass = ClassOf(line, tables);
         var manufacturers = Simulator.ManufacturersFor(tableClass);
@@ -182,7 +193,11 @@ public static partial class Iniss2Stations
         var devices = tables.Where(t => t.Class.Length > 0).DistinctBy(t => t.Table.Address).ToList();
         var problems = new List<InissProblemDto>();
 
-        if (devices.Count == 0)
+        // linka ustredne AK Signal nema tabule, ale svetla a audio linky
+        var controllerLine = tableClass is AkSignalClass or AkSignalUhClass;
+        if (controllerLine && controllers.Count == 0)
+            problems.Add(new InissProblemDto(InissProblemSeverity.Info, InissProblemCode.NoDevices, []));
+        else if (!controllerLine && devices.Count == 0)
             problems.Add(new InissProblemDto(InissProblemSeverity.Info, InissProblemCode.NoTables, []));
 
         foreach (var device in devices.Where(t => manufacturers.Count > 0 && !manufacturers.Contains(t.Class, StringComparer.OrdinalIgnoreCase)))
@@ -191,6 +206,7 @@ public static partial class Iniss2Stations
         return new InissLineDto(line.Key, number, tableClass, line.Address, SimulatorPort(line, number), !line.Omitted, manufacturers.Count > 0,
             devices.Select(device => ToTable(device, manufacturers, null)).ToList(), problems)
         {
+            Controllers = controllerLine ? controllers : [],
             Transport = line.Type == CommLineType.UdpClient ? StationLineTransport.Udp : StationLineTransport.Tcp,
             CanRedirect = line.CanRedirect,
             OriginalPort = line.OriginalAddress

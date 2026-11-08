@@ -1,5 +1,5 @@
 // Scenare porucha: dlzka cyklu (ako FaultScenario.LengthMs v jadre), "co sa stane" v kroku, novy krok a poloha behu.
-import type { BoardFaultDto, FaultKind, FaultScenarioRequest, ScenarioRunDto, ScenarioStepDto } from "@/api";
+import type { AkSignalConditionsDto, BoardFaultDto, FaultKind, FaultScenarioRequest, ScenarioDeviceDto, ScenarioRunDto, ScenarioStepDto } from "@/api";
 
 /** Najkratsi cyklus [ms] - zodpoveda FaultScenario.MinCycleMs. */
 export const MIN_CYCLE_MS = 1000;
@@ -7,10 +7,35 @@ export const MIN_CYCLE_MS = 1000;
 /** Predvolene trvanie noveho kroku [ms]. */
 const DEFAULT_DURATION_MS = 10_000;
 
-/** Co sa v kroku stane: porucha tabule alebo vypadok napajania ci linky - jedna volba v dialogu. */
-export type StepKind = Exclude<FaultKind, "none"> | "powerLoss" | "lineOutage";
+/** Co sa v kroku stane: porucha tabule, vypadok napajania ci linky alebo stav ustredne AK Signal - jedna volba v dialogu. */
+export type StepKind = Exclude<FaultKind, "none"> | "powerLoss" | "lineOutage" | "device";
 
-export const STEP_KINDS: StepKind[] = ["noReply", "nak", "delay", "garbage", "status", "powerLoss", "lineOutage"];
+export const STEP_KINDS: StepKind[] = ["noReply", "nak", "delay", "garbage", "status", "powerLoss", "lineOutage", "device"];
+
+/** Stavy ustredne, ktore krok scenara moze pridat - v poradi ako na stranke svetiel. */
+export const CONDITION_KEYS = [
+  "lightsFault",
+  "highPriority",
+  "outputPowerError",
+  "ampSupplyMissing",
+  "ampCommError",
+  "bankNotSynced",
+] as const satisfies readonly (keyof AkSignalConditionsDto)[];
+
+export const NO_CONDITIONS: AkSignalConditionsDto = {
+  lightsFault: false,
+  highPriority: false,
+  outputPowerError: false,
+  ampSupplyMissing: false,
+  ampCommError: false,
+  bankNotSynced: false,
+};
+
+/** Predvoleny krok ustredne: porucha svetiel, snimac podla nastavenia. */
+const DEFAULT_DEVICE: ScenarioDeviceDto = { conditions: { ...NO_CONDITIONS, lightsFault: true }, sensor: null };
+
+/** Krok ustredne nieco nastavuje - aspon jeden stav alebo rezim snimaca (inak ho server odmietne). */
+export const deviceSetsSomething = (device: ScenarioDeviceDto) => device.sensor !== null || CONDITION_KEYS.some((k) => device.conditions[k]);
 
 /** Dlzka jedneho cyklu [ms]: zadana, inak koniec posledneho kroku, najmenej 1 s. */
 export function scenarioLength(scenario: Pick<FaultScenarioRequest, "cycleMs" | "steps">): number {
@@ -26,13 +51,14 @@ export function stepKind(step: ScenarioStepDto): StepKind {
 
 /** Krok s inou volbou "co sa stane" - porucha si necha parametre, ak ich ma. */
 export function withKind(step: ScenarioStepDto, kind: StepKind): ScenarioStepDto {
-  if (kind === "powerLoss" || kind === "lineOutage") return { ...step, action: kind, fault: null };
+  if (kind === "powerLoss" || kind === "lineOutage") return { ...step, action: kind, fault: null, device: null };
+  if (kind === "device") return { ...step, action: "device", fault: null, device: step.device ?? DEFAULT_DEVICE };
   const fault: BoardFaultDto = {
     kind,
     delayMs: kind === "delay" ? step.fault?.delayMs || 500 : 0,
     status: kind === "status" ? step.fault?.status || 0x01 : 0,
   };
-  return { ...step, action: "fault", fault };
+  return { ...step, action: "fault", fault, device: null };
 }
 
 /** Novy krok: za koncom predchadzajuceho, na tej istej linke (inak prvej), neodpoveda 10 s. */
@@ -44,6 +70,7 @@ export function newStep(previous: ScenarioStepDto | undefined, line: number): Sc
     address: previous?.address ?? null,
     action: "fault",
     fault: { kind: "noReply", delayMs: 0, status: 0 },
+    device: null,
   };
 }
 

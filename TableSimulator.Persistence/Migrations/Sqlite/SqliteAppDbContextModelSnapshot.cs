@@ -163,6 +163,88 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                     b.ToTable("AuditEntries", (string)null);
                 });
 
+            modelBuilder.Entity("TableSimulator.Application.Devices.AnnouncementRecord", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Address")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Channel")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Circuit")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("EndMs")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Line")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Queue")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Sounds")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("StartMs")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(400)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("Value")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EndMs");
+
+                    b.HasIndex("StartMs");
+
+                    b.ToTable("DeviceAnnouncements", (string)null);
+                });
+
+            modelBuilder.Entity("TableSimulator.Application.Devices.LightStateRecord", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Address")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Flags")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Line")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TimeMs")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TimeMs");
+
+                    b.HasIndex("Line", "Address", "TimeMs");
+
+                    b.ToTable("DeviceLightStates", (string)null);
+                });
+
             modelBuilder.Entity("TableSimulator.Application.Faces.FaceRecord", b =>
                 {
                     b.Property<string>("Id")
@@ -831,6 +913,12 @@ namespace TableSimulator.Persistence.Migrations.Sqlite
                         .HasMaxLength(500)
                         .HasColumnType("TEXT")
                         .HasDefaultValue("");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("REAL");
 
                     b.Property<string>("MonitorFolder")
                         .IsRequired()

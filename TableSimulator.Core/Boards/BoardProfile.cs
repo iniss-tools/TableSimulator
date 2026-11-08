@@ -77,6 +77,9 @@ public sealed record BoardProfile
     /// <summary>Listova tabula: moduly a zoznamy listov; null = kazda pozicia je samostatny modul a ukaze kod.</summary>
     public FlapProfile? Flaps { get; init; }
 
+    /// <summary>Ustredna AK Signal: svetla, rozhlas, snimac tmy a stavy; null = <see cref="AkSignalProfile.Default" />.</summary>
+    public AkSignalProfile? AkSignal { get; init; }
+
     /// <summary>Profil pre novu tabulu daneho vyrobcu.</summary>
     public static BoardProfile DefaultFor(string manufacturerKey) => manufacturerKey.ToUpperInvariant() switch
     {

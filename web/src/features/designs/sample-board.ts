@@ -47,6 +47,8 @@ export const SAMPLE_BOARD: BoardDto = {
     flapRows: null,
     rotatingUntil: null,
     amplifier: null,
+    akSignal: null,
+    remoteAudio: null,
   },
   version: 0,
   secondAddress: null,

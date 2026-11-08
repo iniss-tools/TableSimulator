@@ -9,4 +9,8 @@ namespace TableSimulator.Contracts.Scenarios;
 /// <param name="Address">adresa tabule; null = vsetky tabule linky (pri vypadku linky sa neberie do uvahy)</param>
 /// <param name="Action">co krok robi</param>
 /// <param name="Fault">porucha pri <see cref="ScenarioAction.Fault" />; inak null</param>
-public sealed record ScenarioStepDto(int AtMs, int DurationMs, int Line, int? Address, ScenarioAction Action, BoardFaultDto? Fault);
+public sealed record ScenarioStepDto(int AtMs, int DurationMs, int Line, int? Address, ScenarioAction Action, BoardFaultDto? Fault)
+{
+    /// <summary>Stavy a snimac ustredne pri <see cref="ScenarioAction.Device" />; inak null.</summary>
+    public ScenarioDeviceDto? Device { get; init; }
+}

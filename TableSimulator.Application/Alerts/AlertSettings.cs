@@ -2,7 +2,7 @@ namespace TableSimulator.Application.Alerts;
 
 /// <summary>
 /// Oznamenia o vypadkoch liniek mimo prehliadaca - webhook a e-mail (hodi sa pri behu ako sluzba, ked nikto nema
-/// otvoreny web). Vypadok = INISS sa odpojil (TCP, rura) alebo linka nebezi.
+/// otvoreny web). Vypadok = INISS sa odpojil (TCP, rura), linka nebezi alebo sa server INISS2 nepyta ustredne AK Signal.
 /// </summary>
 public sealed record AlertSettings
 {

@@ -9,6 +9,7 @@ public static class LineErrors
     public const string Number = "line.number";
     public const string TableClass = "line.tableClass";
     public const string Endpoint = "line.endpoint";
+    public const string DtrSerial = "line.dtrSerial";
     public const string Mirror = "line.mirror";
 
     public static Error NotFound(int number) =>

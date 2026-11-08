@@ -6,11 +6,12 @@ import { t } from "@/i18n";
 import { runPosition } from "./scenarios";
 import { formatSeconds, stepTarget, stepWhat } from "./step-text";
 
-/** Farba pruhu podla druhu kroku: porucha tabule, vypadok napajania, vypadok linky. */
+/** Farba pruhu podla druhu kroku: porucha tabule, vypadok napajania, vypadok linky, stav ustredne. */
 const COLORS = {
   fault: { idle: "bg-amber-500/45", active: "bg-amber-500" },
   powerLoss: { idle: "bg-red-500/45", active: "bg-red-500" },
   lineOutage: { idle: "bg-violet-500/45", active: "bg-violet-500" },
+  device: { idle: "bg-sky-500/45", active: "bg-sky-500" },
 } as const;
 
 const percent = (value: number, length: number) => `${Math.min(100, Math.max(0, (value / length) * 100))}%`;

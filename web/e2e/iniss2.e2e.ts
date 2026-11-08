@@ -36,11 +36,13 @@ test("server INISS2: nacitanie liniek a ich presmerovanie", async ({ page }) => 
   try {
     await openPage(page, "Linky");
 
-    // nahlad: linka UDP, seriova linka ide cez TCP a linku zvuku simulator nepozna
+    // nahlad: linka UDP, seriova linka ide cez TCP a linka ustredne AK Signal bez svetiel (len upozornenie)
     let dialog = await openDialog(page);
     await expect(dialog.getByText("v simulátore UDP 47001")).toBeVisible();
     await expect(dialog.getByText("v simulátore TCP 47002")).toBeVisible();
-    await expect(dialog.getByRole("row", { name: /Lipovec_Rozhlas/ })).toContainText("trieda, ktorú simulátor nepozná");
+    const controller = dialog.getByRole("row", { name: /Lipovec_Rozhlas/ });
+    await expect(controller).toContainText("131 – AK Signal");
+    await expect(controller).toContainText("Žiadne svetlo ani audio linka nepoužíva túto linku.");
 
     // nacitanie: linky, tabule a celo z udajov stanice
     await dialog.getByRole("button", { name: "Načítať do simulátora" }).click();
@@ -64,6 +66,8 @@ test("server INISS2: nacitanie liniek a ich presmerovanie", async ({ page }) => 
     const redirected = readFileSync(commLines, "latin1");
     expect(redirected).toContain('line="127.0.0.1:47001"');
     expect(redirected).toContain('typ="TCP_CLIENT" protocol="LCD" line="127.0.0.1:47002"');
+    // linka ustredne AK Signal sa presmeruje tiez, povodna adresa ostane v komentari
+    expect(redirected).toContain('protocol="AKSIGNAL" line="127.0.0.1:47003"');
     expect(redirected).toContain('line="10.0.0.12:2000"');
 
     // zrusenie vrati subor presne do povodnej podoby
@@ -76,6 +80,7 @@ test("server INISS2: nacitanie liniek a ich presmerovanie", async ({ page }) => 
     await setProgram(page, settings, settings.inissProgram);
     await deleteLine(page, 1);
     await deleteLine(page, 2);
+    await deleteLine(page, 3);
     rmSync(folder, { recursive: true, force: true });
   }
 

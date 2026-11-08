@@ -10,7 +10,9 @@ import {
   setFaultScenario,
   useSimulatorState,
   type FaultScenarioRequest,
+  type ScenarioDeviceDto,
   type ScenarioStepDto,
+  type TwilightMode,
 } from "@/api";
 import { CheckField, FormField } from "@/components/common/form-field";
 import { FormDialog } from "@/components/common/form-dialog";
@@ -20,11 +22,45 @@ import { FieldGroup, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { t } from "@/i18n";
 import { ScenarioTimeline } from "./ScenarioTimeline";
-import { fromSeconds, newStep, scenarioLength, STEP_KINDS, stepKind, toSeconds, withKind, type StepKind } from "./scenarios";
+import { CONDITION_KEYS, fromSeconds, newStep, scenarioLength, STEP_KINDS, stepKind, toSeconds, withKind, type StepKind } from "./scenarios";
 import { formatSeconds, kindLabel } from "./step-text";
 
 /** Vsetky tabule linky v poli "na com". */
 const ALL = "all";
+
+/** Snimac podla nastavenia ustredne v kroku scenara. */
+const PROFILE = "profile";
+
+/** Co krok nastavuje ustredni AK Signal: stavy pridane k nastaveniu a rezim snimaca. */
+function DeviceEditor({ device, onChange }: { device: ScenarioDeviceDto; onChange: (device: ScenarioDeviceDto) => void }) {
+  const sensorOptions = [
+    { value: PROFILE, label: t("scenario.device.sensorProfile") },
+    ...(["dark", "light", "sun"] as const).map((mode) => ({ value: mode, label: t(`aksignal.sensor.${mode}`) })),
+  ];
+  return (
+    <div className="col-span-2 grid gap-x-4 gap-y-2 rounded-md bg-muted/50 p-2 sm:col-span-7 sm:grid-cols-[minmax(0,1fr)_14rem]">
+      <div className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
+        {CONDITION_KEYS.map((key) => (
+          <CheckField
+            key={key}
+            label={t(`aksignal.condition.${key}`)}
+            checked={device.conditions[key]}
+            onCheckedChange={(on) => onChange({ ...device, conditions: { ...device.conditions, [key]: on } })}
+          />
+        ))}
+      </div>
+      <FormField label={t("aksignal.sensor")}>
+        <OptionSelect<string>
+          value={device.sensor ?? PROFILE}
+          ariaLabel={t("aksignal.sensor")}
+          options={sensorOptions}
+          onValueChange={(value) => onChange({ ...device, sensor: value === PROFILE ? null : (value as TwilightMode) })}
+          className="w-full"
+        />
+      </FormField>
+    </div>
+  );
+}
 
 interface Props {
   id: number | null;
@@ -82,10 +118,11 @@ export function ScenarioDialog({ id, initial, onClose }: Props) {
   });
 
   const lineOptions = live.lines.map((l) => ({ value: l.number, label: l.name ? `${l.number} – ${l.name}` : String(l.number) }));
+  // krok ustredne sa tyka len ustredni AK Signal
   const targetOptions = (step: ScenarioStepDto) => [
-    { value: ALL, label: t("scenario.target.all") },
+    { value: ALL, label: t(step.action === "device" ? "scenario.target.allControllersOfLine" : "scenario.target.all") },
     ...live.boards
-      .filter((b) => b.line === step.line)
+      .filter((b) => b.line === step.line && (step.action !== "device" || b.display.family === "aksignal"))
       .map((b) => ({ value: String(b.address), label: b.name ? `${b.address} – ${b.name}` : String(b.address) })),
   ];
   const length = scenarioLength(scenario);
@@ -194,6 +231,7 @@ export function ScenarioDialog({ id, initial, onClose }: Props) {
                 <Button type="button" variant="ghost" size="icon-sm" title={t("scenario.step.remove")} onClick={() => removeStep(i)}>
                   <Trash2 />
                 </Button>
+                {kind === "device" && step.device && <DeviceEditor device={step.device} onChange={(device) => setStep(i, { device })} />}
               </div>
             );
           })}

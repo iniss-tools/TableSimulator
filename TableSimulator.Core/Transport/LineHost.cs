@@ -264,6 +264,17 @@ public sealed class LineHost : IAsyncDisposable
                 // citanie zo serioveho portu nereaguje na zrusenie - zatvorenie portu ho prerusi
                 using var cancel = token.Register(port.Dispose);
                 SetStatus(LineStatus.Connected, Endpoint.Host);
+                // spinanie zosilnovaca: DTR INISSu je na tomto konci DSR alebo DCD
+                if (_simulator.WatchesModemSignal(Line))
+                {
+                    var watched = port;
+                    watched.PinChanged += (_, e) =>
+                    {
+                        if (e.EventType is SerialPinChange.DsrChanged or SerialPinChange.CDChanged)
+                            ModemSignal(watched);
+                    };
+                    ModemSignal(watched);
+                }
                 var stream = port.BaseStream;
                 while (!token.IsCancellationRequested)
                 {
@@ -290,7 +301,21 @@ public sealed class LineHost : IAsyncDisposable
             finally
             {
                 port?.Dispose();
+                // zavrety port = INISS zosilnovac nedrzi
+                _simulator.SetModemSignal(Line, false);
             }
+        }
+    }
+
+    private void ModemSignal(SerialPort port)
+    {
+        try
+        {
+            _simulator.SetModemSignal(Line, port.DsrHolding || port.CDHolding);
+        }
+        catch (Exception e) when (e is InvalidOperationException or IOException)
+        {
+            // port sa prave zatvara
         }
     }
 

@@ -15,4 +15,10 @@ public sealed record StationBoardDto(int Line, int Address, string Manufacturer,
 
     /// <summary>Co o cele tabule vedia data stanice; null = nic (tabula bez cela).</summary>
     public StationFaceDto? Face { get; init; }
+
+    /// <summary>Ustredna AK Signal: svetla, ktore riadi; pri inych tabuliach prazdne.</summary>
+    public IReadOnlyList<StationLightDto> Lights { get; init; } = [];
+
+    /// <summary>Ustredna AK Signal: audio linky, ktore cez nu hlasia; pri inych tabuliach prazdne.</summary>
+    public IReadOnlyList<StationAudioDto> Audio { get; init; } = [];
 }

@@ -11,7 +11,12 @@ using TableSimulator.Contracts.Keys;
 using TableSimulator.Contracts.Lines;
 using TableSimulator.Contracts.Scenarios;
 using TableSimulator.Contracts.Virtual;
+using AkSignalProfile = TableSimulator.Core.Boards.AkSignalProfile;
+using BoardProfile = TableSimulator.Core.Boards.BoardProfile;
+using LightCircuit = TableSimulator.Core.Boards.LightCircuit;
+using TableSimulator.Core.Protocols.AkSignal;
 using TableSimulator.Core.Protocols.Apel;
+using TableSimulator.Core.Protocols.Remote;
 using TableSimulator.Core.Simulation;
 using TableSimulator.Tests.Server;
 using static TableSimulator.Tests.Archive.ArchiveReaderTests;
@@ -103,6 +108,19 @@ public sealed class McpToolsServerTests
         simulator.Receive(7, ApelFrame.Build(0x81, new ApelRecord(0, "Praha"u8.ToArray())));
         // hodiny tabule (DateTime bez pasma) - vo vystupe nesmie mat format date-time
         simulator.Receive(7, Convert.FromHexString("100281810705301401101020" + "26B01003"));
+        // ustredna AK Signal so svetlom nastupista, server sa jej raz spytal
+        var lights = new SetLineRequest { TableClass = 131, Manufacturer = "AKSIGNAL", Endpoint = @"\\.\PIPE\TableSimulatorTest-" + Guid.NewGuid().ToString("N") };
+        Assert.AreEqual(HttpStatusCode.NoContent, (await admin.PutAsJsonAsync("/api/lines/20", lights, TestContext.CancellationToken)).StatusCode);
+        simulator.SetBoard(new BoardConfig(20, 5, "AKSIGNAL")
+        {
+            Name = "Nastupiste", Profile = new BoardProfile { AkSignal = new AkSignalProfile { Lights = [new LightCircuit("Nástupište 1", 5400010)] } }
+        });
+        simulator.Receive(20, AkSignalFrame.Build(5, AkSignalFrame.GetLight));
+        // vzdialeny INISS s hlasenim na jedinej fronte (desat minut ticha po nahravke, aby test stihol) - rozhlas 21-0
+        var remote = new SetLineRequest { TableClass = 128, Endpoint = @"\\.\PIPE\TableSimulatorTest-" + Guid.NewGuid().ToString("N") };
+        Assert.AreEqual(HttpStatusCode.NoContent, (await admin.PutAsJsonAsync("/api/lines/21", remote, TestContext.CancellationToken)).StatusCode);
+        simulator.Receive(21, RemoteMessage.Build(RemoteMessage.Request, 1,
+            [RemoteChunk.FromInt32("RCMD", 0), new RemoteChunk("RWAV", "SK/R1/1,0,0,SK/R1/2,0,600000"u8.ToArray()), new RemoteChunk("RTIT", "Os 3412"u8.ToArray())]));
         foreach (var (name, content) in new[]
                  {
                      ("pred", RecordingComparisonApiTests.Recording((0, Row(3, 1, "Os 1234 Žilina")), (10, Row(3, 1, "Os 1236 Košice")), (12, Row(5, 1, "Pokladňa")))),
@@ -256,6 +274,21 @@ public sealed class McpToolsServerTests
         CollectionAssert.Contains(fonts.GetProperty("charFonts").EnumerateArray().Select(f => f.GetString()).ToList(), "7x14");
         Assert.AreEqual("Vypadok", (await mcp.Call("list_scenarios")).GetProperty("scenarios")[0].GetProperty("name").GetString());
 
+        var controller = (await mcp.Call("get_aksignal")).GetProperty("controllers").EnumerateArray().Single();
+        Assert.AreEqual(("20-5", "AKSIGNAL", "off"), (controller.GetProperty("id").GetString(), controller.GetProperty("protocol").GetString(),
+            controller.GetProperty("lightMode").GetString()));
+        Assert.AreEqual("Nástupište 1", controller.GetProperty("lights")[0].GetString());
+        Assert.AreEqual(JsonValueKind.String, controller.GetProperty("lastQueryAt").ValueKind);
+        StringAssert.Contains(await mcp.Error("get_aksignal", new() { ["id"] = "7-129" }), "board.notAkSignal");
+        var history = await mcp.Call("get_aksignal_history", new() { ["id"] = "20-5", ["minutes"] = 10 });
+        Assert.IsFalse(history.GetProperty("truncated").GetBoolean());
+        StringAssert.Contains(await mcp.Error("get_aksignal_history", new() { ["limit"] = 0 }), "history.limit");
+
+        var remoteAudio = (await mcp.Call("get_remote_audio")).GetProperty("devices").EnumerateArray().Single();
+        Assert.AreEqual("21-0", remoteAudio.GetProperty("id").GetString());
+        Assert.AreEqual("Os 3412", remoteAudio.GetProperty("queues")[0].GetProperty("playing").GetProperty("title").GetString());
+        StringAssert.Contains(await mcp.Error("get_remote_audio", new() { ["id"] = "7-129" }), "board.notRemoteAudio");
+
         CollectionAssert.AreEquivalent(mcp.Tools.ToArray(), mcp.Called.ToArray(), "kazdy nastroj na citanie musi byt v tomto teste");
         // pozorovatel nastroje so zapisom nevidi
         Assert.IsEmpty(mcp.WriteTools);
@@ -362,6 +395,20 @@ public sealed class McpToolsServerTests
         await mcp.Call("delete_virtual_board", new() { ["id"] = 6 });
         await mcp.Call("delete_virtual_layout", new() { ["id"] = "moje-odchody" });
 
+        // ustredna AK Signal: menia sa len zadane hodnoty, svetlo zapina len server
+        var dark = await mcp.Call("set_aksignal", new() { ["id"] = "20-5", ["sensor"] = "dark", ["lightsFault"] = true });
+        Assert.IsTrue(dark.GetProperty("dark").GetBoolean());
+        var priority = await mcp.Call("set_aksignal", new() { ["id"] = "20-5", ["highPriority"] = true });
+        Assert.IsTrue(priority.GetProperty("conditions").GetProperty("lightsFault").GetBoolean());
+        Assert.IsTrue(priority.GetProperty("conditions").GetProperty("highPriority").GetBoolean());
+        Assert.AreEqual("dark", priority.GetProperty("sensor").GetString());
+        StringAssert.Contains(await mcp.Error("set_aksignal", new() { ["id"] = "7-129", ["lightsFault"] = true }), "board.notAkSignal");
+
+        // rozhlas vzdialeneho INISSu: prerusenie hlasenia, druhy raz uz nic nehra
+        var broken = await mcp.Call("break_announcement", new() { ["id"] = "21-0", ["queue"] = "" });
+        Assert.AreEqual("cancelled", broken.GetProperty("announcements")[0].GetProperty("result").GetString());
+        StringAssert.Contains(await mcp.Error("break_announcement", new() { ["id"] = "21-0" }), "board.nothingPlaying");
+
         // stanica z INISSu bez programu INISSu v nastaveni
         StringAssert.Contains(await mcp.Error("get_iniss_station", new()), "iniss.notConfigured");
         StringAssert.Contains(await mcp.Error("import_iniss_station", new()), "iniss.notConfigured");
@@ -376,7 +423,7 @@ public sealed class McpToolsServerTests
         var actions = audit!.Entries.Where(e => e.User == "key:Agent operator").Select(e => e.Action).ToHashSet();
         CollectionAssert.IsSubsetOf(new[] { "SetLine", "SetBoard", "SendFrame", "SetBoardFault", "ClearBoard", "CreateFaultScenario", "SetFaultScenario",
             "StartFaultScenario", "StopFaultScenario", "PlayRecording", "SetDesign", "DeleteDesign", "SetFace", "DeleteFace", "SetVirtualBoard", "SetVirtualLayout", "DeleteVirtualBoard", "DeleteVirtualLayout",
-            "DeleteBoard", "DeleteLine" },
+            "DeleteBoard", "DeleteLine", "SetAkSignal", "BreakAnnouncement" },
             actions.ToArray());
         CollectionAssert.IsSubsetOf(mcp.WriteTools.ToArray(), mcp.Called.ToArray(), "kazdy nastroj so zapisom musi byt v tomto teste");
         CollectionAssert.Contains(mcp.Called.ToArray(), "get_iniss_station");

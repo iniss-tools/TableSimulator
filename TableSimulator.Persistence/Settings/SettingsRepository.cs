@@ -36,6 +36,7 @@ public sealed class SettingsRepository(AppDbContext db)
             HttpsKey = record.HttpsKey,
             HttpsPassword = record.HttpsPassword,
             CheckUpdates = record.CheckUpdates,
+            Location = new Core.Boards.GeoLocation(record.Latitude, record.Longitude),
             Alerts = record.Alerts.Length == 0 ? new AlertSettings() : JsonSerializer.Deserialize<AlertSettings>(record.Alerts, Json) ?? new AlertSettings()
         };
     }
@@ -69,6 +70,8 @@ public sealed class SettingsRepository(AppDbContext db)
         record.HttpsKey = settings.HttpsKey;
         record.HttpsPassword = settings.HttpsPassword;
         record.CheckUpdates = settings.CheckUpdates;
+        record.Latitude = settings.Location.Latitude;
+        record.Longitude = settings.Location.Longitude;
         record.Alerts = JsonSerializer.Serialize(settings.Alerts, Json);
         db.SaveChanges();
         db.ChangeTracker.Clear();

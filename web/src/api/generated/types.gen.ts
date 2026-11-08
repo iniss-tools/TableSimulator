@@ -22,6 +22,56 @@ export type AccessKeyDto = {
 
 export type AccessKeyKind = 'device' | 'api';
 
+export type AkSignalConditionsDto = {
+    lightsFault: boolean;
+    highPriority: boolean;
+    outputPowerError: boolean;
+    ampSupplyMissing: boolean;
+    ampCommError: boolean;
+    bankNotSynced: boolean;
+};
+
+export type AkSignalDto = {
+    autoMode: boolean;
+    manual: boolean;
+    dark: boolean;
+    lightOn: boolean;
+    lightState: string;
+    audioState: string;
+    announcements: Array<AnnouncementDto>;
+    darkSince: null | string;
+    darkChangesAt: null | string;
+    lightChangedAt: null | string;
+    lightQueryAt: null | string;
+    audioQueryAt: null | string;
+    serverSilent: boolean;
+    banks: {
+        [key: string]: string;
+    };
+    syncedAt: null | string;
+    syncUntil: null | string;
+    conditions: AkSignalConditionsDto;
+    scenario: null | ScenarioDeviceDto;
+};
+
+export type AkSignalProfileDto = {
+    lights: Array<StationLightDto>;
+    audio: Array<StationAudioDto>;
+    sensor: TwilightSensorDto;
+    conditions: AkSignalConditionsDto;
+    soundSeconds: number;
+    syncSeconds: number;
+    silenceSeconds: number;
+};
+
+export type AkSignalSettingsRequest = {
+    sensor: TwilightSensorDto;
+    conditions: AkSignalConditionsDto;
+    soundSeconds: null | number;
+    syncSeconds: null | number;
+    silenceSeconds: null | number;
+};
+
 export type AlertChannelResultDto = {
     configured: boolean;
     error: null | string;
@@ -69,6 +119,35 @@ export type AmplifierDto = {
     switches: number;
     lastCommand: null | number;
 };
+
+export type AnnouncementDto = {
+    id: number;
+    channel: number;
+    sounds: Array<string>;
+    startedAt: string;
+    result: AnnouncementResult;
+    title: null | string;
+    durationMs: null | number;
+    value: null | number;
+    endedAt: null | string;
+    queue: null | string;
+    circuit: null | string;
+};
+
+export type AnnouncementHistoryDto = {
+    boardId: string;
+    channel: number;
+    sounds: Array<string>;
+    startedAt: string;
+    endedAt: string;
+    result: AnnouncementResult;
+    value: null | number;
+    title: null | string;
+    queue: null | string;
+    circuit: null | string;
+};
+
+export type AnnouncementResult = 'playing' | 'completed' | 'stopped' | 'cancelled';
 
 export type ApiProblem = {
     type?: null | string;
@@ -215,6 +294,7 @@ export type BoardProfileDto = {
     autoSize: boolean;
     rotationMs: number;
     flaps: null | FlapProfileDto;
+    akSignal: null | AkSignalProfileDto;
 };
 
 export type BoardStateDto = {
@@ -356,6 +436,14 @@ export type DesignTextStyleDto = {
     bold: null | boolean;
 };
 
+export type DeviceHistoryDto = {
+    from: string;
+    to: string;
+    lights: Array<LightStateDto>;
+    announcements: Array<AnnouncementHistoryDto>;
+    server: Array<ServerLightEventDto>;
+};
+
 export type DisplayDto = {
     family: string;
     brightness: number;
@@ -372,6 +460,8 @@ export type DisplayDto = {
     flapRows: null | Array<FlapRowDto>;
     rotatingUntil: null | string;
     amplifier: null | AmplifierDto;
+    akSignal: null | AkSignalDto;
+    remoteAudio: null | RemoteAudioDto;
 };
 
 export type ElementDto = {
@@ -508,6 +598,11 @@ export type FrameDto = {
 
 export type FrameStatus = 'ok' | 'badChecksum' | 'noBoard' | 'fault' | 'noise' | 'eotInData';
 
+export type GeoLocationDto = {
+    latitude: number;
+    longitude: number;
+};
+
 export type HeaderClockDto = {
     x: number;
     y: number;
@@ -571,6 +666,14 @@ export type InissAmplifierDto = {
     shown: boolean;
 };
 
+export type InissControllerDto = {
+    address: number;
+    manufacturer: string;
+    name: string;
+    lights: Array<StationLightDto>;
+    audio: Array<StationAudioDto>;
+};
+
 export type InissLineDto = {
     section: string;
     number: null | number;
@@ -582,12 +685,13 @@ export type InissLineDto = {
     tables: Array<InissTableDto>;
     problems: Array<InissProblemDto>;
     amplifiers: Array<InissAmplifierDto>;
+    controllers: Array<InissControllerDto>;
     transport: StationLineTransport;
     canRedirect: boolean;
     originalPort: null | string;
 };
 
-export type InissProblemCode = 'lineOutOfRange' | 'lineDuplicate' | 'wrongFamily' | 'noTables' | 'noAutomaticLine' | 'noDriver' | 'unknownLine';
+export type InissProblemCode = 'lineOutOfRange' | 'lineDuplicate' | 'wrongFamily' | 'noTables' | 'noAutomaticLine' | 'noDriver' | 'unknownLine' | 'noDevices' | 'deviceNoLine' | 'deviceLineAmbiguous' | 'deviceUnknownLine' | 'deviceWrongProtocol' | 'deviceAddress' | 'audioChannel' | 'deviceType' | 'masterLight';
 
 export type InissProblemDto = {
     severity: InissProblemSeverity;
@@ -612,6 +716,7 @@ export type InissStationDto = {
     logFolderExists: boolean;
     xmlTables: Array<StationXmlTableDto>;
     unservedAmplifiers: Array<InissAmplifierDto>;
+    deviceProblems: Array<InissProblemDto>;
     iniss2: boolean;
 };
 
@@ -644,6 +749,18 @@ export type InissViewImportedDto = {
 export type InissViewImportRequest = {
     content: string;
     replace: boolean;
+};
+
+export type LightStateDto = {
+    boardId: string;
+    at: string;
+    auto: boolean;
+    manual: boolean;
+    dark: boolean;
+    on: boolean;
+    fault: boolean;
+    silent: boolean;
+    poweredOff: boolean;
 };
 
 export type LineDto = {
@@ -848,6 +965,19 @@ export type RecordingSideDto = {
     note: null | string;
 };
 
+export type RemoteAudioDto = {
+    queues: Array<RemoteQueueDto>;
+    announcements: Array<AnnouncementDto>;
+    lastQueryAt: null | string;
+};
+
+export type RemoteQueueDto = {
+    name: string;
+    off: boolean;
+    playing: null | AnnouncementDto;
+    lastCommandAt: null | string;
+};
+
 export type ReplayState = 'running' | 'paused' | 'finished' | 'stopped';
 
 export type ReplayStatusDto = {
@@ -924,7 +1054,12 @@ export type RunDto = {
     text: string;
 };
 
-export type ScenarioAction = 'fault' | 'powerLoss' | 'lineOutage';
+export type ScenarioAction = 'fault' | 'powerLoss' | 'lineOutage' | 'device';
+
+export type ScenarioDeviceDto = {
+    conditions: AkSignalConditionsDto;
+    sensor: null | TwilightMode;
+};
 
 export type ScenarioRunDto = {
     startedAt: string;
@@ -940,6 +1075,7 @@ export type ScenarioStepDto = {
     address: null | number;
     action: ScenarioAction;
     fault: null | BoardFaultDto;
+    device: null | ScenarioDeviceDto;
 };
 
 export type ServerInfoDto = {
@@ -947,6 +1083,23 @@ export type ServerInfoDto = {
     version: string;
     dataFolder: string;
     addresses: Array<string>;
+};
+
+export type ServerLightEvent = 'train' | 'mode' | 'state' | 'other';
+
+export type ServerLightEventDto = {
+    at: string;
+    station: string;
+    name: string;
+    event: ServerLightEvent;
+    boardId: null | string;
+    manual: boolean;
+    mode: string;
+    trainNeedsLight: boolean;
+    state: Array<string>;
+    turnOn: null | string;
+    turnOff: null | string;
+    train: string;
 };
 
 export type ServerUpdateDto = {
@@ -1073,6 +1226,7 @@ export type SettingsDto = {
     httpsKey: string;
     httpsPasswordSet: boolean;
     checkUpdates: boolean;
+    location: GeoLocationDto;
 };
 
 export type SettingsUpdatedDto = {
@@ -1205,6 +1359,12 @@ export type StateDto = {
     settings: SettingsDto;
 };
 
+export type StationAudioDto = {
+    name: string;
+    station: number;
+    channel: number;
+};
+
 export type StationBoardDto = {
     line: number;
     address: number;
@@ -1213,6 +1373,8 @@ export type StationBoardDto = {
     flaps: null | FlapProfileDto;
     flapRecords: number;
     face: null | StationFaceDto;
+    lights: Array<StationLightDto>;
+    audio: Array<StationAudioDto>;
 };
 
 export type StationBoardKind = 'other' | 'departures' | 'arrivals' | 'platform' | 'underpass';
@@ -1260,6 +1422,16 @@ export type StationImportRequest = {
     xmlTables: Array<StationXmlTableDto>;
     faceLanguage: StationFaceLanguage;
     facesForExisting: boolean;
+};
+
+export type StationLightDto = {
+    name: string;
+    station: number;
+    beforeArrival: number;
+    beforeDeparture: number;
+    afterDeparture: number;
+    afterArrival: number;
+    minOff: number;
 };
 
 export type StationLineDto = {
@@ -1318,6 +1490,13 @@ export type TrafficStatisticsDto = {
     retentionDays: number;
 };
 
+export type TwilightMode = 'sun' | 'dark' | 'light';
+
+export type TwilightSensorDto = {
+    mode: TwilightMode;
+    offsetMinutes: number;
+};
+
 export type UpdateDatabaseRequest = {
     provider: DatabaseKind;
     postgres: PostgresSettingsRequest;
@@ -1350,6 +1529,7 @@ export type UpdateSettingsRequest = {
     httpsKey: string;
     httpsPassword: null | string;
     checkUpdates: boolean;
+    location: null | GeoLocationDto;
 };
 
 export type UpdateUserRequest = {
@@ -3966,6 +4146,35 @@ export type ImportConfigResponses = {
 
 export type ImportConfigResponse = ImportConfigResponses[keyof ImportConfigResponses];
 
+export type BreakBoardAnnouncementData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: {
+        queue?: string;
+    };
+    url: '/api/boards/{id}/remote-audio/break';
+};
+
+export type BreakBoardAnnouncementErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type BreakBoardAnnouncementError = BreakBoardAnnouncementErrors[keyof BreakBoardAnnouncementErrors];
+
+export type BreakBoardAnnouncementResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type BreakBoardAnnouncementResponse = BreakBoardAnnouncementResponses[keyof BreakBoardAnnouncementResponses];
+
 export type ClearBoardData = {
     body?: never;
     path: {
@@ -4074,6 +4283,33 @@ export type SetBoardResponses = {
 };
 
 export type SetBoardResponse = SetBoardResponses[keyof SetBoardResponses];
+
+export type SetBoardAkSignalData = {
+    body: AkSignalSettingsRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/boards/{id}/aksignal';
+};
+
+export type SetBoardAkSignalErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type SetBoardAkSignalError = SetBoardAkSignalErrors[keyof SetBoardAkSignalErrors];
+
+export type SetBoardAkSignalResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type SetBoardAkSignalResponse = SetBoardAkSignalResponses[keyof SetBoardAkSignalResponses];
 
 export type SetBoardFaultData = {
     body: BoardFaultDto;
@@ -4474,3 +4710,32 @@ export type GetTableArchiveResponses = {
 };
 
 export type GetTableArchiveResponse = GetTableArchiveResponses[keyof GetTableArchiveResponses];
+
+export type GetAkSignalHistoryData = {
+    body?: never;
+    path?: never;
+    query: {
+        from: string;
+        to: string;
+        board?: string;
+    };
+    url: '/api/aksignal/history';
+};
+
+export type GetAkSignalHistoryErrors = {
+    /**
+     * Error (ProblemDetails)
+     */
+    default: ApiProblem;
+};
+
+export type GetAkSignalHistoryError = GetAkSignalHistoryErrors[keyof GetAkSignalHistoryErrors];
+
+export type GetAkSignalHistoryResponses = {
+    /**
+     * OK
+     */
+    200: DeviceHistoryDto;
+};
+
+export type GetAkSignalHistoryResponse = GetAkSignalHistoryResponses[keyof GetAkSignalHistoryResponses];

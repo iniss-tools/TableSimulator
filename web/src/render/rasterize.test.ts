@@ -48,6 +48,7 @@ function board(rows: Board["display"]["rows"], extra: Partial<Board["display"]> 
       faceValues: null,
       rotationMs: 3000,
       flaps: null,
+      akSignal: null,
     },
     secondAddress: null,
     mismatch: null,
@@ -68,6 +69,8 @@ function board(rows: Board["display"]["rows"], extra: Partial<Board["display"]> 
       flapRows: null,
       rotatingUntil: null,
       amplifier: null,
+      akSignal: null,
+      remoteAudio: null,
       ...extra,
     },
   };

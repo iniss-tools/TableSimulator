@@ -238,9 +238,9 @@ const SCENARIO: FaultScenarioRequest = {
   loop: true,
   cycleMs: 60_000,
   steps: [
-    { atMs: 5_000, durationMs: 20_000, line: 2, address: 3, action: "fault", fault: { kind: "noReply", delayMs: 0, status: 0 } },
-    { atMs: 15_000, durationMs: 10_000, line: 2, address: 4, action: "powerLoss", fault: null },
-    { atMs: 35_000, durationMs: 15_000, line: 2, address: null, action: "lineOutage", fault: null },
+    { atMs: 5_000, durationMs: 20_000, line: 2, address: 3, action: "fault", fault: { kind: "noReply", delayMs: 0, status: 0 }, device: null },
+    { atMs: 15_000, durationMs: 10_000, line: 2, address: 4, action: "powerLoss", fault: null, device: null },
+    { atMs: 35_000, durationMs: 15_000, line: 2, address: null, action: "lineOutage", fault: null, device: null },
   ],
 };
 
@@ -317,6 +317,8 @@ export default async function demo() {
         flaps: b.flaps ?? null,
         flapRecords: 4,
         face: b.face ?? null,
+        lights: [],
+        audio: [],
       })),
       logFolder: null,
       xmlTables: [],

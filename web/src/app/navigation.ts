@@ -11,6 +11,7 @@ import {
   History,
   KeyRound,
   LayoutGrid,
+  Lightbulb,
   ListVideo,
   ShieldUser,
   Megaphone,
@@ -33,6 +34,7 @@ export type NavPath =
   | "/designs"
   | "/faces"
   | "/lines"
+  | "/lights"
   | "/scenarios"
   | "/log"
   | "/statistics"
@@ -73,6 +75,7 @@ export const NAV: NavGroup[] = [
       { to: "/designs", label: "nav.designs", icon: Palette, permission: PERMISSIONS.designs },
       { to: "/faces", label: "nav.faces", icon: Frame, permission: PERMISSIONS.designs },
       { to: "/lines", label: "nav.lines", icon: Cable, permission: PERMISSIONS.view },
+      { to: "/lights", label: "nav.lights", icon: Lightbulb, permission: PERMISSIONS.view },
       { to: "/scenarios", label: "nav.scenarios", icon: Siren, permission: PERMISSIONS.view },
       { to: "/log", label: "nav.log", icon: Activity, permission: PERMISSIONS.log },
       { to: "/statistics", label: "nav.statistics", icon: ChartColumn, permission: PERMISSIONS.statistics },

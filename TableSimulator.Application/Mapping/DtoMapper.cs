@@ -1,6 +1,7 @@
 using System.Globalization;
 using TableSimulator.Application.Settings;
 using TableSimulator.Contracts.Boards;
+using TableSimulator.Contracts.Scenarios;
 using TableSimulator.Contracts.Display;
 using TableSimulator.Contracts.Frames;
 using TableSimulator.Contracts.Lines;
@@ -52,7 +53,7 @@ public static partial class DtoMapper
         return new BoardDto(
             board.Id, board.Line, board.Address, board.Name, board.ManufacturerKey, ToDto(board.Profile), board.Design, ToDto(board.Fault),
             board.AutoCreated, new BoardStatsDto(s.Frames, s.Acks, s.Naks, s.Unanswered, s.LastFrameAt),
-            ToDto(board.Display, board.ManufacturerKey), board.Version)
+            ToDto(board.Display, board.ManufacturerKey, board.EffectiveProfile, board.Override), board.Version)
         {
             SecondAddress = board.SecondAddress,
             Mismatch = board.Mismatch is { } m ? new ManufacturerMismatchDto(m.Evidence, m.Suggested.ToArray()) : null,
@@ -104,8 +105,46 @@ public static partial class DtoMapper
             MovingFont = profile.MovingFont,
             AutoSize = profile.AutoSize,
             RotationMs = profile.RotationMs,
-            Flaps = profile.Flaps is { } f ? ToDto(f) : null
+            Flaps = profile.Flaps is { } f ? ToDto(f) : null,
+            AkSignal = profile.AkSignal is { } a ? ToDto(a) : null
         };
+    }
+
+    /// <summary>Ustredna AK Signal: svetla a audio linky, snimac, stavy a casovanie.</summary>
+    public static AkSignalProfileDto ToDto(AkSignalProfile profile)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        return new AkSignalProfileDto
+        {
+            Lights = profile.Lights.Select(l => new StationLightDto(l.Name, l.Station)
+            {
+                BeforeArrival = l.BeforeArrival, BeforeDeparture = l.BeforeDeparture, AfterDeparture = l.AfterDeparture, AfterArrival = l.AfterArrival,
+                MinOff = l.MinOff
+            }).ToArray(),
+            Audio = profile.Audio.Select(a => new StationAudioDto(a.Name, a.Station, a.Channel)).ToArray(),
+            Sensor = new TwilightSensorDto(ToDto(profile.Sensor.Mode), profile.Sensor.OffsetMinutes),
+            Conditions = ToDto(profile.Conditions),
+            SoundSeconds = profile.SoundSeconds,
+            SyncSeconds = profile.SyncSeconds,
+            SilenceSeconds = profile.SilenceSeconds
+        };
+    }
+
+    private static AkSignalConditionsDto ToDto(AkSignalConditions c) =>
+        new(c.LightsFault, c.HighPriority, c.OutputPowerError, c.AmpSupplyMissing, c.AmpCommError, c.BankNotSynced);
+
+    private static Contracts.Boards.TwilightMode ToDto(Core.Boards.TwilightMode mode) => mode switch
+    {
+        Core.Boards.TwilightMode.Dark => Contracts.Boards.TwilightMode.Dark,
+        Core.Boards.TwilightMode.Light => Contracts.Boards.TwilightMode.Light,
+        _ => Contracts.Boards.TwilightMode.Sun
+    };
+
+    /// <summary>Krok scenara pre ustrednu, alebo co jej scenar prave nastavuje.</summary>
+    public static ScenarioDeviceDto ToDto(AkSignalOverride device)
+    {
+        ArgumentNullException.ThrowIfNull(device);
+        return new ScenarioDeviceDto(ToDto(device.Conditions), device.Sensor is { } mode ? ToDto(mode) : null);
     }
 
     public static FlapProfileDto ToDto(FlapProfile flaps)
@@ -206,9 +245,61 @@ public static partial class DtoMapper
             HttpsCertificate = settings.HttpsCertificate,
             HttpsKey = settings.HttpsKey,
             HttpsPasswordSet = settings.HttpsPassword.Length > 0,
-            CheckUpdates = settings.CheckUpdates
+            CheckUpdates = settings.CheckUpdates,
+            Location = new GeoLocationDto(settings.Location.Latitude, settings.Location.Longitude)
         };
     }
+
+    /// <summary>
+    /// Stav ustredne AK Signal; stav svetla a zvuku tak, ako by ho ustredna poslala pri poslednom dotaze - pri AKSIGNALUH
+    /// kluce, inak bajt hex.
+    /// </summary>
+    private static AkSignalDto ToDto(AkSignalDisplay display, string manufacturer, BoardProfile profile, AkSignalOverride? scenario)
+    {
+        var uh = string.Equals(manufacturer, "AKSIGNALUH", StringComparison.OrdinalIgnoreCase);
+        var at = display.LastQueryAt ?? DateTimeOffset.MinValue;
+        return new AkSignalDto(display.AutoMode, display.Manual, display.Dark, display.IsLightOn,
+            uh ? string.Join(",", display.LightKeys(profile)) : display.LightState(profile).ToString("X2", CultureInfo.InvariantCulture),
+            uh ? string.Join(",", display.AudioKeys(profile, null, at)) : display.AudioState(profile).ToString("X2", CultureInfo.InvariantCulture),
+            display.Announcements.Select(ToDto).ToArray())
+        {
+            DarkSince = display.DarkSince,
+            DarkChangesAt = display.DarkChangesAt,
+            LightChangedAt = display.LightChangedAt,
+            LightQueryAt = display.LightQueryAt,
+            AudioQueryAt = display.AudioQueryAt,
+            ServerSilent = display.ServerSilent,
+            Banks = display.Banks.ToDictionary(StringComparer.Ordinal),
+            SyncedAt = display.SyncedAt,
+            SyncUntil = display.SyncUntil,
+            Conditions = ToDto((profile.AkSignal ?? AkSignalProfile.Default).Conditions),
+            Scenario = scenario is null ? null : ToDto(scenario)
+        };
+    }
+
+    private static AnnouncementDto ToDto(Announcement announcement) =>
+        new(announcement.Id, announcement.Channel, announcement.Sounds.ToArray(), announcement.StartedAt, announcement.Result switch
+        {
+            Core.Boards.AnnouncementResult.Completed => Contracts.Display.AnnouncementResult.Completed,
+            Core.Boards.AnnouncementResult.Stopped => Contracts.Display.AnnouncementResult.Stopped,
+            Core.Boards.AnnouncementResult.Cancelled => Contracts.Display.AnnouncementResult.Cancelled,
+            _ => Contracts.Display.AnnouncementResult.Playing
+        })
+        {
+            Title = announcement.Title,
+            DurationMs = announcement.Duration is { } duration ? (long)duration.TotalMilliseconds : null,
+            Value = announcement.Value,
+            EndedAt = announcement.EndedAt,
+            Queue = announcement.Queue,
+            Circuit = announcement.Circuit
+        };
+
+    private static RemoteAudioDto ToDto(RemoteAudioDisplay display) =>
+        new(display.Queues.Select(q => new RemoteQueueDto(q.Name, q.Off, q.Playing is { } playing ? ToDto(playing) : null) { LastCommandAt = q.LastCommandAt })
+            .ToArray(), display.Announcements.Select(ToDto).ToArray())
+        {
+            LastQueryAt = display.LastQueryAt
+        };
 
     private static Contracts.Lines.LineMode ToDto(Core.Lines.LineMode mode) => mode switch
     {
@@ -228,7 +319,7 @@ public static partial class DtoMapper
         _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
     };
 
-    private static DisplayDto ToDto(BoardDisplay display, string manufacturer) => display switch
+    private static DisplayDto ToDto(BoardDisplay display, string manufacturer, BoardProfile profile, AkSignalOverride? scenario) => display switch
     {
         CharDisplay c => new DisplayDto("chars", c.Brightness, c.ClockValue, c.ClockSetAt, [], 0, null, null)
         {
@@ -252,6 +343,8 @@ public static partial class DtoMapper
         {
             Amplifier = new AmplifierDto(a.Band, a.State, a.OnSince, a.Switches, a.LastCommand)
         },
+        AkSignalDisplay k => new DisplayDto("aksignal", k.Brightness, k.ClockValue, k.ClockSetAt, [], 0, null, null) { AkSignal = ToDto(k, manufacturer, profile, scenario) },
+        RemoteAudioDisplay r => new DisplayDto("remoteaudio", r.Brightness, r.ClockValue, r.ClockSetAt, [], 0, null, null) { RemoteAudio = ToDto(r) },
         _ => new DisplayDto("unknown", display.Brightness, display.ClockValue, display.ClockSetAt, [], 0, null, null)
     };
 

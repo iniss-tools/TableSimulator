@@ -26,7 +26,7 @@ public static class LineTools
         IQueryHandler<GetStateQuery, StateDto> state,
         ICommandHandler<SetLineCommand> handler,
         [Description("Line number 1-100.")] int number,
-        [Description("INISS table class, selects the protocol: 1 Elektrocas LCD, 2 ERS, 3 FERS, 4 ELEN, 5 LCD1/ERP, 10 APEL, 128 remote INISS, 129 ELSVO, 130 ITP.")]
+        [Description("INISS table class, selects the protocol: 1 Elektrocas LCD, 2 ERS, 3 FERS, 4 ELEN, 5 LCD1/ERP, 10 APEL, 128 remote INISS, 129 ELSVO, 130 ITP, 131 AK Signal, 132 AK Signal UH (INISS2 platform lighting and PA controllers).")]
         int? tableClass = null,
         [Description("Where INISS connects: TCP://0.0.0.0:47001, UDP://..., \\\\.\\PIPE\\name (INISS creates the pipe) or COM3:9600,n,8,1.")]
         string? endpoint = null,

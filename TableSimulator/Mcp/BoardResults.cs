@@ -15,7 +15,7 @@ public sealed record BoardSummary(
     int Line,
     int Address,
     string Manufacturer,
-    [property: Description("elen, chars, flaps, amplifier or unknown.")]
+    [property: Description("elen, chars, flaps, amplifier, aksignal, remoteaudio or unknown.")]
     string Family,
     [property: Description("Increases with every change of the content or settings; pass it to wait_for_board_change.")]
     long Version,
@@ -36,7 +36,7 @@ public sealed record BoardDetail(
     [property: Description("Second address of a two-sided board; null = only one.")]
     int? SecondAddress,
     string Manufacturer,
-    [property: Description("elen, chars, flaps, amplifier or unknown.")]
+    [property: Description("elen, chars, flaps, amplifier, aksignal, remoteaudio or unknown.")]
     string Family,
     [property: Description("Design set for the board; null = default for the manufacturer.")]
     string? Design,

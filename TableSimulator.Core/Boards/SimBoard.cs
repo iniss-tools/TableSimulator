@@ -172,6 +172,14 @@ public sealed class SimBoard
     /// <summary>Profil - hardver tabule.</summary>
     public BoardProfile Profile { get; set; }
 
+    /// <summary>Co scenar docasne nastavuje ustredni AK Signal nad jej profil; null = nic.</summary>
+    public AkSignalOverride? Override { get; internal set; }
+
+    /// <summary>Profil, podla ktoreho tabula odpoveda - <see cref="Profile" /> s prekrytim zo scenara.</summary>
+    public BoardProfile EffectiveProfile => Override is { } o
+        ? Profile with { AkSignal = o.Apply(Profile.AkSignal ?? AkSignalProfile.Default) }
+        : Profile;
+
     /// <summary>Identifikator vzhladu; null = predvoleny pre technologiu.</summary>
     public string? Design { get; set; }
 

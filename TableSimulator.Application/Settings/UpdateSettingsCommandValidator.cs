@@ -21,6 +21,10 @@ public sealed class UpdateSettingsCommandValidator : AbstractValidator<UpdateSet
                 .Must(f => f is null || f.Count(p => !string.IsNullOrWhiteSpace(p)) <= SettingsErrors.MaxVirtualFolders)
                 .WithErrorCode(SettingsErrors.VirtualFolders)
                 .WithMessage($"At most {SettingsErrors.MaxVirtualFolders} folders with table XML files.");
+            RuleFor(c => c.Request.Location!)
+                .Must(l => new Core.Boards.GeoLocation(l.Latitude, l.Longitude).IsValid && double.IsFinite(l.Latitude) && double.IsFinite(l.Longitude))
+                .When(c => c.Request.Location is not null).WithErrorCode(SettingsErrors.Location)
+                .WithMessage("Latitude must be -90 to 90 and longitude -180 to 180.");
         });
     }
 }

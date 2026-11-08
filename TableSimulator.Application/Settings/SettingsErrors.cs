@@ -7,6 +7,7 @@ public static class SettingsErrors
     public const string ConnectHost = "settings.connectHost";
     public const string VirtualFolders = "settings.virtualFolders";
     public const string HttpsPort = "settings.httpsPort";
+    public const string Location = "settings.location";
 
     /// <summary>Najviac sledovanych priecinkov s XML tabul.</summary>
     public const int MaxVirtualFolders = 4;

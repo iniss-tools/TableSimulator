@@ -13,5 +13,8 @@ public enum ScenarioAction
     [JsonStringEnumMemberName("powerLoss")] PowerLoss,
 
     /// <summary>Vypadok linky - spojenie s INISSom sa zavrie a nove sa neprijima.</summary>
-    [JsonStringEnumMemberName("lineOutage")] LineOutage
+    [JsonStringEnumMemberName("lineOutage")] LineOutage,
+
+    /// <summary>Stavy a snimac ustredne AK Signal; inej tabule sa netyka.</summary>
+    [JsonStringEnumMemberName("device")] Device
 }

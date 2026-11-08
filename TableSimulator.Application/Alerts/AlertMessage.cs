@@ -13,10 +13,14 @@ public enum AlertKind
 /// <summary>Linka v oznameni.</summary>
 /// <param name="Number">cislo linky</param>
 /// <param name="Name">nazov linky</param>
-/// <param name="Status">stav (kluc ako v API: <c>lost</c>, <c>error</c>, <c>connected</c>)</param>
-/// <param name="Detail">podrobnost (chyba linky)</param>
+/// <param name="Status">stav (kluc ako v API: <c>lost</c>, <c>error</c>, <c>connected</c>; alebo <see cref="AlertLineState.Silent" />)</param>
+/// <param name="Detail">podrobnost (chyba linky, ustredne, ktorych sa server nepyta)</param>
 /// <param name="Since">od kedy stav trva</param>
-public sealed record AlertLine(int Number, string Name, string Status, string? Detail, DateTimeOffset Since);
+public sealed record AlertLine(int Number, string Name, string Status, string? Detail, DateTimeOffset Since)
+{
+    /// <summary>Pri navrate stav pocas vypadku; inak null.</summary>
+    public string? Previous { get; init; }
+}
 
 /// <summary>Oznamenie pripravene na odoslanie - predmet a text v jazyku z nastavenia a udaje pre webhook.</summary>
 public sealed record AlertMessage(AlertKind Kind, string Subject, string Text, IReadOnlyList<AlertLine> Lines, DateTimeOffset Time, string Server)
@@ -46,15 +50,21 @@ public sealed record AlertMessage(AlertKind Kind, string Subject, string Text, I
                 subject = lines.Count == 1
                     ? (cs ? "Výpadek: " : "Výpadok: ") + Label(lines[0])
                     : (cs ? "Výpadek linek: " : "Výpadok liniek: ") + lines.Count.ToString(CultureInfo.InvariantCulture);
-                body = lines.Select(l => Label(l) + ": " + (l.Status == "error"
-                    ? (cs ? "linka neběží" : "linka nebeží") + (l.Detail is { Length: > 0 } d ? " – " + d : "")
-                    : cs ? "INISS se odpojil" : "INISS sa odpojil") + (cs ? " (od " : " (od ") + Clock(l.Since) + ")");
+                body = lines.Select(l => Label(l) + ": " + l.Status switch
+                {
+                    "error" => (cs ? "linka neběží" : "linka nebeží") + (l.Detail is { Length: > 0 } d ? " – " + d : ""),
+                    AlertLineState.Silent => (cs ? "server INISS2 se neptá ústředny " : "server INISS2 sa nepýta ústredne ") + l.Detail
+                                             + (cs ? " (poslední dotaz " : " (posledný dotaz ") + Clock(l.Since) + ")",
+                    _ => cs ? "INISS se odpojil" : "INISS sa odpojil"
+                } + (l.Status == AlertLineState.Silent ? "" : " (od " + Clock(l.Since) + ")"));
                 break;
             case AlertKind.Recovery:
                 subject = lines.Count == 1
                     ? (cs ? "Znovu funguje: " : "Znova funguje: ") + Label(lines[0])
                     : (cs ? "Linky znovu fungují: " : "Linky znova fungujú: ") + lines.Count.ToString(CultureInfo.InvariantCulture);
-                body = lines.Select(l => Label(l) + ": " + (cs ? "INISS je znovu připojen (" : "INISS je znova pripojený (") + Clock(l.Since) + ")");
+                body = lines.Select(l => Label(l) + ": " + (l.Previous == AlertLineState.Silent
+                    ? cs ? "server INISS2 se ústředen znovu ptá" : "server INISS2 sa ústrední znova pýta"
+                    : cs ? "INISS je znovu připojen (" + Clock(l.Since) + ")" : "INISS je znova pripojený (" + Clock(l.Since) + ")"));
                 break;
             default:
                 subject = cs ? "Zkušební oznámení" : "Skúšobné oznámenie";

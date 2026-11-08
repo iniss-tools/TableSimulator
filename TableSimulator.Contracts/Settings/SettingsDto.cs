@@ -45,4 +45,7 @@ public sealed record SettingsDto(int HttpPort, bool AllowNetwork, string FontsFo
 
     /// <summary>Zistovat novu verziu servera (len server z vydania).</summary>
     public bool CheckUpdates { get; init; } = true;
+
+    /// <summary>Poloha pre vychod a zapad slnka (snimac tmy ustredni AK Signal).</summary>
+    public GeoLocationDto Location { get; init; } = new(48.67, 19.70);
 }

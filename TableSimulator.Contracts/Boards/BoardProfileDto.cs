@@ -59,4 +59,7 @@ public sealed record BoardProfileDto
 
     /// <summary>Listova tabula: moduly a zoznamy listov; null = kazda pozicia ukaze kod.</summary>
     public FlapProfileDto? Flaps { get; init; }
+
+    /// <summary>Ustredna AK Signal: svetla, rozhlas, snimac tmy a stavy; null = ina tabula alebo predvolene.</summary>
+    public AkSignalProfileDto? AkSignal { get; init; }
 }

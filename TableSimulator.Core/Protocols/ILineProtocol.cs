@@ -1,5 +1,6 @@
 using TableSimulator.Core.Boards;
 using TableSimulator.Core.Lines;
+using TableSimulator.Core.Simulation;
 
 namespace TableSimulator.Core.Protocols;
 
@@ -42,10 +43,21 @@ internal interface ILineContext
     /// <summary>Aktualny cas.</summary>
     DateTimeOffset Now { get; }
 
+    /// <summary>Okolie simulatora (poloha pre snimac tmy, dlzky zvukov).</summary>
+    SimEnvironment Environment { get; }
+
     /// <summary>Tabula na adrese; pri samouceni ju vytvori. null = na adrese nikto nie je.</summary>
     /// <param name="address">adresa</param>
     /// <param name="manufacturer">vyrobca novej tabule zo samoucenia; null = podla linky</param>
     SimBoard? FindBoard(int address, string? manufacturer = null);
+
+    /// <summary>
+    /// Zariadenie linky na adrese (napr. rozhlas vzdialeneho INISSu) - ak nie je, vytvori ho aj bez samoucenia.
+    /// null = zariadenie je bez napajania.
+    /// </summary>
+    /// <param name="address">adresa zariadenia</param>
+    /// <param name="manufacturer">vyrobca (druh zariadenia)</param>
+    SimBoard? Device(int address, string manufacturer);
 
     /// <summary>Vsetky tabule na linke (hromadne spravy).</summary>
     IReadOnlyList<SimBoard> Boards { get; }

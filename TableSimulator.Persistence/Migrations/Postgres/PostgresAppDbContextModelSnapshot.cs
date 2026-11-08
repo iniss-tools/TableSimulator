@@ -175,6 +175,92 @@ namespace TableSimulator.Persistence.Migrations.Postgres
                     b.ToTable("AuditEntries", (string)null);
                 });
 
+            modelBuilder.Entity("TableSimulator.Application.Devices.AnnouncementRecord", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("Address")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Channel")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Circuit")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<long>("EndMs")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Line")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Queue")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Sounds")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<long>("StartMs")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<int?>("Value")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EndMs");
+
+                    b.HasIndex("StartMs");
+
+                    b.ToTable("DeviceAnnouncements", (string)null);
+                });
+
+            modelBuilder.Entity("TableSimulator.Application.Devices.LightStateRecord", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("Address")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Flags")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Line")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("TimeMs")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TimeMs");
+
+                    b.HasIndex("Line", "Address", "TimeMs");
+
+                    b.ToTable("DeviceLightStates", (string)null);
+                });
+
             modelBuilder.Entity("TableSimulator.Application.Faces.FaceRecord", b =>
                 {
                     b.Property<string>("Id")
@@ -855,6 +941,12 @@ namespace TableSimulator.Persistence.Migrations.Postgres
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasDefaultValue("");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("MonitorFolder")
                         .IsRequired()

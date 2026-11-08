@@ -10,8 +10,17 @@ export const REMOTE_INISS_CLASS = 128;
 /** Vyrobcovia listovych tabul (rodina flaps). */
 export const FLAP_MANUFACTURERS = ["FERS", "ERS"];
 
-/** Spinacie jednotky zosilnovacov (rodina amplifier) - nie tabule, nemaju rozmer, pismo ani vzhlad. */
-export const AMPLIFIER_MANUFACTURERS = ["ELSVO"];
+/** Spinacie jednotky zosilnovacov (rodina amplifier) - nie tabule, nemaju rozmer, pismo ani vzhlad; DTR = spinanie signalom portu. */
+export const AMPLIFIER_MANUFACTURERS = ["ELSVO", "DTR"];
+
+/** Trieda linky spinania zosilnovaca signalom DTR (INISS 3.39) - len simulator. */
+export const DTR_CLASS = 900;
+
+/** Ustredne AK Signal servera INISS2 (rodina aksignal) - svetlo a rozhlas, nie tabule. */
+export const AKSIGNAL_MANUFACTURERS = ["AKSIGNAL", "AKSIGNALUH"];
+
+/** Rozhlas vzdialeneho INISSu (rodina remoteaudio) - fronty hlaseni na linke triedy 128, nie tabula. */
+export const REMOTE_AUDIO_MANUFACTURERS = ["REMOTE_AUDIO"];
 
 /** Vyrobcovia znakovych tabul Elektrocas (rodina chars). */
 export const CHAR_MANUFACTURERS = ["LCD", "LCD1", "ERP"];
@@ -20,12 +29,14 @@ export const CHAR_MANUFACTURERS = ["LCD", "LCD1", "ERP"];
 export const ELEN_MANUFACTURERS = ["ELEN", "ELENOLD", "ELEN10", "ELEN16", "ELEN16KAM", "ELEKON", "ELENWIN", "ELEKONKAM", "ERP_ELEN"];
 
 /** Druh tabule podla vyrobcu - urcuje, ake nastavenia profilu maju zmysel; znakove su Elektrocas aj APEL. */
-export type BoardKind = "elen" | "chars" | "flaps" | "amplifier";
+export type BoardKind = "elen" | "chars" | "flaps" | "amplifier" | "aksignal" | "remoteaudio";
 
 export function boardKind(manufacturer: string): BoardKind {
   const upper = manufacturer.toUpperCase();
   if (FLAP_MANUFACTURERS.includes(upper)) return "flaps";
   if (AMPLIFIER_MANUFACTURERS.includes(upper)) return "amplifier";
+  if (AKSIGNAL_MANUFACTURERS.includes(upper)) return "aksignal";
+  if (REMOTE_AUDIO_MANUFACTURERS.includes(upper)) return "remoteaudio";
   return ELEN_MANUFACTURERS.includes(upper) ? "elen" : "chars";
 }
 
@@ -79,6 +90,7 @@ export function defaultProfile(manufacturer: string): BoardProfileDto {
     faceValues: null,
     rotationMs: 3000,
     flaps: null,
+    akSignal: null,
   };
 }
 

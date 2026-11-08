@@ -23,8 +23,11 @@ import { useFontHeight } from "./font-height";
 const FAULTS: FaultKind[] = ["none", "noReply", "nak", "delay", "garbage", "status"];
 
 /** Poruchy, ktore tabula danej rodiny vie predstierat - stav hlasia len tabule so stavovou odpovedou. */
-// stav (kod odpovede) maju len tabule s odpovedou na kazdu spravu - Elektrocas, listove, APEL a jednotky ELSVO
-const STATUS_FAMILIES = ["chars", "flaps", "amplifier"];
+// stav (kod odpovede) maju len tabule s odpovedou na kazdu spravu - Elektrocas, listove, APEL, jednotky ELSVO a ustredne AK Signal
+const STATUS_FAMILIES = ["chars", "flaps", "amplifier", "aksignal"];
+
+/** Predvoleny stav pri poruche so stavovou odpovedou: zosilnovac "pripravena, ale nezopnuta", ustredna "svetla v poriadku", inak chybna sprava. */
+const DEFAULT_STATUS: Record<string, number> = { amplifier: 0x80, aksignal: 0x08 };
 const faultsFor = (board: BoardDto) => FAULTS.filter((f) => f !== "status" || STATUS_FAMILIES.includes(board.display.family));
 
 const failed = (e: unknown) => toast.error(errorText(e));
@@ -70,8 +73,7 @@ function FaultControl({ board, edit }: { board: BoardDto; edit: boolean }) {
     fault({
       kind,
       delayMs: kind === "delay" ? Math.max(board.fault.delayMs, 500) : 0,
-      // predvolene "chybna sprava", pri zosilnovaci "pripravena, ale nezopnuta"
-      status: kind === "status" ? board.fault.status || (board.display.family === "amplifier" ? 0x80 : 0x01) : 0,
+      status: kind === "status" ? board.fault.status || (DEFAULT_STATUS[board.display.family] ?? 0x01) : 0,
     });
 
   return (
@@ -184,7 +186,19 @@ function BoardClock({ clock, setAt }: { clock: string; setAt: string }) {
 
 /** Karta tabule; `edit` = uprava a mazanie (linky a tabule), `control` = poruchy a vymazanie obsahu. */
 export function BoardCard({ board, onEdit, edit, control }: { board: BoardDto; onEdit: () => void; edit: boolean; control: boolean }) {
-  const name = board.name || t(board.display.family === "amplifier" ? "amplifier.unnamed" : "board.unnamed", { address: board.address });
+  const family = board.display.family;
+  const name =
+    board.name ||
+    t(
+      family === "amplifier"
+        ? "amplifier.unnamed"
+        : family === "aksignal"
+          ? "aksignal.unnamed"
+          : family === "remoteaudio"
+            ? "remoteaudio.unnamed"
+            : "board.unnamed",
+      { address: board.address },
+    );
   const last = board.stats.lastFrameAt ? new Date(board.stats.lastFrameAt).toLocaleTimeString(locale()) : null;
   const d = board.display;
   const view = useRef<BoardViewHandle>(null);
@@ -254,7 +268,10 @@ export function BoardCard({ board, onEdit, edit, control }: { board: BoardDto; o
         <span className="text-xs text-muted-foreground">
           {last ? t("board.lastFrame", { time: last }) : t("board.noFrames")} ·{" "}
           {t("board.stats", { frames: board.stats.frames, acks: board.stats.acks, naks: board.stats.naks })}
-          {d.family !== "flaps" && d.family !== "amplifier" && <> · {d.brightness > 0 ? t("board.brightness", { value: d.brightness }) : t("board.dark")}</>}
+          {d.family !== "flaps" && d.family !== "amplifier" && d.family !== "aksignal" && d.family !== "remoteaudio" && (
+            <> · {d.brightness > 0 ? t("board.brightness", { value: d.brightness }) : t("board.dark")}</>
+          )}
+          {d.akSignal?.serverSilent && <span className="font-medium text-red-700 dark:text-red-400"> · {t("aksignal.silent")}</span>}
           {d.rotatingUntil && <Rotating until={d.rotatingUntil} />}
           {d.amplifier?.onSince && <AmplifierOn since={d.amplifier.onSince} />}
           {d.clock && d.clockSetAt && <BoardClock clock={d.clock} setAt={d.clockSetAt} />}

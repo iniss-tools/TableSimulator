@@ -23,6 +23,8 @@ public sealed class BoardProfileValidator : AbstractValidator<BoardProfileDto>
             .WithMessage("Flap modules or lists are out of range.");
         RuleFor(p => p.CharFonts).Must(IsValidCharFonts).WithErrorCode(BoardErrors.CharFonts)
             .WithMessage("Character fonts must map font numbers 0-63 to a known dot font.");
+        RuleFor(p => p.AkSignal).Must(a => a is null || AkSignalRules.IsValid(a.Sensor, a.SoundSeconds, a.SyncSeconds, a.SilenceSeconds))
+            .WithErrorCode(BoardErrors.AkSignal).WithMessage(AkSignalRules.Message);
     }
 
     /// <summary>Cisla pisma 0-63 a zname bodove pisma (prazdne = predvolene).</summary>

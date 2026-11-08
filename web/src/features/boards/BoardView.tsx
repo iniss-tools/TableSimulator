@@ -13,7 +13,9 @@ import { faceBoxes, faceValues, hasFaceClock, measureContext, resolveFace, shift
 import { blinkPhase, boardClock, isAnimated, rasterize } from "@/render/rasterize";
 import { loadFaceImages } from "@/render/images";
 import { LedRenderer, ledLayout, ledSize } from "@/render/led";
+import { AkSignalView } from "./AkSignalView";
 import { AmplifierView } from "./AmplifierView";
+import { RemoteAudioView } from "./RemoteAudioView";
 import { FlapView } from "./FlapView";
 
 // Prve kreslenie tabule trva desiatky ms - stranka s mnohymi tabulami ich kresli po jednej v samostatnych ulohach,
@@ -96,6 +98,8 @@ interface Props {
 export function BoardView(props: Props) {
   const family = props.board.display.family;
   if (family === "amplifier") return <AmplifierView {...props} />;
+  if (family === "aksignal") return <AkSignalView {...props} />;
+  if (family === "remoteaudio") return <RemoteAudioView {...props} />;
   return family === "flaps" ? <FlapView {...props} /> : <LedBoardView {...props} />;
 }
 

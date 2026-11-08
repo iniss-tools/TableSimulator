@@ -33,4 +33,7 @@ public sealed record UpdateSettingsRequest
 
     /// <summary>Zistovat novu verziu servera.</summary>
     public bool CheckUpdates { get; init; } = true;
+
+    /// <summary>Poloha pre vychod a zapad slnka; null = nechat ulozenu.</summary>
+    public GeoLocationDto? Location { get; init; }
 }

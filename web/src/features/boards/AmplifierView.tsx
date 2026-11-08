@@ -11,7 +11,10 @@ const RELEASE = 0xc0;
 
 const OFF: AmplifierDto = { band: 0, state: 0, onSince: null, switches: 0, lastCommand: null };
 
-function texts(amplifier: AmplifierDto): AmplifierTexts {
+function texts(amplifier: AmplifierDto, dtr: boolean): AmplifierTexts {
+  // DTR: len zopnute alebo nie, bez pasma a stavu jednotky
+  if (dtr)
+    return { title: amplifier.band > 0 ? t("amplifier.dtr.on") : t("amplifier.off"), detail: t("amplifier.dtr.detail", { switches: amplifier.switches }) };
   const title =
     amplifier.band > 0 ? t("amplifier.on", { band: amplifier.band }) : amplifier.lastCommand === RELEASE ? t("amplifier.released") : t("amplifier.off");
   const state = amplifier.state.toString(16).toUpperCase().padStart(2, "0");
@@ -30,6 +33,7 @@ export function AmplifierView({ board, fit = "width", className, ref }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [space, setSpace] = useState({ width: 0, height: 0 });
   const amplifier = board.display.amplifier ?? OFF;
+  const dtr = board.manufacturer.toUpperCase() === "DTR";
   const latest = useRef(amplifier);
   useLayoutEffect(() => {
     latest.current = amplifier;
@@ -59,11 +63,11 @@ export function AmplifierView({ board, fit = "width", className, ref }: Props) {
         const target = document.createElement("canvas");
         target.width = AMPLIFIER_WIDTH * 2;
         target.height = AMPLIFIER_HEIGHT * 2;
-        drawAmplifier(target.getContext("2d")!, latest.current, texts(latest.current), 2);
+        drawAmplifier(target.getContext("2d")!, latest.current, texts(latest.current, dtr), 2);
         return new Promise<Blob>((resolve, reject) => target.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("PNG"))), "image/png"));
       },
     }),
-    [],
+    [dtr],
   );
 
   useEffect(() => {
@@ -72,8 +76,8 @@ export function AmplifierView({ board, fit = "width", className, ref }: Props) {
     el.width = Math.max(1, Math.round(AMPLIFIER_WIDTH * scale));
     el.height = Math.max(1, Math.round(AMPLIFIER_HEIGHT * scale));
     const ctx = el.getContext("2d");
-    if (ctx) drawAmplifier(ctx, amplifier, texts(amplifier), scale);
-  }, [amplifier, scale, cssScale]);
+    if (ctx) drawAmplifier(ctx, amplifier, texts(amplifier, dtr), scale);
+  }, [amplifier, dtr, scale, cssScale]);
 
   return (
     <div ref={box} className={cn("flex w-full justify-center leading-0", fit === "contain" && "h-full items-center", className)}>

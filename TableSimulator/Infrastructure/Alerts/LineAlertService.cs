@@ -6,8 +6,8 @@ using TableSimulator.Core.Simulation;
 namespace TableSimulator.Infrastructure.Alerts;
 
 /// <summary>
-/// Kazde 2 s porovna stav liniek a oznami vypadky a navraty kanalmi z nastavenia (<see cref="LineAlertTracker" />).
-/// Vypnute oznamenia na vypadky zabudnu.
+/// Kazde 2 s porovna stav liniek (aj ticho servera pri ustredniach AK Signal, <see cref="AlertLines" />) a oznami vypadky
+/// a navraty kanalmi z nastavenia (<see cref="LineAlertTracker" />). Vypnute oznamenia na vypadky zabudnu.
 /// </summary>
 public sealed class LineAlertService(
     Simulator simulator,
@@ -33,10 +33,7 @@ public sealed class LineAlertService(
                     continue;
                 }
 
-                var lines = simulator.Read(s => s.Lines
-                    .Select(l => new AlertLineState(l.Number, l.Name, SimulatorConfigJson.Key(l.Status), l.StatusDetail, l.StatusSince))
-                    .ToList());
-                var (outages, recoveries) = _tracker.Update(lines, time.GetUtcNow(), alerts);
+                var (outages, recoveries) = _tracker.Update(AlertLines.Of(simulator), time.GetUtcNow(), alerts);
                 if (outages.Count > 0)
                     await SendAsync(AlertKind.Outage, outages, alerts, stoppingToken).ConfigureAwait(false);
                 if (recoveries.Count > 0)

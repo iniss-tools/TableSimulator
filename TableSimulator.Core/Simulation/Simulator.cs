@@ -2,6 +2,8 @@ using System.Globalization;
 using TableSimulator.Core.Boards;
 using TableSimulator.Core.Lines;
 using TableSimulator.Core.Protocols;
+using TableSimulator.Core.Protocols.AkSignal;
+using TableSimulator.Core.Protocols.Dtr;
 using TableSimulator.Core.Protocols.Apel;
 using TableSimulator.Core.Protocols.Elsvo;
 using TableSimulator.Core.Statistics;
@@ -67,6 +69,8 @@ public sealed class Simulator
     private readonly TimeProvider _time;
     private readonly TrafficCollector _traffic = new();
     private SessionRecorder? _recorder;
+    private SimEnvironment _environment = new();
+    private readonly DeviceHistoryCollector _history = new();
     private long _seq;
 
     public Simulator(TimeProvider? time = null)
@@ -83,12 +87,57 @@ public sealed class Simulator
     /// <summary>Triedy liniek (TableClass), ktore simulator pozna.</summary>
     public static IReadOnlyList<int> SupportedClasses => [.. Protocols.Keys.Order()];
 
+    /// <summary>Trieda linky spinania zosilnovaca signalom DTR (len simulator, INISS ju nema).</summary>
+    public const int ModemSignalClass = DtrProtocol.TableClass;
+
     /// <summary>Vyrobcovia tabul (<c>MANUFACTURER_KEY</c>), ktore simulator na linke danej triedy zobrazi; prvy je predvoleny.</summary>
     public static IReadOnlyList<string> ManufacturersFor(int tableClass) =>
         Protocols.TryGetValue(tableClass, out var p) ? p.Manufacturers : [];
 
     /// <summary>Aktualny cas simulatora.</summary>
     public DateTimeOffset Now => _time.GetUtcNow();
+
+    /// <summary>Okolie simulatora - poloha pre snimac tmy a dlzky zvukov banky.</summary>
+    public SimEnvironment Environment
+    {
+        get
+        {
+            lock (_lock)
+                return _environment;
+        }
+    }
+
+    /// <summary>Nastavi okolie simulatora; zariadenia ho pouziju pri dalsej sprave alebo tiku (<see cref="Tick" />).</summary>
+    public void SetEnvironment(SimEnvironment environment)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+        lock (_lock)
+            _environment = environment;
+    }
+
+    /// <summary>
+    /// Posunie obsah zariadeni, ktory sa meni s casom aj bez spravy INISSu (snimac tmy, koniec hlasenia, ticho servera)
+    /// - server vola kazdu sekundu. Vrati pocet zmenenych tabul.
+    /// </summary>
+    public int Tick()
+    {
+        var events = new List<SimulatorEvent>();
+        lock (_lock)
+        {
+            var now = Now;
+            foreach (var board in _boards.Values)
+            {
+                if (board.PoweredOff || board.Display is not ITimedDisplay timed || !timed.Advance(now, board.EffectiveProfile, _environment.Location))
+                    continue;
+                board.Version++;
+                _history.Observe(board, now);
+                events.Add(new BoardChanged(board.Id));
+            }
+        }
+
+        Raise(events);
+        return events.Count;
+    }
 
     /// <summary>Vykona <paramref name="action" /> pod zamkom simulatora - na citanie konzistentneho stavu.</summary>
     public T Read<T>(Func<Simulator, T> action)
@@ -246,6 +295,16 @@ public sealed class Simulator
                         existing.Version++;
                     }
 
+                    // svetla a audio linky ustredne su data stanice - snimac tmy a stavy od obsluhy ostanu
+                    if (board.AkSignal is { } station && existing.Display is AkSignalDisplay)
+                    {
+                        existing.Profile = existing.Profile with
+                        {
+                            AkSignal = (existing.Profile.AkSignal ?? AkSignalProfile.Default) with { Lights = station.Lights, Audio = station.Audio }
+                        };
+                        existing.Version++;
+                    }
+
                     // tabula zo samoucenia nema nazov - dostane ho zo stanice, nazov od obsluhy ostane
                     if (existing.Name.Length == 0 && !string.IsNullOrWhiteSpace(board.Name))
                     {
@@ -266,6 +325,8 @@ public sealed class Simulator
                 }
 
                 var profile = BoardProfile.DefaultFor(key) with { AutoSize = true };
+                if (board.AkSignal is { } controller)
+                    profile = profile with { AkSignal = AkSignalProfile.Default with { Lights = controller.Lights, Audio = controller.Audio } };
                 if (board.Flaps is { } layout)
                 {
                     var positions = layout.Modules.Count == 0 ? profile.Width / 8 : layout.Modules.Max(m => m.Position + m.Span);
@@ -334,10 +395,130 @@ public sealed class Simulator
         {
             if (!_boards.Remove(id))
                 return false;
+            _history.Forget(id);
         }
 
         Raise([new StructureChanged()]);
         return true;
+    }
+
+    /// <summary>Zmeni profil tabule (napr. snimac a stavy ustredne AK Signal); vrati false, ak tabula nie je.</summary>
+    public bool UpdateProfile(string id, Func<BoardProfile, BoardProfile> update)
+    {
+        ArgumentNullException.ThrowIfNull(update);
+        lock (_lock)
+        {
+            if (!_boards.TryGetValue(id, out var board))
+                return false;
+            board.Profile = update(board.Profile);
+            AdvanceTimed(board);
+            board.Version++;
+            _history.Observe(board, Now);
+        }
+
+        Raise([new BoardChanged(id)]);
+        return true;
+    }
+
+    /// <summary>Linka cita signal DTR INISSu (spinanie zosilnovaca, <see cref="DtrProtocol" />) namiesto sprav.</summary>
+    public bool WatchesModemSignal(int line)
+    {
+        lock (_lock)
+            return _lines.TryGetValue(line, out var l) && l.Protocol is DtrProtocol;
+    }
+
+    /// <summary>
+    /// Signal DTR INISSu na linke spinania zosilnovaca (na druhom konci paru portov DSR alebo DCD): zopne alebo vypne
+    /// zosilnovac - zariadenie na adrese <see cref="DtrProtocol.DeviceAddress" />, ak nie je, zalozi ho. Zmenu zapise do
+    /// zaznamu komunikacie. Vrati true, ak sa stav zmenil.
+    /// </summary>
+    public bool SetModemSignal(int line, bool on)
+    {
+        var events = new List<SimulatorEvent>();
+        lock (_lock)
+        {
+            if (!_lines.TryGetValue(line, out var simLine) || simLine.Protocol is not DtrProtocol)
+                return false;
+            var id = SimBoard.MakeId(line, DtrProtocol.DeviceAddress);
+            if (!_boards.TryGetValue(id, out var board))
+            {
+                if (!on)
+                    return false;
+                board = new SimBoard(line, DtrProtocol.DeviceAddress, "", DtrProtocol.Manufacturer, BoardProfile.DefaultFor(DtrProtocol.Manufacturer),
+                    simLine.Protocol.CreateDisplay(DtrProtocol.Manufacturer))
+                {
+                    AutoCreated = true
+                };
+                _boards[id] = board;
+                events.Add(new StructureChanged());
+            }
+
+            if (board.PoweredOff || board.Display is not AmplifierDisplay amplifier)
+                return false;
+            var changed = on ? amplifier.SwitchOn(0, 1, Now) : amplifier.SwitchOff(0);
+            if (!changed)
+                return false;
+            simLine.LastReceivedAt = Now;
+            board.Stats.Frames++;
+            board.Stats.LastFrameAt = Now;
+            board.Version++;
+            events.Add(new FrameLogged(AddLog(line, FrameDirection.Received, DtrProtocol.DeviceAddress, [], FrameStatus.Ok, new FrameInfo(on ? "dtr.on" : "dtr.off"))));
+            events.Add(new BoardChanged(id));
+        }
+
+        Raise(events);
+        return true;
+    }
+
+    /// <summary>
+    /// Prerusi hlasenie rozhlasu vzdialeneho INISSu (fronta null = vsetky): dalsia odpoved riadiacemu INISSu nebude mat
+    /// stav fronty a riadiaci zapise <c>remote break</c>.
+    /// </summary>
+    public BreakResult BreakAnnouncement(string id, string? queue)
+    {
+        lock (_lock)
+        {
+            if (!_boards.TryGetValue(id, out var board))
+                return BreakResult.NotFound;
+            if (board.Display is not RemoteAudioDisplay audio)
+                return BreakResult.NotRemoteAudio;
+            if (!audio.Break(queue, Now))
+                return BreakResult.NothingPlaying;
+            board.Version++;
+            _history.Observe(board, Now);
+        }
+
+        Raise([new BoardChanged(id)]);
+        return BreakResult.Broken;
+    }
+
+    /// <summary>
+    /// Nastavi alebo zrusi (null) prekrytie ustredne AK Signal zo scenara - stavy a snimac plati hned, profil sa nemeni.
+    /// Vrati false, ak tabula nie je alebo nie je ustredna.
+    /// </summary>
+    public bool SetOverride(string id, AkSignalOverride? value)
+    {
+        lock (_lock)
+        {
+            if (!_boards.TryGetValue(id, out var board) || value is not null && board.Display is not AkSignalDisplay)
+                return false;
+            if (board.Override == value)
+                return true;
+            board.Override = value;
+            AdvanceTimed(board);
+            board.Version++;
+            _history.Observe(board, Now);
+        }
+
+        Raise([new BoardChanged(id)]);
+        return true;
+    }
+
+    // obsah meniaci sa s casom vyhodnoti hned po zmene profilu, nie az pri dalsom tiku
+    private void AdvanceTimed(SimBoard board)
+    {
+        if (!board.PoweredOff && board.Display is ITimedDisplay timed)
+            timed.Advance(Now, board.EffectiveProfile, _environment.Location);
     }
 
     /// <summary>Nastavi predstieranu poruchu tabule.</summary>
@@ -371,6 +552,7 @@ public sealed class Simulator
             if (!on)
                 board.Display.Clear();
             board.Version++;
+            _history.Observe(board, Now);
         }
 
         Raise([new BoardChanged(id)]);
@@ -399,6 +581,13 @@ public sealed class Simulator
 
         Raise([new LineChanged(number)]);
         return true;
+    }
+
+    /// <summary>Odoberie zmeny stavu svetiel a skoncene hlasenia ustredni AK Signal od posledneho odberu (historia).</summary>
+    public DeviceHistorySample TakeDeviceHistory()
+    {
+        lock (_lock)
+            return _history.Take();
     }
 
     /// <summary>
@@ -514,6 +703,12 @@ public sealed class Simulator
                 line.LastReceivedAt = Now;
             context = new Context(this, line);
             line.Protocol.Receive(data, context);
+            foreach (var changed in context.Events.OfType<BoardChanged>().Select(e => e.BoardId).Distinct())
+            {
+                if (_boards.TryGetValue(changed, out var board))
+                    _history.Observe(board, Now);
+            }
+
             var sent = 0L;
             foreach (var reply in context.Replies)
                 sent += reply.Bytes.Length;
@@ -725,7 +920,10 @@ public sealed class Simulator
         [5] = (() => new ElektrocasProtocol(), ["LCD1", "ERP"]),
         [128] = (() => new RemoteProtocol(), [.. RemoteProtocol.Manufacturers]),
         [129] = (() => new ElsvoProtocol(), ["ELSVO"]),
-        [130] = (() => new ItpProtocol(), ["LCD1", "ERP", "LCD", "FERS"])
+        [130] = (() => new ItpProtocol(), ["LCD1", "ERP", "LCD", "FERS"]),
+        [131] = (() => new AkSignalProtocol(), [AkSignalProtocol.Manufacturer]),
+        [132] = (() => new AkSignalUhProtocol(), [AkSignalUhProtocol.Manufacturer]),
+        [DtrProtocol.TableClass] = (() => new DtrProtocol(), [DtrProtocol.Manufacturer])
     };
 
     private static ILineProtocol? CreateProtocol(int tableClass) => Protocols.TryGetValue(tableClass, out var p) ? p.Create() : null;
@@ -766,6 +964,8 @@ public sealed class Simulator
 
         public DateTimeOffset Now => sim.Now;
 
+        public SimEnvironment Environment => sim._environment;
+
         public IReadOnlyList<SimBoard> Boards => sim._boards.Values.Where(b => b.Line == line.Number && !b.PoweredOff).ToList();
 
         public SimBoard? FindBoard(int address, string? manufacturer = null)
@@ -776,16 +976,24 @@ public sealed class Simulator
                 return board.PoweredOff ? null : board;
             if (sim._boards.Values.FirstOrDefault(b => b.Line == line.Number && b.SecondAddress == address) is { } second)
                 return second.PoweredOff ? null : second;
-            if (!line.AutoLearn)
-                return null;
+            return line.AutoLearn ? Create(address, manufacturer ?? line.Manufacturer) : null;
+        }
 
-            manufacturer ??= line.Manufacturer;
-            board = new SimBoard(line.Number, address, "", manufacturer,
+        public SimBoard? Device(int address, string manufacturer)
+        {
+            if (sim._boards.TryGetValue(SimBoard.MakeId(line.Number, address), out var board))
+                return board.PoweredOff ? null : board;
+            return Create(address, manufacturer);
+        }
+
+        private SimBoard Create(int address, string manufacturer)
+        {
+            var board = new SimBoard(line.Number, address, "", manufacturer,
                 BoardProfile.DefaultFor(manufacturer) with { AutoSize = true }, line.Protocol.CreateDisplay(manufacturer))
             {
                 AutoCreated = true
             };
-            sim._boards[id] = board;
+            sim._boards[board.Id] = board;
             Events.Add(new StructureChanged());
             return board;
         }

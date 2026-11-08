@@ -32,6 +32,15 @@ internal static partial class ServerLog
     [LoggerMessage(Level = LogLevel.Warning, Message = "Monitor hlaseni nemoze precitat archiv hlaseni: {Error}")]
     public static partial void ReportMonitorFailed(ILogger logger, string error);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Zariadenia simulatora sa nepodarilo posunut v case")]
+    public static partial void DeviceClockFailed(ILogger logger, Exception error);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Historiu ustredni AK Signal sa nepodarilo zapisat")]
+    public static partial void DeviceHistoryFailed(ILogger logger, Exception error);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Historia ustredni: odstranenych {Count} zaznamov starsich nez {Days} dni")]
+    public static partial void DeviceHistoryCleaned(ILogger logger, int count, int days);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Statistika: odstranenych {Count} zaznamov starsich nez {Days} dni")]
     public static partial void StatisticsCleaned(ILogger logger, int count, int days);
 

@@ -24,8 +24,18 @@ public sealed class FaultScenarioRequestValidator : AbstractValidator<FaultScena
                 .WithErrorCode(ScenarioErrors.StepFault);
             step.RuleFor(s => s.Fault!.DelayMs).InclusiveBetween(0, 60_000).When(s => s.Fault is not null).WithErrorCode(ScenarioErrors.StepFault);
             step.RuleFor(s => s.Fault!.Status).InclusiveBetween(0, 255).When(s => s.Fault is not null).WithErrorCode(ScenarioErrors.StepFault);
+            step.RuleFor(s => s.Device).NotNull().When(s => s.Action == ScenarioAction.Device).WithErrorCode(ScenarioErrors.StepDevice)
+                .WithMessage("A controller step needs conditions or a sensor mode.");
+            step.RuleFor(s => s.Device!.Conditions).NotNull().When(s => s.Device is not null).WithErrorCode(ScenarioErrors.StepDevice);
+            step.RuleFor(s => s.Device!.Sensor).IsInEnum().When(s => s.Device is not null).WithErrorCode(ScenarioErrors.StepDevice);
+            step.RuleFor(s => s.Device).Must(d => d!.Sensor is not null || d.Conditions is { } c && HasAny(c))
+                .When(s => s.Action == ScenarioAction.Device && s.Device is not null).WithErrorCode(ScenarioErrors.StepDevice)
+                .WithMessage("A controller step needs conditions or a sensor mode.");
         });
     }
+
+    private static bool HasAny(AkSignalConditionsDto c) =>
+        c.LightsFault || c.HighPriority || c.OutputPowerError || c.AmpSupplyMissing || c.AmpCommError || c.BankNotSynced;
 }
 
 public sealed class CreateFaultScenarioCommandValidator : AbstractValidator<CreateFaultScenarioCommand>

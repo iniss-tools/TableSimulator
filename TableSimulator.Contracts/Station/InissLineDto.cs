@@ -24,6 +24,9 @@ public sealed record InissLineDto(
     /// <summary>Spinacie jednotky ELSVO na linke (okruhy Audio.txt so stlpcom 8 E a cislom linky).</summary>
     public IReadOnlyList<InissAmplifierDto> Amplifiers { get; init; } = [];
 
+    /// <summary>INISS2: ustredne AK Signal na linke (svetla z Lights.xml, audio linky z Audio.xml).</summary>
+    public IReadOnlyList<InissControllerDto> Controllers { get; init; } = [];
+
     /// <summary>Ako INISS na linku posiela.</summary>
     public StationLineTransport Transport { get; init; }
 

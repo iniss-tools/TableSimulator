@@ -11,6 +11,7 @@ import {
   importInissStationMutation,
   redirectInissLinesMutation,
   type InissAmplifierDto,
+  type InissControllerDto,
   type InissLineDto,
   type InissProblemDto,
   type InissTableDto,
@@ -45,8 +46,21 @@ function className(tableClass: number): string {
   return hasText(key) ? t(key) : t("iniss.class", { value: tableClass });
 }
 
-function Tables({ tables, amplifiers }: { tables: InissTableDto[]; amplifiers: InissAmplifierDto[] }) {
-  if (tables.length === 0 && amplifiers.length === 0) return <span className="text-muted-foreground">–</span>;
+function Controller({ controller }: { controller: InissControllerDto }) {
+  const name = controller.name || t("iniss.controller.unnamed");
+  return (
+    <span>
+      {controller.manufacturer === "AKSIGNALUH" ? t("iniss.controller.uh", { name }) : t("iniss.controller", { name, address: controller.address })}
+      <span className="text-xs text-muted-foreground">
+        {" "}
+        · {t("iniss.controller.detail", { lights: controller.lights.length, audio: controller.audio.length })}
+      </span>
+    </span>
+  );
+}
+
+function Tables({ tables, amplifiers, controllers }: { tables: InissTableDto[]; amplifiers: InissAmplifierDto[]; controllers: InissControllerDto[] }) {
+  if (tables.length === 0 && amplifiers.length === 0 && controllers.length === 0) return <span className="text-muted-foreground">–</span>;
   return (
     <div className="flex flex-col gap-0.5 whitespace-normal">
       {tables.map((table) => (
@@ -62,6 +76,9 @@ function Tables({ tables, amplifiers }: { tables: InissTableDto[]; amplifiers: I
           {t("iniss.amplifier", { name: amplifier.name, address: amplifier.address })}
           {!amplifier.shown && <span className="text-xs"> · {t("iniss.notShown")}</span>}
         </span>
+      ))}
+      {controllers.map((controller) => (
+        <Controller key={`aksignal/${controller.address}`} controller={controller} />
       ))}
     </div>
   );
@@ -123,7 +140,7 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
       column.display({
         id: "tables",
         header: t("iniss.col.tables"),
-        cell: ({ row }) => <Tables tables={row.original.tables} amplifiers={row.original.amplifiers} />,
+        cell: ({ row }) => <Tables tables={row.original.tables} amplifiers={row.original.amplifiers} controllers={row.original.controllers} />,
       }),
       column.display({
         id: "state",
@@ -236,6 +253,19 @@ export function InissStationDialog({ onClose }: { onClose: () => void }) {
                         <li key={`elsvo/${a.line}/${a.address}`}>
                           {t("iniss.amplifier", { name: a.name, address: a.address })} – {t("iniss.amplifier.noLine", { line: a.line })}
                         </li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+              {station.deviceProblems.length > 0 && (
+                <Alert className="border-amber-500/40 text-amber-800 dark:text-amber-300">
+                  <TriangleAlert />
+                  <AlertDescription className="text-current">
+                    <p className="font-medium">{t("iniss.deviceProblems")}</p>
+                    <ul className="list-disc pl-4">
+                      {station.deviceProblems.map((p, i) => (
+                        <li key={i}>{problemText(p)}</li>
                       ))}
                     </ul>
                   </AlertDescription>

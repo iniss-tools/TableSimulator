@@ -1,6 +1,7 @@
 // Spolocne pre testy: spravy ELEN ako ich posiela INISS (TCP na port linky), linky cez API, chyby stranky, prihlasenie.
 import { connect } from "node:net";
 import { expect, type Page } from "@playwright/test";
+import { defaultProfile } from "../src/lib/boards";
 
 /** Kontrolny sucet ELEN (CRC-16 0xA001, nizsi bajt). */
 function crc(data: number[]): number {
@@ -52,6 +53,61 @@ export function remoteTableMessage(seq: number, manufacturer: number, address: n
   return [...message, sum & 0xff, sum >> 8];
 }
 
+/**
+ * Sprava riadiaceho INISSu pre jedinu frontu hlaseni: prikaz fronty, pri novom hlaseni zoznam nahravok (RWAV) a titulok.
+ */
+export function remoteQueueMessage(seq: number, command: number, recordings?: string, title?: string): number[] {
+  const chunk = (tag: string, data: number[]) => [...Array.from(tag, (ch) => ch.charCodeAt(0)).reverse(), ...int32(data.length), ...data];
+  const text = (value: string) => Array.from(value, (ch) => ch.charCodeAt(0));
+  const body = [
+    ...chunk("RCMD", int32(command)),
+    ...(recordings === undefined ? [] : chunk("RWAV", text(recordings))),
+    ...(title === undefined ? [] : chunk("RTIT", text(title))),
+  ];
+  const message = [0x53, ...int32(body.length + 11), ...int32(seq), ...body];
+  const sum = remoteCrc(message);
+  return [...message, sum & 0xff, sum >> 8];
+}
+
+/** Stav fronty (RSTA) z odpovede vzdialeneho INISSu; null = odpoved ho nema. */
+export function remoteQueueState(reply: number[]): number | null {
+  for (let i = 9; i + 8 <= reply.length - 2;) {
+    const tag = String.fromCharCode(...reply.slice(i, i + 4).reverse());
+    const length = reply[i + 4] | (reply[i + 5] << 8) | (reply[i + 6] << 16) | (reply[i + 7] << 24);
+    if (tag === "RSTA") return reply[i + 8] | (reply[i + 9] << 8) | (reply[i + 10] << 16) | (reply[i + 11] << 24);
+    i += 8 + length;
+  }
+  return null;
+}
+
+/** Sprava servera INISS2 ustredni AK Signal: adresa, dlzka, prikaz, volitelna hodnota a sucet bajtov. */
+export function akSignalFrame(address: number, command: number, value?: number): number[] {
+  const body = value === undefined ? [address, 4, command] : [address, 6, command, value & 0xff, (value >> 8) & 0xff];
+  return [...body, body.reduce((a, b) => a + b, 0) & 0xff];
+}
+
+/**
+ * Trvale spojenie s linkou ako server INISS2 alebo riadiaci INISS - odpojenie by na stranke vyvolalo upozornenie na vypadok.
+ * `ask` posle spravu a pocka na odpoved.
+ */
+export async function openLine(port: number) {
+  const socket = connect(port, "127.0.0.1");
+  await new Promise<void>((resolve, reject) => socket.once("connect", resolve).once("error", reject));
+  let replies: number[] = [];
+  socket.on("data", (data: Buffer) => replies.push(...data));
+  return {
+    async ask(frame: number[]): Promise<number[]> {
+      replies = [];
+      socket.write(Buffer.from(frame));
+      for (let i = 0; i < 100 && replies.length === 0; i++) await new Promise((r) => setTimeout(r, 20));
+      // dobehnutie zvysku odpovede
+      await new Promise((r) => setTimeout(r, 30));
+      return replies;
+    },
+    close: () => socket.end(),
+  };
+}
+
 /** Posle spravy na linku simulatora ako INISS a vrati odpovede tabule (bajt po kazdej sprave). */
 export async function sendToLine(port: number, frames: number[][]): Promise<number[]> {
   const socket = connect(port, "127.0.0.1");
@@ -71,11 +127,29 @@ export async function sendToLine(port: number, frames: number[][]): Promise<numb
 /** Zmeny cez API ako web (ochrana proti CSRF). */
 export const API_HEADERS = { "X-Requested-With": "TableSimulator" };
 
-/** Linka ELEN na TCP porte 47000 + cislo (bez okna - test sa venuje inemu). */
-export async function createLine(page: Page, number: number, name: string) {
+/** Linka (predvolene ELEN) na TCP porte 47000 + cislo (bez okna - test sa venuje inemu). */
+export async function createLine(page: Page, number: number, name: string, tableClass = 4, manufacturer = "ELEN") {
   const response = await page.request.put(`/api/lines/${number}`, {
     headers: API_HEADERS,
-    data: { number, tableClass: 4, endpoint: `TCP://0.0.0.0:${47000 + number}`, name, mode: "display", autoLearn: true, manufacturer: "ELEN", mirror: null },
+    data: { number, tableClass, endpoint: `TCP://0.0.0.0:${47000 + number}`, name, mode: "display", autoLearn: true, manufacturer, mirror: null },
+  });
+  expect(response.ok(), await response.text()).toBe(true);
+}
+
+/** Tabula alebo zariadenie na linke s predvolenym profilom vyrobcu. */
+export async function createBoard(page: Page, line: number, address: number, manufacturer: string, name: string) {
+  const response = await page.request.put(`/api/boards/${line}/${address}`, {
+    headers: API_HEADERS,
+    data: {
+      line,
+      address,
+      manufacturer,
+      name,
+      profile: defaultProfile(manufacturer),
+      design: null,
+      fault: { kind: "none", delayMs: 0, status: 0 },
+      secondAddress: null,
+    },
   });
   expect(response.ok(), await response.text()).toBe(true);
 }
